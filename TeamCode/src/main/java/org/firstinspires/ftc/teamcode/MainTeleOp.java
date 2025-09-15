@@ -5,20 +5,24 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.DrivingStuff.MecanumDrive;
 import org.firstinspires.ftc.teamcode.Intake.IntakeMotors;
+import org.firstinspires.ftc.teamcode.Outtake.OuttakeMotors;
+
 
 @TeleOp
 public class MainTeleOp extends LinearOpMode {
 
     // Create an instance of your new MecanumDrive class
-    private MecanumDrive mecanumDrive = new MecanumDrive();
-    private IntakeMotors intakeMotors = new IntakeMotors();
+    private final MecanumDrive mecanumDrive = new MecanumDrive();
+    private final IntakeMotors intakeMotors = new IntakeMotors();
+    private final OuttakeMotors outtakeMotors = new OuttakeMotors();
 
     @Override
     public void runOpMode() throws InterruptedException {
 
         // Initialize the MecanumDrive class with the hardware map
         mecanumDrive.init(hardwareMap);
-        intakeMotors.init(hardwareMap);
+        intakeMotors.init2(hardwareMap.dcMotor.get("outtakeMotor"));
+        outtakeMotors.init3(hardwareMap.dcMotor.get("intakeMotor"));
 
         //Telemetry add time
         addTelemetry("Status", "Initialized");
@@ -44,13 +48,16 @@ public class MainTeleOp extends LinearOpMode {
                 mecanumDrive.changeSlowMode();
             }
             if (gamepad1.triangleWasPressed()){
-                intakeMotors.changeIntakeStatus();
+                outtakeMotors.shootBall();
+            }
+            if (gamepad1.crossWasPressed()){
+                intakeMotors.grabBall();
             }
 
             // Call the drive method in the MecanumDrive class
             mecanumDrive.drive(driveY, driveX, rotationStick);
 
-            intakeMotors.grabBall();
+
 
             // Display telemetry data
             addTelemetry("Robot Heading", mecanumDrive.getRobotHeading());

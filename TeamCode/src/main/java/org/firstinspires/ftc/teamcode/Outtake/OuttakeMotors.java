@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.Intake;
+package org.firstinspires.ftc.teamcode.Outtake;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -6,40 +6,31 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class IntakeMotors {
+public class OuttakeMotors {
 
     // Declare variables for the motor
     double speed = .5;
     double shootTime = 5;
     boolean running = false;
-    private DcMotor intakeMotor;
+    private DcMotor outtakeMotor;
     Timer timer = new Timer();
 
 
 
     // Initialization method to map hardware
-    public void init2(DcMotor intakeMotor) {
+    public void init3(DcMotor outtakeMotor) {
         // Retrieve and initialize motors from the hardware map
-        this.intakeMotor = intakeMotor;
+        this.outtakeMotor = outtakeMotor;
 
         // Set motor directions based on configuration
-        intakeMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        outtakeMotor.setDirection(DcMotorSimple.Direction.FORWARD);
     }
 
-    public void grabBall(){
-        intakeMotor.setPower(speed);
+    public void shootBall(){
+        outtakeMotor.setPower(speed);
         System.out.println("Timer Started");
-        timer.schedule(new StopMotor(intakeMotor), 5000);
+        timer.schedule(new StopMotor(outtakeMotor), 5000);
     }
-
-   /* public boolean checkBall(){
-        //if there is a ball, then we categorize it and do stuff
-        return false;
-    }
-
-    public void changeIntakeStatus(){
-        running = !running;
-    }*/
 
     static class StopMotor extends TimerTask{
         DcMotor motor;
