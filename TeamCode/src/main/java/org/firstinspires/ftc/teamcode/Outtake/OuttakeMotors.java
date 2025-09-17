@@ -2,24 +2,18 @@ package org.firstinspires.ftc.teamcode.Outtake;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.HardwareMap;
-import java.util.Timer;
-import java.util.TimerTask;
 
 public class OuttakeMotors {
 
-    // Declare variables for the motor
+    // Declare variables for the motors
     double speed = 1;
-    double shootTime = 5;
-    boolean running = false;
+    /*boolean running = false;*/
     private DcMotor outtakeMotor1;
     private DcMotor outtakeMotor2;
-    Timer timer = new Timer();
-
 
 
     // Initialization method to map hardware
-    public void init3(DcMotor outtakeMotor1, DcMotor outtakeMotor2) {
+    public void initOuttake(DcMotor outtakeMotor1, DcMotor outtakeMotor2) {
         // Retrieve and initialize motors from the hardware map
         this.outtakeMotor1 = outtakeMotor1;
         this.outtakeMotor2 = outtakeMotor2;
@@ -29,51 +23,32 @@ public class OuttakeMotors {
         outtakeMotor2.setDirection(DcMotorSimple.Direction.FORWARD);
     }
 
-   /* public void shootBall(){
-        outtakeMotor1.setPower(speed);
-        System.out.println("Timer Started");
-        timer.schedule(new StopMotor(outtakeMotor1), 5000);
-    }*/
-    public void toggleOutake(){
+    //Shoots the ball, if 1 is passed, shoots forward,
+    // if -1 is passed, expunges the ball
+    public void shoot(int direction){
+        outtakeMotor1.setPower(speed * direction);
+        outtakeMotor2.setPower(speed * direction);
+    }
+    //stops the shooter
+    public void stopShooter(){
+        outtakeMotor1.setPower(0);
+        outtakeMotor2.setPower(0);
+    }
 
+    /*
+    Use if you want a continuous shooter motion, used as a toggle
+    if its not being used, comment it to save space
+    public void toggleOuttake(){
 
         running = !running;
         if(running){
             outtakeMotor1.setPower(speed);
             outtakeMotor2.setPower(speed);
-        }else{
+        }else {
             outtakeMotor1.setPower(0);
             outtakeMotor2.setPower(0);
         }
     }
-    public void shoot(){
-        outtakeMotor1.setPower(speed);
-        outtakeMotor2.setPower(speed);
-    }
-    public void notShoot(){
-        outtakeMotor1.setPower(0);
-        outtakeMotor2.setPower(0);
-    }
-
-    public void expunge(){
-            outtakeMotor1.setPower(speed * -1);
-            outtakeMotor2.setPower(speed * -1);
-
-    }
-
-    static class StopMotor extends TimerTask{
-        DcMotor motor;
-
-        StopMotor(DcMotor motor){
-            this.motor = motor;
-        }
-
-        @Override
-        public void run() {
-            motor.setPower(0);
-            System.out.println("Timer has been completed");
-        }
-    }
-
+    */
 
 }

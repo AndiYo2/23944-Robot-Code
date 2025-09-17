@@ -21,8 +21,8 @@ public class MainTeleOp extends LinearOpMode {
 
         // Initialize the MecanumDrive class with the hardware map
         mecanumDrive.init(hardwareMap);
-        intakeMotors.init2(hardwareMap.dcMotor.get("intakeMotor"));
-        outtakeMotors.init3(hardwareMap.dcMotor.get("outtakeMotor1"), hardwareMap.dcMotor.get("outtakeMotor2"));
+        intakeMotors.initIntake(hardwareMap.dcMotor.get("intakeMotor"));
+        outtakeMotors.initOuttake(hardwareMap.dcMotor.get("outtakeMotor1"), hardwareMap.dcMotor.get("outtakeMotor2"));
 
         //Telemetry add time
         addTelemetry("Status", "Initialized");
@@ -49,28 +49,25 @@ public class MainTeleOp extends LinearOpMode {
             if (gamepad1.circleWasPressed()){
                 mecanumDrive.changeSlowMode();
             }
-//            /*if (gamepad1.triangleWasPressed()){
-//                outtakeMotors.toggleOutake();
-//            }*/
-//            if (gamepad1.crossWasPressed()){
-//                intakeMotors.toggleIntake();
-//            }
+
+            // Outtake Motor functions
+
+            //  Right trigger Shooting out if
             if(gamepad1.right_trigger > .5){
-                outtakeMotors.shoot();
+                outtakeMotors.shoot(1 /*positive means shoot*/);
                 released = true;
             }else if (released){
-                outtakeMotors.notShoot();
+                outtakeMotors.stopShooter();
                 released = false;
             }
-
+            // Right Bumper - reverses and expunges the shot
             if(gamepad1.right_bumper){
-
-                outtakeMotors.expunge();
+                outtakeMotors.shoot(-1 /*negative means expunge backwards*/);
             }else if (gamepad1.rightBumperWasReleased()){
-                outtakeMotors.notShoot();
+                outtakeMotors.stopShooter();
             }
 
-
+            // Intake Motor functions, Left Trigger
             if(gamepad1.left_trigger > .5){
                 intakeMotors.intakeBall();
             }else{
@@ -78,10 +75,11 @@ public class MainTeleOp extends LinearOpMode {
             }
 
 
+
+
+
             // Call the drive method in the MecanumDrive class
             mecanumDrive.drive(driveY, driveX, rotationStick);
-
-
 
             // Display telemetry data
             addTelemetry("Robot Heading", mecanumDrive.getRobotHeading());

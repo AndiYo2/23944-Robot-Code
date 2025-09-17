@@ -18,7 +18,7 @@ public class IntakeMotors {
 
 
     // Initialization method to map hardware
-    public void init2(DcMotor intakeMotor) {
+    public void initIntake(DcMotor intakeMotor) {
         // Retrieve and initialize motors from the hardware map
         this.intakeMotor = intakeMotor;
 
