@@ -21,8 +21,8 @@ public class MainTeleOp extends LinearOpMode {
 
         // Initialize the MecanumDrive class with the hardware map
         mecanumDrive.init(hardwareMap);
-        intakeMotors.init2(hardwareMap.dcMotor.get("outtakeMotor"));
-        outtakeMotors.init3(hardwareMap.dcMotor.get("intakeMotor"));
+        intakeMotors.init2(hardwareMap.dcMotor.get("intakeMotor"));
+        outtakeMotors.init3(hardwareMap.dcMotor.get("outtakeMotor1"), hardwareMap.dcMotor.get("outtakeMotor2"));
 
         //Telemetry add time
         addTelemetry("Status", "Initialized");
@@ -39,6 +39,8 @@ public class MainTeleOp extends LinearOpMode {
             double driveX = gamepad1.left_stick_x;
             double rotationStick = -gamepad1.right_stick_x;
 
+            boolean released = true;
+
             // Reset the IMU yaw with a button press
             if (gamepad1.options) {
                 mecanumDrive.resetYaw();
@@ -47,12 +49,34 @@ public class MainTeleOp extends LinearOpMode {
             if (gamepad1.circleWasPressed()){
                 mecanumDrive.changeSlowMode();
             }
-            if (gamepad1.triangleWasPressed()){
-                outtakeMotors.toggleOutake();
+//            /*if (gamepad1.triangleWasPressed()){
+//                outtakeMotors.toggleOutake();
+//            }*/
+//            if (gamepad1.crossWasPressed()){
+//                intakeMotors.toggleIntake();
+//            }
+            if(gamepad1.right_trigger > .5){
+                outtakeMotors.shoot();
+                released = true;
+            }else if (released){
+                outtakeMotors.notShoot();
+                released = false;
             }
-            if (gamepad1.crossWasPressed()){
-                intakeMotors.toggleIntake();
+
+            if(gamepad1.right_bumper){
+
+                outtakeMotors.expunge();
+            }else if (gamepad1.rightBumperWasReleased()){
+                outtakeMotors.notShoot();
             }
+
+
+            if(gamepad1.left_trigger > .5){
+                intakeMotors.intakeBall();
+            }else{
+                intakeMotors.stopIntakeBall();
+            }
+
 
             // Call the drive method in the MecanumDrive class
             mecanumDrive.drive(driveY, driveX, rotationStick);

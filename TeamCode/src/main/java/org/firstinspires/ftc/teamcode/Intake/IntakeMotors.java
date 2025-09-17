@@ -2,14 +2,14 @@ package org.firstinspires.ftc.teamcode.Intake;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.HardwareMap;
+
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class IntakeMotors {
 
     // Declare variables for the motor
-    double speed = .5;
+    double speed = .75;
     double shootTime = 5;
     boolean running = false;
     private DcMotor intakeMotor;
@@ -38,6 +38,12 @@ public class IntakeMotors {
         }else{
             intakeMotor.setPower(0);
         }
+    }
+    public void intakeBall(){
+        intakeMotor.setPower(speed);
+    }
+    public void stopIntakeBall(){
+        intakeMotor.setPower(0);
     }
 
    /* public boolean checkBall(){
