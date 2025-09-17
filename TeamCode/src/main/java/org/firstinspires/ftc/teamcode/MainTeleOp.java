@@ -48,10 +48,10 @@ public class MainTeleOp extends LinearOpMode {
                 mecanumDrive.changeSlowMode();
             }
             if (gamepad1.triangleWasPressed()){
-                outtakeMotors.shootBall();
+                outtakeMotors.toggleOutake();
             }
             if (gamepad1.crossWasPressed()){
-                intakeMotors.grabBall();
+                intakeMotors.toggleIntake();
             }
 
             // Call the drive method in the MecanumDrive class

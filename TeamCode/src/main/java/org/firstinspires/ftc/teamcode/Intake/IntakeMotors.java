@@ -31,6 +31,14 @@ public class IntakeMotors {
         System.out.println("Timer Started");
         timer.schedule(new StopMotor(intakeMotor), 5000);
     }
+    public void toggleIntake(){
+        running = !running;
+        if(running){
+            intakeMotor.setPower(speed);
+        }else{
+            intakeMotor.setPower(0);
+        }
+    }
 
    /* public boolean checkBall(){
         //if there is a ball, then we categorize it and do stuff

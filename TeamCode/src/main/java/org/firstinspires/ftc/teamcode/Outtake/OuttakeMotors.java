@@ -31,6 +31,14 @@ public class OuttakeMotors {
         System.out.println("Timer Started");
         timer.schedule(new StopMotor(outtakeMotor), 5000);
     }
+    public void toggleOutake(){
+        running = !running;
+        if(running){
+            outtakeMotor.setPower(speed);
+        }else{
+            outtakeMotor.setPower(0);
+        }
+    }
 
     static class StopMotor extends TimerTask{
         DcMotor motor;
