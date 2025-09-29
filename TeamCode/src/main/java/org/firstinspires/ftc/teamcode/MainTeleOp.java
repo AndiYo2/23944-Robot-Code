@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.teamcode.DrivingStuff.MecanumDrive;
 import org.firstinspires.ftc.teamcode.Intake.IntakeMotors;
 import org.firstinspires.ftc.teamcode.Outtake.OuttakeMotors;
+import org.firstinspires.ftc.teamcode.Globals.BallPattern;
 
 
 @TeleOp
@@ -16,6 +17,9 @@ public class MainTeleOp extends LinearOpMode {
     private final IntakeMotors intakeMotors = new IntakeMotors();
     private final OuttakeMotors outtakeMotors = new OuttakeMotors();
 
+    public BallPattern pattern = new BallPattern();
+
+
     @Override
     public void runOpMode() throws InterruptedException {
 
@@ -23,6 +27,9 @@ public class MainTeleOp extends LinearOpMode {
         mecanumDrive.init(hardwareMap);
         intakeMotors.initIntake(hardwareMap.dcMotor.get("intakeMotor"));
         outtakeMotors.initOuttake(hardwareMap.dcMotor.get("outtakeMotor1"), hardwareMap.dcMotor.get("outtakeMotor2"));
+
+        pattern.setBallPattern("P","P","G");
+
 
         //Telemetry add time
         addTelemetry("Status", "Initialized");
