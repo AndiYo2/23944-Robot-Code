@@ -5,12 +5,17 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.teamcode.DrivingStuff.MecanumDrive;
 import org.firstinspires.ftc.teamcode.Intake.IntakeMotors;
+import org.firstinspires.ftc.teamcode.Outtake.OuttakeCases;
 import org.firstinspires.ftc.teamcode.Outtake.OuttakeMotors;
 import org.firstinspires.ftc.teamcode.Globals.BallPattern;
 
 
 @TeleOp
 public class MainTeleOp extends LinearOpMode {
+
+
+
+
 
     // Create an instance of your new MecanumDrive class
     private final MecanumDrive mecanumDrive = new MecanumDrive();
@@ -23,12 +28,14 @@ public class MainTeleOp extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
 
+
+
         // Initialize the MecanumDrive class with the hardware map
         mecanumDrive.init(hardwareMap);
         intakeMotors.initIntake(hardwareMap.dcMotor.get("intakeMotor"));
         outtakeMotors.initOuttake(hardwareMap.dcMotor.get("outtakeMotor1"), hardwareMap.dcMotor.get("outtakeMotor2"));
 
-        pattern.setBallPattern("P","P","G");
+        pattern.setBallPattern(BallPattern.BallType.GREEN, BallPattern.BallType.PURPLE, BallPattern.BallType.PURPLE);
 
 
         //Telemetry add time
