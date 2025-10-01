@@ -26,7 +26,7 @@ public class OuttakeCases
 
         while(x <= size)
 
-            if(goalPattern.getBallInSlotX(top) != storedPattern.getBallInSlotX(top)){
+            if(goalPattern.getBallInSlotX(x) != storedPattern.getBallInSlotX(top)){
 
                 //find slot the next color is located in
                 //rotate to that slot
