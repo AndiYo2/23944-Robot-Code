@@ -22,6 +22,8 @@ public class BallPattern {
 
 
 
+
+
     public void setBallPattern(BallType one, BallType two, BallType three){
         pattern = new BallType[]{one, two, three};
     }

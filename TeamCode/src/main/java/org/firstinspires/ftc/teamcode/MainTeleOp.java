@@ -14,29 +14,28 @@ import org.firstinspires.ftc.teamcode.Globals.BallPattern;
 public class MainTeleOp extends LinearOpMode {
 
 
-
-
-
     // Create an instance of your new MecanumDrive class
     private final MecanumDrive mecanumDrive = new MecanumDrive();
     private final IntakeMotors intakeMotors = new IntakeMotors();
     private final OuttakeMotors outtakeMotors = new OuttakeMotors();
 
-    public BallPattern pattern = new BallPattern();
+    //Testing: public BallPattern pattern = new BallPattern();
 
 
     @Override
     public void runOpMode() throws InterruptedException {
 
+        //Testing: pattern.setBallPattern(BallPattern.BallType.GREEN, BallPattern.BallType.PURPLE, BallPattern.BallType.PURPLE);
+
+        String outtakeMotorOne = "outMotor1";
+        String outtakeMotorTwo = "outMotor2";
+        String intakeMotor = "inMotor";
 
 
         // Initialize the MecanumDrive class with the hardware map
-        mecanumDrive.init(hardwareMap);
-        intakeMotors.initIntake(hardwareMap.dcMotor.get("intakeMotor"));
-        outtakeMotors.initOuttake(hardwareMap.dcMotor.get("outtakeMotor1"), hardwareMap.dcMotor.get("outtakeMotor2"));
-
-        pattern.setBallPattern(BallPattern.BallType.GREEN, BallPattern.BallType.PURPLE, BallPattern.BallType.PURPLE);
-
+        mecanumDrive.initDrive(hardwareMap);
+        /*intakeMotors.initIntake(hardwareMap.dcMotor.get(intakeMotor));
+        outtakeMotors.initOuttake(hardwareMap.dcMotor.get(outtakeMotorOne), hardwareMap.dcMotor.get(outtakeMotorTwo));*/
 
         //Telemetry add time
         addTelemetry("Status", "Initialized");
@@ -67,8 +66,8 @@ public class MainTeleOp extends LinearOpMode {
             // Outtake Motor functions
 
             //  Right trigger Shooting out if
-            if(gamepad1.right_trigger > .5){
-                outtakeMotors.shoot(1 /*positive means shoot*/);
+            /*if(gamepad1.right_trigger > .5){
+                outtakeMotors.shoot(1 *//*positive means shoot*//*);
                 released = true;
             }else if (released){
                 outtakeMotors.stopShooter();
@@ -76,7 +75,7 @@ public class MainTeleOp extends LinearOpMode {
             }
             // Right Bumper - reverses and expunges the shot
             if(gamepad1.right_bumper){
-                outtakeMotors.shoot(-1 /*negative means expunge backwards*/);
+                outtakeMotors.shoot(-1 *//*negative means expunge backwards*//*);
             }else if (gamepad1.rightBumperWasReleased()){
                 outtakeMotors.stopShooter();
             }
@@ -86,7 +85,7 @@ public class MainTeleOp extends LinearOpMode {
                 intakeMotors.intakeBall();
             }else{
                 intakeMotors.stopIntakeBall();
-            }
+            }*/
 
 
 

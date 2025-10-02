@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.Outtake;
 
 import org.firstinspires.ftc.teamcode.Globals.BallPattern;
+
 import java.util.ArrayList;
 
 
@@ -19,10 +20,11 @@ public class OuttakeCases
         this.goalPattern = goalPattern;
     }
 
-    public void calcShootingOrder(int top){
+    public String calcShootingOrder(int top){
 
         int size = purpleBalls.size()+ greenBalls.size();
         int x =1;
+        String comp = "";
 
         while(x <= size)
 
@@ -33,29 +35,43 @@ public class OuttakeCases
                 if(goalPattern.getBallInSlotX(x) == BallPattern.BallType.PURPLE && !purpleBalls.isEmpty()){
                     //rotate to:
                     top = purpleBalls.get(0);
-                    purpleBalls.remove(0);
-                    System.out.println("rotated to a purple");
+                    comp += "rp ";
 
                 } else if (goalPattern.getBallInSlotX(x) == BallPattern.BallType.GREEN && !greenBalls.isEmpty()) {
                     //rotate to:
                     top = greenBalls.get(0);
-                    greenBalls.remove(0);
-                    System.out.println("rotated to a green");
+                    comp += "rg ";
 
                 }else{
+
                     break;
                 }
 
 
             }else{
-                System.out.println(x + " - " + storedPattern.getBallInSlotX(top));
+                comp += "" + storedPattern.getBallInSlotX(top) + " ";
                 storedPattern.setBallPatternNone(top);
+                removeColorCatagory(top);
                 x++;
 
             }
+        return comp;
+    }
+
+    public void removeColorCatagory(int x){
+
+        if(purpleBalls.contains(x)){
+            purpleBalls.remove(Integer.valueOf(x));
+        }else{
+            greenBalls.remove(Integer.valueOf(x));
+        }
 
     }
 
+    public void clearForTesting(){
+        purpleBalls.clear();
+        greenBalls.clear();
+    }
 
 
     public void setBalls(BallPattern.BallType one,BallPattern.BallType two,BallPattern.BallType three ){
@@ -64,18 +80,20 @@ public class OuttakeCases
 
         if(one == BallPattern.BallType.PURPLE){
             purpleBalls.add(1);
-        }else{
+        }else if(one == BallPattern.BallType.GREEN){
             greenBalls.add(1);
         }
         if(two == BallPattern.BallType.PURPLE){
             purpleBalls.add(2);
-        }else{
+        }else if(two == BallPattern.BallType.GREEN){
             greenBalls.add(2);
         }
         if(three == BallPattern.BallType.PURPLE){
             purpleBalls.add(3);
-        }else{
+        }else if (three == BallPattern.BallType.GREEN){
             greenBalls.add(3);
+        }else{
+            //Maybe not needed
         }
 
     }
