@@ -18,7 +18,6 @@ public class MecanumDrive {
     private DcMotor backRightMotor;
     private IMU imu;
 
-    DcMotorSimple.Direction reverseMotor = DcMotorSimple.Direction.REVERSE;
     private boolean isSlow = false;
 
     public MecanumDrive() {
@@ -34,14 +33,15 @@ public class MecanumDrive {
         backRightMotor = hardwareMap.dcMotor.get("backRightMotor");
 
         // Set motor directions based on configuration
-        frontRightMotor.setDirection(reverseMotor);
-        backRightMotor.setDirection(reverseMotor);
+        frontRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        backRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+
 
         // Retrieve and initialize the IMU
         imu = hardwareMap.get(IMU.class, "imu");
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
-                RevHubOrientationOnRobot.LogoFacingDirection.BACKWARD,
-                RevHubOrientationOnRobot.UsbFacingDirection.UP));
+                RevHubOrientationOnRobot.LogoFacingDirection.UP,
+                RevHubOrientationOnRobot.UsbFacingDirection.BACKWARD));
         imu.initialize(parameters);
     }
 
