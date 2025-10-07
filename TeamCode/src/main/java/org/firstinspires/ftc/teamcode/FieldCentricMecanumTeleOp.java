@@ -24,7 +24,7 @@ public class FieldCentricMecanumTeleOp extends LinearOpMode {
         // reverse the left side instead.
         // See the note about this earlier on this page.
         backLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-        backRightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        frontLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // Retrieve the IMU from the hardware map
         IMU imu = hardwareMap.get(IMU.class, "imu");
@@ -47,7 +47,7 @@ public class FieldCentricMecanumTeleOp extends LinearOpMode {
             // This button choice was made so that it is hard to hit on accident,
             // it can be freely changed based on preference.
             // The equivalent button is start on Xbox-style controllers.
-            if (gamepad1.options) {
+            if (gamepad1.optionsWasPressed()) {
                 imu.resetYaw();
             }
 

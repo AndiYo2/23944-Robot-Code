@@ -34,8 +34,8 @@ public class MainTeleOp extends LinearOpMode {
 
         // Initialize the MecanumDrive class with the hardware map
         mecanumDrive.initDrive(hardwareMap);
-        /*intakeMotors.initIntake(hardwareMap.dcMotor.get(intakeMotor));
-        outtakeMotors.initOuttake(hardwareMap.dcMotor.get(outtakeMotorOne), hardwareMap.dcMotor.get(outtakeMotorTwo));*/
+        intakeMotors.initIntake(hardwareMap.dcMotor.get(intakeMotor));
+        outtakeMotors.initOuttake(hardwareMap.dcMotor.get(outtakeMotorOne), hardwareMap.dcMotor.get(outtakeMotorTwo));
 
         //Telemetry add time
         addTelemetry("Status", "Initialized");
@@ -50,7 +50,7 @@ public class MainTeleOp extends LinearOpMode {
             // Read driver inputs from the gamepad
             double driveY = -gamepad1.left_stick_y;
             double driveX = gamepad1.left_stick_x;
-            double rotationStick = -gamepad1.right_stick_x;
+            double rotationStick = gamepad1.right_stick_x;
 
             boolean released = true;
 
@@ -66,8 +66,8 @@ public class MainTeleOp extends LinearOpMode {
             // Outtake Motor functions
 
             //  Right trigger Shooting out if
-            /*if(gamepad1.right_trigger > .5){
-                outtakeMotors.shoot(1 *//*positive means shoot*//*);
+            if(gamepad1.right_trigger > .5){
+                outtakeMotors.shoot(1);
                 released = true;
             }else if (released){
                 outtakeMotors.stopShooter();
@@ -75,17 +75,18 @@ public class MainTeleOp extends LinearOpMode {
             }
             // Right Bumper - reverses and expunges the shot
             if(gamepad1.right_bumper){
-                outtakeMotors.shoot(-1 *//*negative means expunge backwards*//*);
+                outtakeMotors.shoot(-1 );
             }else if (gamepad1.rightBumperWasReleased()){
                 outtakeMotors.stopShooter();
             }
 
             // Intake Motor functions, Left Trigger
+
             if(gamepad1.left_trigger > .5){
                 intakeMotors.intakeBall();
             }else{
                 intakeMotors.stopIntakeBall();
-            }*/
+            }
 
 
 

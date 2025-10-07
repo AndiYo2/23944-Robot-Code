@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 public class OuttakeMotors {
 
     // Declare variables for the motors
-    double speed = 1;
+    double speed = .55;
     /*boolean running = false;*/
     private DcMotor outtakeMotor1;
     private DcMotor outtakeMotor2;
