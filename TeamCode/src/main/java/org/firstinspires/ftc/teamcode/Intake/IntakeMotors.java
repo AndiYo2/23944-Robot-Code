@@ -9,7 +9,7 @@ import java.util.TimerTask;
 public class IntakeMotors {
 
     // Declare variables for the motor
-    double speed = .75;
+    double speed = 1;
     //boolean running = false;
     private DcMotor intakeMotor;
 
