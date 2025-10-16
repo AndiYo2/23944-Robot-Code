@@ -13,7 +13,7 @@ import  com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import org.firstinspires.ftc.teamcode.Intake.IntakeMotors;
 
 @Autonomous(name = "BackBlueAuton")
-public class NineBallRedAutonBackStart extends OpMode{
+public class NineBallBlueAutonBackStart extends OpMode{
     private Follower follower;
     private Timer pathTimer, actionTimer, opmodeTimer;
     private int pathState;
