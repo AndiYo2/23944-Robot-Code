@@ -10,6 +10,8 @@ import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import  com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
+import org.firstinspires.ftc.teamcode.Intake.IntakeMotors;
+
 @Autonomous(name = "BackBlueAuton")
 public class nineBallBlueAutonBackStart extends OpMode{
     private Follower follower;
@@ -26,39 +28,42 @@ public class nineBallBlueAutonBackStart extends OpMode{
             secondToShoot,
             shootToStop;
 
-    private final Pose startPose = new Pose(84, 4, Math.toRadians(90));
-    private final Pose endPose = new Pose(120, 18, Math.toRadians(180));
+    private final Pose startPose = new Pose(81, 9, Math.toRadians(90));
+    private final Pose endPose = new Pose(126, 12, Math.toRadians(90));
 
-    private final Pose scanPose = new Pose(86.5,108.5, Math.toRadians(110));
-    private final Pose shootPose = new Pose(90,81.5, Math.toRadians(45));
-    private final Pose firstPickupPose = new Pose(125,81.5, Math.toRadians(0));
-    private final Pose secondPickupPose = new Pose(124,56, Math.toRadians(0));
+    private final Pose scanPose = new Pose(86.5,113.5, Math.toRadians(110));
+    private final Pose shootPose = new Pose(90,90, Math.toRadians(45));
+    private final Pose firstPickupPose = new Pose(120,83.5, Math.toRadians(0));
+    private final Pose secondPickupPose = new Pose(120,58.5, Math.toRadians(0));
 
-    private final Pose startToScanControlPoint = new Pose(94,58.5);
-    private final Pose shootToSecondControlPoint = new Pose(82,53.5);
+    private final Pose shootToFirstControlPoint = new Pose(85.5,74);
+    private final Pose shootToSecondControlPoint = new Pose(79,72);
+    private final Pose shootToSecondControlPoint2 = new Pose(67,57);
 
-
+    IntakeMotors intakeMotors = new IntakeMotors();
 
 
 
     public void buildPaths(){
-        startToScan = new Path(new BezierCurve(startPose, scanPose, startToScanControlPoint));
+        startToScan = new Path(new BezierLine(startPose, scanPose));
         startToScan.setLinearHeadingInterpolation(startPose.getHeading(), scanPose.getHeading());
 
         scanToShoot = follower.pathBuilder()
+
                 .addPath(new BezierLine(scanPose, shootPose))
                 .setLinearHeadingInterpolation(scanPose.getHeading(), shootPose.getHeading())
                 .build();
         shootToFirst = follower.pathBuilder()
-                .addPath(new BezierLine(shootPose, firstPickupPose))
+                .addPath(new BezierCurve(shootPose, shootToFirstControlPoint, firstPickupPose))
                 .setLinearHeadingInterpolation(shootPose.getHeading(), firstPickupPose.getHeading())
                 .build();
+
         firstToShoot = follower.pathBuilder()
                 .addPath(new BezierLine(firstPickupPose,shootPose))
                 .setLinearHeadingInterpolation(firstPickupPose.getHeading(), shootPose.getHeading())
                 .build();
         shootToSecond = follower.pathBuilder()
-                .addPath(new BezierCurve(shootPose, secondPickupPose, shootToSecondControlPoint))
+                .addPath(new BezierCurve(shootPose, shootToSecondControlPoint, shootToSecondControlPoint2 ,secondPickupPose))
                 .setLinearHeadingInterpolation(shootPose.getHeading(), secondPickupPose.getHeading())
                 .build();
         secondToShoot = follower.pathBuilder()
@@ -66,7 +71,7 @@ public class nineBallBlueAutonBackStart extends OpMode{
                 .setLinearHeadingInterpolation(secondPickupPose.getHeading(), shootPose.getHeading())
                 .build();
         shootToStop = follower.pathBuilder()
-                .addPath(new BezierLine(shootPose, endPose))
+                .addPath(new BezierCurve(shootPose, endPose))
                 .setLinearHeadingInterpolation(shootPose.getHeading(), endPose.getHeading())
                 .build();
     }
@@ -82,6 +87,7 @@ public class nineBallBlueAutonBackStart extends OpMode{
             case 0:
                 follower.followPath(startToScan);
                 setPathState(1);
+
                 break;
             case 1:
             /* You could check for
@@ -95,6 +101,7 @@ public class nineBallBlueAutonBackStart extends OpMode{
                     /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
                     follower.followPath(scanToShoot, true);
                     setPathState(2);
+
                 }
                 break;
             case 2:
@@ -102,6 +109,7 @@ public class nineBallBlueAutonBackStart extends OpMode{
                 if(!follower.isBusy()) {
                     /* Grab Sample */
                     /* Since this is a pathChain, we can have Pedro hold the end point while we are scoring the sample */
+                    intakeMotors.toggleIntake();
                     follower.followPath(shootToFirst,true);
                     setPathState(3);
                 }
@@ -109,25 +117,30 @@ public class nineBallBlueAutonBackStart extends OpMode{
             case 3:
                 /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the scorePose's position */
                 if(!follower.isBusy()) {
-                    /* Score Sample */
+
+                    /* Score Sample *//*
                     /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
                     follower.followPath(firstToShoot,true);
                     setPathState(4);
+                    intakeMotors.toggleIntake();
                 }
                 break;
             case 4:
                 /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the pickup2Pose's position */
                 if(!follower.isBusy()) {
-                    /* Grab Sample */
+                    /* Grab Sample *//*
                     /* Since this is a pathChain, we can have Pedro hold the end point while we are scoring the sample */
+                    intakeMotors.toggleIntake();
                     follower.followPath(shootToSecond,true);
                     setPathState(5);
+
                 }
                 break;
             case 5:
                 /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the scorePose's position */
                 if(!follower.isBusy()) {
-                    /* Score Sample */
+
+                    /* Score Sample *//*
                     /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
                     follower.followPath(secondToShoot,true);
                     setPathState(6);
@@ -136,7 +149,8 @@ public class nineBallBlueAutonBackStart extends OpMode{
             case 6:
                 /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the pickup3Pose's position */
                 if(!follower.isBusy()) {
-                    /* Grab Sample */
+                    intakeMotors.toggleIntake();
+                    /* Grab Sample *//*
                     /* Since this is a pathChain, we can have Pedro hold the end point while we are scoring the sample */
                     follower.followPath(shootToStop, true);
                     setPathState(7);
@@ -166,6 +180,9 @@ public class nineBallBlueAutonBackStart extends OpMode{
             follower = Constants.createFollower(hardwareMap);
             buildPaths();
             follower.setStartingPose(startPose);
+
+
+            intakeMotors.initIntake(hardwareMap.dcMotor.get("inMotor"));
         }
         /** This method is called continuously after Init while waiting for "play". **/
         @Override

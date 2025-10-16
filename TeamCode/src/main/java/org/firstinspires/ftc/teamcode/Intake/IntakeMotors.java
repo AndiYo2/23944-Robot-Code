@@ -10,7 +10,7 @@ public class IntakeMotors {
 
     // Declare variables for the motor
     double speed = 1;
-    //boolean running = false;
+    boolean running = false;
     private DcMotor intakeMotor;
 
 
@@ -32,7 +32,7 @@ public class IntakeMotors {
         intakeMotor.setPower(0);
     }
 
-    /*public void toggleIntake(){
+    public void toggleIntake(){
         running = !running;
         if(running){
             intakeMotor.setPower(speed);
@@ -40,5 +40,5 @@ public class IntakeMotors {
             intakeMotor.setPower(0);
         }
     }
-    */
+
 }
