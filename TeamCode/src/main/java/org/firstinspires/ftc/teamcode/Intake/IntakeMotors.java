@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode.Intake;
 
-import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 import java.util.Timer;
@@ -11,17 +11,17 @@ public class IntakeMotors {
     // Declare variables for the motor
     double speed = 1;
     boolean running = false;
-    private DcMotor intakeMotor;
+    private DcMotorEx intakeMotor;
 
 
 
     // Initialization method to map hardware
-    public void initIntake(DcMotor intakeMotor) {
+    public void initIntake(DcMotorEx intakeMotor) {
         // Retrieve and initialize motors from the hardware map
         this.intakeMotor = intakeMotor;
 
         // Set motor directions based on configuration
-        intakeMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        intakeMotor.setDirection(DcMotorEx.Direction.FORWARD);
     }
 
 
@@ -31,6 +31,7 @@ public class IntakeMotors {
     public void stopIntakeBall(){
         intakeMotor.setPower(0);
     }
+
 
     public void toggleIntake(){
         running = !running;

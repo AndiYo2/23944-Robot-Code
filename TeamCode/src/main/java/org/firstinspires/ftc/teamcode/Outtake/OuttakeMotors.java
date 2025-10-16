@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.teamcode.Outtake;
 
-import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 
 public class OuttakeMotors {
@@ -8,12 +8,12 @@ public class OuttakeMotors {
     // Declare variables for the motors
     double speed = .55;
     /*boolean running = false;*/
-    private DcMotor outtakeMotor1;
-    private DcMotor outtakeMotor2;
+    private DcMotorEx outtakeMotor1;
+    private DcMotorEx outtakeMotor2;
 
 
     // Initialization method to map hardware
-    public void initOuttake(DcMotor outtakeMotor1, DcMotor outtakeMotor2) {
+    public void initOuttake(DcMotorEx outtakeMotor1, DcMotorEx outtakeMotor2) {
         // Retrieve and initialize motors from the hardware map
         this.outtakeMotor1 = outtakeMotor1;
         this.outtakeMotor2 = outtakeMotor2;

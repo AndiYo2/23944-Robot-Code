@@ -9,7 +9,7 @@ import com.pedropathing.ftc.drivetrains.MecanumConstants;
 import com.pedropathing.ftc.localization.constants.PinpointConstants;
 import com.pedropathing.paths.PathConstraints;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 
@@ -57,10 +57,10 @@ public class Constants {
             .rightRearMotorName("backRightMotor")
             .leftRearMotorName("backLeftMotor")
             .leftFrontMotorName("frontLeftMotor")
-            .leftFrontMotorDirection(DcMotorSimple.Direction.REVERSE)
-            .leftRearMotorDirection(DcMotorSimple.Direction.REVERSE)
-            .rightFrontMotorDirection(DcMotorSimple.Direction.FORWARD)
-            .rightRearMotorDirection(DcMotorSimple.Direction.FORWARD)
+            .leftFrontMotorDirection(DcMotorEx.Direction.REVERSE)
+            .leftRearMotorDirection(DcMotorEx.Direction.REVERSE)
+            .rightFrontMotorDirection(DcMotorEx.Direction.FORWARD)
+            .rightRearMotorDirection(DcMotorEx.Direction.FORWARD)
             .xVelocity(xVelocity)
             .yVelocity(yVelocity);
 
