@@ -9,6 +9,7 @@ import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import  com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.teamcode.Intake.IntakeMotors;
 
@@ -152,7 +153,7 @@ public class TwelveBallBlueAutonBackStart extends OpMode{
 
             case 5:
                 /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the scorePose's position */
-                if(!follower.isBusy()) {
+                if(follower.isBusy()) {
                     break;
                 }
                     /* Score Sample *//*
@@ -163,7 +164,7 @@ public class TwelveBallBlueAutonBackStart extends OpMode{
 
             case 6:
                 /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the pickup3Pose's position */
-                if(!follower.isBusy()) {
+                if(follower.isBusy()) {
                     break;
                 }
                 intakeMotors.toggleIntake();
@@ -212,7 +213,7 @@ public class TwelveBallBlueAutonBackStart extends OpMode{
         follower.setStartingPose(startPose);
 
 
-        intakeMotors.initIntake(hardwareMap.dcMotor.get("inMotor"));
+        intakeMotors.initIntake(hardwareMap.get(DcMotorEx.class, "inMotor"));
     }
     /** This method is called continuously after Init while waiting for "play". **/
     @Override

@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.Intake;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -11,12 +12,12 @@ public class IntakeMotors {
     // Declare variables for the motor
     double speed = .75;
     boolean running = false;
-    private DcMotor intakeMotor;
+    private DcMotorEx intakeMotor;
 
 
 
     // Initialization method to map hardware
-    public void initIntake(DcMotor intakeMotor) {
+    public void initIntake(DcMotorEx intakeMotor) {
         // Retrieve and initialize motors from the hardware map
         this.intakeMotor = intakeMotor;
 

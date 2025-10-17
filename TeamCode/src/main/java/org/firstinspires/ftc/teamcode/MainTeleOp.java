@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.teamcode.DrivingStuff.MecanumDrive;
 import org.firstinspires.ftc.teamcode.Intake.IntakeMotors;
@@ -34,7 +35,7 @@ public class MainTeleOp extends LinearOpMode {
 
         // Initialize the MecanumDrive class with the hardware map
         mecanumDrive.initDrive(hardwareMap);
-        intakeMotors.initIntake(hardwareMap.dcMotor.get(intakeMotor));
+        intakeMotors.initIntake(hardwareMap.get(DcMotorEx.class, intakeMotor));
         outtakeMotors.initOuttake(hardwareMap.dcMotor.get(outtakeMotorOne), hardwareMap.dcMotor.get(outtakeMotorTwo));
 
         //Telemetry add time
