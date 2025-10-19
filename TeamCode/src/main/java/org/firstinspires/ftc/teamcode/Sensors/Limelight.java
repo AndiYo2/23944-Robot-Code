@@ -59,7 +59,7 @@ public class Limelight {
             telemetry.addData("Tx: ", result.getTx());
             telemetry.addData("Ty: ", result.getTy());
             telemetry.addData("Ta: ", result.getTa());
-            telemetry.addData("Botpose: ", botPose);
+            telemetry.addData("Bot pose: ", botPose);
         }
     }
 
