@@ -39,13 +39,13 @@ public class TwelveBallBlueAutonBackStart extends OpMode{
     private final Pose scanPose = new Pose(57.5,113.5, Math.toRadians(110));
     private final Pose shootPose = new Pose(54,90, Math.toRadians(135));
     private final Pose firstPickupPose = new Pose(24,83.5, Math.toRadians(180));
-    private final Pose secondPickupPose = new Pose(120,58.5, Math.toRadians(180));
-    private final Pose thirdPickupPose = new Pose(24, 36.5, Math.toRadians(180));
+    private final Pose secondPickupPose = new Pose(24,58.5, Math.toRadians(180));
+    private final Pose thirdPickupPose = new Pose(24, 33.5, Math.toRadians(180));
 
     private final Pose shootToFirstControlPoint = new Pose(58.5,74);
     private final Pose shootToSecondControlPoint = new Pose(65,72);
-    private final Pose shootToSecondControlPoint2 = new Pose(73,57);
-    private final Pose shootToThirdControlPoint = new Pose(76, 23);
+    private final Pose shootToSecondControlPoint2 = new Pose(77,57);
+    private final Pose shootToThirdControlPoint = new Pose(80, 23);
 
     IntakeMotors intakeMotors = new IntakeMotors();
 
