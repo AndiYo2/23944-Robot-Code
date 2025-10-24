@@ -8,7 +8,7 @@ import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import  com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.teamcode.Intake.IntakeMotors;
@@ -28,8 +28,9 @@ public class BlueAutoThatWillShockTheWorld extends OpMode{
             firstToShoot,
             shootToSecond,
             secondToShoot,
-            shootToPush,
-            pushToStop;
+            shootToPushPrep,
+            pushPrepToStopPrep,
+            stopPrepToStop;
 
     private final Pose startPose = new Pose(20, 123, Math.toRadians(143));
     private final Pose endPose = new Pose(39, 9, Math.toRadians(90));
@@ -38,6 +39,7 @@ public class BlueAutoThatWillShockTheWorld extends OpMode{
     private final Pose firstPickupPose = new Pose(24,83.5, Math.toRadians(180));
     private final Pose secondPickupPose = new Pose(120,58.5, Math.toRadians(180));
     private final Pose pushPose = new Pose(63, 9, 90);
+    private final Pose stopPrepPose = new Pose(39, 9, Math.toRadians(90));
 
     private final Pose shootToFirstControlPoint = new Pose(58.5,74);
     private final Pose shootToSecondControlPoint = new Pose(65,72);
@@ -53,7 +55,6 @@ public class BlueAutoThatWillShockTheWorld extends OpMode{
                 .addPath(new BezierCurve(shootPose, shootToFirstControlPoint, firstPickupPose))
                 .setLinearHeadingInterpolation(shootPose.getHeading(), firstPickupPose.getHeading())
                 .build();
-
         firstToShoot = follower.pathBuilder()
                 .addPath(new BezierLine(firstPickupPose, shootPose))
                 .setLinearHeadingInterpolation(firstPickupPose.getHeading(), shootPose.getHeading())
@@ -66,13 +67,17 @@ public class BlueAutoThatWillShockTheWorld extends OpMode{
                 .addPath(new BezierLine(secondPickupPose, shootPose))
                 .setLinearHeadingInterpolation(secondPickupPose.getHeading(), shootPose.getHeading())
                 .build();
-        shootToPush = follower.pathBuilder()
+        shootToPushPrep = follower.pathBuilder()
                 .addPath(new BezierLine(shootPose, pushPose))
                 .setLinearHeadingInterpolation(shootPose.getHeading(), pushPose.getHeading())
                 .build();
-        pushToStop = follower.pathBuilder()
-                .addPath(new BezierLine(pushPose, endPose))
-                .setLinearHeadingInterpolation(pushPose.getHeading(), endPose.getHeading())
+        pushPrepToStopPrep = follower.pathBuilder()
+                .addPath(new BezierLine(pushPose, stopPrepPose))
+                .setLinearHeadingInterpolation(pushPose.getHeading(), stopPrepPose.getHeading())
+                .build();
+        stopPrepToStop = follower.pathBuilder()
+                .addPath(new BezierLine(stopPrepPose, endPose))
+                .setLinearHeadingInterpolation(stopPrepPose.getHeading(), endPose.getHeading())
                 .build();
     }
 
@@ -137,15 +142,22 @@ public class BlueAutoThatWillShockTheWorld extends OpMode{
                 if(follower.isBusy()) {
                     break;
                 }
-                follower.followPath(shootToPush, true);
+                follower.followPath(shootToPushPrep, true);
                 setPathState(6);
 
             case 6:
                 if(follower.isBusy()) {
                     break;
                 }
-                follower.followPath(pushToStop);
+                follower.followPath(pushPrepToStopPrep, true);
                 setPathState(7);
+
+            case 7:
+                if(follower.isBusy()) {
+                    break;
+                }
+                follower.followPath(stopPrepToStop);
+                setPathState(8);
         }
     }
 
