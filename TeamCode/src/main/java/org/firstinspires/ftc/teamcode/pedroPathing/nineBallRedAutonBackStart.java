@@ -101,7 +101,7 @@ public class nineBallRedAutonBackStart extends OpMode{
             case 2:
                 if(follower.isBusy())
                     break;
-                intakeMotors.toggleIntake();
+                intakeMotors.toggleIntake(1);
                 follower.followPath(shootToFirst,true);
                 setPathState(3);
 
@@ -110,12 +110,12 @@ public class nineBallRedAutonBackStart extends OpMode{
                     break;
                 follower.followPath(firstToShoot,true);
                 setPathState(4);
-                intakeMotors.toggleIntake();
+                intakeMotors.toggleIntake(1);
 
             case 4:
                 if(follower.isBusy())
                     break;
-                intakeMotors.toggleIntake();
+                intakeMotors.toggleIntake(1);
                 follower.followPath(shootToSecond,true);
                 setPathState(5);
 
@@ -128,7 +128,7 @@ public class nineBallRedAutonBackStart extends OpMode{
             case 6:
                 if(follower.isBusy())
                     break;
-                intakeMotors.toggleIntake();
+                intakeMotors.toggleIntake(1);
                 follower.followPath(shootToStop, true);
                 setPathState(7);
         }

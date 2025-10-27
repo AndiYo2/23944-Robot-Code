@@ -25,21 +25,24 @@ public class IntakeMotors {
     }
 
 
-    public void intakeBall(){
-        intakeMotor.setPower(speed);
+    public void intakeBall(int positiveOrNeg){
+        intakeMotor.setPower(speed * positiveOrNeg);
     }
     public void stopIntakeBall(){
         intakeMotor.setPower(0);
     }
 
 
-    public void toggleIntake(){
+    public void toggleIntake(int positiveOrNeg){
         running = !running;
         if(running){
-            intakeMotor.setPower(speed);
+            intakeMotor.setPower(speed * positiveOrNeg);
         }else{
             intakeMotor.setPower(0);
         }
+    }
+    public void expunge(){
+
     }
 
 }

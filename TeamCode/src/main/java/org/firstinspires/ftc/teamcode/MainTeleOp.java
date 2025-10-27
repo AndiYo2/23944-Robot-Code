@@ -6,9 +6,11 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.teamcode.DrivingStuff.MecanumDrive;
 import org.firstinspires.ftc.teamcode.Intake.IntakeMotors;
+import org.firstinspires.ftc.teamcode.InternalSystems.StagingServos;
 import org.firstinspires.ftc.teamcode.Outtake.OuttakeCases;
 import org.firstinspires.ftc.teamcode.Outtake.OuttakeMotors;
 import org.firstinspires.ftc.teamcode.Globals.BallPattern;
+import org.firstinspires.ftc.teamcode.Outtake.TurretRotations;
 
 
 @TeleOp
@@ -19,6 +21,8 @@ public class MainTeleOp extends LinearOpMode {
     private final MecanumDrive mecanumDrive = new MecanumDrive();
     private final IntakeMotors intakeMotors = new IntakeMotors();
     private final OuttakeMotors outtakeMotors = new OuttakeMotors();
+    private final TurretRotations turret = new TurretRotations();
+    private final StagingServos stagingServos = new StagingServos();
 
     //Testing: public BallPattern pattern = new BallPattern();
 
@@ -29,15 +33,15 @@ public class MainTeleOp extends LinearOpMode {
         //Testing: pattern.setBallPattern(BallPattern.BallType.GREEN, BallPattern.BallType.PURPLE, BallPattern.BallType.PURPLE);
 
         String outtakeMotorOne = "outMotor1";
-        String outtakeMotorTwo = "outMotor2";
         String intakeMotor = "inMotor";
 
 
         // Initialize the MecanumDrive class with the hardware map
         mecanumDrive.initDrive(hardwareMap);
         intakeMotors.initIntake(hardwareMap.get(DcMotorEx.class, intakeMotor));
-        outtakeMotors.initOuttake(hardwareMap.get(DcMotorEx.class, outtakeMotorOne),
-                                  hardwareMap.get(DcMotorEx.class, outtakeMotorTwo));
+        outtakeMotors.initOuttake(hardwareMap.get(DcMotorEx.class, outtakeMotorOne));
+        turret.initTurret(hardwareMap);
+        stagingServos.initStagingServos(hardwareMap);
 
         //Telemetry add time
         addTelemetry("Status", "Initialized");
@@ -75,20 +79,36 @@ public class MainTeleOp extends LinearOpMode {
                 outtakeMotors.stopShooter();
                 released = false;
             }
-            // Right Bumper - reverses and expunges the shot
-            if(gamepad1.right_bumper){
-                outtakeMotors.shoot(-1 );
-            }else if (gamepad1.rightBumperWasReleased()){
-                outtakeMotors.stopShooter();
+
+            // Intake Motor functions, Left Trigger and bumper
+            if(gamepad1.left_bumper){
+                intakeMotors.intakeBall(-1 );
+            }else if (gamepad1.leftBumperWasReleased()){
+                intakeMotors.stopIntakeBall();
             }
 
-            // Intake Motor functions, Left Trigger
-
             if(gamepad1.left_trigger > .5){
-                intakeMotors.intakeBall();
+                intakeMotors.intakeBall(1);
             }else{
                 intakeMotors.stopIntakeBall();
             }
+
+            //Manual turret Rotator
+
+            if(gamepad1.dpadRightWasPressed()){
+                turret.rotate(1);
+            }
+            else if(gamepad1.dpadLeftWasPressed()){
+                turret.rotate(-1);
+            }else if (gamepad1.dpadDownWasPressed()){
+                turret.stop();
+            }
+
+            if(gamepad1.rightBumperWasPressed()){
+                stagingServos.toggleStageServos(1);
+                addTelemetry("Test", "running");
+            }
+
 
 
 

@@ -69,7 +69,7 @@ public class Constants {
             .strafePodX(0)
             .distanceUnit(DistanceUnit.INCH)
             .forwardEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD)
-            .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.REVERSED);
+            .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD);
 
 
 
