@@ -35,11 +35,11 @@ public class nineBallRedAutonBackStart extends OpMode{
     private final Pose scanPose = new Pose(86.5,113.5, Math.toRadians(110));
     private final Pose shootPose = new Pose(90,90, Math.toRadians(45));
     private final Pose firstPickupPose = new Pose(120,83.5, Math.toRadians(0));
-    private final Pose secondPickupPose = new Pose(120,58.5, Math.toRadians(0));
+    private final Pose secondPickupPose = new Pose(120,55.5, Math.toRadians(0));
 
     private final Pose shootToFirstControlPoint = new Pose(85.5,74);
-    private final Pose shootToSecondControlPoint = new Pose(79,72);
-    private final Pose shootToSecondControlPoint2 = new Pose(67,57);
+    private final Pose shootToSecondControlPoint = new Pose(79,67);
+    private final Pose shootToSecondControlPoint2 = new Pose(67,52);
 
     IntakeMotors intakeMotors = new IntakeMotors();
 
@@ -72,7 +72,9 @@ public class nineBallRedAutonBackStart extends OpMode{
         shootToStop = follower.pathBuilder()
                 .addPath(new BezierCurve(shootPose, endPose))
                 .setLinearHeadingInterpolation(shootPose.getHeading(), endPose.getHeading())
+
                 .build();
+
     }
 
     public void setPathState(int i){
@@ -91,6 +93,7 @@ public class nineBallRedAutonBackStart extends OpMode{
                 follower.followPath(startToScan);
                 setPathState(1);
 
+
                 break;
             case 1:
                 if (follower.isBusy())
@@ -103,26 +106,31 @@ public class nineBallRedAutonBackStart extends OpMode{
                     break;
                 intakeMotors.toggleIntake(1);
                 follower.followPath(shootToFirst,true);
+                follower.setMaxPower(.5);
                 setPathState(3);
 
             case 3:
                 if(follower.isBusy())
                     break;
                 follower.followPath(firstToShoot,true);
+                follower.setMaxPower(1);
                 setPathState(4);
                 intakeMotors.toggleIntake(1);
+
 
             case 4:
                 if(follower.isBusy())
                     break;
                 intakeMotors.toggleIntake(1);
                 follower.followPath(shootToSecond,true);
+                follower.setMaxPower(.5);
                 setPathState(5);
 
             case 5:
                 if(follower.isBusy())
                     break;
                 follower.followPath(secondToShoot,true);
+                follower.setMaxPower(1);
                 setPathState(6);
 
             case 6:
