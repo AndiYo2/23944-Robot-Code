@@ -1,7 +1,8 @@
 package org.firstinspires.ftc.teamcode.InternalSystems;
 
-import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 public class StagingServos {
 
@@ -9,17 +10,25 @@ public class StagingServos {
     boolean toggleStatus = false;
 
     HardwareMap hMap;
-    CRServo leftServo, rightServo;
+    Servo flipperServo;
+    ElapsedTime runtime = new ElapsedTime();
 
     public void initStagingServos(HardwareMap hardwareMap){
         hMap = hardwareMap;
-        leftServo = hMap.get(CRServo.class, "leftServo");
-        rightServo = hMap.get(CRServo.class, "rightServo");
-        rightServo.setDirection(CRServo.Direction.REVERSE);
+        flipperServo = hMap.get(Servo.class,"flipperServo");
+    }
+    
+    public void flip(){
+        runtime.reset();
+        flipperServo.setPosition(0.5);
+        while (runtime.seconds() < 0.25) {
+            // Wait for 0.25 seconds
+        }
+        flipperServo.setPosition(0.0);
     }
 
 
-    public void toggleStageServos(int direction){
+   /* public void toggleStageServos(int direction){
         if(toggleStatus){
             leftServo.setPower(0);
             rightServo.setPower(0);
@@ -30,7 +39,7 @@ public class StagingServos {
 
         toggleStatus = !toggleStatus;
 
-    }
+    }*/
 
 
 

@@ -12,12 +12,14 @@ import  com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.teamcode.Intake.IntakeMotors;
+import org.firstinspires.ftc.teamcode.Outtake.OuttakeMotors;
 
 @Autonomous(name = "BackRedAuton")
 public class nineBallRedAutonBackStart extends OpMode{
     private Follower follower;
     private Timer pathTimer, actionTimer, opmodeTimer;
     private int pathState;
+
 
     private Path startToScan;
 
@@ -43,6 +45,7 @@ public class nineBallRedAutonBackStart extends OpMode{
 
     IntakeMotors intakeMotors = new IntakeMotors();
 
+    OuttakeMotors outtakeMotors = new OuttakeMotors();
 
 
     public void buildPaths(){
@@ -99,6 +102,7 @@ public class nineBallRedAutonBackStart extends OpMode{
                 if (follower.isBusy())
                     break;
                 follower.followPath(scanToShoot, true);
+                outtakeMotors.shoot(1);
                 setPathState(2);
 
             case 2:
@@ -166,6 +170,7 @@ public class nineBallRedAutonBackStart extends OpMode{
             follower.setStartingPose(startPose);
 
             intakeMotors.initIntake(hardwareMap.get(DcMotorEx.class,"inMotor"));
+            outtakeMotors.initOuttake(hardwareMap.get(DcMotorEx.class,"outMotor1"));
         }
         /** This method is called continuously after Init while waiting for "play". **/
         @Override

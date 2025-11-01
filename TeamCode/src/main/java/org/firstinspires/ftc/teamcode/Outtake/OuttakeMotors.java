@@ -14,6 +14,11 @@ public class OuttakeMotors {
         outtakeMotor1.setDirection(DcMotorSimple.Direction.REVERSE);
     }
 
+
+    public void timedShoot(int miliseconds){
+
+    }
+
     /**
      * Shoots the ball: 1 for forward, -1 for reverse
      */

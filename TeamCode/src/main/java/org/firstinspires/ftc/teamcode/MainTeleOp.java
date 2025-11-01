@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.teamcode.DrivingStuff.MecanumDrive;
 import org.firstinspires.ftc.teamcode.Intake.IntakeMotors;
+import org.firstinspires.ftc.teamcode.InternalSystems.StagingMotors;
 import org.firstinspires.ftc.teamcode.InternalSystems.StagingServos;
 import org.firstinspires.ftc.teamcode.Outtake.OuttakeCases;
 import org.firstinspires.ftc.teamcode.Outtake.OuttakeMotors;
@@ -19,6 +20,7 @@ public class MainTeleOp extends LinearOpMode {
     private final OuttakeMotors outtakeMotors = new OuttakeMotors();
     private final TurretRotations turret = new TurretRotations();
     private final StagingServos stagingServos = new StagingServos();
+    private final StagingMotors stagingMotors = new StagingMotors();
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -31,6 +33,7 @@ public class MainTeleOp extends LinearOpMode {
         outtakeMotors.initOuttake(hardwareMap.get(DcMotorEx.class, outtakeMotorOne));
         turret.initTurret(hardwareMap);
         stagingServos.initStagingServos(hardwareMap);
+        stagingMotors.initStagingMotors(hardwareMap.get(DcMotorEx.class, intakeMotor));
 
         addTelemetry("Status", "Initialized");
         waitForStart();
@@ -103,8 +106,11 @@ public class MainTeleOp extends LinearOpMode {
 
     private void handleStaging() {
         if (gamepad1.rightBumperWasPressed()) {
-            stagingServos.toggleStageServos(1);
-            addTelemetry("Test", "running");
+            stagingMotors.toggleStaging(-1);
+        }
+        if(gamepad1.dpadUpWasPressed()){
+            stagingServos.flip();
+            addTelemetry("Flipped", "active");
         }
     }
 
