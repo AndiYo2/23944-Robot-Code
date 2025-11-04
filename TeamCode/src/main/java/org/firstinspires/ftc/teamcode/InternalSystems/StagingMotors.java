@@ -35,4 +35,9 @@ public class StagingMotors {
         }
     }
 
+
+    public void stopStaging(){
+        stagingMotor.setPower(0);
+    }
+
 }

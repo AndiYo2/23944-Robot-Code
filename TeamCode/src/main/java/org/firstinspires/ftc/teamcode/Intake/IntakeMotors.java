@@ -36,7 +36,7 @@ public class IntakeMotors {
     }
     public void stopIntakeBall(){
         intakeMotor.setPower(0);
-        stagingMotor.toggleStaging();
+        stagingMotor.stopStaging();
     }
 
 
@@ -49,7 +49,7 @@ public class IntakeMotors {
             }
         }else{
             intakeMotor.setPower(0);
-            stagingMotor.toggleStaging();
+            stagingMotor.stopStaging();
         }
     }
 
