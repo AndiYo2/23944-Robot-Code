@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.Intake;
 
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import org.firstinspires.ftc.teamcode.InternalSystems.StagingMotors;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -12,6 +13,8 @@ public class IntakeMotors {
     double speed = 1;
     boolean running = false;
     private DcMotorEx intakeMotor;
+
+    StagingMotors stagingMotor = new StagingMotors();
 
 
 
@@ -27,9 +30,13 @@ public class IntakeMotors {
 
     public void intakeBall(int positiveOrNeg){
         intakeMotor.setPower(speed * positiveOrNeg);
+        if(positiveOrNeg > 0){
+            stagingMotor.toggleStaging();
+        }
     }
     public void stopIntakeBall(){
         intakeMotor.setPower(0);
+        stagingMotor.toggleStaging();
     }
 
 
@@ -37,12 +44,13 @@ public class IntakeMotors {
         running = !running;
         if(running){
             intakeMotor.setPower(speed * positiveOrNeg);
+            if(positiveOrNeg > 0){
+                stagingMotor.toggleStaging();
+            }
         }else{
             intakeMotor.setPower(0);
+            stagingMotor.toggleStaging();
         }
-    }
-    public void expunge(){
-
     }
 
 }

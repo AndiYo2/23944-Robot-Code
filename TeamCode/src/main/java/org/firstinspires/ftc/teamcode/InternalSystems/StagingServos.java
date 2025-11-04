@@ -18,13 +18,14 @@ public class StagingServos {
         flipperServo = hMap.get(Servo.class,"flipperServo");
     }
     
-    public void flip(){
+    public boolean flip(){
         runtime.reset();
         flipperServo.setPosition(0.5);
         while (runtime.seconds() < 0.25) {
             // Wait for 0.25 seconds
         }
         flipperServo.setPosition(0.0);
+        return true;
     }
 
 

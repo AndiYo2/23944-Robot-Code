@@ -10,26 +10,26 @@ public class StagingMotors {
     // Declare variables for the motor
     double speed = 1;
     boolean running = false;
-    private DcMotorEx stagingMotor;
+    private static DcMotorEx stagingMotor;
 
 
 
     // Initialization method to map hardware
     public void initStagingMotors(DcMotorEx sMotor) {
         // Retrieve and initialize motors from the hardware map
-        this.stagingMotor = sMotor;
+        stagingMotor = sMotor;
 
         // Set motor directions based on configuration
-        stagingMotor.setDirection(DcMotorEx.Direction.FORWARD);
+        stagingMotor.setDirection(DcMotorEx.Direction.REVERSE);
     }
 
 
 
 
-    public void toggleStaging(int positiveOrNeg){
+    public void toggleStaging(){
         running = !running;
         if(running){
-            stagingMotor.setPower(speed * positiveOrNeg);
+            stagingMotor.setPower(speed);
         }else{
             stagingMotor.setPower(0);
         }

@@ -8,9 +8,7 @@ import org.firstinspires.ftc.teamcode.DrivingStuff.MecanumDrive;
 import org.firstinspires.ftc.teamcode.Intake.IntakeMotors;
 import org.firstinspires.ftc.teamcode.InternalSystems.StagingMotors;
 import org.firstinspires.ftc.teamcode.InternalSystems.StagingServos;
-import org.firstinspires.ftc.teamcode.Outtake.OuttakeCases;
 import org.firstinspires.ftc.teamcode.Outtake.OuttakeMotors;
-import org.firstinspires.ftc.teamcode.Globals.BallPattern;
 import org.firstinspires.ftc.teamcode.Outtake.TurretRotations;
 
 @TeleOp
@@ -72,7 +70,7 @@ public class MainTeleOp extends LinearOpMode {
 
     private void handleOuttake(boolean released) {
         if (gamepad1.right_trigger > .5) {
-            outtakeMotors.shoot(1);
+            outtakeMotors.shooterSpin(1);
             released = true;
         } else if (released) {
             outtakeMotors.stopShooter();
@@ -95,18 +93,18 @@ public class MainTeleOp extends LinearOpMode {
     }
 
     private void handleTurret() {
-        if (gamepad1.dpadRightWasPressed()) {
+        if (gamepad1.dpadDownWasPressed()) {
+            turret.stop();
+        } else if (gamepad1.dpadRightWasPressed()) {
             turret.rotate(1);
         } else if (gamepad1.dpadLeftWasPressed()) {
             turret.rotate(-1);
-        } else if (gamepad1.dpadDownWasPressed()) {
-            turret.stop();
         }
     }
 
     private void handleStaging() {
         if (gamepad1.rightBumperWasPressed()) {
-            stagingMotors.toggleStaging(-1);
+            stagingMotors.toggleStaging();
         }
         if(gamepad1.dpadUpWasPressed()){
             stagingServos.flip();
