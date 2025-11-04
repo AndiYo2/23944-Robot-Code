@@ -12,6 +12,9 @@ import  com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.teamcode.Intake.IntakeMotors;
+import org.firstinspires.ftc.teamcode.Outtake.OuttakeMotors;
+import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
+
 
 @Autonomous(name = "BackBlueAuton")
 public class NineBallBlueAutonBackStart extends OpMode{
@@ -19,10 +22,9 @@ public class NineBallBlueAutonBackStart extends OpMode{
     private Timer pathTimer, actionTimer, opmodeTimer;
     private int pathState;
 
-    private Path startToScan;
+    private Path startToShoot;
 
     private PathChain
-            scanToShoot,
             shootToFirst,
             firstToShoot,
             shootToSecond,
@@ -30,28 +32,23 @@ public class NineBallBlueAutonBackStart extends OpMode{
             shootToStop;
 
     private final Pose startPose = new Pose(63, 9, Math.toRadians(90));
-    private final Pose endPose = new Pose(126, 12, Math.toRadians(90));
+    private final Pose endPose = new Pose(18, 12, Math.toRadians(90));
 
-    private final Pose scanPose = new Pose(57.5,113.5, Math.toRadians(110));
     private final Pose shootPose = new Pose(54,90, Math.toRadians(135));
     private final Pose firstPickupPose = new Pose(24,83.5, Math.toRadians(180));
-    private final Pose secondPickupPose = new Pose(120,58.5, Math.toRadians(180));
+    private final Pose secondPickupPose = new Pose(24,60, Math.toRadians(180));
 
     private final Pose shootToFirstControlPoint = new Pose(58.5,74);
-    private final Pose shootToSecondControlPoint = new Pose(65,72);
-    private final Pose shootToSecondControlPoint2 = new Pose(73,57);
+    private final Pose shootToSecondControlPoint = new Pose(63,72);
+    private final Pose shootToSecondControlPoint2 = new Pose(70,57);
 
     IntakeMotors intakeMotors = new IntakeMotors();
+    OuttakeMotors outtakeMotors = new OuttakeMotors();
 
     public void buildPaths(){
-        startToScan = new Path(new BezierLine(startPose, scanPose));
-        startToScan.setLinearHeadingInterpolation(startPose.getHeading(), scanPose.getHeading());
+        startToShoot = new Path(new BezierLine(startPose, shootPose));
+        startToShoot.setLinearHeadingInterpolation(startPose.getHeading(), shootPose.getHeading());
 
-        scanToShoot = follower.pathBuilder()
-
-                .addPath(new BezierLine(scanPose, shootPose))
-                .setLinearHeadingInterpolation(scanPose.getHeading(), shootPose.getHeading())
-                .build();
         shootToFirst = follower.pathBuilder()
                 .addPath(new BezierCurve(shootPose, shootToFirstControlPoint, firstPickupPose))
                 .setLinearHeadingInterpolation(shootPose.getHeading(), firstPickupPose.getHeading())
@@ -84,83 +81,55 @@ public class NineBallBlueAutonBackStart extends OpMode{
     public void autonomousPathUpdate() {
         switch (pathState) {
             case 0:
-                follower.followPath(startToScan);
+                if (follower.isBusy())
+                    break;
+                follower.followPath(startToShoot, true);
+                outtakeMotors.shootAuton();
                 setPathState(1);
 
-                break;
-
             case 1:
-            /* You could check for
-            - Follower State: "if(!follower.isBusy()) {}"
-            - Time: "if(pathTimer.getElapsedTimeSeconds() > 1) {}"
-            - Robot Position: "if(follower.getPose().getX() > 36) {}"
-            */
-                /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the scorePose's position */
-                if (follower.isBusy()) {
+                if(follower.isBusy()|| outtakeMotors.flywheelRunning())
                     break;
-                }
-                /* Score Preload */
-                /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
-                follower.followPath(scanToShoot, true);
+                intakeMotors.toggleIntake(1);
+                follower.followPath(shootToFirst,true);
+                follower.setMaxPower(.5);
                 setPathState(2);
 
             case 2:
-                /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the pickup1Pose's position */
-                if (follower.isBusy()) {
+                if(follower.isBusy())
                     break;
-                }
-                /* Grab Sample */
-                /* Since this is a pathChain, we can have Pedro hold the end point while we are scoring the sample */
-                intakeMotors.toggleIntake();
-                follower.followPath(shootToFirst, true);
+                intakeMotors.stopIntakeBall();
+                follower.followPath(firstToShoot,true);
+                follower.setMaxPower(1);
+                outtakeMotors.shootAuton();
                 setPathState(3);
-
+                
             case 3:
-                /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the scorePose's position */
-                if (follower.isBusy()) {
+                if(follower.isBusy() || outtakeMotors.flywheelRunning())
                     break;
-                }
-                /* Score Sample *//*
-                    /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
-                follower.followPath(firstToShoot, true);
+                intakeMotors.toggleIntake(1);
+                follower.followPath(shootToSecond,true);
+                follower.setMaxPower(.5);
                 setPathState(4);
-                intakeMotors.toggleIntake();
 
             case 4:
-                /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the pickup2Pose's position */
-                if (follower.isBusy()) {
+                if(follower.isBusy())
                     break;
-                }
-                /* Grab Sample *//*
-                    /* Since this is a pathChain, we can have Pedro hold the end point while we are scoring the sample */
-                intakeMotors.toggleIntake();
-                follower.followPath(shootToSecond, true);
+                intakeMotors.stopIntakeBall();
+                follower.followPath(secondToShoot,true);
+                follower.setMaxPower(1);
+                outtakeMotors.shootAuton();
                 setPathState(5);
 
             case 5:
-                /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the scorePose's position */
-                if (follower.isBusy()) {
+                if(follower.isBusy() || outtakeMotors.flywheelRunning())
                     break;
-                }
-                /* Score Sample *//*
-                    /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
-                follower.followPath(secondToShoot, true);
-                setPathState(6);
-                intakeMotors.toggleIntake();
-
-            case 6:
-                /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the pickup3Pose's position */
-                if (follower.isBusy()) {
-                    break;
-                }
-                intakeMotors.toggleIntake();
-                /* Grab Sample *//*
-                    /* Since this is a pathChain, we can have Pedro hold the end point while we are scoring the sample */
                 follower.followPath(shootToStop, true);
-                setPathState(7);
+                setPathState(6);
         }
     }
-                @Override
+
+    @Override
     public void loop () {
         // These loop the movements of the robot, these must be called continuously in order to work
         follower.update();
@@ -180,10 +149,11 @@ public class NineBallBlueAutonBackStart extends OpMode{
         opmodeTimer.resetTimer();
         follower = Constants.createFollower(hardwareMap);
         buildPaths();
+
         follower.setStartingPose(startPose);
 
-
-        intakeMotors.initIntake(hardwareMap.get(DcMotorEx.class, "inMotor"));
+        intakeMotors.initIntake(hardwareMap.get(DcMotorEx.class,"inMotor"));
+        outtakeMotors.initOuttake(hardwareMap.get(DcMotorEx.class,"outMotor1"));
     }
     /** This method is called continuously after Init while waiting for "play". **/
     @Override

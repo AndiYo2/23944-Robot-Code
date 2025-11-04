@@ -10,12 +10,13 @@ public class StagingServos {
     boolean toggleStatus = false;
 
     HardwareMap hMap;
-    Servo flipperServo;
+    Servo flipperServo, rampServo;
     ElapsedTime runtime = new ElapsedTime();
 
     public void initStagingServos(HardwareMap hardwareMap){
         hMap = hardwareMap;
         flipperServo = hMap.get(Servo.class,"flipperServo");
+        rampServo = hMap.get(Servo.class, "rampServo");
     }
     
     public boolean flip(){
@@ -25,6 +26,16 @@ public class StagingServos {
             // Wait for 0.25 seconds
         }
         flipperServo.setPosition(0.0);
+        return true;
+    }
+
+    public boolean pushOutOfRamp() {
+        runtime.reset();
+        rampServo.setPosition(0.25);
+        while(runtime.seconds() < 0.25) {
+            //Wait for 0.25 seconds
+        }
+        rampServo.setPosition(0.0);
         return true;
     }
 

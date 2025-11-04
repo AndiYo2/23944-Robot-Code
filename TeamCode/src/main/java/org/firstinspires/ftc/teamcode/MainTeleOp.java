@@ -90,6 +90,11 @@ public class MainTeleOp extends LinearOpMode {
         } else {
             intakeMotors.stopIntakeBall();
         }
+
+        if(gamepad1.triangle) {
+            stagingServos.pushOutOfRamp();
+            addTelemetry("Pushed", "active");
+        }
     }
 
     private void handleTurret() {
