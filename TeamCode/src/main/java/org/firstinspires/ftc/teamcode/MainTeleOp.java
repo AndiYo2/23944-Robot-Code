@@ -6,108 +6,118 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.teamcode.DrivingStuff.MecanumDrive;
 import org.firstinspires.ftc.teamcode.Intake.IntakeMotors;
-import org.firstinspires.ftc.teamcode.Outtake.OuttakeCases;
+import org.firstinspires.ftc.teamcode.InternalSystems.StagingMotors;
+import org.firstinspires.ftc.teamcode.InternalSystems.StagingServos;
 import org.firstinspires.ftc.teamcode.Outtake.OuttakeMotors;
-import org.firstinspires.ftc.teamcode.Globals.BallPattern;
-
+import org.firstinspires.ftc.teamcode.Outtake.TurretRotations;
 
 @TeleOp
 public class MainTeleOp extends LinearOpMode {
-
-
-    // Create an instance of your new MecanumDrive class
     private final MecanumDrive mecanumDrive = new MecanumDrive();
     private final IntakeMotors intakeMotors = new IntakeMotors();
     private final OuttakeMotors outtakeMotors = new OuttakeMotors();
-
-    //Testing: public BallPattern pattern = new BallPattern();
-
+    private final TurretRotations turret = new TurretRotations();
+    private final StagingServos stagingServos = new StagingServos();
+    private final StagingMotors stagingMotors = new StagingMotors();
 
     @Override
     public void runOpMode() throws InterruptedException {
-
-        //Testing: pattern.setBallPattern(BallPattern.BallType.GREEN, BallPattern.BallType.PURPLE, BallPattern.BallType.PURPLE);
-
         String outtakeMotorOne = "outMotor1";
-        String outtakeMotorTwo = "outMotor2";
         String intakeMotor = "inMotor";
 
-
-        // Initialize the MecanumDrive class with the hardware map
+        // Initialize hardware
         mecanumDrive.initDrive(hardwareMap);
         intakeMotors.initIntake(hardwareMap.get(DcMotorEx.class, intakeMotor));
-        outtakeMotors.initOuttake(hardwareMap.dcMotor.get(outtakeMotorOne), hardwareMap.dcMotor.get(outtakeMotorTwo));
+        outtakeMotors.initOuttake(hardwareMap.get(DcMotorEx.class, outtakeMotorOne));
+        turret.initTurret(hardwareMap);
+        stagingServos.initStagingServos(hardwareMap);
+        stagingMotors.initStagingMotors(hardwareMap.get(DcMotorEx.class, intakeMotor));
 
-        //Telemetry add time
         addTelemetry("Status", "Initialized");
-
-        // Wait for the initialization of the robot, bc somewhere this has to be present
-        // So we made it here!
         waitForStart();
 
         if (isStopRequested()) return;
 
+        boolean released = true;
+
         while (opModeIsActive()) {
-            // Read driver inputs from the gamepad
-            double driveY = -gamepad1.left_stick_y;
-            double driveX = gamepad1.left_stick_x;
-            double rotationStick = gamepad1.right_stick_x;
+            handleDriving();
+            handleOuttake(released);
+            handleIntake();
+            handleTurret();
+            handleStaging();
 
-            boolean released = true;
-
-            // Reset the IMU yaw with a button press
-            if (gamepad1.options) {
-                mecanumDrive.resetYaw();
-            }
-            //Check if circle was pressed and change slowmode accordingly
-            if (gamepad1.circleWasPressed()){
-                mecanumDrive.changeSlowMode();
-            }
-
-            // Outtake Motor functions
-
-            //  Right trigger Shooting out if
-            if(gamepad1.right_trigger > .5){
-                outtakeMotors.shoot(1);
-                released = true;
-            }else if (released){
-                outtakeMotors.stopShooter();
-                released = false;
-            }
-            // Right Bumper - reverses and expunges the shot
-            if(gamepad1.right_bumper){
-                outtakeMotors.shoot(-1 );
-            }else if (gamepad1.rightBumperWasReleased()){
-                outtakeMotors.stopShooter();
-            }
-
-            // Intake Motor functions, Left Trigger
-
-            if(gamepad1.left_trigger > .5){
-                intakeMotors.intakeBall();
-            }else{
-                intakeMotors.stopIntakeBall();
-            }
-
-
-
-
-
-            // Call the drive method in the MecanumDrive class
-            mecanumDrive.drive(driveY, driveX, rotationStick);
-
-            // Display telemetry data
+            // Display telemetry
             addTelemetry("Robot Heading", mecanumDrive.getRobotHeading());
             addTelemetry("Status", "Running");
         }
     }
 
-    //This is where we can add our telemetry data
-    public void addTelemetry(String label, String value){
+    private void handleDriving() {
+        double driveY = -gamepad1.left_stick_y;
+        double driveX = gamepad1.left_stick_x;
+        double rotationStick = gamepad1.right_stick_x;
+
+        if (gamepad1.options) {
+            mecanumDrive.resetYaw();
+        }
+        if (gamepad1.circleWasPressed()) {
+            mecanumDrive.changeSlowMode();
+        }
+
+        mecanumDrive.drive(driveY, driveX, rotationStick);
+    }
+
+    private void handleOuttake(boolean released) {
+        if (gamepad1.right_trigger > .5) {
+            outtakeMotors.shooterSpin(1);
+            released = true;
+        } else if (released) {
+            outtakeMotors.stopShooter();
+            released = false;
+        }
+    }
+
+    private void handleIntake() {
+        if (gamepad1.left_bumper) {
+            intakeMotors.intakeBall(-1);
+        } else if (gamepad1.leftBumperWasReleased()) {
+            intakeMotors.stopIntakeBall();
+        }
+
+        if (gamepad1.left_trigger > .5) {
+            intakeMotors.intakeBall(1);
+        } else {
+            intakeMotors.stopIntakeBall();
+        }
+    }
+
+    private void handleTurret() {
+        if (gamepad1.dpadDownWasPressed()) {
+            turret.stop();
+        } else if (gamepad1.dpadRightWasPressed()) {
+            turret.rotate(1);
+        } else if (gamepad1.dpadLeftWasPressed()) {
+            turret.rotate(-1);
+        }
+    }
+
+    private void handleStaging() {
+        if (gamepad1.rightBumperWasPressed()) {
+            stagingMotors.toggleStaging();
+        }
+        if(gamepad1.dpadUpWasPressed()){
+            stagingServos.flip();
+            addTelemetry("Flipped", "active");
+        }
+    }
+
+    private void addTelemetry(String label, String value) {
         telemetry.addData(label, value);
         telemetry.update();
     }
-    public void addTelemetry(String label, double value){
+
+    private void addTelemetry(String label, double value) {
         telemetry.addData(label, value);
         telemetry.update();
     }

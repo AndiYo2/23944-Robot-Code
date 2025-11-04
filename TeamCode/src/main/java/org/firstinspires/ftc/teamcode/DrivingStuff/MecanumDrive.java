@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.DrivingStuff;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
@@ -12,10 +13,10 @@ import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 public class MecanumDrive {
 
     // Declare private variables for the motors and IMU
-    private DcMotor frontLeftMotor;
-    private DcMotor backLeftMotor;
-    private DcMotor frontRightMotor;
-    private DcMotor backRightMotor;
+    private DcMotorEx frontLeftMotor;
+    private DcMotorEx backLeftMotor;
+    private DcMotorEx frontRightMotor;
+    private DcMotorEx backRightMotor;
     private IMU imu;
 
     private boolean isSlow = false;
@@ -27,10 +28,10 @@ public class MecanumDrive {
     // Initialization method to map hardware
     public void initDrive(HardwareMap hardwareMap) {
         // Retrieve and initialize motors from the hardware map
-        frontLeftMotor = hardwareMap.dcMotor.get("frontLeftMotor");
-        backLeftMotor = hardwareMap.dcMotor.get("backLeftMotor");
-        frontRightMotor = hardwareMap.dcMotor.get("frontRightMotor");
-        backRightMotor = hardwareMap.dcMotor.get("backRightMotor");
+        frontLeftMotor = hardwareMap.get(DcMotorEx.class,"frontLeftMotor");
+        backLeftMotor = hardwareMap.get(DcMotorEx.class,"backLeftMotor");
+        frontRightMotor = hardwareMap.get(DcMotorEx.class,"frontRightMotor");
+        backRightMotor = hardwareMap.get(DcMotorEx.class,"backRightMotor");
 
         // Set motor directions based on configuration
         frontLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -40,8 +41,8 @@ public class MecanumDrive {
         // Retrieve and initialize the IMU
         imu = hardwareMap.get(IMU.class, "imu");
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
-                RevHubOrientationOnRobot.LogoFacingDirection.UP,
-                RevHubOrientationOnRobot.UsbFacingDirection.FORWARD));
+                RevHubOrientationOnRobot.LogoFacingDirection.BACKWARD,
+                RevHubOrientationOnRobot.UsbFacingDirection.UP));
         imu.initialize(parameters);
     }
 

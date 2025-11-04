@@ -1,54 +1,64 @@
 package org.firstinspires.ftc.teamcode.Outtake;
 
-import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import org.firstinspires.ftc.teamcode.InternalSystems.StagingMotors;
+import org.firstinspires.ftc.teamcode.InternalSystems.StagingServos;
 
 public class OuttakeMotors {
 
-    // Declare variables for the motors
-    double speed = .55;
-    /*boolean running = false;*/
-    private DcMotor outtakeMotor1;
-    private DcMotor outtakeMotor2;
+    private final double speed = 1;
+    private final double necesaryFlywheelSpeed = 1000;
+    private DcMotorEx outtakeMotor1;
+    private StagingMotors stagingMotor = new StagingMotors();
+    private StagingServos stagingServos = new StagingServos();
+
+    private boolean flywheelRunning = false;
 
 
-    // Initialization method to map hardware
-    public void initOuttake(DcMotor outtakeMotor1, DcMotor outtakeMotor2) {
-        // Retrieve and initialize motors from the hardware map
+    public void initOuttake(DcMotorEx outtakeMotor1) {
         this.outtakeMotor1 = outtakeMotor1;
-        this.outtakeMotor2 = outtakeMotor2;
-
-        // Set motor directions based on configuration
         outtakeMotor1.setDirection(DcMotorSimple.Direction.REVERSE);
-        outtakeMotor2.setDirection(DcMotorSimple.Direction.FORWARD);
     }
 
-    //Shoots the ball, if 1 is passed, shoots forward,
-    // if -1 is passed, expunges the ball
-    public void shoot(int direction){
-        outtakeMotor1.setPower(speed * direction);
-        outtakeMotor2.setPower(speed * direction);
-    }
-    //stops the shooter
-    public void stopShooter(){
-        outtakeMotor1.setPower(0);
-        outtakeMotor2.setPower(0);
-    }
 
-    /*
-    Use if you want a continuous shooter motion, used as a toggle
-    if its not being used, comment it to save space
-    public void toggleOuttake(){
+    public void shootAuton(){
+        shooterSpin(1);
+        flywheelRunning = true;
 
-        running = !running;
-        if(running){
-            outtakeMotor1.setPower(speed);
-            outtakeMotor2.setPower(speed);
-        }else {
-            outtakeMotor1.setPower(0);
-            outtakeMotor2.setPower(0);
+        stagingMotor.toggleStaging();
+        for(int i = 0; i < 3; i++) {
+            while (true) {
+                if (outtakeMotor1.getVelocity() > necesaryFlywheelSpeed) {
+                    if (stagingServos.flip()) {
+                        break;
+                        //just to make sure it completes the flip
+                    }
+                }
+            }
         }
+        stopShooter();
+        flywheelRunning = false;
+        stagingMotor.toggleStaging();
+
     }
-    */
+
+    /**
+     * Shoots the ball: 1 for forward, -1 for reverse
+     */
+    public void shooterSpin(int direction) {
+        outtakeMotor1.setPower(speed * direction);
+    }
+
+
+    public boolean flywheelRunning() {
+        return flywheelRunning;
+    }
+    /**
+     * Stops the shooter motor
+     */
+    public void stopShooter() {
+        outtakeMotor1.setPower(0);
+    }
 
 }

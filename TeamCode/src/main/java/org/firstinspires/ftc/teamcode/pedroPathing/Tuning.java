@@ -174,7 +174,7 @@ class LocalizationTest extends OpMode {
  * @version 1.0, 5/6/2024
  */
 class ForwardTuner extends OpMode {
-    public static double DISTANCE = 24;
+    public static double DISTANCE = 48;
 
     @Override
     public void init() {
@@ -313,13 +313,13 @@ class TurnTuner extends OpMode {
  *
  * @author Anyi Lin - 10158 Scott's Bots
  * @author Aaron Yang - 10158 Scott's Bots
- * @author Harrison Womack - 10158 Scott's Bots
+ * @author Harrison Womack - 10158 Scott's Bots 
  * @author Baron Henderson - 20077 The Indubitables
  * @version 1.0, 3/13/2024
  */
 class ForwardVelocityTuner extends OpMode {
     private final ArrayList<Double> velocities = new ArrayList<>();
-    public static double DISTANCE = 24;
+    public static double DISTANCE = 48;
     public static double RECORD_NUMBER = 10;
 
     private boolean end;
@@ -1129,7 +1129,7 @@ class Triangle extends OpMode {
  * @version 1.0, 3/12/2024
  */
 class Circle extends OpMode {
-    public static double RADIUS = 7.5;
+    public static double RADIUS = 15;
     private PathChain circle;
 
     public void start() {
