@@ -39,7 +39,7 @@ public class OuttakeMotors {
         }
         stopShooter();
         flywheelRunning = false;
-        stagingMotor.toggleStaging();
+        stagingMotor.stopStaging();
 
     }
 
