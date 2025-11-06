@@ -43,6 +43,8 @@ public class NineBallBlueAutonBackStart extends OpMode{
     private final Pose shootToSecondControlPoint = new Pose(63,72);
     private final Pose shootToSecondControlPoint2 = new Pose(70,57);
 
+    private final double shooterPower = .8;
+
     IntakeMotors intakeMotors = new IntakeMotors();
     OuttakeMotors outtakeMotors = new OuttakeMotors();
 
@@ -77,23 +79,43 @@ public class NineBallBlueAutonBackStart extends OpMode{
         pathState = i;
         pathTimer.resetTimer();
     }
+    /*
+        Actions we want to perform:
+        Start the wheel fire to designated speed
+        Move to first shoot
+        FIRE!
+        Move to the first ball pickup
+        pick up balls at .5 drive motor power
+        move back to shoot
+        FIRE!
+        move to the second ball pickup
+        pick up balls at .5 motor power
+        move back to shoot
+        FIRE!
 
+        either move to end position or move a bot
+
+     */
 
     public void autonomousPathUpdate() {
         switch (pathState) {
             case 0:
                 if (follower.isBusy())
                     break;
+                outtakeMotors.shooterSpin(1, shooterPower);
                 follower.followPath(startToShoot, true);
-                outtakeMotors.shootAuton();
                 setPathState(1);
 
             case 1:
-                if(follower.isBusy()|| outtakeMotors.flywheelRunning())
+                if(follower.isBusy())
                     break;
-                intakeMotors.toggleIntake(1);
+                outtakeMotors.shootAuton();
+                while (outtakeMotors.isAutonShooting()){/*wait lol*/}
+
                 follower.followPath(shootToFirst,true);
                 follower.setMaxPower(.5);
+                intakeMotors.toggleIntake(1);
+
                 setPathState(2);
 
             case 2:
@@ -102,15 +124,18 @@ public class NineBallBlueAutonBackStart extends OpMode{
                 intakeMotors.stopIntakeBall();
                 follower.followPath(firstToShoot,true);
                 follower.setMaxPower(1);
-                outtakeMotors.shootAuton();
                 setPathState(3);
                 
             case 3:
-                if(follower.isBusy() || outtakeMotors.flywheelRunning())
+                if(follower.isBusy())
                     break;
-                intakeMotors.toggleIntake(1);
+
+                outtakeMotors.shootAuton();
+                while (outtakeMotors.isAutonShooting()){/*wait lol*/}
+
                 follower.followPath(shootToSecond,true);
                 follower.setMaxPower(.5);
+                intakeMotors.toggleIntake(1);
                 setPathState(4);
 
             case 4:
@@ -119,12 +144,17 @@ public class NineBallBlueAutonBackStart extends OpMode{
                 intakeMotors.stopIntakeBall();
                 follower.followPath(secondToShoot,true);
                 follower.setMaxPower(1);
-                outtakeMotors.shootAuton();
                 setPathState(5);
 
             case 5:
-                if(follower.isBusy() || outtakeMotors.flywheelRunning())
+                if(follower.isBusy())
                     break;
+
+                outtakeMotors.shootAuton();
+                while (outtakeMotors.isAutonShooting()){/*wait lol*/}
+
+                outtakeMotors.stopShooter();
+
                 follower.followPath(shootToStop, true);
                 setPathState(6);
         }

@@ -5,7 +5,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 public class TurretRotations {
-    //Might be 44 for something idk
+    //Might be 44 for something
     static double position = 0;
     double power = 1;
     //Position is the same as the degree of the turret in our arc

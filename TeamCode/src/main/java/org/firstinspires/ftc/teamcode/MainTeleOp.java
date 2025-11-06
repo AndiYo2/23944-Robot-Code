@@ -100,6 +100,8 @@ public class MainTeleOp extends LinearOpMode {
     private void handleIntake() {
         if (gamepad1.left_trigger > 0.5) {
             intakeMotors.intakeBall(1);
+        } else if (gamepad1.left_bumper) {
+            intakeMotors.intakeBall(-1);
         } else {
             intakeMotors.stopIntakeBall();
         }

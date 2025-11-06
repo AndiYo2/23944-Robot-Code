@@ -16,6 +16,7 @@ public class OuttakeMotors {
     private StagingServos stagingServos;
 
     private boolean flywheelRunning = false;
+    private boolean autonShooting = false;
 
     ElapsedTime runtime = new ElapsedTime();
 
@@ -32,23 +33,31 @@ public class OuttakeMotors {
 
 
     public void shootAuton(){
-        shooterSpin(1);
-        flywheelRunning = true;
+        autonShooting = true;
         stagingMotor.toggleStaging();
-
-        runtime.reset();
-        while(runtime.seconds() < 1) {
-            //wait for 2 seconds
+        for (int i = 0; i < 3; i++) {
+            runtime.reset();
+            while(runtime.seconds() < 1) {
+                //wait for 1 second
+            }
+            stagingMotor.invertStagingForLaunch();
+            stagingServos.flip();
+            runtime.reset();
+            while(runtime.seconds() < .75) {
+                //wait for 1 second
+            }
+            stagingMotor.toggleStaging();
+            stagingServos.pushOutOfRamp();
         }
 
-        stagingServos.flip();
-        stopShooter();
+        autonShooting = false;
 
-        flywheelRunning = false;
-        stagingMotor.stopStaging();
 
     }
 
+    public boolean isAutonShooting(){
+        return autonShooting;
+    }
     /**
      * Shoots the ball: 1 for forward, -1 for reverse
      */
