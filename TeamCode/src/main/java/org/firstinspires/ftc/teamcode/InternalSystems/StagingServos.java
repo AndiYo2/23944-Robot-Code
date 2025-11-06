@@ -5,54 +5,39 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 public class StagingServos {
+    private static final double FLIPPER_EXTENDED = 0.9;
+    private static final double FLIPPER_RETRACTED = 0.4;
+    private static final double RAMP_EXTENDED = 1.0;
+    private static final double RAMP_RETRACTED = 0.15;
 
-    double power = 1;
-    boolean toggleStatus = false;
+    private HardwareMap hMap;
+    private Servo flipperServo;
+    private Servo rampServo;
+    private final ElapsedTime runtime = new ElapsedTime();
 
-    HardwareMap hMap;
-    Servo flipperServo, rampServo;
-    ElapsedTime runtime = new ElapsedTime();
-
-    public void initStagingServos(HardwareMap hardwareMap){
+    public void initStagingServos(HardwareMap hardwareMap) {
         hMap = hardwareMap;
-        flipperServo = hMap.get(Servo.class,"flipperServo");
+        flipperServo = hMap.get(Servo.class, "flipperServo");
         rampServo = hMap.get(Servo.class, "rampServo");
     }
-    
-    public boolean flip(){
+
+    public boolean flip() {
         runtime.reset();
-        flipperServo.setPosition(0.5);
-        while (runtime.seconds() < 0.25) {
-            // Wait for 0.25 seconds
+        flipperServo.setPosition(FLIPPER_EXTENDED);
+        while (runtime.seconds() < 0.5) {
+            // Wait for servo to complete movement
         }
-        flipperServo.setPosition(0.0);
+        flipperServo.setPosition(FLIPPER_RETRACTED);
         return true;
     }
 
     public boolean pushOutOfRamp() {
         runtime.reset();
-        rampServo.setPosition(0.25);
-        while(runtime.seconds() < 0.25) {
-            //Wait for 0.25 seconds
+        rampServo.setPosition(RAMP_EXTENDED);
+        while (runtime.seconds() < 0.75) {
+            // Wait for servo to complete movement
         }
-        rampServo.setPosition(0.0);
+        rampServo.setPosition(RAMP_RETRACTED);
         return true;
     }
-
-
-   /* public void toggleStageServos(int direction){
-        if(toggleStatus){
-            leftServo.setPower(0);
-            rightServo.setPower(0);
-        }else {
-            leftServo.setPower(power * direction);
-            rightServo.setPower(power * direction);
-        }
-
-        toggleStatus = !toggleStatus;
-
-    }*/
-
-
-
 }

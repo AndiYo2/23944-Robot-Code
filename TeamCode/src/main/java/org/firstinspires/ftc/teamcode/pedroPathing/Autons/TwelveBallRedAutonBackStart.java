@@ -1,3 +1,4 @@
+/*
 package org.firstinspires.ftc.teamcode.pedroPathing.Autons;
 
 import com.pedropathing.follower.Follower;
@@ -92,11 +93,13 @@ public class TwelveBallRedAutonBackStart extends OpMode {
         pathTimer.resetTimer();
     }
 
-    /* You could check for
+    */
+/* You could check for
        - Follower State: "if(!follower.isBusy()) {}"
        - Time: "if(pathTimer.getElapsedTimeSeconds() > 1) {}"
        - Robot Position: "if(follower.getPose().getX() > 36) {}"
-       */
+       *//*
+
     public void autonomousPathUpdate() {
         switch (pathState) {
             case 0:
@@ -172,7 +175,9 @@ public class TwelveBallRedAutonBackStart extends OpMode {
         telemetry.addData("heading", follower.getPose().getHeading());
         telemetry.update();
     }
-    /** This method is called once at the init of the OpMode. **/
+    */
+/** This method is called once at the init of the OpMode. **//*
+
     @Override
     public void init () {
         pathTimer = new Timer();
@@ -185,19 +190,26 @@ public class TwelveBallRedAutonBackStart extends OpMode {
 
         intakeMotors.initIntake(hardwareMap.get(DcMotorEx.class, "inMotor"));
     }
-    /** This method is called continuously after Init while waiting for "play". **/
+    */
+/** This method is called continuously after Init while waiting for "play". **//*
+
     @Override
     public void init_loop () {
     }
-    /** This method is called once at the start of the OpMode.
-     * It runs all the setup actions, including building paths and starting the path system **/
+    */
+/** This method is called once at the start of the OpMode.
+     * It runs all the setup actions, including building paths and starting the path system **//*
+
     @Override
     public void start () {
         opmodeTimer.resetTimer();
         setPathState(0);
     }
-    /** We do not use this because everything should automatically disable **/
+    */
+/** We do not use this because everything should automatically disable **//*
+
     @Override
     public void stop () {
     }
 }
+*/

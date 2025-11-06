@@ -2,16 +2,17 @@ package org.firstinspires.ftc.teamcode.Outtake;
 
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.Servo;
-
-import org.firstinspires.ftc.teamcode.Globals.AxonServo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 public class TurretRotations {
     //Might be 44 for something idk
     static double position = 0;
     double power = 1;
     //Position is the same as the degree of the turret in our arc
-    final double negBound = -360*3, posBound = 360*3;
+    private final double MAX_ROTATION_TIME = 5000; // 5 seconds in milliseconds
+    private double accumulatedTime = 0;
+    private int lastDirection = 0;
+    private ElapsedTime runtime = new ElapsedTime();
 
     //servo init
     HardwareMap hMap;
@@ -27,54 +28,28 @@ public class TurretRotations {
 
     }
 
-    /*public boolean rotateToX(double newPos){
-        if (newPos < posBound && newPos > negBound){
-            position = newPos;
-            if(newPos > position){
-                serv.setDirection(CRServo.Direction.FORWARD);
-            }else{
-                serv.setDirection(CRServo.Direction.REVERSE);
-            }
-            serv.setTargetRotation(newPos);
-            return true;
-        }
-        return false;
-    }*/
 
     public void stop(){
         serv.setPower(0);
     }
 
     public void rotate(int posOrNeg){
-        serv.setPower(power * posOrNeg);
-
-    }
-
-    /*public boolean checkViewForTag(){
-        if(true)//is the thing in view
-        {
-            rotateToX( -1);
-            return true;
+        if (posOrNeg != lastDirection) {
+            runtime.reset();
         }
-        return false;
-    }
-
-    public void rotateBot(){
-        //Temp
-    }
-
-    public void setToTag(){
-        rotateToX(negBound + 1);
-        while(!checkViewForTag()){
-            if(!rotateToX(position + 1))
-                rotateBot();
-            break;
-
+        if (accumulatedTime < MAX_ROTATION_TIME || posOrNeg == 0) {
+            serv.setPower(power * posOrNeg);
+            if (posOrNeg != 0) {
+                accumulatedTime += runtime.milliseconds();
+                lastDirection = posOrNeg;
+                runtime.reset();
+            }
+        } else {
+            stop();
         }
-        //lockOnToTag()
+    }
 
 
-    }*/
 
 
 }

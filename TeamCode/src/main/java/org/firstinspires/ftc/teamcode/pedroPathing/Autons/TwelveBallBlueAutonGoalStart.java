@@ -1,3 +1,4 @@
+/*
 package org.firstinspires.ftc.teamcode.pedroPathing.Autons;
 
 import com.pedropathing.follower.Follower;
@@ -96,57 +97,87 @@ public class TwelveBallBlueAutonGoalStart extends OpMode {
                 break;
 
             case 1:
-                /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the pickup1Pose's position */
+                */
+/* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the pickup1Pose's position *//*
+
                 if(follower.isBusy()) {
                     break;
                 }
-                /* Grab Sample */
-                /* Since this is a pathChain, we can have Pedro hold the end point while we are scoring the sample */
+                */
+/* Grab Sample *//*
+
+                */
+/* Since this is a pathChain, we can have Pedro hold the end point while we are scoring the sample *//*
+
                 intakeMotors.toggleIntake();
                 follower.followPath(shootToFirst,true);
                 setPathState(2);
 
             case 2:
-                /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the scorePose's position */
+                */
+/* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the scorePose's position *//*
+
                 if(follower.isBusy()) {
                     break;
                 }
-                /* Score Sample *//*
-                    /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
+                */
+/* Score Sample *//*
+*/
+/*
+                    /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample *//*
+
                 follower.followPath(firstToShoot,true);
                 setPathState(3);
                 intakeMotors.toggleIntake();
 
             case 3:
-                /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the pickup2Pose's position */
+                */
+/* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the pickup2Pose's position *//*
+
                 if(follower.isBusy()) {
                     break;
                 }
-                /* Grab Sample *//*
-                    /* Since this is a pathChain, we can have Pedro hold the end point while we are scoring the sample */
+                */
+/* Grab Sample *//*
+*/
+/*
+                    /* Since this is a pathChain, we can have Pedro hold the end point while we are scoring the sample *//*
+
                 intakeMotors.toggleIntake();
                 follower.followPath(shootToSecond,true);
                 setPathState(4);
 
             case 4:
-                /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the scorePose's position */
+                */
+/* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the scorePose's position *//*
+
                 if(follower.isBusy()) {
                     break;
                 }
-                /* Score Sample *//*
-                    /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample */
+                */
+/* Score Sample *//*
+*/
+/*
+                    /* Since this is a pathChain, we can have Pedro hold the end point while we are grabbing the sample *//*
+
                 follower.followPath(secondToShoot,true);
                 setPathState(5);
                 intakeMotors.toggleIntake();
 
             case 5:
-                /* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the pickup3Pose's position */
+                */
+/* This case checks the robot's position and will wait until the robot position is close (1 inch away) from the pickup3Pose's position *//*
+
                 if(follower.isBusy()) {
                     break;
                 }
                 intakeMotors.toggleIntake();
-                /* Grab Sample *//*
-                    /* Since this is a pathChain, we can have Pedro hold the end point while we are scoring the sample */
+                */
+/* Grab Sample *//*
+*/
+/*
+                    /* Since this is a pathChain, we can have Pedro hold the end point while we are scoring the sample *//*
+
                 follower.followPath(shootToThird, true);
                 setPathState(6);
 
@@ -179,7 +210,9 @@ public class TwelveBallBlueAutonGoalStart extends OpMode {
         telemetry.addData("heading", follower.getPose().getHeading());
         telemetry.update();
     }
-    /** This method is called once at the init of the OpMode. **/
+    */
+/** This method is called once at the init of the OpMode. **//*
+
     @Override
     public void init () {
         pathTimer = new Timer();
@@ -192,19 +225,26 @@ public class TwelveBallBlueAutonGoalStart extends OpMode {
 
         intakeMotors.initIntake(hardwareMap.get(DcMotorEx.class, "inMotor"));
     }
-    /** This method is called continuously after Init while waiting for "play". **/
+    */
+/** This method is called continuously after Init while waiting for "play". **//*
+
     @Override
     public void init_loop () {
     }
-    /** This method is called once at the start of the OpMode.
-     * It runs all the setup actions, including building paths and starting the path system **/
+    */
+/** This method is called once at the start of the OpMode.
+     * It runs all the setup actions, including building paths and starting the path system **//*
+
     @Override
     public void start () {
         opmodeTimer.resetTimer();
         setPathState(0);
     }
-    /** We do not use this because everything should automatically disable **/
+    */
+/** We do not use this because everything should automatically disable **//*
+
     @Override
     public void stop () {
     }
 }
+*/

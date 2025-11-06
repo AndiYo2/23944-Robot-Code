@@ -2,42 +2,48 @@ package org.firstinspires.ftc.teamcode.Outtake;
 
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.util.ElapsedTime;
+
 import org.firstinspires.ftc.teamcode.InternalSystems.StagingMotors;
 import org.firstinspires.ftc.teamcode.InternalSystems.StagingServos;
 
 public class OuttakeMotors {
 
     private final double speed = 1;
-    private final double necesaryFlywheelSpeed = 1000;
     private DcMotorEx outtakeMotor1;
     private StagingMotors stagingMotor = new StagingMotors();
-    private StagingServos stagingServos = new StagingServos();
+    private StagingServos stagingServos;
 
     private boolean flywheelRunning = false;
 
+    ElapsedTime runtime = new ElapsedTime();
 
-    public void initOuttake(DcMotorEx outtakeMotor1) {
-        this.outtakeMotor1 = outtakeMotor1;
+    public void initOuttake(HardwareMap hMap) {
+        outtakeMotor1 = hMap.get(DcMotorEx.class, "outMotor1");
         outtakeMotor1.setDirection(DcMotorSimple.Direction.REVERSE);
+
+    }
+    public void initOuttake(HardwareMap hMap, StagingServos s) {
+        this.outtakeMotor1 = hMap.get(DcMotorEx.class, "outMotor1");
+        outtakeMotor1.setDirection(DcMotorSimple.Direction.REVERSE);
+        stagingServos = s;
     }
 
 
     public void shootAuton(){
         shooterSpin(1);
         flywheelRunning = true;
-
         stagingMotor.toggleStaging();
-        for(int i = 0; i < 3; i++) {
-            while (true) {
-                if (outtakeMotor1.getVelocity() > necesaryFlywheelSpeed) {
-                    if (stagingServos.flip()) {
-                        break;
-                        //just to make sure it completes the flip
-                    }
-                }
-            }
+
+        runtime.reset();
+        while(runtime.seconds() < 1) {
+            //wait for 2 seconds
         }
+
+        stagingServos.flip();
         stopShooter();
+
         flywheelRunning = false;
         stagingMotor.stopStaging();
 
@@ -48,6 +54,9 @@ public class OuttakeMotors {
      */
     public void shooterSpin(int direction) {
         outtakeMotor1.setPower(speed * direction);
+    }
+    public void shooterSpin(int direction, double pow) {
+        outtakeMotor1.setPower(pow * direction);
     }
 
 

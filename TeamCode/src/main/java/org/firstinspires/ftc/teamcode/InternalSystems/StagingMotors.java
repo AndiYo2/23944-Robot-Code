@@ -1,43 +1,58 @@
 package org.firstinspires.ftc.teamcode.InternalSystems;
 
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.HardwareDevice;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import java.util.Timer;
 import java.util.TimerTask;
 
+/**
+ * Controls the staging motors for the robot's internal systems.
+ * This class manages the movement and control of staging mechanisms.
+ */
 public class StagingMotors {
-
-    // Declare variables for the motor
-    double speed = 1;
-    boolean running = false;
     private static DcMotorEx stagingMotor;
+    private final double speed = 1;
+    private boolean running = false;
 
-
-
-    // Initialization method to map hardware
-    public void initStagingMotors(DcMotorEx sMotor) {
-        // Retrieve and initialize motors from the hardware map
-        stagingMotor = sMotor;
-
-        // Set motor directions based on configuration
+    /**
+     * Initializes the staging motors with the given hardware map.
+     *
+     * @param hMap Hardware map containing the motor configurations
+     */
+    public void initStagingMotors(HardwareMap hMap) {
+        stagingMotor = hMap.get(DcMotorEx.class, "stagingMotor");
         stagingMotor.setDirection(DcMotorEx.Direction.REVERSE);
     }
 
-
-
-
-    public void toggleStaging(){
+    /**
+     * Toggles the staging motor between running and stopped states.
+     */
+    public void toggleStaging() {
         running = !running;
-        if(running){
+        if (running) {
             stagingMotor.setPower(speed);
-        }else{
+        } else {
             stagingMotor.setPower(0);
         }
     }
-
-
-    public void stopStaging(){
-        stagingMotor.setPower(0);
+    
+    
+    public void invertStagingForLaunch(){
+        stagingMotor.setPower(-speed);
+        try {
+            Thread.sleep(50);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        stopStaging();
     }
 
+    /**
+     * Stops the staging motor.
+     */
+    public void stopStaging() {
+        stagingMotor.setPower(0);
+    }
 }

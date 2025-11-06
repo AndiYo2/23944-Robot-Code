@@ -12,6 +12,7 @@ import  com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.teamcode.Intake.IntakeMotors;
+import org.firstinspires.ftc.teamcode.InternalSystems.StagingServos;
 import org.firstinspires.ftc.teamcode.Outtake.OuttakeMotors;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
@@ -152,8 +153,8 @@ public class NineBallBlueAutonBackStart extends OpMode{
 
         follower.setStartingPose(startPose);
 
-        intakeMotors.initIntake(hardwareMap.get(DcMotorEx.class,"inMotor"));
-        outtakeMotors.initOuttake(hardwareMap.get(DcMotorEx.class,"outMotor1"));
+        intakeMotors.initIntake(hardwareMap);
+        outtakeMotors.initOuttake(hardwareMap);
     }
     /** This method is called continuously after Init while waiting for "play". **/
     @Override
