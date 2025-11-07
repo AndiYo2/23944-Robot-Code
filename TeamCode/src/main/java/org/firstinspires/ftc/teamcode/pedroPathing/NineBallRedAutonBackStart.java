@@ -9,16 +9,15 @@ import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import  com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 
 import org.firstinspires.ftc.teamcode.Intake.IntakeMotors;
+import org.firstinspires.ftc.teamcode.InternalSystems.StagingMotors;
 import org.firstinspires.ftc.teamcode.InternalSystems.StagingServos;
 import org.firstinspires.ftc.teamcode.Outtake.OuttakeMotors;
-import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
 
-@Autonomous(name = "BackBlueAuton")
-public class NineBallBlueAutonBackStart extends OpMode{
+@Autonomous(name = "BackRedAuton")
+public class NineBallRedAutonBackStart extends OpMode{
     private Follower follower;
     private Timer pathTimer, actionTimer, opmodeTimer;
     private int pathState;
@@ -32,21 +31,20 @@ public class NineBallBlueAutonBackStart extends OpMode{
             secondToShoot,
             shootToStop;
 
-    private final Pose startPose = new Pose(63, 9, Math.toRadians(90));
-    private final Pose endPose = new Pose(18, 12, Math.toRadians(90));
+    private final Pose startPose = new Pose(87, 9, Math.toRadians(90));
+    private final Pose endPose = new Pose(126, 12, Math.toRadians(90));
 
-    private final Pose shootPose = new Pose(54,90, Math.toRadians(135));
-    private final Pose firstPickupPose = new Pose(24,83.5, Math.toRadians(180));
-    private final Pose secondPickupPose = new Pose(24,60, Math.toRadians(180));
+    private final Pose shootPose = new Pose(90,90, Math.toRadians(45));
+    private final Pose firstPickupPose = new Pose(120,83.5, Math.toRadians(0));
+    private final Pose secondPickupPose = new Pose(120,55.5, Math.toRadians(0));
 
-    private final Pose shootToFirstControlPoint = new Pose(58.5,74);
-    private final Pose shootToSecondControlPoint = new Pose(63,72);
-    private final Pose shootToSecondControlPoint2 = new Pose(70,57);
-
-    private final double shooterPower = .8;
+    private final Pose shootToFirstControlPoint = new Pose(85.5,74);
+    private final Pose shootToSecondControlPoint = new Pose(82,55);
 
     IntakeMotors intakeMotors = new IntakeMotors();
     OuttakeMotors outtakeMotors = new OuttakeMotors();
+    StagingServos stagingServos = new StagingServos();
+    StagingMotors stagingMotors = new StagingMotors();
 
     public void buildPaths(){
         startToShoot = new Path(new BezierLine(startPose, shootPose));
@@ -56,13 +54,12 @@ public class NineBallBlueAutonBackStart extends OpMode{
                 .addPath(new BezierCurve(shootPose, shootToFirstControlPoint, firstPickupPose))
                 .setLinearHeadingInterpolation(shootPose.getHeading(), firstPickupPose.getHeading())
                 .build();
-
         firstToShoot = follower.pathBuilder()
                 .addPath(new BezierLine(firstPickupPose,shootPose))
                 .setLinearHeadingInterpolation(firstPickupPose.getHeading(), shootPose.getHeading())
                 .build();
         shootToSecond = follower.pathBuilder()
-                .addPath(new BezierCurve(shootPose, shootToSecondControlPoint, shootToSecondControlPoint2 ,secondPickupPose))
+                .addPath(new BezierCurve(shootPose, shootToSecondControlPoint, secondPickupPose))
                 .setLinearHeadingInterpolation(shootPose.getHeading(), secondPickupPose.getHeading())
                 .build();
         secondToShoot = follower.pathBuilder()
@@ -79,30 +76,14 @@ public class NineBallBlueAutonBackStart extends OpMode{
         pathState = i;
         pathTimer.resetTimer();
     }
-    /*
-        Actions we want to perform:
-        Start the wheel fire to designated speed
-        Move to first shoot
-        FIRE!
-        Move to the first ball pickup
-        pick up balls at .5 drive motor power
-        move back to shoot
-        FIRE!
-        move to the second ball pickup
-        pick up balls at .5 motor power
-        move back to shoot
-        FIRE!
 
-        either move to end position or move a bot
-
-     */
 
     public void autonomousPathUpdate() {
         switch (pathState) {
             case 0:
                 if (follower.isBusy())
                     break;
-                outtakeMotors.shooterSpin(1, shooterPower);
+                outtakeMotors.shooterSpin(1);
                 follower.followPath(startToShoot, true);
                 setPathState(1);
 
@@ -114,35 +95,32 @@ public class NineBallBlueAutonBackStart extends OpMode{
 
                 follower.followPath(shootToFirst,true);
                 follower.setMaxPower(.5);
-                intakeMotors.toggleIntake(1);
-
                 setPathState(2);
 
             case 2:
                 if(follower.isBusy())
                     break;
-                intakeMotors.stopIntakeBall();
                 follower.followPath(firstToShoot,true);
+                intakeMotors.stopIntakeBall();
                 follower.setMaxPower(1);
                 setPathState(3);
                 
             case 3:
                 if(follower.isBusy())
                     break;
-
                 outtakeMotors.shootAuton();
                 while (outtakeMotors.isAutonShooting()){/*wait lol*/}
 
                 follower.followPath(shootToSecond,true);
                 follower.setMaxPower(.5);
-                intakeMotors.toggleIntake(1);
+
                 setPathState(4);
 
             case 4:
                 if(follower.isBusy())
                     break;
-                intakeMotors.stopIntakeBall();
                 follower.followPath(secondToShoot,true);
+                intakeMotors.stopIntakeBall();
                 follower.setMaxPower(1);
                 setPathState(5);
 
@@ -154,6 +132,7 @@ public class NineBallBlueAutonBackStart extends OpMode{
                 while (outtakeMotors.isAutonShooting()){/*wait lol*/}
 
                 outtakeMotors.stopShooter();
+                intakeMotors.stopIntakeBall();
 
                 follower.followPath(shootToStop, true);
                 setPathState(6);
@@ -162,9 +141,10 @@ public class NineBallBlueAutonBackStart extends OpMode{
 
     @Override
     public void loop () {
-        // These loop the movements of the robot, these must be called continuously in order to work
+        // These will loop the movements of the robot, these must be called to continuously work
         follower.update();
         autonomousPathUpdate();
+
         // Feedback to Driver Hub for debugging
         telemetry.addData("path state", pathState);
         telemetry.addData("x", follower.getPose().getX());
@@ -182,9 +162,12 @@ public class NineBallBlueAutonBackStart extends OpMode{
         buildPaths();
 
         follower.setStartingPose(startPose);
-
         intakeMotors.initIntake(hardwareMap);
-        outtakeMotors.initOuttake(hardwareMap);
+        stagingMotors.initStagingMotors(hardwareMap);
+        stagingServos.initStagingServos(hardwareMap);
+        outtakeMotors.initOuttake(hardwareMap, stagingServos, intakeMotors);
+        stagingServos.flip();
+
     }
     /** This method is called continuously after Init while waiting for "play". **/
     @Override

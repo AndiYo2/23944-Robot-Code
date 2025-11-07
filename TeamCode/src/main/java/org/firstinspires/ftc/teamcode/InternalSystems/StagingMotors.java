@@ -29,20 +29,15 @@ public class StagingMotors {
     /**
      * Toggles the staging motor between running and stopped states.
      */
-    public void toggleStaging() {
-        running = !running;
-        if (running) {
-            stagingMotor.setPower(speed);
-        } else {
-            stagingMotor.setPower(0);
-        }
+    public void runStaging(){
+        stagingMotor.setPower(speed);
     }
     
     
     public void invertStagingForLaunch(){
         stagingMotor.setPower(-speed);
         try {
-            Thread.sleep(50);
+            Thread.sleep(20);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }

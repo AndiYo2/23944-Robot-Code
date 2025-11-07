@@ -12,14 +12,14 @@ public class IntakeMotors {
     private final StagingMotors stagingMotor = new StagingMotors();
 
     public void initIntake(HardwareMap hMap) {
-        intakeMotor = hMap.get(DcMotorEx.class, "intakeMotor");
+        intakeMotor = hMap.get(DcMotorEx.class, "inMotor");
         intakeMotor.setDirection(DcMotorEx.Direction.FORWARD);
     }
 
     public void intakeBall(int positiveOrNeg) {
         intakeMotor.setPower(speed * positiveOrNeg);
         if (positiveOrNeg > 0) {
-            stagingMotor.toggleStaging();
+            stagingMotor.runStaging();
         }
     }
 
@@ -33,7 +33,7 @@ public class IntakeMotors {
         if (running) {
             intakeMotor.setPower(speed * positiveOrNeg);
             if (positiveOrNeg > 0) {
-                stagingMotor.toggleStaging();
+                stagingMotor.runStaging();
             }
         } else {
             intakeMotor.setPower(0);

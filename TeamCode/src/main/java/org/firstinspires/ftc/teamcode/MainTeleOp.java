@@ -2,7 +2,6 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.DrivingStuff.MecanumDrive;
 import org.firstinspires.ftc.teamcode.Intake.IntakeMotors;
@@ -19,18 +18,10 @@ public class MainTeleOp extends LinearOpMode {
     private final TurretRotations turret = new TurretRotations();
     private final StagingServos stagingServos = new StagingServos();
     private final StagingMotors stagingMotors = new StagingMotors();
-    private final ElapsedTime runtime = new ElapsedTime();
 
-    private static final double DEFAULT_SHOOTER_POWER = 0.85;
-
-    private static final double FAR_SHOOTER_POWER= 0.9;
-    private static final double CLOSE_SHOOTER_POWER = 0.7;
-    private static final double SHOOTER_POWER_INCREMENT = 0.05;
     private static final double STAGING_DELAY_SECONDS = 0.1;
     private static final double FLIP_DELAY_SECONDS = 0.5;
 
-    private double shooterPower = DEFAULT_SHOOTER_POWER;
-    private boolean toggle = false;
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -45,9 +36,10 @@ public class MainTeleOp extends LinearOpMode {
             handleDriving();
             handleShooter();
             handleIntake();
-            handleStagingMotor();
             displayTelemetry();
+            handleShooterPowerControls();
         }
+
     }
 
     private void initializeHardware() {
@@ -56,7 +48,7 @@ public class MainTeleOp extends LinearOpMode {
         turret.initTurret(hardwareMap);
         stagingMotors.initStagingMotors(hardwareMap);
         stagingServos.initStagingServos(hardwareMap);
-        outtakeMotors.initOuttake(hardwareMap, stagingServos);
+        outtakeMotors.initOuttake(hardwareMap, stagingServos, intakeMotors);
     }
 
     private void handleDriving() {
@@ -75,14 +67,14 @@ public class MainTeleOp extends LinearOpMode {
     }
 
     private void handleShooter() {
-        outtakeMotors.shooterSpin(1, shooterPower);
+        outtakeMotors.shooterSpin(1);
         handleTurretRotations();
         if (gamepad1.right_trigger > 0.5) {
             stagingMotors.invertStagingForLaunch();
             sleep((long) (STAGING_DELAY_SECONDS * 1000));
             stagingServos.flip();
             sleep((long) (FLIP_DELAY_SECONDS * 1000));
-            stagingMotors.toggleStaging();
+            stagingMotors.runStaging();
         }
     }
 
@@ -111,36 +103,24 @@ public class MainTeleOp extends LinearOpMode {
         }
     }
 
-    private void handleStagingMotor() {
-        if (gamepad1.rightBumperWasPressed()) {
-            stagingMotors.toggleStaging();
-        }
-        handleShooterPowerControls();
-    }
+
 
     private void handleShooterPowerControls() {
         if (gamepad1.squareWasPressed()) {
-            //togglePowerModes()
-            if(toggle){
-                shooterPower = CLOSE_SHOOTER_POWER;
-            }else{
-                shooterPower = FAR_SHOOTER_POWER;
-            }
-            toggle = !toggle;
-
+            outtakeMotors.shooterPowerToggle();
         }
-        if (gamepad1.dpadDownWasPressed()) {
-            shooterPower = Math.max(.6, shooterPower - SHOOTER_POWER_INCREMENT);
+        if (gamepad1.dpadDownWasPressed() && !gamepad1.dpad_left && !gamepad1.dpad_right) {
+            outtakeMotors.decreaseFlywheelSpeed();
         }
-        if (gamepad1.dpadUpWasPressed()) {
-            shooterPower = Math.min(1, shooterPower + SHOOTER_POWER_INCREMENT);
+        if (gamepad1.dpadUpWasPressed() && !gamepad1.dpad_left && !gamepad1.dpad_right) {
+            outtakeMotors.increaseFlywheelSpeed();
         }
 
     }
 
     private void displayTelemetry() {
         addTelemetry("Robot Heading", mecanumDrive.getRobotHeading());
-        addTelemetry("Shooter Power", shooterPower);
+        addTelemetry("Shooter Power", outtakeMotors.getFlywheelSpeed());
 
     }
 

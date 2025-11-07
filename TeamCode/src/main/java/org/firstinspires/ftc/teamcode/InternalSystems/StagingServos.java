@@ -21,14 +21,22 @@ public class StagingServos {
         rampServo = hMap.get(Servo.class, "rampServo");
     }
 
-    public boolean flip() {
+    public void flip() {
         runtime.reset();
         flipperServo.setPosition(FLIPPER_EXTENDED);
         while (runtime.seconds() < 0.5) {
             // Wait for servo to complete movement
         }
         flipperServo.setPosition(FLIPPER_RETRACTED);
-        return true;
+    }
+
+    public void halfFlip() {
+        runtime.reset();
+        rampServo.setPosition(RAMP_EXTENDED - .5);
+        while (runtime.seconds() < 0.5) {
+            // Wait for servo to complete movement
+        }
+        rampServo.setPosition(RAMP_RETRACTED);
     }
 
     public boolean pushOutOfRamp() {
