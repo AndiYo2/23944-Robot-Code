@@ -36,8 +36,8 @@ public class NineBallBlueAutonBackStart extends OpMode{
     private final Pose endPose = new Pose(18, 12, Math.toRadians(90));
 
     private final Pose shootPose = new Pose(54,90, Math.toRadians(135));
-    private final Pose firstPickupPose = new Pose(24,83.5, Math.toRadians(180));
-    private final Pose secondPickupPose = new Pose(24,55.5, Math.toRadians(180));
+    private final Pose firstPickupPose = new Pose(24,87, Math.toRadians(180));
+    private final Pose secondPickupPose = new Pose(24,60.5, Math.toRadians(180));
 
     private final Pose shootToFirstControlPoint = new Pose(85.5,74);
     private final Pose shootToSecondControlPoint = new Pose(62,55);
