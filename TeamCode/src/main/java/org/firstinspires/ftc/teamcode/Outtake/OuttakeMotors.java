@@ -20,14 +20,14 @@ public class OuttakeMotors {
 
 
     private static final double FAR_SHOOTER_POWER= 0.9;
-    private static final double CLOSE_SHOOTER_POWER = 0.7;
+    private static final double CLOSE_SHOOTER_POWER = 0.75;
     private static final double SHOOTER_POWER_INCREMENT = 0.05;
 
     private boolean flywheelRunning = false;
     private boolean autonShooting = false;
     private boolean toggle = false;
 
-    private double power = 0.7;
+    private double power = 0.8;
 
     ElapsedTime runtime = new ElapsedTime();
 
@@ -51,16 +51,16 @@ public class OuttakeMotors {
 
         stagingServos.flip();
         waitT(.25);
-        intakeMotors.intakeBall(1);
+        stagingMotor.runStaging();
         stagingServos.halfFlip();
         waitT(.5);
-        intakeMotors.stopIntakeBall();
+        stagingMotor.stopStaging();
         stagingServos.flip();
         waitT(.25);
-        intakeMotors.intakeBall(1);
+        stagingMotor.runStaging();
         stagingServos.pushOutOfRamp();
         waitT(.25);
-        intakeMotors.stopIntakeBall();
+        stagingMotor.stopStaging();
         stagingServos.flip();
         waitT(.1);
 
@@ -72,20 +72,19 @@ public class OuttakeMotors {
         autonShooting = true;
 
         intakeMotors.stopIntakeBall();
-        stagingMotor.invertStagingForLaunchAuto();
         waitT(.1);
         stagingServos.flip();
         waitT(.25);
-        intakeMotors.intakeBall(1);
+        stagingMotor.runStaging();
         stagingServos.halfFlip();
         waitT(.5);
-        intakeMotors.stopIntakeBall();
+        stagingMotor.stopStaging();
         stagingServos.flip();
         waitT(.25);
-        intakeMotors.intakeBall(1);
+        stagingMotor.runStaging();
         stagingServos.pushOutOfRamp();
         waitT(.25);
-        intakeMotors.stopIntakeBall();
+        stagingMotor.stopStaging();
         stagingServos.flip();
         waitT(.1);
 
@@ -112,7 +111,7 @@ public class OuttakeMotors {
         power = Math.min(1, power + SHOOTER_POWER_INCREMENT);
     }
     public void decreaseFlywheelSpeed(){
-        power = Math.max(.6, power - SHOOTER_POWER_INCREMENT);
+        power = Math.max(.75, power - SHOOTER_POWER_INCREMENT);
     }
     public void shooterPowerToggle(){
         if(toggle){

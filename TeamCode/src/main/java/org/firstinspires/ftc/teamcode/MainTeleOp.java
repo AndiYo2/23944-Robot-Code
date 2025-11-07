@@ -38,6 +38,7 @@ public class MainTeleOp extends LinearOpMode {
             handleIntake();
             displayTelemetry();
             handleShooterPowerControls();
+            handleStaging();
         }
 
     }
@@ -70,11 +71,12 @@ public class MainTeleOp extends LinearOpMode {
         outtakeMotors.shooterSpin(1);
         handleTurretRotations();
         if (gamepad1.right_trigger > 0.5) {
-            stagingMotors.invertStagingForLaunch();
             sleep((long) (STAGING_DELAY_SECONDS * 1000));
             stagingServos.flip();
             sleep((long) (FLIP_DELAY_SECONDS * 1000));
-            stagingMotors.runStaging();
+        }
+        if(gamepad1.rightBumperWasPressed()){
+            stagingMotors.invertStagingForLaunchAuto();
         }
     }
 
@@ -92,9 +94,7 @@ public class MainTeleOp extends LinearOpMode {
     private void handleIntake() {
         if (gamepad1.left_trigger > 0.5) {
             intakeMotors.intakeBall(1);
-        } else if (gamepad1.left_bumper) {
-            intakeMotors.intakeBall(-1);
-        } else {
+        }else {
             intakeMotors.stopIntakeBall();
         }
         if (gamepad1.triangleWasPressed()) {
@@ -115,7 +115,15 @@ public class MainTeleOp extends LinearOpMode {
         if (gamepad1.dpadUpWasPressed() && !gamepad1.dpad_left && !gamepad1.dpad_right) {
             outtakeMotors.increaseFlywheelSpeed();
         }
+    }
 
+    private void handleStaging(){
+        if(gamepad1.leftBumperWasPressed()){
+            stagingMotors.runStaging();
+        }
+        if(gamepad1.leftBumperWasReleased()){
+            stagingMotors.stopStaging();
+        }
     }
 
     private void displayTelemetry() {

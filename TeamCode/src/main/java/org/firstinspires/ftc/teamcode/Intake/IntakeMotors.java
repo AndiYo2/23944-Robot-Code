@@ -18,26 +18,9 @@ public class IntakeMotors {
 
     public void intakeBall(int positiveOrNeg) {
         intakeMotor.setPower(speed * positiveOrNeg);
-        if (positiveOrNeg > 0) {
-            stagingMotor.runStaging();
-        }
     }
 
     public void stopIntakeBall() {
         intakeMotor.setPower(0);
-        stagingMotor.stopStaging();
-    }
-
-    public void toggleIntake(int positiveOrNeg) {
-        running = !running;
-        if (running) {
-            intakeMotor.setPower(speed * positiveOrNeg);
-            if (positiveOrNeg > 0) {
-                stagingMotor.runStaging();
-            }
-        } else {
-            intakeMotor.setPower(0);
-            stagingMotor.stopStaging();
-        }
     }
 }
