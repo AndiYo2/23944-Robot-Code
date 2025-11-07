@@ -49,51 +49,53 @@ public class OuttakeMotors {
     public void shootAuton(){
         autonShooting = true;
 
-
-        intakeMotors.stopIntakeBall();
         stagingServos.flip();
-
-
-        runtime.reset();
-        wait(.25);
+        waitT(.25);
         intakeMotors.intakeBall(1);
         stagingServos.halfFlip();
-
-        runtime.reset();
-        while(runtime.seconds() < 1) {
-            //wait for .025 second
-        }
+        waitT(.5);
         intakeMotors.stopIntakeBall();
         stagingServos.flip();
-
-
-
-
-        runtime.reset();
-        wait(.25);
+        waitT(.25);
         intakeMotors.intakeBall(1);
         stagingServos.pushOutOfRamp();
-
-
+        waitT(.25);
         intakeMotors.stopIntakeBall();
-
         stagingServos.flip();
+        waitT(.1);
 
-
-
-
-
-        runtime.reset();
-        wait(.25);
+        autonShooting = false;
         intakeMotors.intakeBall(1);
 
+    }
+    public void shootAutonSecondary(){
+        autonShooting = true;
+
+        intakeMotors.stopIntakeBall();
+        stagingMotor.invertStagingForLaunchAuto();
+        waitT(.1);
+        stagingServos.flip();
+        waitT(.25);
+        intakeMotors.intakeBall(1);
+        stagingServos.halfFlip();
+        waitT(.5);
+        intakeMotors.stopIntakeBall();
+        stagingServos.flip();
+        waitT(.25);
+        intakeMotors.intakeBall(1);
+        stagingServos.pushOutOfRamp();
+        waitT(.25);
+        intakeMotors.stopIntakeBall();
+        stagingServos.flip();
+        waitT(.1);
 
         autonShooting = false;
         intakeMotors.intakeBall(1);
 
     }
 
-    public void wait(double time){
+
+    public void waitT(double time){
         runtime.reset();
         while(runtime.seconds() < time) {
             //wait for b second

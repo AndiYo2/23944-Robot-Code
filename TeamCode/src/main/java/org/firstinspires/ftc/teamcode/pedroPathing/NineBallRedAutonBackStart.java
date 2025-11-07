@@ -108,7 +108,7 @@ public class NineBallRedAutonBackStart extends OpMode{
             case 3:
                 if(follower.isBusy())
                     break;
-                outtakeMotors.shootAuton();
+                outtakeMotors.shootAutonSecondary();
                 while (outtakeMotors.isAutonShooting()){/*wait lol*/}
 
                 follower.followPath(shootToSecond,true);
@@ -128,7 +128,7 @@ public class NineBallRedAutonBackStart extends OpMode{
                 if(follower.isBusy())
                     break;
 
-                outtakeMotors.shootAuton();
+                outtakeMotors.shootAutonSecondary();
                 while (outtakeMotors.isAutonShooting()){/*wait lol*/}
 
                 outtakeMotors.stopShooter();

@@ -43,6 +43,15 @@ public class StagingMotors {
         }
         stopStaging();
     }
+    public void invertStagingForLaunchAuto(){
+        stagingMotor.setPower(-speed);
+        try {
+            Thread.sleep(25);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        stopStaging();
+    }
 
     /**
      * Stops the staging motor.
