@@ -32,7 +32,7 @@ public class StagingServos {
 
     public void halfFlip() {
         runtime.reset();
-        rampServo.setPosition(RAMP_EXTENDED - .5);
+        rampServo.setPosition(RAMP_EXTENDED - .6);
         while (runtime.seconds() < 0.5) {
             // Wait for servo to complete movement
         }

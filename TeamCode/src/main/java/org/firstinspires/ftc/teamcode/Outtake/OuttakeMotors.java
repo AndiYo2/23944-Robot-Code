@@ -27,7 +27,7 @@ public class OuttakeMotors {
     private boolean autonShooting = false;
     private boolean toggle = false;
 
-    private double power = 0.8;
+    private double power = 0.725;
 
     ElapsedTime runtime = new ElapsedTime();
 
@@ -48,48 +48,55 @@ public class OuttakeMotors {
 
     public void shootAuton(){
         autonShooting = true;
-
+        waitT(1);
+        stagingMotor.runStaging();
+        waitT(.2);
+        stagingMotor.stopStaging();
         stagingServos.flip();
-        waitT(.25);
+        waitT(.6);
         stagingMotor.runStaging();
         stagingServos.halfFlip();
-        waitT(.5);
+        waitT(.4);
         stagingMotor.stopStaging();
         stagingServos.flip();
-        waitT(.25);
+        waitT(1);
+        intakeMotors.intakeBall(1);
         stagingMotor.runStaging();
         stagingServos.pushOutOfRamp();
-        waitT(.25);
+        waitT(1);
         stagingMotor.stopStaging();
         stagingServos.flip();
-        waitT(.1);
+        waitT(1);
 
         autonShooting = false;
         intakeMotors.intakeBall(1);
+        stagingMotor.runStaging();
 
     }
     public void shootAutonSecondary(){
         autonShooting = true;
 
         intakeMotors.stopIntakeBall();
+        stagingMotor.stopStaging();
         waitT(.1);
         stagingServos.flip();
         waitT(.25);
         stagingMotor.runStaging();
         stagingServos.halfFlip();
-        waitT(.5);
+        waitT(1);
         stagingMotor.stopStaging();
         stagingServos.flip();
-        waitT(.25);
+        waitT(.4);
         stagingMotor.runStaging();
         stagingServos.pushOutOfRamp();
-        waitT(.25);
+        waitT(.4);
         stagingMotor.stopStaging();
         stagingServos.flip();
         waitT(.1);
 
         autonShooting = false;
         intakeMotors.intakeBall(1);
+        stagingMotor.runStaging();
 
     }
 
