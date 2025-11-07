@@ -88,37 +88,40 @@ public class NineBallRedAutonBackStart extends OpMode{
                 setPathState(1);
 
             case 1:
-                if(follower.isBusy())
+                if (follower.isBusy())
                     break;
                 outtakeMotors.shootAuton();
-                while (outtakeMotors.isAutonShooting()){/*wait lol*/}
+                while (outtakeMotors.isAutonShooting()) {/*wait lol*/}
 
-                follower.followPath(shootToFirst,true);
+                follower.followPath(shootToFirst, true);
                 follower.setMaxPower(.5);
                 setPathState(2);
 
             case 2:
-                if(follower.isBusy())
+                if (follower.isBusy())
                     break;
-                follower.followPath(firstToShoot,true);
+                follower.followPath(firstToShoot, true);
                 intakeMotors.stopIntakeBall();
                 follower.setMaxPower(1);
                 setPathState(3);
-                
+
             case 3:
-                if(follower.isBusy())
-                    break;
+                if (follower.isBusy()){
+                break;
+                }
                 outtakeMotors.shootAutonSecondary();
                 while (outtakeMotors.isAutonShooting()){/*wait lol*/}
 
                 follower.followPath(shootToSecond,true);
-                follower.setMaxPower(.5);
-
                 setPathState(4);
 
             case 4:
-                if(follower.isBusy())
+                if(follower.isBusy()) {
+                    if (follower.getDistanceRemaining() < 10) {
+                        follower.setMaxPower(.5);
+                    }
                     break;
+                }
                 follower.followPath(secondToShoot,true);
                 intakeMotors.stopIntakeBall();
                 follower.setMaxPower(1);
