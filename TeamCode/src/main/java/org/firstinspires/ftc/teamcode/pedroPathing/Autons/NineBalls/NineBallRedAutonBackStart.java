@@ -33,9 +33,10 @@ public class NineBallRedAutonBackStart extends OpMode{
             shootToStop;
 
     private final Pose startPose = new Pose(87, 9, Math.toRadians(90));
-    private final Pose endPose = new Pose(126, 12, Math.toRadians(90));
+    private final Pose endPose = new Pose(116, 72, Math.toRadians(0));
 
     private final Pose shootPose = new Pose(90,90, Math.toRadians(45));
+    private final Pose secondaryShootPose = new Pose(90,90, Math.toRadians(40));
     private final Pose firstPickupPose = new Pose(120,83.5, Math.toRadians(0));
     private final Pose secondPickupPose = new Pose(120,55.5, Math.toRadians(0));
 
@@ -56,12 +57,12 @@ public class NineBallRedAutonBackStart extends OpMode{
                 .setLinearHeadingInterpolation(shootPose.getHeading(), firstPickupPose.getHeading())
                 .build();
         firstToShoot = follower.pathBuilder()
-                .addPath(new BezierLine(firstPickupPose,shootPose))
-                .setLinearHeadingInterpolation(firstPickupPose.getHeading(), shootPose.getHeading())
+                .addPath(new BezierLine(firstPickupPose,secondaryShootPose))
+                .setLinearHeadingInterpolation(firstPickupPose.getHeading(), secondaryShootPose.getHeading())
                 .build();
         shootToSecond = follower.pathBuilder()
-                .addPath(new BezierCurve(shootPose, shootToSecondControlPoint, secondPickupPose))
-                .setLinearHeadingInterpolation(shootPose.getHeading(), secondPickupPose.getHeading())
+                .addPath(new BezierCurve(secondaryShootPose, shootToSecondControlPoint, secondPickupPose))
+                .setLinearHeadingInterpolation(secondaryShootPose.getHeading(), secondPickupPose.getHeading())
                 .build();
         secondToShoot = follower.pathBuilder()
                 .addPath(new BezierLine(secondPickupPose, shootPose))
@@ -170,6 +171,7 @@ public class NineBallRedAutonBackStart extends OpMode{
         stagingServos.initStagingServos(hardwareMap);
         outtakeMotors.initOuttake(hardwareMap, stagingServos, intakeMotors);
         stagingServos.flip();
+        outtakeMotors.decreaseFlywheelSpeed();
 
     }
     /** This method is called continuously after Init while waiting for "play". **/

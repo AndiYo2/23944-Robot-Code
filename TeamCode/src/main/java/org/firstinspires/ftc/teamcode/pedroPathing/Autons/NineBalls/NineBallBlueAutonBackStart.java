@@ -33,9 +33,10 @@ public class NineBallBlueAutonBackStart extends OpMode{
             shootToStop;
 
     private final Pose startPose = new Pose(57, 9, Math.toRadians(90));
-    private final Pose endPose = new Pose(18, 12, Math.toRadians(90));
+    private final Pose endPose = new Pose(28, 72, Math.toRadians(180));
 
     private final Pose shootPose = new Pose(54,90, Math.toRadians(135));
+    private final Pose secondaryShootPose = new Pose(54,90, Math.toRadians(145));
     private final Pose firstPickupPose = new Pose(24,87, Math.toRadians(180));
     private final Pose secondPickupPose = new Pose(24,60.5, Math.toRadians(180));
 
@@ -56,8 +57,8 @@ public class NineBallBlueAutonBackStart extends OpMode{
                 .setLinearHeadingInterpolation(shootPose.getHeading(), firstPickupPose.getHeading())
                 .build();
         firstToShoot = follower.pathBuilder()
-                .addPath(new BezierLine(firstPickupPose,shootPose))
-                .setLinearHeadingInterpolation(firstPickupPose.getHeading(), shootPose.getHeading())
+                .addPath(new BezierLine(firstPickupPose,secondaryShootPose))
+                .setLinearHeadingInterpolation(firstPickupPose.getHeading(), secondaryShootPose.getHeading())
                 .build();
         shootToSecond = follower.pathBuilder()
                 .addPath(new BezierCurve(shootPose, shootToSecondControlPoint, secondPickupPose))
@@ -103,6 +104,7 @@ public class NineBallBlueAutonBackStart extends OpMode{
                 }
                 follower.followPath(firstToShoot, true);
                 intakeMotors.stopIntakeBall();
+                stagingMotors.stopStaging();
                 follower.setMaxPower(1);
                 setPathState(3);
 
@@ -125,6 +127,7 @@ public class NineBallBlueAutonBackStart extends OpMode{
                 }
                 follower.followPath(secondToShoot,true);
                 intakeMotors.stopIntakeBall();
+                stagingMotors.stopStaging();
                 follower.setMaxPower(1);
                 setPathState(5);
 

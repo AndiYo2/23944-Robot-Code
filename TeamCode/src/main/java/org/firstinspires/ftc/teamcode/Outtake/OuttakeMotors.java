@@ -26,8 +26,8 @@ public class OuttakeMotors {
     private boolean flywheelRunning = false;
     private boolean autonShooting = false;
     private boolean toggle = false;
-
-    private double power = 0.725;
+    private int powIndex = 0;
+    private double power = 0.715;
 
     ElapsedTime runtime = new ElapsedTime();
 
@@ -53,17 +53,17 @@ public class OuttakeMotors {
         waitT(.2);
         stagingMotor.stopStaging();
         stagingServos.flip();
-        waitT(.6);
+        waitT(.25);
         stagingMotor.runStaging();
         stagingServos.halfFlip();
-        waitT(.4);
+        waitT(1);
         stagingMotor.stopStaging();
         stagingServos.flip();
-        waitT(1);
+        waitT(.4);
         intakeMotors.intakeBall(1);
         stagingMotor.runStaging();
         stagingServos.pushOutOfRamp();
-        waitT(1);
+        waitT(.6);
         stagingMotor.stopStaging();
         stagingServos.flip();
         waitT(1);
@@ -87,6 +87,8 @@ public class OuttakeMotors {
         stagingMotor.stopStaging();
         stagingServos.flip();
         waitT(.4);
+        intakeMotors.intakeBall(1);
+
         stagingMotor.runStaging();
         stagingServos.pushOutOfRamp();
         waitT(.4);
@@ -121,12 +123,11 @@ public class OuttakeMotors {
         power = Math.max(.75, power - SHOOTER_POWER_INCREMENT);
     }
     public void shooterPowerToggle(){
-        if(toggle){
-           power = CLOSE_SHOOTER_POWER;
-        }else{
-            power= FAR_SHOOTER_POWER;
-        }
-        toggle = !toggle;
+        powIndex++;
+        double[] pows = new double[]{.725,.8,.9};
+        power = pows[powIndex % 3];
+
+
     }
 
     public double getFlywheelSpeed(){

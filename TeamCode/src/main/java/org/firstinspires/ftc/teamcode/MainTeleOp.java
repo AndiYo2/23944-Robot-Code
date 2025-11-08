@@ -101,6 +101,12 @@ public class MainTeleOp extends LinearOpMode {
             stagingServos.pushOutOfRamp();
             addTelemetry("Pushed", "active");
         }
+        if(gamepad1.xWasPressed()){
+            intakeMotors.intakeBall(-1);
+        }
+        if(gamepad1.xWasReleased()){
+            intakeMotors.stopIntakeBall();
+        }
     }
 
 
