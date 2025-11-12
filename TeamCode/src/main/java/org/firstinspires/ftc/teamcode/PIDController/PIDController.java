@@ -26,7 +26,6 @@ public class PIDController {
         double derivative = (error - lastError) / timer.seconds();
 
         double output = (error * kp) + (derivative * kd) + (integralSum * ki);
-        output = Math.max(0, Math.min(1, output));
 
         lastError = error;
         timer.reset();
