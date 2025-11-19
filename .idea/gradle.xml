@@ -14,8 +14,8 @@
             <option value="$PROJECT_DIR$/TeamCode" />
           </set>
         </option>
+        <option name="resolveExternalAnnotations" value="true" />
       </GradleProjectSettings>
     </option>
-    <option name="offlineMode" value="true" />
   </component>
 </project>

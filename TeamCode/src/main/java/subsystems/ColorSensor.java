@@ -1,20 +1,24 @@
-package OldSystems;
+package subsystems;
 
-import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.arcrobotics.ftclib.command.Subsystem;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
+import utility.RobotHardware;
 
-public class ColorSensor {
+public class ColorSensor implements Subsystem {
+
     NormalizedRGBA colors;
     private NormalizedColorSensor colorSensor;
 
-    public ColorSensor(){colors = colorSensor.getNormalizedColors();}
-
-
-    public void initColorSensor(HardwareMap hardwareMap){
-        colorSensor = hardwareMap.get(NormalizedColorSensor.class, "color_sensor");
+    RobotHardware robot;
+    public ColorSensor(){
+        robot = new RobotHardware();
+        refreshScan();
     }
-    public void refreshScan(){colors = colorSensor.getNormalizedColors();}
+
+
+    public void refreshScan(){
+        colors = colorSensor.getNormalizedColors();}
 
 
 
@@ -34,6 +38,4 @@ public class ColorSensor {
 
         return "red = [" + colors.red + "] green = [ "+ colors.green + "] blue = [ "+ colors.blue + "]";
     }
-
-
 }

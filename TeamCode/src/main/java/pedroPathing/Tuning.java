@@ -64,7 +64,7 @@ public class Tuning extends SelectableOpMode {
                 p.add("Drive Tuner", DriveTuner::new);
                 p.add("Centripetal Tuner", CentripetalTuner::new);
             });
-            s.folder("Tests", p -> {
+            s.folder("tests", p -> {
                 p.add("Line", Line::new);
                 p.add("Triangle", Triangle::new);
                 p.add("Circle", Circle::new);

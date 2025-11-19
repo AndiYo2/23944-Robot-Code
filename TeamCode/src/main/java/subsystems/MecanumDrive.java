@@ -1,8 +1,6 @@
-package Subsystems;
+package subsystems;
 
 import com.arcrobotics.ftclib.command.Subsystem;
-import com.bylazar.telemetry.PanelsTelemetry;
-import com.bylazar.telemetry.TelemetryManager;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
@@ -10,8 +8,6 @@ import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-
-import java.util.function.DoubleSupplier;
 
 import pedroPathing.Constants;
 import utility.RobotHardware;
@@ -42,6 +38,9 @@ public class MecanumDrive implements Subsystem {
 
     public void setSlowMode(boolean set) {
         slowmode = set;
+    }
+    public void toggleSlowMode() {
+        slowmode = !slowmode;
     }
 
     public void resetYaw(){
@@ -74,24 +73,27 @@ public class MecanumDrive implements Subsystem {
         robot.telemetryManager.debug(String.format("driving %f %f %f", ly, lx, rx));
         robot.telemetryManager.update();
 
-        heading = robot.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
-        double rotX = lx * Math.cos(-heading) - ly * Math.sin(-heading);
-        double rotY = lx * Math.sin(-heading) + ly * Math.cos(-heading);
+        double botHeading = heading;
 
-        rotX *= 1.1;
+        // Rotate the joystick input vector to be relative to the field
+        double rotX = lx * Math.cos(-botHeading) - ly * Math.sin(-botHeading);
+        double rotY = lx * Math.sin(-botHeading) + ly * Math.cos(-botHeading);
 
+        rotX = rotX * 1.1;  // Counteract imperfect strafing
+
+        // Calculate and normalize motor powers
         double denominator = Math.max(Math.abs(rotY) + Math.abs(rotX) + Math.abs(rx), 1);
-        leftFrontPower = (rotY + rotX + rx) / denominator;
-        leftRearPower = (rotY - rotX + rx) / denominator;
-        rightFrontPower = (rotY - rotX - rx) / denominator;
-        rightRearPower = (rotY + rotX - rx) / denominator;
+        double frontLeftPower = (rotY + rotX + rx) / denominator;
+        double backLeftPower = (rotY - rotX + rx) / denominator;
+        double frontRightPower = (rotY - rotX - rx) / denominator;
+        double backRightPower = (rotY + rotX - rx) / denominator;
 
         double mult = slowmode ? 0.25 : 1;
 
-        robot.frontLeft.setPower(leftFrontPower * mult);
-        robot.backLeft.setPower(leftRearPower * mult);
-        robot.frontRight.setPower(rightFrontPower * mult);
-        robot.backRight.setPower(rightRearPower * mult);
+        robot.frontLeft.setPower(frontLeftPower * mult);
+        robot.backLeft.setPower(backLeftPower * mult);
+        robot.frontRight.setPower(frontRightPower * mult);
+        robot.backRight.setPower(backRightPower * mult);
     }
 
 }

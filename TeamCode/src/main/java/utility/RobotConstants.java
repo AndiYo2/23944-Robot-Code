@@ -11,19 +11,22 @@ public class RobotConstants {
     public static class Intake {
         public static String intake = "intakeMotor";
         public static String intakeBelt = "intakeBeltMotor";
-        public static String colorSensor = "colorSensor";
 
     }
 
     public static class Spindexer {
-        public static String spindexer = "spindexerMotor";
+        public static String spindexer = "spindexerServo";
 
         //Possibly add robot ball patterns here:
     }
 
-    public static class Outtake {
+    public static class Shooter {
         public static String shooter = "shooterMotor";
         public static String turret = "turretServo";
         public static String outtakeBelt= "outtakeBeltMotor";
+    }
+
+    public static class ColorSensor {
+        public static String colorSensor = "colorSensor";
     }
 }

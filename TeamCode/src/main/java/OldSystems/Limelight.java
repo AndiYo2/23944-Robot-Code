@@ -1,6 +1,6 @@
 package OldSystems;
 
-import com.qualcomm.hardware.limelightvision.LLResult;
+/*import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -68,5 +68,5 @@ public class Limelight {
         distance = (scale / ta);
         return distance;
     }
-}
+}*/
 

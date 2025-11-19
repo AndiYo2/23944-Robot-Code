@@ -1,12 +1,10 @@
 package utility;
 
-import com.arcrobotics.ftclib.controller.PIDController;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.*;
 
-import com.arcrobotics.ftclib.controller.PIDFController;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 public class RobotHardware {
@@ -22,7 +20,7 @@ public class RobotHardware {
     // Intake
     public DcMotorEx intakeMotor, intakeBeltMotor;
 
-    // Outtake
+    // Shooter
     public DcMotorEx shooterMotor, shooterBeltMotor;
     public CRServo turretServo;
 
@@ -36,7 +34,7 @@ public class RobotHardware {
     public ColorSensor colorSensor;
 
     //Spindexer
-    public DcMotorEx spindexerMotor;
+    public CRServo spindexerMotor;
 
     public TelemetryManager telemetryManager;
 
@@ -82,17 +80,17 @@ public class RobotHardware {
         intakeMotor = hardwareMap.get(DcMotorEx.class, RobotConstants.Intake.intake);
         intakeBeltMotor = hardwareMap.get(DcMotorEx.class, RobotConstants.Intake.intakeBelt);
         intakeBeltMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        colorSensor = hardwareMap.get(ColorSensor.class, RobotConstants.Intake.colorSensor);
+        colorSensor = hardwareMap.get(ColorSensor.class, RobotConstants.ColorSensor.colorSensor);
 
         // ******************* SPINDEXER ******************* //
-        spindexerMotor = hardwareMap.get(DcMotorEx.class, RobotConstants.Spindexer.spindexer);
+        spindexerMotor = hardwareMap.get(CRServo.class, RobotConstants.Spindexer.spindexer);
 
 
         // ******************* OUTTAKE ******************* //
-        shooterMotor = hardwareMap.get(DcMotorEx.class, RobotConstants.Outtake.shooter);
-        shooterBeltMotor = hardwareMap.get(DcMotorEx.class, RobotConstants.Outtake.outtakeBelt);
+        shooterMotor = hardwareMap.get(DcMotorEx.class, RobotConstants.Shooter.shooter);
+        shooterBeltMotor = hardwareMap.get(DcMotorEx.class, RobotConstants.Shooter.outtakeBelt);
         shooterBeltMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        turretServo = hardwareMap.get(CRServo.class, RobotConstants.Outtake.turret);
+        turretServo = hardwareMap.get(CRServo.class, RobotConstants.Shooter.turret);
 
         // ******************* LIMELIGHT ******************* //
 //        limelight = hardwareMap.get(Limelight3A.class, "limelight");

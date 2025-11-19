@@ -1,4 +1,4 @@
-package Subsystems;
+package subsystems;
 
 import com.arcrobotics.ftclib.command.Subsystem;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -56,9 +56,6 @@ public class Intake implements Subsystem {
         robot.intakeBeltMotor.setPower(0);
     }
 
-    public void stopStaging() {
-        robot.intakeBeltMotor.setVelocity(0);
-    }
 
 
 }
