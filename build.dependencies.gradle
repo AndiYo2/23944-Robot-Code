@@ -21,7 +21,6 @@ dependencies {
     implementation 'com.pedropathing:telemetry:0.0.6'
 
     implementation 'com.bylazar:fullpanels:1.0.2'
-    implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'com.github.FTCLib:FTCLib:v2.1.1'
 
 

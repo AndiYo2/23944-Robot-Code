@@ -16,6 +16,7 @@ public class RobotConstants {
 
     public static class Spindexer {
         public static String spindexer = "spindexerServo";
+        public static String spindexerEncoder = "spindexerServoEncoder";
 
         //Possibly add robot ball patterns here:
     }

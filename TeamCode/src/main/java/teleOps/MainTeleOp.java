@@ -45,8 +45,8 @@ public class MainTeleOp extends OpModeTemplate {
                 .whenPressed(() -> mecanumDrive.toggleSlowMode());
 
         new GamepadButton(driverGamepad, GamepadKeys.Button.Y) // Up
-                .whenPressed(() -> intake.setIntakePower(1))
-                .whenReleased(() -> intake.stopIntakeMotor());
+                .whenPressed(() -> intake.setStagingMotorPower(1))
+                .whenReleased(() -> intake.stopStagingMotor());
 
         new GamepadButton(driverGamepad, GamepadKeys.Button.X) // Left
                 .whenPressed(() -> shooter.setStagingMotorPower(1))
@@ -75,5 +75,9 @@ public class MainTeleOp extends OpModeTemplate {
                 -gamepad1.left_stick_y,
                 gamepad1.left_stick_x,
                 gamepad1.right_stick_x);
+        spindexer.periodic();
+        telemetry.addData("isRunning", true);
+        telemetry.addData("MotorPosition", spindexer.getEncoderDegrees());
+        telemetry.update();
     }
 }

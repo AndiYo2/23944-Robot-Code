@@ -8,7 +8,7 @@ public class Shooter implements Subsystem {
         RobotHardware robot;
 
         public Shooter(){
-            this.robot = robot;
+            this.robot = RobotHardware.getInstance();
         }
 
         public double getShooterMotorVelocity() {

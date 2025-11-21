@@ -2,11 +2,13 @@ package utility;
 
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
+import com.pedropathing.ftc.localization.Encoder;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.*;
 
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
+
 public class RobotHardware {
     // Drivetrain
     public DcMotorEx frontLeft, backLeft, frontRight, backRight;
@@ -35,6 +37,7 @@ public class RobotHardware {
 
     //Spindexer
     public CRServo spindexerMotor;
+    public AnalogInput spindexerEncoder;
 
     public TelemetryManager telemetryManager;
 
@@ -69,9 +72,8 @@ public class RobotHardware {
 
         imu = hardwareMap.get(IMU.class, "imu");
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
-                RevHubOrientationOnRobot.LogoFacingDirection.BACKWARD, //
-                RevHubOrientationOnRobot.UsbFacingDirection.UP
-        ));
+                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT, //
+                RevHubOrientationOnRobot.UsbFacingDirection.UP));
         imu.initialize(parameters);
         imu.resetYaw();
 
@@ -80,10 +82,13 @@ public class RobotHardware {
         intakeMotor = hardwareMap.get(DcMotorEx.class, RobotConstants.Intake.intake);
         intakeBeltMotor = hardwareMap.get(DcMotorEx.class, RobotConstants.Intake.intakeBelt);
         intakeBeltMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        intakeBeltMotor.setDirection(DcMotor.Direction.REVERSE);
         colorSensor = hardwareMap.get(ColorSensor.class, RobotConstants.ColorSensor.colorSensor);
 
         // ******************* SPINDEXER ******************* //
+
         spindexerMotor = hardwareMap.get(CRServo.class, RobotConstants.Spindexer.spindexer);
+        spindexerEncoder = hardwareMap.get(AnalogInput.class, RobotConstants.Spindexer.spindexerEncoder);
 
 
         // ******************* OUTTAKE ******************* //

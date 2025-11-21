@@ -9,6 +9,8 @@ import subsystems.Intake;
 import subsystems.Shooter;
 import subsystems.ColorSensor;
 import subsystems.Limelight;
+import utility.RobotConstants;
+import utility.RobotHardware;
 
     abstract public class OpModeTemplate extends CommandOpMode {
         protected MecanumDrive mecanumDrive;
@@ -17,17 +19,20 @@ import subsystems.Limelight;
         protected Spindexer spindexer;
         protected ColorSensor colorSensor;
         protected GamepadEx driverGamepad;
+        private final RobotHardware robot = RobotHardware.getInstance();
 
         protected void initHardware(boolean isAuto) {
+            driverGamepad = new GamepadEx(gamepad1);
+            robot.init(hardwareMap, driverGamepad);
             mecanumDrive = new MecanumDrive();
 
 
             intake = new Intake();
             shooter = new Shooter();
-            colorSensor = new ColorSensor();
+//          colorSensor = new ColorSensor();
             spindexer = new Spindexer();
-            register(intake, shooter, colorSensor, spindexer);
-            driverGamepad = new GamepadEx(gamepad1);
+            register(intake, shooter, spindexer /*,colorSensor*/);
+
         }
 
         public enum Alliance {
