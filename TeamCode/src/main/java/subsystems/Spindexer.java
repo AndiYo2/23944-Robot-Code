@@ -1,7 +1,7 @@
 package subsystems;
 
 import com.arcrobotics.ftclib.command.Subsystem;
-import utility.AxonServo;
+import utility.BallPattern;
 import utility.RobotHardware;
 
 public class Spindexer implements Subsystem {
@@ -12,15 +12,19 @@ public class Spindexer implements Subsystem {
 
     private double motorPos = 0;
 
+    public static BallPattern currentBallPattern;
+
     public Spindexer() {
         this.robot = RobotHardware.getInstance();
+        currentBallPattern = new BallPattern();
     }
+
+
     public double getEncoderDegrees() {
         //Voltage / 3.3V * 360 Degrees
         motorPos = (robot.spindexerEncoder.getVoltage() / 3.3) * 360;
         return motorPos;
     }
-
 
     public void setPositionAdd(double position) {
         goalRotationPosition += position;
@@ -35,7 +39,6 @@ public class Spindexer implements Subsystem {
     public void rotate() {
         setPositionAdd(-120);
     }
-
 
     private double getAngularDistance(double angleA, double angleB) {
         double diff = Math.abs(angleA - angleB);
@@ -59,4 +62,24 @@ public class Spindexer implements Subsystem {
             }
         }
     }
+
+
+    public static boolean addBallLogic(){
+        BallPattern.BallType ball = ColorSensorSubsytem.getBallColor();
+
+        if(currentBallPattern.getBallInSlotX(1) == BallPattern.BallType.NONE){
+            currentBallPattern.addBallInSlotX(1, ball);
+            return true;
+        }
+        return false;
+    }
+
+
+
+
+
+
+
+
+
 }

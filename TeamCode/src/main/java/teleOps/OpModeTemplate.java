@@ -7,9 +7,7 @@ import subsystems.MecanumDrive;
 import subsystems.Spindexer;
 import subsystems.Intake;
 import subsystems.Shooter;
-import subsystems.ColorSensor;
-import subsystems.Limelight;
-import utility.RobotConstants;
+import subsystems.ColorSensorSubsytem;
 import utility.RobotHardware;
 
     abstract public class OpModeTemplate extends CommandOpMode {
@@ -17,7 +15,7 @@ import utility.RobotHardware;
         protected Shooter shooter;
         protected Intake intake;
         protected Spindexer spindexer;
-        protected ColorSensor colorSensor;
+        protected ColorSensorSubsytem colorSensorIntake;
         protected GamepadEx driverGamepad;
         private final RobotHardware robot = RobotHardware.getInstance();
 
@@ -29,9 +27,9 @@ import utility.RobotHardware;
 
             intake = new Intake();
             shooter = new Shooter();
-//          colorSensor = new ColorSensor();
+            colorSensorIntake = new ColorSensorSubsytem();
             spindexer = new Spindexer();
-            register(intake, shooter, spindexer /*,colorSensor*/);
+            register(intake, shooter, spindexer , colorSensorIntake);
 
         }
 

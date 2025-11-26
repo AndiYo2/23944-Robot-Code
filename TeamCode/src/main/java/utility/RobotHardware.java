@@ -2,7 +2,6 @@ package utility;
 
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
-import com.pedropathing.ftc.localization.Encoder;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.*;
 
@@ -33,7 +32,7 @@ public class RobotHardware {
     public Limelight3A limelight;
 
     // Color Sensor
-    public ColorSensor colorSensor;
+    public ColorSensor colorSensorIntake;
 
     //Spindexer
     public CRServo spindexerMotor;
@@ -83,7 +82,7 @@ public class RobotHardware {
         intakeBeltMotor = hardwareMap.get(DcMotorEx.class, RobotConstants.Intake.intakeBelt);
         intakeBeltMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         intakeBeltMotor.setDirection(DcMotor.Direction.REVERSE);
-        colorSensor = hardwareMap.get(ColorSensor.class, RobotConstants.ColorSensor.colorSensor);
+        colorSensorIntake = hardwareMap.get(ColorSensor.class, RobotConstants.ColorSensor.colorSensor);
 
         // ******************* SPINDEXER ******************* //
 

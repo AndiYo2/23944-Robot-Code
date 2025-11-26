@@ -1,21 +1,9 @@
 package teleOps;
 
-import com.arcrobotics.ftclib.command.CommandOpMode;
 import com.arcrobotics.ftclib.command.button.Trigger;
-import com.arcrobotics.ftclib.gamepad.GamepadEx;
-import com.arcrobotics.ftclib.command.CommandScheduler;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.arcrobotics.ftclib.command.button.GamepadButton;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-
-import com.qualcomm.robotcore.hardware.Gamepad;
-import subsystems.MecanumDrive;
-import subsystems.ColorSensor;
-import subsystems.Intake;
-import subsystems.Shooter;
-
-import utility.RobotHardware;
 
 
 @TeleOp
@@ -54,17 +42,6 @@ public class MainTeleOp extends OpModeTemplate {
 
         new GamepadButton(driverGamepad, GamepadKeys.Button.A)
                 .whenPressed(() -> spindexer.rotate());
-
-
-
-
-
-
-
-
-
-
-
 
     }
 

@@ -2,6 +2,8 @@ package subsystems;
 
 import com.arcrobotics.ftclib.command.Subsystem;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import teleOps.OpModeTemplate;
+import utility.RobotConstants;
 import utility.RobotHardware;
 
 public class Intake implements Subsystem {
@@ -57,5 +59,12 @@ public class Intake implements Subsystem {
     }
 
 
+    public void tryAddBallInSpindexer(){
+        if(robot.spindexerMotor.getPower() == 0){
+            robot.intakeBeltMotor.setPower(1);
+            Spindexer.addBallLogic();
+        }
 
+
+    }
 }

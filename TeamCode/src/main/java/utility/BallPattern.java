@@ -21,15 +21,15 @@ public class BallPattern {
     }
 
 
-
-
-
     public void setBallPattern(BallType one, BallType two, BallType three){
         pattern = new BallType[]{one, two, three};
     }
 
     public void setBallPatternNone(int x){
         pattern[x -1 ] = BallType.NONE;
+    }
+    public void addBallInSlotX(int x, BallType ballType){
+        pattern[x -1 ] = ballType;
     }
 
 
