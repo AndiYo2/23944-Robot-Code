@@ -13,7 +13,7 @@ public class ColorSensorSubsytem implements Subsystem {
 
     RobotHardware robot;
     public ColorSensorSubsytem(){
-        robot = new RobotHardware();
+        this.robot = RobotHardware.getInstance();
         colorSensor = (NormalizedColorSensor) robot.colorSensorIntake;
         refreshScan();
     }

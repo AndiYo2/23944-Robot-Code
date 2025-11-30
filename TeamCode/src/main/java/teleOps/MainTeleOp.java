@@ -43,6 +43,10 @@ public class MainTeleOp extends OpModeTemplate {
         new GamepadButton(driverGamepad, GamepadKeys.Button.A)
                 .whenPressed(() -> spindexer.rotate());
 
+        new GamepadButton(driverGamepad, GamepadKeys.Button.RIGHT_BUMPER)
+                .whenPressed(() -> spindexer.flickBallOut());
+
+
     }
 
     @Override

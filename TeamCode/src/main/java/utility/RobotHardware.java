@@ -40,6 +40,8 @@ public class RobotHardware {
 
     public TelemetryManager telemetryManager;
 
+    public Servo spindexerServo;
+
 
 
     public static RobotHardware getInstance() {
@@ -82,12 +84,14 @@ public class RobotHardware {
         intakeBeltMotor = hardwareMap.get(DcMotorEx.class, RobotConstants.Intake.intakeBelt);
         intakeBeltMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         intakeBeltMotor.setDirection(DcMotor.Direction.REVERSE);
+
         colorSensorIntake = hardwareMap.get(ColorSensor.class, RobotConstants.ColorSensor.colorSensor);
 
         // ******************* SPINDEXER ******************* //
 
         spindexerMotor = hardwareMap.get(CRServo.class, RobotConstants.Spindexer.spindexer);
         spindexerEncoder = hardwareMap.get(AnalogInput.class, RobotConstants.Spindexer.spindexerEncoder);
+        spindexerServo = hardwareMap.get(Servo.class, RobotConstants.Spindexer.spindexerFLipperServo);
 
 
         // ******************* OUTTAKE ******************* //
@@ -97,10 +101,10 @@ public class RobotHardware {
         turretServo = hardwareMap.get(CRServo.class, RobotConstants.Shooter.turret);
 
         // ******************* LIMELIGHT ******************* //
-//        limelight = hardwareMap.get(Limelight3A.class, "limelight");
-//        limelight.setPollRateHz(100);
-//        limelight.pipelineSwitch(0);
-//        limelight.start();
+         limelight = hardwareMap.get(Limelight3A.class, RobotConstants.Limelight.limelight);
+        limelight.setPollRateHz(100);
+        limelight.pipelineSwitch(0);
+        limelight.start();
 
     }
 }

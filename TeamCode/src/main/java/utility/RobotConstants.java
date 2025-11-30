@@ -18,6 +18,8 @@ public class RobotConstants {
         public static String spindexer = "spindexerServo";
         public static String spindexerEncoder = "spindexerServoEncoder";
 
+        public static String spindexerFLipperServo = "spindexerFlipperServo";
+
         //Possibly add robot ball patterns here:
     }
 
@@ -30,4 +32,11 @@ public class RobotConstants {
     public static class ColorSensor {
         public static String colorSensor = "colorSensor";
     }
+
+    public static class Limelight{
+        public static String limelight = "limelight";
+    }
+
+
+
 }

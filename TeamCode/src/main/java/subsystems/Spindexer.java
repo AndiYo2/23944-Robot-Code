@@ -26,6 +26,16 @@ public class Spindexer implements Subsystem {
         return motorPos;
     }
 
+    public void flickBallOut() {
+        robot.spindexerServo.setPosition(.65);
+        try {
+            Thread.sleep(600);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        robot.spindexerServo.setPosition(0.25);
+    }
+
     public void setPositionAdd(double position) {
         goalRotationPosition += position;
         if(goalRotationPosition >= 360){
@@ -37,7 +47,7 @@ public class Spindexer implements Subsystem {
     }
 
     public void rotate() {
-        setPositionAdd(-120);
+        setPositionAdd(120);
     }
 
     private double getAngularDistance(double angleA, double angleB) {
@@ -63,23 +73,13 @@ public class Spindexer implements Subsystem {
         }
     }
 
-
-    public static boolean addBallLogic(){
+    public static boolean addBallLogic() {
         BallPattern.BallType ball = ColorSensorSubsytem.getBallColor();
 
-        if(currentBallPattern.getBallInSlotX(1) == BallPattern.BallType.NONE){
+        if (currentBallPattern.getBallInSlotX(1) == BallPattern.BallType.NONE) {
             currentBallPattern.addBallInSlotX(1, ball);
             return true;
         }
         return false;
     }
-
-
-
-
-
-
-
-
-
 }

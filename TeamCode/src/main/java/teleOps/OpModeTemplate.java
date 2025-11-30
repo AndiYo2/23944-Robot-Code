@@ -3,6 +3,7 @@ package teleOps;
 import com.arcrobotics.ftclib.command.CommandOpMode;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 
+import subsystems.Limelight;
 import subsystems.MecanumDrive;
 import subsystems.Spindexer;
 import subsystems.Intake;
@@ -17,7 +18,9 @@ import utility.RobotHardware;
         protected Spindexer spindexer;
         protected ColorSensorSubsytem colorSensorIntake;
         protected GamepadEx driverGamepad;
+        protected Limelight limelight;
         private final RobotHardware robot = RobotHardware.getInstance();
+
 
         protected void initHardware(boolean isAuto) {
             driverGamepad = new GamepadEx(gamepad1);
@@ -29,7 +32,8 @@ import utility.RobotHardware;
             shooter = new Shooter();
             colorSensorIntake = new ColorSensorSubsytem();
             spindexer = new Spindexer();
-            register(intake, shooter, spindexer , colorSensorIntake);
+            limelight = new Limelight();
+            register(intake, shooter, spindexer, limelight,  colorSensorIntake);
 
         }
 
