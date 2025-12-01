@@ -19,13 +19,6 @@ public class Spindexer implements Subsystem {
         currentBallPattern = new BallPattern();
     }
 
-
-    public double getEncoderDegrees() {
-        //Voltage / 3.3V * 360 Degrees
-        motorPos = (robot.spindexerEncoder.getVoltage() / 3.3) * 360;
-        return motorPos;
-    }
-
     public void flickBallOut() {
         robot.spindexerServo.setPosition(.65);
         try {
@@ -35,6 +28,13 @@ public class Spindexer implements Subsystem {
         }
         robot.spindexerServo.setPosition(0.25);
     }
+
+    public double getEncoderDegrees() {
+        //Voltage / 3.3V * 360 Degrees
+        motorPos = (robot.spindexerEncoder.getVoltage() / 3.3) * 360;
+        return motorPos;
+    }
+
 
     public void setPositionAdd(double position) {
         goalRotationPosition += position;
@@ -59,7 +59,7 @@ public class Spindexer implements Subsystem {
     public void periodic() {
         getEncoderDegrees();
         if (!isAtGoal) {
-            robot.spindexerMotor.setPower(.5);
+            robot.spindexerMotor.setPower(-.2);
 
             // Normalize positions to 0-360 range
             double normalizedMotorPos = ((motorPos % 360) + 360) % 360;

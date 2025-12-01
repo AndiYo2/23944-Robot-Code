@@ -4,6 +4,7 @@ import com.arcrobotics.ftclib.command.button.Trigger;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.arcrobotics.ftclib.command.button.GamepadButton;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
+import subsystems.ColorSensorSubsytem;
 
 
 @TeleOp
@@ -57,8 +58,9 @@ public class MainTeleOp extends OpModeTemplate {
                 gamepad1.left_stick_x,
                 gamepad1.right_stick_x);
         spindexer.periodic();
+        colorSensorIntake.periodic();
         telemetry.addData("isRunning", true);
-        telemetry.addData("MotorPosition", spindexer.getEncoderDegrees());
+        telemetry.addData("ColorSensor", colorSensorIntake.getColorDataString());
         telemetry.update();
     }
 }

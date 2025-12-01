@@ -60,7 +60,12 @@ public class ColorSensorSubsytem implements Subsystem {
     }
 
     public String getColorDataString(){
-
+        refreshScan();
         return "red = [" + colors.red + "] green = [ "+ colors.green + "] blue = [ "+ colors.blue + "]";
     }
+    @Override
+    public void periodic() {
+        refreshScan();
+    }
+
 }
