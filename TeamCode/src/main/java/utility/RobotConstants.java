@@ -27,6 +27,7 @@ public class RobotConstants {
         public static String shooter = "shooterMotor";
         public static String turret = "turretServo";
         public static String outtakeBelt= "outtakeBeltMotor";
+        public static String shooterEncoder = "shooterEncoder";
     }
 
     public static class ColorSensor {

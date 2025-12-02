@@ -6,6 +6,7 @@ import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import java.util.List;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.jetbrains.annotations.NotNull;
 import utility.RobotHardware;
 
 public class Limelight implements Subsystem {
@@ -67,6 +68,18 @@ public class Limelight implements Subsystem {
             double dist = result.getBotposeAvgDist();
         }
     }
+
+    public double getEncoderDegrees() {
+        //Voltage / 3.3V * 360 Degrees
+        double motorPos = (robot.shooterEncoder.getVoltage() / 3.3) * 360;
+        return motorPos;
+    }
+
+
+
+
+
+
 
     public void aimTurret() {
         LLResult result = robot.limelight.getLatestResult();
@@ -232,5 +245,14 @@ public class Limelight implements Subsystem {
         sb.append(String.format("Target Lost Timer: %.2f s\n", targetLostTimer.seconds()));
 
         return sb.toString();
+    }
+
+
+
+    @Override
+    public void periodic() {
+        start();
+        aimTurret();
+
     }
 }

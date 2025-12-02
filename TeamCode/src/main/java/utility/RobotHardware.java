@@ -11,18 +11,21 @@ import com.qualcomm.hardware.limelightvision.Limelight3A;
 public class RobotHardware {
     // Drivetrain
     public DcMotorEx frontLeft, backLeft, frontRight, backRight;
-    public IMU imu;
+
 
     // Hardware
+    public IMU imu;
     private HardwareMap hardwareMap;
     private static RobotHardware instance = null;
-    private boolean enabled;
+    public boolean enabled = false;
+
 
     // Intake
     public DcMotorEx intakeMotor, intakeBeltMotor;
 
     // Shooter
     public DcMotorEx shooterMotor, shooterBeltMotor;
+    public AnalogInput shooterEncoder;
     public CRServo turretServo;
 
     //Driver Controller
@@ -99,6 +102,7 @@ public class RobotHardware {
         shooterBeltMotor = hardwareMap.get(DcMotorEx.class, RobotConstants.Shooter.outtakeBelt);
         shooterBeltMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         turretServo = hardwareMap.get(CRServo.class, RobotConstants.Shooter.turret);
+        shooterEncoder = hardwareMap.get(AnalogInput.class, RobotConstants.Shooter.shooterEncoder);
 
         // ******************* LIMELIGHT ******************* //
          limelight = hardwareMap.get(Limelight3A.class, RobotConstants.Limelight.limelight);

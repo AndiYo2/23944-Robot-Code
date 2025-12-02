@@ -59,8 +59,10 @@ public class MainTeleOp extends OpModeTemplate {
                 gamepad1.right_stick_x);
         spindexer.periodic();
         colorSensorIntake.periodic();
+
+
         telemetry.addData("isRunning", true);
-        telemetry.addData("ColorSensor", colorSensorIntake.getColorDataString());
+        //telemetry.addData("ColorSensor", colorSensorIntake.getColorDataString());
         telemetry.update();
     }
 }
