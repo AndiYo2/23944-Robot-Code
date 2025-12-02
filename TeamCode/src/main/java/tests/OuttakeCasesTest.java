@@ -1,6 +1,7 @@
 package tests;
 
 import utility.BallPattern;
+import utility.OuttakeCases;
 
 public class OuttakeCasesTest {
     static int count = 0;

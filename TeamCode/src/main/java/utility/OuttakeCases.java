@@ -1,6 +1,4 @@
-package tests;
-
-import utility.BallPattern;
+package utility;
 
 import java.util.ArrayList;
 
