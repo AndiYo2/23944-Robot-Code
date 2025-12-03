@@ -21,6 +21,8 @@ public class MainTeleOp extends OpModeTemplate {
     private void configureButtonBindings() {
         new Trigger(() -> gamepad1.left_trigger > 0.3)
                 .whenActive(() -> intake.setIntakePower(1))
+                .whenActive(() -> intake.setStagingMotorPower(1))
+                .whenInactive(() -> intake.stopStagingMotor())
                 .whenInactive(() -> intake.stopIntakeMotor());
 
         new Trigger(() -> gamepad1.right_trigger > 0.3)
@@ -32,10 +34,6 @@ public class MainTeleOp extends OpModeTemplate {
 
         new GamepadButton(driverGamepad, GamepadKeys.Button.B) // Right
                 .whenPressed(() -> mecanumDrive.toggleSlowMode());
-
-        new GamepadButton(driverGamepad, GamepadKeys.Button.Y) // Up
-                .whenPressed(() -> intake.setStagingMotorPower(1))
-                .whenReleased(() -> intake.stopStagingMotor());
 
         new GamepadButton(driverGamepad, GamepadKeys.Button.X) // Left
                 .whenPressed(() -> shooter.setStagingMotorPower(1))
