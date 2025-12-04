@@ -20,13 +20,12 @@ public class RobotConstants {
 
         public static String spindexerFLipperServo = "spindexerFlipperServo";
 
-        //Possibly add robot ball patterns here:
     }
 
     public static class Shooter {
         public static String shooter = "shooterMotor";
         public static String turret = "turretServo";
-        public static String outtakeBelt= "outtakeBeltMotor";
+        public static String shooterFlipperServo = "shooterFlipperServo";
         public static String shooterEncoder = "shooterEncoder";
     }
 

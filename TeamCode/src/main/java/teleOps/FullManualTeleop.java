@@ -4,11 +4,10 @@ import com.arcrobotics.ftclib.command.button.Trigger;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.arcrobotics.ftclib.command.button.GamepadButton;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
-import subsystems.ColorSensorSubsytem;
 
 
 @TeleOp
-public class MainTeleOp extends OpModeTemplate {
+public class FullManualTeleop extends OpModeTemplate {
 
 
 
@@ -32,18 +31,21 @@ public class MainTeleOp extends OpModeTemplate {
         new GamepadButton(driverGamepad, GamepadKeys.Button.START)
                 .whenPressed(() -> mecanumDrive.resetYaw());
 
-        new GamepadButton(driverGamepad, GamepadKeys.Button.B) // Right
+        new GamepadButton(driverGamepad, GamepadKeys.Button.B)
                 .whenPressed(() -> mecanumDrive.toggleSlowMode());
 
-        new GamepadButton(driverGamepad, GamepadKeys.Button.X) // Left
-                .whenPressed(() -> shooter.setStagingMotorPower(1))
-                .whenReleased(() -> shooter.stopStagingMotor());
+        new GamepadButton(driverGamepad, GamepadKeys.Button.Y)
+                .whenPressed(() -> shooter.flip());
 
         new GamepadButton(driverGamepad, GamepadKeys.Button.A)
                 .whenPressed(() -> spindexer.rotate());
 
-        new GamepadButton(driverGamepad, GamepadKeys.Button.RIGHT_BUMPER)
+        new GamepadButton(driverGamepad, GamepadKeys.Button.X)
                 .whenPressed(() -> spindexer.flickBallOut());
+
+        new GamepadButton(driverGamepad, GamepadKeys.Button.LEFT_BUMPER)
+                .whenPressed(() -> shooter.toggleLimelight());
+
 
 
     }
@@ -57,6 +59,7 @@ public class MainTeleOp extends OpModeTemplate {
                 gamepad1.right_stick_x);
         spindexer.periodic();
         colorSensorIntake.periodic();
+        shooter.periodic();
 
 
         telemetry.addData("isRunning", true);

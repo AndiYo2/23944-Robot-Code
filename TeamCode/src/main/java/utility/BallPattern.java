@@ -28,7 +28,7 @@ public class BallPattern {
     public void setBallPatternNone(int x){
         pattern[x -1 ] = BallType.NONE;
     }
-    public void addBallInSlotX(int x, BallType ballType){
+    public void setBallInSlotX(int x, BallType ballType){
         pattern[x -1 ] = ballType;
     }
 
@@ -40,4 +40,16 @@ public class BallPattern {
     public BallType[] getBallPattern(){
         return pattern;
     }
+
+
+    public boolean isFull(){
+        for(BallType ball : pattern){
+            if(ball == BallType.NONE){
+                return false;
+            }
+        }
+        return true;
+    }
+
+
 }

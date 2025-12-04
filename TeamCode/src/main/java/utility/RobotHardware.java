@@ -24,7 +24,9 @@ public class RobotHardware {
     public DcMotorEx intakeMotor, intakeBeltMotor;
 
     // Shooter
-    public DcMotorEx shooterMotor, shooterBeltMotor;
+    public DcMotorEx shooterMotor;
+
+    public Servo shooterFlipper;
     public AnalogInput shooterEncoder;
     public CRServo turretServo;
 
@@ -99,10 +101,9 @@ public class RobotHardware {
 
         // ******************* OUTTAKE ******************* //
         shooterMotor = hardwareMap.get(DcMotorEx.class, RobotConstants.Shooter.shooter);
-        shooterBeltMotor = hardwareMap.get(DcMotorEx.class, RobotConstants.Shooter.outtakeBelt);
-        shooterBeltMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         turretServo = hardwareMap.get(CRServo.class, RobotConstants.Shooter.turret);
         shooterEncoder = hardwareMap.get(AnalogInput.class, RobotConstants.Shooter.shooterEncoder);
+        shooterFlipper = hardwareMap.get(Servo.class, RobotConstants.Shooter.shooterFlipperServo);
 
         // ******************* LIMELIGHT ******************* //
          limelight = hardwareMap.get(Limelight3A.class, RobotConstants.Limelight.limelight);

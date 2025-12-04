@@ -1,5 +1,6 @@
 package subsystems;
 
+import android.graphics.Color;
 import com.arcrobotics.ftclib.command.Subsystem;
 import utility.BallPattern;
 import utility.RobotHardware;
@@ -9,6 +10,9 @@ public class Spindexer implements Subsystem {
     private final RobotHardware robot;
     private double goalRotationPosition = 0;   // Cumulative target position
     private boolean isAtGoal = true;
+    private boolean noBallsLeft;
+    private long lastNoneDetectionTime = 0;
+    private boolean isTimerStarted = false;
 
     private double motorPos = 0;
 
@@ -66,7 +70,7 @@ public class Spindexer implements Subsystem {
             double normalizedGoalPos = ((goalRotationPosition % 360) + 360) % 360;
 
             // Check if within 5 degrees using the shortest path
-            if (getAngularDistance(normalizedMotorPos, normalizedGoalPos) <= 2) {
+            if (getAngularDistance(normalizedMotorPos, normalizedGoalPos) <= 5) {
                 isAtGoal = true;
                 robot.spindexerMotor.setPower(0);
             }
@@ -77,9 +81,44 @@ public class Spindexer implements Subsystem {
         BallPattern.BallType ball = ColorSensorSubsytem.getBallColor();
 
         if (currentBallPattern.getBallInSlotX(1) == BallPattern.BallType.NONE) {
-            currentBallPattern.addBallInSlotX(1, ball);
+            currentBallPattern.setBallInSlotX(1, ball);
             return true;
         }
         return false;
     }
+    
+    
+    
+    
+    public void indexBalls(){
+        noBallsLeft = false;
+        
+        while(!(currentBallPattern.isFull() || noBallsLeft )){
+
+
+            if (ColorSensorSubsytem.getBallColor() == BallPattern.BallType.NONE) {
+                if (!isTimerStarted) {
+                    lastNoneDetectionTime = System.currentTimeMillis();
+                    isTimerStarted = true;
+                } else if (System.currentTimeMillis() - lastNoneDetectionTime >= 2000) {
+                    noBallsLeft = true;
+                    robot.intakeBeltMotor.setPower(0);
+                }
+            } else {
+                isTimerStarted = false;
+            }
+
+
+            if(ColorSensorSubsytem.getBallColor() != BallPattern.BallType.NONE){
+                robot.intakeBeltMotor.setPower(0);
+                currentBallPattern.setBallInSlotX(1, ColorSensorSubsytem.getBallColor());
+                rotate();
+            }else{
+                robot.intakeBeltMotor.setPower(1);
+            }
+            
+        }
+        
+    }
+    
 }
