@@ -2,11 +2,14 @@ package utility;
 
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
+import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.*;
 
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
 public class RobotHardware {
     // Drivetrain
@@ -47,6 +50,8 @@ public class RobotHardware {
 
     public Servo spindexerServo;
 
+    public GoBildaPinpointDriver pinpoint;
+
 
 
     public static RobotHardware getInstance() {
@@ -83,6 +88,9 @@ public class RobotHardware {
         imu.initialize(parameters);
         imu.resetYaw();
 
+        pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
+        pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
+        pinpoint.setOffsets(0.0, 0.0, DistanceUnit.INCH);
 
         // ******************* INTAKE ******************* //
         intakeMotor = hardwareMap.get(DcMotorEx.class, RobotConstants.Intake.intake);
@@ -101,6 +109,7 @@ public class RobotHardware {
 
         // ******************* OUTTAKE ******************* //
         shooterMotor = hardwareMap.get(DcMotorEx.class, RobotConstants.Shooter.shooter);
+        shooterMotor.setDirection(DcMotorEx.Direction.REVERSE);
         turretServo = hardwareMap.get(CRServo.class, RobotConstants.Shooter.turret);
         shooterEncoder = hardwareMap.get(AnalogInput.class, RobotConstants.Shooter.shooterEncoder);
         shooterFlipper = hardwareMap.get(Servo.class, RobotConstants.Shooter.shooterFlipperServo);

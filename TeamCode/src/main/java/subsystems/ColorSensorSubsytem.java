@@ -36,27 +36,20 @@ public class ColorSensorSubsytem implements Subsystem {
         refreshScan();
         return colors.blue;
     }
+
+    public float getAlpha(){
+        refreshScan();
+        return colors.alpha;
+    }
     
     public static BallPattern.BallType getBallColor(){
         refreshScan();
-        float red = colors.red;
-        float green = colors.green;
-        float blue = colors.blue;
 
-        // Threshold values for color detection
-        final float COLOR_THRESHOLD = 0.3f;
-
-        // Check for purple (high red and blue, low green)
-        if (red > COLOR_THRESHOLD && blue > COLOR_THRESHOLD && green < COLOR_THRESHOLD) {
+        if(colors.alpha < .07){
             return BallPattern.BallType.PURPLE;
+        }else{
+            return BallPattern.BallType.NONE;
         }
-        // Check for green (high green, low red and blue)
-        else if (green > COLOR_THRESHOLD && red < COLOR_THRESHOLD && blue < COLOR_THRESHOLD) {
-            return BallPattern.BallType.GREEN;
-        }
-        // If no clear color pattern is detected
-        return BallPattern.BallType.NONE;
-
     }
 
     public String getColorDataString(){

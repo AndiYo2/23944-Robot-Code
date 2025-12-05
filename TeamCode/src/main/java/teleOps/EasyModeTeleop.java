@@ -47,7 +47,7 @@ public class EasyModeTeleop extends OpModeTemplate {
     private void executeShootSequence() {
         schedule(new SequentialCommandGroup(
                 new InstantCommand(() -> spindexer.flickBallOut()),
-                new WaitCommand(100), // Wait for flickBallOut to complete
+                new WaitCommand(500), // Wait for flickBallOut to complete
                 new InstantCommand(() -> shooter.shootBall()),
                 new WaitCommand(550),
                 new InstantCommand(() -> spindexer.rotate()),

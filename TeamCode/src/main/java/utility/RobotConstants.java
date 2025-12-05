@@ -22,6 +22,7 @@ public class RobotConstants {
 
     }
 
+
     public static class Shooter {
         public static String shooter = "shooterMotor";
         public static String turret = "turretServo";
@@ -35,6 +36,10 @@ public class RobotConstants {
 
     public static class Limelight{
         public static String limelight = "limelight";
+    }
+
+    public static class Pinpoint{
+        public static String pinpoint = "pinpoint";
     }
 
 

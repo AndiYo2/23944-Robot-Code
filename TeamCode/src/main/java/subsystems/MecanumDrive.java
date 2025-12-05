@@ -44,10 +44,12 @@ public class MecanumDrive implements Subsystem {
     }
 
     public void resetYaw(){
-        robot.imu.resetYaw();
+        robot.pinpoint.resetPosAndIMU();
     }
     public double getRobotHeading(){
-        return robot.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+        robot.pinpoint.update();
+        return robot.pinpoint.getHeading(AngleUnit.RADIANS);
+
     }
 
     public Follower driveToPose(Pose target, HardwareMap hardwareMap) {
@@ -73,7 +75,7 @@ public class MecanumDrive implements Subsystem {
         robot.telemetryManager.debug(String.format("driving %f %f %f", ly, lx, rx));
         robot.telemetryManager.update();
 
-        double botHeading = heading;
+        double botHeading = getRobotHeading();
 
         // Rotate the joystick input vector to be relative to the field
         double rotX = lx * Math.cos(-botHeading) - ly * Math.sin(-botHeading);

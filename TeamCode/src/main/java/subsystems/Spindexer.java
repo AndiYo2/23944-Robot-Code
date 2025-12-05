@@ -10,11 +10,11 @@ public class Spindexer implements Subsystem {
     private final RobotHardware robot;
     private double goalRotationPosition = 0;   // Cumulative target position
     private boolean isAtGoal = true;
-    private boolean noBallsLeft;
-    private long lastNoneDetectionTime = 0;
-    private boolean isTimerStarted = false;
-
     private double motorPos = 0;
+
+    // State tracking for ball detection
+    private BallPattern.BallType lastDetectedBall = BallPattern.BallType.NONE;
+    private boolean hasRotatedForCurrentBall = false;
 
     public static BallPattern currentBallPattern;
 
@@ -26,7 +26,7 @@ public class Spindexer implements Subsystem {
     public void flickBallOut() {
         robot.spindexerServo.setPosition(.65);
         try {
-            Thread.sleep(600);
+            Thread.sleep(400);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
@@ -38,7 +38,6 @@ public class Spindexer implements Subsystem {
         motorPos = (robot.spindexerEncoder.getVoltage() / 3.3) * 360;
         return motorPos;
     }
-
 
     public void setPositionAdd(double position) {
         goalRotationPosition += position;
@@ -62,6 +61,8 @@ public class Spindexer implements Subsystem {
     @Override
     public void periodic() {
         getEncoderDegrees();
+
+        // Handle motor rotation to goal position
         if (!isAtGoal) {
             robot.spindexerMotor.setPower(-.2);
 
@@ -86,39 +87,63 @@ public class Spindexer implements Subsystem {
         }
         return false;
     }
-    
-    
-    
-    
-    public void indexBalls(){
-        noBallsLeft = false;
-        
-        while(!(currentBallPattern.isFull() || noBallsLeft )){
 
-
-            if (ColorSensorSubsytem.getBallColor() == BallPattern.BallType.NONE) {
-                if (!isTimerStarted) {
-                    lastNoneDetectionTime = System.currentTimeMillis();
-                    isTimerStarted = true;
-                } else if (System.currentTimeMillis() - lastNoneDetectionTime >= 2000) {
-                    noBallsLeft = true;
-                    robot.intakeBeltMotor.setPower(0);
-                }
-            } else {
-                isTimerStarted = false;
-            }
-
-
-            if(ColorSensorSubsytem.getBallColor() != BallPattern.BallType.NONE){
-                robot.intakeBeltMotor.setPower(0);
-                currentBallPattern.setBallInSlotX(1, ColorSensorSubsytem.getBallColor());
-                rotate();
-            }else{
-                robot.intakeBeltMotor.setPower(1);
-            }
-            
-        }
-        
+    public void startIntake() {
+        robot.intakeBeltMotor.setPower(1);
+        robot.intakeMotor.setPower(1);
     }
-    
+
+    public void stopIntake() {
+        robot.intakeBeltMotor.setPower(0);
+        robot.intakeMotor.setPower(0);
+    }
+
+    public void indexBalls() {
+        // Start the intake motors
+        startIntake();
+
+        while (!currentBallPattern.isFull()) {
+            BallPattern.BallType detectedBall = ColorSensorSubsytem.getBallColor();
+
+            // Ball detected and we haven't rotated for it yet
+            if (detectedBall != BallPattern.BallType.NONE && !hasRotatedForCurrentBall) {
+                // Add ball to pattern
+                currentBallPattern.setBallInSlotX(1, detectedBall);
+
+                // Rotate to next slot
+                rotate();
+
+                // Mark that we've rotated for this ball
+                hasRotatedForCurrentBall = true;
+                lastDetectedBall = detectedBall;
+
+                // Wait for rotation to complete before continuing
+                while (!isAtGoal) {
+                    try {
+                        Thread.sleep(50);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        stopIntake();
+                        return;
+                    }
+                }
+            }
+            // No ball detected - reset the flag so we can detect the next ball
+            else if (detectedBall == BallPattern.BallType.NONE) {
+                hasRotatedForCurrentBall = false;
+            }
+
+            // Small delay to prevent CPU spinning
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+
+        // Stop intake when pattern is full or interrupted
+        stopIntake();
+    }
+
 }

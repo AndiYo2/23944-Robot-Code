@@ -9,8 +9,8 @@ import utility.RobotHardware;
 
 public class Shooter implements Subsystem {
 
-    private final double FLIPPER_POSITION_EXTEND = 1;
-    private final double FLIPPER_POSITION_RETRACT = 0;
+    private final double FLIPPER_POSITION_EXTEND = .6;
+    private final double FLIPPER_POSITION_RETRACT = .325;
     RobotHardware robot;
     private final double[] txValues = new double[10];
     private int txValuesIndex = 0;
@@ -23,7 +23,7 @@ public class Shooter implements Subsystem {
     }
 
     // ============================================================
-    // ====================== SHOOTER ==================
+    // ====================== SHOOTER =============================
     // ============================================================
 
     public double getShooterMotorVelocity() {
@@ -50,90 +50,88 @@ public class Shooter implements Subsystem {
     // ====================== STAGING FLIPPER =====================
     // ============================================================
 
-   public void flip(){
+    public void flip(){
         robot.shooterFlipper.setPosition(FLIPPER_POSITION_EXTEND);
-       try {
-           Thread.sleep(600);
-       } catch (InterruptedException e) {
-           Thread.currentThread().interrupt();
-       }
-       robot.shooterFlipper.setPosition(FLIPPER_POSITION_RETRACT);
-   }
+        try {
+            Thread.sleep(400);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        robot.shooterFlipper.setPosition(FLIPPER_POSITION_RETRACT);
+    }
 
     // ============================================================
     // ====================== VELOCITY CALCULATION ================
     // ============================================================
 
     // Configuration constants
-    private static final double LIMELIGHT_HEIGHT = 0.41; // Height of limelight from ground in meters (adjust this)
-    private static final double LIMELIGHT_ANGLE = 10.0; // Angle of limelight from horizontal in degrees (adjust this)
-    private static final double TARGET_HEIGHT = 0.75; // Height of AprilTag center from ground
-    private static final double LAUNCH_HEIGHT = 0.38; // Height of ball launch point from ground in meters (adjust this)
+    private static final double LIMELIGHT_HEIGHT = 0.41; // Height of limelight from ground in meters
+    private static final double LIMELIGHT_ANGLE = 10.0; // Angle of limelight from horizontal in degrees
+    private static final double APRILTAG_HEIGHT = 0.75; // Height of AprilTag center from ground (could be 1.0m - verify this!)
+    private static final double TARGET_OFFSET = .1; // How much higher than AprilTag we want to aim (meters)
+    private static final double TARGET_HEIGHT = APRILTAG_HEIGHT + TARGET_OFFSET; // Actual target height (1.0m or 1.25m)
+    private static final double LAUNCH_HEIGHT = 0.38; // Height of ball launch point from ground in meters
     private static final double LAUNCH_ANGLE = 40.0; // Launch angle in degrees (adjust based on your hood)
     private static final double GRAVITY = 9.81; // m/s^2
 
-    private double requiredVelocity = 0; // Store calculated velocity
+    // Velocity lookup table - every 0.05m from 0.5m to 1.5m
+    // Format: {distance in meters, velocity in rad/s}
+    // Tune each value by testing at that exact distance
+    private static final double[][] VELOCITY_MAP = {
+            {0.50, 23.0},
+            {0.55, 24.0},
+            {0.60, 25.0},
+            {0.65, 26.0},
+            {0.70, 27.0},
+            {0.75, 29.0},
+            {0.80, 31.0},
+            {0.85, 33.5},
+            {0.90, 36.0},
+            {0.95, 38.0},
+            {1.00, 40.0},
+            {1.05, 42.0},
+            {1.10, 44.0},
+            {1.15, 46.0},
+            {1.20, 48.0},
+            {1.25, 50.0},
+            {1.30, 51.0},
+            {1.35, 53.0},
+            {1.40, 54.0},
+            {1.45, 54.5},
+            {1.50, 55.0}
+    };
+
+    private double requiredVelocity = 25; // Store calculated velocity
 
     /**
      * Calculate required shooter velocity based on distance to target
-     * Uses Limelight ty (vertical angle) to calculate distance
+     * Finds the closest entry in the lookup table (rounded to nearest 0.05m)
      */
     public void calculateRequiredVelocity() {
-        LLResult result = robot.limelight.getLatestResult();
+        double distance = getDistanceToTarget();
 
-        if (result != null && result.isValid()) {
-            double ty = result.getTy(); // Vertical angle to target in degrees
+        if (distance > 0) {
+            // Round distance to nearest 0.05m
+            double roundedDistance = Math.round(distance / 0.05) * 0.05;
 
-            // Calculate horizontal distance to target using trigonometry
-            double angleToTarget = LIMELIGHT_ANGLE + ty;
-            double heightDifference = TARGET_HEIGHT - LIMELIGHT_HEIGHT;
+            // Find exact match in table
+            double closestVelocity = VELOCITY_MAP[VELOCITY_MAP.length / 2][1]; // default to middle
+            double closestDistanceDiff = Double.MAX_VALUE;
 
-            // Distance = height_difference / tan(angle)
-            double horizontalDistance = heightDifference / Math.tan(Math.toRadians(angleToTarget));
-
-            // Make sure distance is positive
-            if (horizontalDistance <= 0) {
-                horizontalDistance = 0.5; // Default minimum distance
+            for (int i = 0; i < VELOCITY_MAP.length; i++) {
+                double distDiff = Math.abs(VELOCITY_MAP[i][0] - roundedDistance);
+                if (distDiff < closestDistanceDiff) {
+                    closestDistanceDiff = distDiff;
+                    closestVelocity = VELOCITY_MAP[i][1];
+                }
             }
 
-            // Calculate required velocity using projectile motion
-            requiredVelocity = calculateVelocityForDistance(horizontalDistance);
+            requiredVelocity = closestVelocity;
+
+        } else {
+            // No valid target - use middle value from lookup table
+            requiredVelocity = VELOCITY_MAP[VELOCITY_MAP.length / 2][1];
         }
-    }
-
-    /**
-     * Calculate required velocity to hit target at given horizontal distance
-     * Uses projectile motion equations
-     *
-     * @param distance Horizontal distance to target in meters
-     * @return Required velocity in radians/second for your motor
-     */
-    private double calculateVelocityForDistance(double distance) {
-        double heightDiff = TARGET_HEIGHT - LAUNCH_HEIGHT;
-        double angle = Math.toRadians(LAUNCH_ANGLE);
-
-        // Projectile motion formula:
-        // v = sqrt((g * d^2) / (2 * cos^2(θ) * (d * tan(θ) - h)))
-        // where h is height difference, d is distance, θ is launch angle
-
-        double numerator = GRAVITY * distance * distance;
-        double denominator = 2 * Math.cos(angle) * Math.cos(angle) *
-                (distance * Math.tan(angle) - heightDiff);
-
-        if (denominator <= 0) {
-            // Can't reach target with this angle
-            return 100.0; // Return high default value
-        }
-
-        double velocityMS = Math.sqrt(numerator / denominator);
-
-        // Convert to appropriate units for your motor
-        // If your motor uses radians/second for the wheel, you'll need to convert
-        // Assuming wheel diameter of 4 inches (0.1016 m):
-        double wheelRadius = 0.0508; // 2 inches in meters
-        double angularVelocity = velocityMS / wheelRadius;
-
-        return angularVelocity;
     }
 
     /**
@@ -141,6 +139,14 @@ public class Shooter implements Subsystem {
      */
     public double getRequiredVelocity() {
         return requiredVelocity;
+    }
+
+    public void lowerRequiredVelocity(){
+        requiredVelocity -= .5;
+    }
+
+    public void raiseRequiredVelocity(){
+        requiredVelocity += .5;
     }
 
     /**
@@ -152,29 +158,29 @@ public class Shooter implements Subsystem {
         if (result != null && result.isValid()) {
             double ty = result.getTy();
             double angleToTarget = LIMELIGHT_ANGLE + ty;
-            double heightDifference = TARGET_HEIGHT - LIMELIGHT_HEIGHT;
-            return heightDifference / Math.tan(Math.toRadians(angleToTarget));
+            double heightDifference = APRILTAG_HEIGHT - LIMELIGHT_HEIGHT;
+            double distance = heightDifference / Math.tan(Math.toRadians(angleToTarget));
+            return distance > 0 ? distance : -1;
         }
 
         return -1; // Invalid
     }
+
+    /**
+     * Check if shooter is ready to fire
+     */
+
     // ============================================================
     // ====================== FULL METHODS ========================
     // ============================================================
 
-
     public boolean shootBall(){
         // Calculate required velocity based on current distance
-        calculateRequiredVelocity();
+        // Check if shooter is at speed and flipper is ready
 
-        if(robot.shooterMotor.getVelocity(AngleUnit.RADIANS) > requiredVelocity * 0.95){ // 95% threshold
-            if(robot.shooterFlipper.getPosition() == FLIPPER_POSITION_RETRACT){
-                flip();
-                return true;
-            }
-        }
+        flip();
+        return true;
 
-        return false;
     }
 
 
@@ -182,11 +188,15 @@ public class Shooter implements Subsystem {
     // ======================== TURRET SYSTEM ======================
     // ============================================================
 
-    private static final double DEADBAND = 8.0;  // Stop moving when within 2 degrees
+    private static final double DEADBAND = 8.0;  // Stop moving within 8 degrees
     private static final double POWER_SCALE = 0.015;  // How fast to turn (tune this)
 
     public void toggleLimelight(){
         limelightDisabled = !limelightDisabled;
+    }
+
+    public boolean limelightDisabled(){
+        return limelightDisabled;
     }
 
 
@@ -194,7 +204,10 @@ public class Shooter implements Subsystem {
     public void periodic() {
 
         // Calculate required velocity continuously
-        calculateRequiredVelocity();
+
+
+        robot.shooterMotor.setVelocity(requiredVelocity, AngleUnit.RADIANS);
+
 
         // Get Limelight data
         LLResult result = robot.limelight.getLatestResult();
