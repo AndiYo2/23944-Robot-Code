@@ -22,6 +22,10 @@ public class Shooter implements Subsystem {
         this.robot = RobotHardware.getInstance();;
     }
 
+    public Shooter(Limelight limelight){
+
+    }
+
     // ============================================================
     // ====================== SHOOTER =============================
     // ============================================================
@@ -78,30 +82,30 @@ public class Shooter implements Subsystem {
     // Format: {distance in meters, velocity in rad/s}
     // Tune each value by testing at that exact distance
     private static final double[][] VELOCITY_MAP = {
-            {0.50, 23.0},
-            {0.55, 24.0},
-            {0.60, 25.0},
-            {0.65, 26.0},
-            {0.70, 27.0},
-            {0.75, 29.0},
-            {0.80, 31.0},
-            {0.85, 33.5},
-            {0.90, 36.0},
-            {0.95, 38.0},
-            {1.00, 40.0},
-            {1.05, 42.0},
-            {1.10, 44.0},
-            {1.15, 46.0},
-            {1.20, 48.0},
-            {1.25, 50.0},
-            {1.30, 51.0},
-            {1.35, 53.0},
-            {1.40, 54.0},
-            {1.45, 54.5},
-            {1.50, 55.0}
+            {0.50, .55},
+            {0.55, .55},
+            {0.60, .6},
+            {0.65, .6},
+            {0.70, .6},
+            {0.75, .625}, //l
+            {0.80, .65}, //locked
+            {0.85, .7},
+            {0.90, .75},
+            {0.95, .8},
+            {1.00, .800},
+            {1.05, .820},
+            {1.10, .840},
+            {1.15, .860},
+            {1.20, .880},
+            {1.25, .800},
+            {1.30, .810},
+            {1.35, .830},
+            {1.40, .840},
+            {1.45, .845},
+            {1.50, .850}
     };
 
-    private double requiredVelocity = 25; // Store calculated velocity
+    private double requiredVelocity = .5; // Store calculated velocity
 
     /**
      * Calculate required shooter velocity based on distance to target
@@ -130,7 +134,7 @@ public class Shooter implements Subsystem {
 
         } else {
             // No valid target - use middle value from lookup table
-            requiredVelocity = VELOCITY_MAP[VELOCITY_MAP.length / 2][1];
+            requiredVelocity = .71719;
         }
     }
 
@@ -142,11 +146,11 @@ public class Shooter implements Subsystem {
     }
 
     public void lowerRequiredVelocity(){
-        requiredVelocity -= .5;
+        requiredVelocity -= .05;
     }
 
     public void raiseRequiredVelocity(){
-        requiredVelocity += .5;
+        requiredVelocity += .05;
     }
 
     /**
@@ -204,9 +208,9 @@ public class Shooter implements Subsystem {
     public void periodic() {
 
         // Calculate required velocity continuously
+        calculateRequiredVelocity();
 
-
-        robot.shooterMotor.setVelocity(requiredVelocity, AngleUnit.RADIANS);
+        robot.shooterMotor.setPower(requiredVelocity);
 
 
         // Get Limelight data

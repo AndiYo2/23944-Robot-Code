@@ -1,5 +1,6 @@
-package pedroPathing.Autons.NineBalls;
+package Autos;
 
+import com.arcrobotics.ftclib.command.Subsystem;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
@@ -15,8 +16,8 @@ import subsystems.*;
 import utility.RobotHardware;
 
 
-@Autonomous(name = "BackRedAuton")
-public class NineBallRedAutonBackStart extends OpMode {
+@Autonomous(name = "BackRedAutonTest", group = "Autonomous")
+public class AutonTest extends OpMode {
     private Follower follower;
 
     private Timer pathTimer, actionTimer, opmodeTimer;
@@ -26,7 +27,6 @@ public class NineBallRedAutonBackStart extends OpMode {
 
     Shooter shooter;
     Intake intake;
-    ColorSensorSubsytem colorSensorSubsytem;
     Spindexer spindexer;
 
     private Path startToShoot;
@@ -80,101 +80,190 @@ public class NineBallRedAutonBackStart extends OpMode {
         pathState = i;
         pathTimer.resetTimer();
     }
-    public void wait(double time){
+    private boolean isWaiting = false;
+    private double waitDuration = 0;
+
+    public void startWait(double time){
         actionTimer.resetTimer();
-        while(actionTimer.getElapsedTimeSeconds() < time){
-        }
+        waitDuration = time;
+        isWaiting = true;
     }
 
-    public void autonShoot(){
-        for(int i = 0; i < 3; i++) {
-            spindexer.flickBallOut();
-            wait(.200);
-            shooter.shootBall();
-            wait(.350);
-            spindexer.rotate();
-            wait(.350);
+    public boolean isWaitComplete(){
+        if (!isWaiting) {
+            return true;
         }
+
+        if (actionTimer.getElapsedTimeSeconds() >= waitDuration) {
+            isWaiting = false;
+            return true;
+        }
+
+        return false;
+    }
+
+    // Shooting state machine
+    private int shootStep = 0;
+    private int ballsShot = 0;
+
+    public boolean autonShoot(){
+        switch(shootStep) {
+            case 0:
+                spindexer.flickBallOut();
+                startWait(0.200);
+                shootStep++;
+                break;
+            case 1:
+                if (!isWaitComplete()) break;
+                shooter.shootBall();
+                startWait(0.350);
+                shootStep++;
+                break;
+            case 2:
+                if (!isWaitComplete()) break;
+                spindexer.rotate();
+                startWait(0.350);
+                shootStep++;
+                break;
+            case 3:
+                if (!isWaitComplete()) break;
+                ballsShot++;
+                if (ballsShot < 3) {
+                    shootStep = 0; // Go back to shoot next ball
+                } else {
+                    shootStep = 0; // Reset for next use
+                    ballsShot = 0;
+                    return true; // Signal completion
+                }
+                break;
+        }
+        return false; // Still shooting
+    }
+
+    // Spindexer state machine
+    private int spindexerStep = 0;
+
+    public boolean addToSpindexer(){
+        switch(spindexerStep) {
+            case 0:
+                runAutonIntake();
+                spindexer.rotate();
+                startWait(0.5);
+                spindexerStep++;
+                break;
+            case 1:
+                if (!isWaitComplete()) break;
+                spindexer.rotate();
+                startWait(0.5);
+                spindexerStep++;
+                break;
+            case 2:
+                if (!isWaitComplete()) break;
+                stopAutonIntake();
+                spindexerStep = 0; // Reset for next use
+                return true; // Signal completion
+        }
+        return false; // Still running
     }
 
     public void runAutonIntake(){
         intake.setIntakePower(1);
         intake.setStagingMotorPower(1);
     }
+
     public void stopAutonIntake(){
         intake.setIntakePower(0);
         intake.setStagingMotorPower(0);
     }
 
-    public void addToSpindexer(){
-        runAutonIntake();
-        spindexer.rotate();
-        spindexer.rotate();
-        wait(1000.0);
-        stopAutonIntake();
-
-
+    public void toggleSlowMode(){
+        follower.setMaxPower(.5);
     }
 
-
+    // Updated autonomousPathUpdate with proper state tracking
     public void autonomousPathUpdate() {
         switch (pathState) {
             case 0:
                 if (follower.isBusy())
                     break;
+                spindexer.rotate();
                 follower.followPath(startToShoot, true);
                 setPathState(1);
+                break;
 
             case 1:
                 if (follower.isBusy())
                     break;
 
-                autonShoot();
+                // Keep calling autonShoot until it returns true
+                if (!autonShoot())
+                    break;
 
-                //wait till completion
                 follower.followPath(shootToFirst, true);
                 setPathState(2);
                 runAutonIntake();
+                toggleSlowMode();
+                break;
 
             case 2:
                 if (follower.isBusy())
                     break;
                 stopAutonIntake();
                 follower.followPath(firstToShoot, true);
-
+                toggleSlowMode();
                 setPathState(3);
-                addToSpindexer();
+                break;
 
             case 3:
-                if (follower.isBusy()){
+                if (follower.isBusy())
                     break;
-                }
 
-                autonShoot();
+                // Keep calling addToSpindexer until it returns true
+                if (!addToSpindexer())
+                    break;
 
-                follower.followPath(shootToSecond,true);
                 setPathState(4);
-
-                runAutonIntake();
-
+                break;
 
             case 4:
-                if(follower.isBusy()) {
+                // Keep calling autonShoot until it returns true
+                if (!autonShoot())
                     break;
-                }
-                follower.followPath(secondToShoot,true);
-                stopAutonIntake();
+
+                follower.followPath(shootToSecond, true);
                 setPathState(5);
-                addToSpindexer();
+                toggleSlowMode();
+                runAutonIntake();
+                break;
 
             case 5:
                 if(follower.isBusy())
                     break;
-                autonShoot();
+                follower.followPath(secondToShoot, true);
+                stopAutonIntake();
+                setPathState(6);
+                toggleSlowMode();
+                break;
 
+            case 6:
+                if (follower.isBusy())
+                    break;
+
+                // Keep calling addToSpindexer until it returns true
+                if (!addToSpindexer())
+                    break;
+
+                setPathState(7);
+                break;
+
+            case 7:
+                // Keep calling autonShoot until it returns true
+                if (!autonShoot())
+                    break;
 
                 follower.followPath(shootToStop, true);
-                setPathState(6);
+                setPathState(8);
+                break;
         }
     }
     /** This method is called once at the init of the OpMode. **/
@@ -187,10 +276,14 @@ public class NineBallRedAutonBackStart extends OpMode {
         autonomousPathUpdate();
 
         // Feedback to Driver Hub for debugging
+        telemetry.addData("Shooter Power", shooter.getShooterPower());
+        telemetry.addData("Shooter distance", shooter.getDistanceToTarget());
         telemetry.addData("path state", pathState);
+
         telemetry.addData("x", follower.getPose().getX());
         telemetry.addData("y", follower.getPose().getY());
         telemetry.addData("heading", follower.getPose().getHeading());
+
         telemetry.update();
 
         shooter.periodic();
@@ -204,19 +297,20 @@ public class NineBallRedAutonBackStart extends OpMode {
         pathTimer = new Timer();
         opmodeTimer = new Timer();
         opmodeTimer.resetTimer();
+        actionTimer = new Timer();
 
 
         follower = Constants.createFollower(hardwareMap);
         buildPaths();
 
-        robotHardware = new RobotHardware();
+        robotHardware = RobotHardware.getInstance();
         robotHardware.init(hardwareMap);
         follower.setStartingPose(startPose);
 
         shooter = new Shooter();
         intake = new Intake();
-        colorSensorSubsytem = new ColorSensorSubsytem();
         spindexer = new Spindexer();
+
 
 
     }

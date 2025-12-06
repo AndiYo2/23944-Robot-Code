@@ -20,7 +20,7 @@ public class Constants {
 
     static double yVelocity =72.241424480084276,
             xVelocity = 83.29543178288017,
-            robotMass = 10;
+            robotMass = 15;
 
 
 

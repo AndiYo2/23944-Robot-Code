@@ -109,7 +109,6 @@ public class RobotHardware {
 
         // ******************* OUTTAKE ******************* //
         shooterMotor = hardwareMap.get(DcMotorEx.class, RobotConstants.Shooter.shooter);
-        shooterMotor.setDirection(DcMotorEx.Direction.REVERSE);
         turretServo = hardwareMap.get(CRServo.class, RobotConstants.Shooter.turret);
         shooterEncoder = hardwareMap.get(AnalogInput.class, RobotConstants.Shooter.shooterEncoder);
         shooterFlipper = hardwareMap.get(Servo.class, RobotConstants.Shooter.shooterFlipperServo);
