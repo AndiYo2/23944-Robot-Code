@@ -7,10 +7,11 @@ import com.arcrobotics.ftclib.command.button.Trigger;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.arcrobotics.ftclib.command.button.GamepadButton;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
+import utility.RobotHardware;
 
 
 @TeleOp
-public class FullManualTeleop extends OpModeTemplate {
+public class RedTeleOp extends OpModeTemplate {
 
 
 
@@ -18,6 +19,7 @@ public class FullManualTeleop extends OpModeTemplate {
     public void initialize() {
         initHardware(false);
         configureButtonBindings();
+        RobotHardware.getInstance().limelight.pipelineSwitch(4);
     }
 
     private int shotsQueued = 0;
@@ -55,6 +57,8 @@ public class FullManualTeleop extends OpModeTemplate {
             .whenPressed(() -> shooter.lowerRequiredVelocity());
         new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_UP)
             .whenPressed(() -> shooter.raiseRequiredVelocity());
+        new GamepadButton(driverGamepad, GamepadKeys.Button.RIGHT_BUMPER)
+            .whenPressed(() -> spindexer.unstick());
 
 
 

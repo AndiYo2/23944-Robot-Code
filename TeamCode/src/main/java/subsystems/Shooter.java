@@ -18,13 +18,13 @@ public class Shooter implements Subsystem {
 
     private boolean limelightDisabled = false;
 
+    private boolean autonModeEnabled = false;
+
     public Shooter() {
         this.robot = RobotHardware.getInstance();;
     }
 
-    public Shooter(Limelight limelight){
 
-    }
 
     // ============================================================
     // ====================== SHOOTER =============================
@@ -92,20 +92,11 @@ public class Shooter implements Subsystem {
             {0.85, .7},
             {0.90, .75},
             {0.95, .8},
-            {1.00, .800},
-            {1.05, .820},
-            {1.10, .840},
-            {1.15, .860},
-            {1.20, .880},
-            {1.25, .800},
-            {1.30, .810},
-            {1.35, .830},
-            {1.40, .840},
-            {1.45, .845},
-            {1.50, .850}
+            {1.00, 1}
+
     };
 
-    private double requiredVelocity = .5; // Store calculated velocity
+    private double requiredVelocity = 1; // Store calculated velocity
 
     /**
      * Calculate required shooter velocity based on distance to target
@@ -133,11 +124,19 @@ public class Shooter implements Subsystem {
             requiredVelocity = closestVelocity;
 
         } else {
-            // No valid target - use middle value from lookup table
-            requiredVelocity = .71719;
+            if(autonModeEnabled){
+                requiredVelocity = .625;
+            }else {
+                // No valid target - use middle value from lookup table
+                requiredVelocity = 1;
+            }
         }
     }
 
+
+    public void enableAutonMode(){
+         autonModeEnabled = true;
+    }
     /**
      * Get the currently calculated required velocity
      */
@@ -197,6 +196,9 @@ public class Shooter implements Subsystem {
 
     public void toggleLimelight(){
         limelightDisabled = !limelightDisabled;
+    }
+    public void disableLimelight(){
+        limelightDisabled = true;
     }
 
     public boolean limelightDisabled(){

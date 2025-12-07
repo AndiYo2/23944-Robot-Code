@@ -1,6 +1,5 @@
-package Autos;
+package pedroPathing.Autos;
 
-import com.arcrobotics.ftclib.command.Subsystem;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
@@ -16,8 +15,8 @@ import subsystems.*;
 import utility.RobotHardware;
 
 
-@Autonomous(name = "BackRedAutonTest", group = "Autonomous")
-public class AutonTest extends OpMode {
+@Autonomous(name = "BlueFrontAuton", group = "Autonomous")
+public class BlueFrontAuton extends OpMode {
     private Follower follower;
 
     private Timer pathTimer, actionTimer, opmodeTimer;
@@ -38,16 +37,15 @@ public class AutonTest extends OpMode {
             secondToShoot,
             shootToStop;
 
-    private final Pose startPose = new Pose(87, 9, Math.toRadians(90));
-    private final Pose endPose = new Pose(116, 72, Math.toRadians(0));
+    private final Pose startPose = new Pose(57, 9, Math.toRadians(90));
+    private final Pose endPose = new Pose(28, 72, Math.toRadians(180));
 
-    private final Pose shootPose = new Pose(90,90, Math.toRadians(45));
-    private final Pose secondaryShootPose = new Pose(90,90, Math.toRadians(40));
-    private final Pose firstPickupPose = new Pose(120,83.5, Math.toRadians(0));
-    private final Pose secondPickupPose = new Pose(120,55.5, Math.toRadians(0));
+    private final Pose shootPose = new Pose(54,90, Math.toRadians(135));
+    private final Pose firstPickupPose = new Pose(24,86, Math.toRadians(180));
+    private final Pose secondPickupPose = new Pose(24,61, Math.toRadians(180));
 
-    private final Pose shootToFirstControlPoint = new Pose(85.5,74);
-    private final Pose shootToSecondControlPoint = new Pose(82,55);
+    private final Pose shootToFirstControlPoint = new Pose(66.5,78.5);
+    private final Pose shootToSecondControlPoint = new Pose(69.7,49.5);
 
 
     public void buildPaths(){
@@ -59,12 +57,12 @@ public class AutonTest extends OpMode {
                 .setLinearHeadingInterpolation(shootPose.getHeading(), firstPickupPose.getHeading())
                 .build();
         firstToShoot = follower.pathBuilder()
-                .addPath(new BezierLine(firstPickupPose,secondaryShootPose))
-                .setLinearHeadingInterpolation(firstPickupPose.getHeading(), secondaryShootPose.getHeading())
+                .addPath(new BezierLine(firstPickupPose,shootPose))
+                .setLinearHeadingInterpolation(firstPickupPose.getHeading(), shootPose.getHeading())
                 .build();
         shootToSecond = follower.pathBuilder()
-                .addPath(new BezierCurve(secondaryShootPose, shootToSecondControlPoint, secondPickupPose))
-                .setLinearHeadingInterpolation(secondaryShootPose.getHeading(), secondPickupPose.getHeading())
+                .addPath(new BezierCurve(shootPose, shootToSecondControlPoint, secondPickupPose))
+                .setLinearHeadingInterpolation(shootPose.getHeading(), secondPickupPose.getHeading())
                 .build();
         secondToShoot = follower.pathBuilder()
                 .addPath(new BezierLine(secondPickupPose, shootPose))
@@ -80,90 +78,43 @@ public class AutonTest extends OpMode {
         pathState = i;
         pathTimer.resetTimer();
     }
-    private boolean isWaiting = false;
-    private double waitDuration = 0;
+    // Replace wait() and action methods with these self-contained loops:
 
-    public void startWait(double time){
+    public void wait(double time){
         actionTimer.resetTimer();
-        waitDuration = time;
-        isWaiting = true;
+        while(actionTimer.getElapsedTimeSeconds() < time){
+            // Keep subsystems and follower updating during the wait
+            follower.update();
+            shooter.periodic();
+            spindexer.periodic();
+            intake.periodic();
+        }
     }
 
-    public boolean isWaitComplete(){
-        if (!isWaiting) {
-            return true;
-        }
+    public void autonShoot(){
+        for(int i = 0; i < 3; i++) {
+            wait(.3);
+            spindexer.flickBallOut();
+            wait(.2);
 
-        if (actionTimer.getElapsedTimeSeconds() >= waitDuration) {
-            isWaiting = false;
-            return true;
-        }
+            shooter.shootBall();
+            wait(.2);
 
-        return false;
+            spindexer.rotate();
+            wait(.4);
+        }
     }
 
-    // Shooting state machine
-    private int shootStep = 0;
-    private int ballsShot = 0;
+    public void addToSpindexer(){
+        runAutonIntake();
 
-    public boolean autonShoot(){
-        switch(shootStep) {
-            case 0:
-                spindexer.flickBallOut();
-                startWait(0.200);
-                shootStep++;
-                break;
-            case 1:
-                if (!isWaitComplete()) break;
-                shooter.shootBall();
-                startWait(0.350);
-                shootStep++;
-                break;
-            case 2:
-                if (!isWaitComplete()) break;
-                spindexer.rotate();
-                startWait(0.350);
-                shootStep++;
-                break;
-            case 3:
-                if (!isWaitComplete()) break;
-                ballsShot++;
-                if (ballsShot < 3) {
-                    shootStep = 0; // Go back to shoot next ball
-                } else {
-                    shootStep = 0; // Reset for next use
-                    ballsShot = 0;
-                    return true; // Signal completion
-                }
-                break;
-        }
-        return false; // Still shooting
-    }
+        spindexer.rotate();
+        wait(.5);
 
-    // Spindexer state machine
-    private int spindexerStep = 0;
+        spindexer.rotate();
+        wait(.5);
 
-    public boolean addToSpindexer(){
-        switch(spindexerStep) {
-            case 0:
-                runAutonIntake();
-                spindexer.rotate();
-                startWait(0.5);
-                spindexerStep++;
-                break;
-            case 1:
-                if (!isWaitComplete()) break;
-                spindexer.rotate();
-                startWait(0.5);
-                spindexerStep++;
-                break;
-            case 2:
-                if (!isWaitComplete()) break;
-                stopAutonIntake();
-                spindexerStep = 0; // Reset for next use
-                return true; // Signal completion
-        }
-        return false; // Still running
+        stopAutonIntake();
     }
 
     public void runAutonIntake(){
@@ -176,94 +127,63 @@ public class AutonTest extends OpMode {
         intake.setStagingMotorPower(0);
     }
 
-    public void toggleSlowMode(){
-        follower.setMaxPower(.5);
-    }
-
-    // Updated autonomousPathUpdate with proper state tracking
     public void autonomousPathUpdate() {
         switch (pathState) {
             case 0:
+                spindexer.rotate();
                 if (follower.isBusy())
                     break;
-                spindexer.rotate();
                 follower.followPath(startToShoot, true);
                 setPathState(1);
-                break;
 
             case 1:
                 if (follower.isBusy())
                     break;
 
-                // Keep calling autonShoot until it returns true
-                if (!autonShoot())
-                    break;
+                autonShoot();
 
                 follower.followPath(shootToFirst, true);
                 setPathState(2);
+                follower.setMaxPower(.5);
                 runAutonIntake();
-                toggleSlowMode();
-                break;
 
             case 2:
                 if (follower.isBusy())
                     break;
                 stopAutonIntake();
                 follower.followPath(firstToShoot, true);
-                toggleSlowMode();
+                follower.setMaxPower(1);
                 setPathState(3);
-                break;
+                addToSpindexer();
 
             case 3:
-                if (follower.isBusy())
+                if (follower.isBusy()){
                     break;
+                }
 
-                // Keep calling addToSpindexer until it returns true
-                if (!addToSpindexer())
-                    break;
-
+                autonShoot();
+                follower.followPath(shootToSecond,true);
                 setPathState(4);
-                break;
+                follower.setMaxPower(.5);
+                runAutonIntake();
 
             case 4:
-                // Keep calling autonShoot until it returns true
-                if (!autonShoot())
+                if(follower.isBusy()) {
                     break;
-
-                follower.followPath(shootToSecond, true);
+                }
+                follower.followPath(secondToShoot,true);
+                stopAutonIntake();
                 setPathState(5);
-                toggleSlowMode();
-                runAutonIntake();
-                break;
+                follower.setMaxPower(1);
+                addToSpindexer();
 
             case 5:
                 if(follower.isBusy())
                     break;
-                follower.followPath(secondToShoot, true);
-                stopAutonIntake();
-                setPathState(6);
-                toggleSlowMode();
-                break;
-
-            case 6:
-                if (follower.isBusy())
-                    break;
-
-                // Keep calling addToSpindexer until it returns true
-                if (!addToSpindexer())
-                    break;
-
-                setPathState(7);
-                break;
-
-            case 7:
-                // Keep calling autonShoot until it returns true
-                if (!autonShoot())
-                    break;
+                autonShoot();
 
                 follower.followPath(shootToStop, true);
-                setPathState(8);
-                break;
+                setPathState(6);
         }
     }
     /** This method is called once at the init of the OpMode. **/
@@ -310,7 +230,8 @@ public class AutonTest extends OpMode {
         shooter = new Shooter();
         intake = new Intake();
         spindexer = new Spindexer();
-
+        shooter.enableAutonMode();
+        shooter.disableLimelight();
 
 
     }

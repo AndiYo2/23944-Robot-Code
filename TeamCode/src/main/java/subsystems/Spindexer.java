@@ -11,6 +11,7 @@ public class Spindexer implements Subsystem {
     private double goalRotationPosition = 0;   // Cumulative target position
     private boolean isAtGoal = true;
     private double motorPos = 0;
+    int tempUnstick = 1;
 
     // State tracking for ball detection
     private BallPattern.BallType lastDetectedBall = BallPattern.BallType.NONE;
@@ -50,7 +51,13 @@ public class Spindexer implements Subsystem {
     }
 
     public void rotate() {
+        tempUnstick = 1;
         setPositionAdd(120);
+    }
+
+    public void unstick(){
+        tempUnstick = -1;
+        setPositionAdd(-120);
     }
 
     private double getAngularDistance(double angleA, double angleB) {
@@ -58,13 +65,17 @@ public class Spindexer implements Subsystem {
         return Math.min(diff, 360 - diff);
     }
 
+public boolean isAtTheGoal(){
+        return isAtGoal;
+}
+
     @Override
     public void periodic() {
         getEncoderDegrees();
 
         // Handle motor rotation to goal position
         if (!isAtGoal) {
-            robot.spindexerMotor.setPower(-.2);
+            robot.spindexerMotor.setPower(-.2 * tempUnstick);
 
             // Normalize positions to 0-360 range
             double normalizedMotorPos = ((motorPos % 360) + 360) % 360;
