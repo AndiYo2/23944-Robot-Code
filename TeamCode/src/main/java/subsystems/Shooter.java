@@ -3,6 +3,7 @@ package subsystems;
 import com.arcrobotics.ftclib.command.Subsystem;
 import com.qualcomm.hardware.limelightvision.LLResult;
 
+import com.qualcomm.robotcore.hardware.DcMotor;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import utility.RobotConstants;
 import utility.RobotHardware;
@@ -19,9 +20,12 @@ public class Shooter implements Subsystem {
     private boolean limelightDisabled = false;
 
     private boolean autonModeEnabled = false;
+    public boolean disbaleCalcs = false;
 
     public Shooter() {
         this.robot = RobotHardware.getInstance();;
+        robot.shooterMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.shooterMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
 
@@ -103,6 +107,10 @@ public class Shooter implements Subsystem {
      * Finds the closest entry in the lookup table (rounded to nearest 0.05m)
      */
     public void calculateRequiredVelocity() {
+        if(disbaleCalcs){
+            return;
+        }
+
         double distance = getDistanceToTarget();
 
         if (distance > 0) {
@@ -145,11 +153,20 @@ public class Shooter implements Subsystem {
     }
 
     public void lowerRequiredVelocity(){
-        requiredVelocity -= .05;
+        if(requiredVelocity > .5){
+            requiredVelocity -= .5;
+        }
+    }
+    public double getWheelVelocity(){
+        return robot.shooterMotor.getVelocity();
     }
 
     public void raiseRequiredVelocity(){
-        requiredVelocity += .05;
+        requiredVelocity += .5;
+    }
+
+    public void setTurretTurnerPower(double power){
+        robot.turretServo.setPower(power);
     }
 
     /**
@@ -210,9 +227,9 @@ public class Shooter implements Subsystem {
     public void periodic() {
 
         // Calculate required velocity continuously
-        calculateRequiredVelocity();
 
-        robot.shooterMotor.setPower(requiredVelocity);
+
+        robot.shooterMotor.setPower(1);
 
 
         // Get Limelight data
@@ -255,8 +272,10 @@ public class Shooter implements Subsystem {
             // Apply power (positive tx = target is right, so turn right)
             robot.turretServo.setPower(power);
         } else {
-            // No target visible, stop moving
-            robot.turretServo.setPower(0);
+            if(!disbaleCalcs) {
+                // No target visible, stop moving
+                robot.turretServo.setPower(0);
+            }
         }
     }
 }

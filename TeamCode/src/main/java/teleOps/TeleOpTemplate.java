@@ -6,7 +6,7 @@ import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import subsystems.*;
 import utility.RobotHardware;
 
-    abstract public class OpModeTemplate extends CommandOpMode {
+    abstract public class TeleOpTemplate extends CommandOpMode {
         protected MecanumDrive mecanumDrive;
         protected Shooter shooter;
         protected Intake intake;

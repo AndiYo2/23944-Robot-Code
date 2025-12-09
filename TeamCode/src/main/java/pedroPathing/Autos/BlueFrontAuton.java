@@ -1,41 +1,16 @@
 package pedroPathing.Autos;
 
-import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
-import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import pedroPathing.Constants;
-import subsystems.*;
-import utility.RobotHardware;
-
-
 @Autonomous(name = "BlueFrontAuton", group = "Autonomous")
-public class BlueFrontAuton extends OpMode {
-    private Follower follower;
-
-    private Timer pathTimer, actionTimer, opmodeTimer;
-    private int pathState;
-
-    RobotHardware robotHardware;
-
-    Shooter shooter;
-    Intake intake;
-    Spindexer spindexer;
-
+public class BlueFrontAuton extends AutonTemplate {
     private Path startToShoot;
-
-    private PathChain
-            shootToFirst,
-            firstToShoot,
-            shootToSecond,
-            secondToShoot,
-            shootToStop;
+    private PathChain shootToFirst, firstToShoot, shootToSecond, secondToShoot, shootToStop;
 
     private final Pose startPose = new Pose(57, 9, Math.toRadians(90));
     private final Pose endPose = new Pose(28, 72, Math.toRadians(180));
@@ -47,8 +22,10 @@ public class BlueFrontAuton extends OpMode {
     private final Pose shootToFirstControlPoint = new Pose(66.5,78.5);
     private final Pose shootToSecondControlPoint = new Pose(69.7,49.5);
 
+    @Override
+    protected void buildPaths() {
+        follower.setStartingPose(startPose);
 
-    public void buildPaths(){
         startToShoot = new Path(new BezierLine(startPose, shootPose));
         startToShoot.setLinearHeadingInterpolation(startPose.getHeading(), shootPose.getHeading());
 
@@ -56,78 +33,30 @@ public class BlueFrontAuton extends OpMode {
                 .addPath(new BezierCurve(shootPose, shootToFirstControlPoint, firstPickupPose))
                 .setLinearHeadingInterpolation(shootPose.getHeading(), firstPickupPose.getHeading())
                 .build();
+
         firstToShoot = follower.pathBuilder()
-                .addPath(new BezierLine(firstPickupPose,shootPose))
+                .addPath(new BezierLine(firstPickupPose, shootPose))
                 .setLinearHeadingInterpolation(firstPickupPose.getHeading(), shootPose.getHeading())
                 .build();
+
         shootToSecond = follower.pathBuilder()
                 .addPath(new BezierCurve(shootPose, shootToSecondControlPoint, secondPickupPose))
                 .setLinearHeadingInterpolation(shootPose.getHeading(), secondPickupPose.getHeading())
                 .build();
+
         secondToShoot = follower.pathBuilder()
                 .addPath(new BezierLine(secondPickupPose, shootPose))
                 .setLinearHeadingInterpolation(secondPickupPose.getHeading(), shootPose.getHeading())
                 .build();
+
         shootToStop = follower.pathBuilder()
                 .addPath(new BezierCurve(shootPose, endPose))
                 .setLinearHeadingInterpolation(shootPose.getHeading(), endPose.getHeading())
                 .build();
     }
 
-    public void setPathState(int i){
-        pathState = i;
-        pathTimer.resetTimer();
-    }
-    // Replace wait() and action methods with these self-contained loops:
-
-    public void wait(double time){
-        actionTimer.resetTimer();
-        while(actionTimer.getElapsedTimeSeconds() < time){
-            // Keep subsystems and follower updating during the wait
-            follower.update();
-            shooter.periodic();
-            spindexer.periodic();
-            intake.periodic();
-        }
-    }
-
-    public void autonShoot(){
-        for(int i = 0; i < 3; i++) {
-            wait(.3);
-            spindexer.flickBallOut();
-            wait(.2);
-
-            shooter.shootBall();
-            wait(.2);
-
-            spindexer.rotate();
-            wait(.4);
-        }
-    }
-
-    public void addToSpindexer(){
-        runAutonIntake();
-
-        spindexer.rotate();
-        wait(.5);
-
-        spindexer.rotate();
-        wait(.5);
-
-        stopAutonIntake();
-    }
-
-    public void runAutonIntake(){
-        intake.setIntakePower(1);
-        intake.setStagingMotorPower(1);
-    }
-
-    public void stopAutonIntake(){
-        intake.setIntakePower(0);
-        intake.setStagingMotorPower(0);
-    }
-
-    public void autonomousPathUpdate() {
+    @Override
+    protected void autonomousPathUpdate() {
         switch (pathState) {
             case 0:
                 spindexer.rotate();
@@ -135,17 +64,17 @@ public class BlueFrontAuton extends OpMode {
                     break;
                 follower.followPath(startToShoot, true);
                 setPathState(1);
+                break;
 
             case 1:
                 if (follower.isBusy())
                     break;
-
                 autonShoot();
-
                 follower.followPath(shootToFirst, true);
                 setPathState(2);
                 follower.setMaxPower(.5);
                 runAutonIntake();
+                break;
 
             case 2:
                 if (follower.isBusy())
@@ -155,101 +84,55 @@ public class BlueFrontAuton extends OpMode {
                 follower.setMaxPower(1);
                 setPathState(3);
                 addToSpindexer();
+                break;
 
             case 3:
-                if (follower.isBusy()){
+                if (follower.isBusy())
                     break;
-                }
-
                 autonShoot();
-                follower.followPath(shootToSecond,true);
+                follower.followPath(shootToSecond, true);
                 setPathState(4);
                 follower.setMaxPower(.5);
                 runAutonIntake();
+                break;
 
             case 4:
-                if(follower.isBusy()) {
+                if (follower.isBusy())
                     break;
-                }
-                follower.followPath(secondToShoot,true);
+                follower.followPath(secondToShoot, true);
                 stopAutonIntake();
                 setPathState(5);
                 follower.setMaxPower(1);
                 addToSpindexer();
+                break;
 
             case 5:
-                if(follower.isBusy())
+                if (follower.isBusy())
                     break;
                 autonShoot();
-
                 follower.followPath(shootToStop, true);
                 setPathState(6);
+                break;
         }
     }
-    /** This method is called once at the init of the OpMode. **/
 
-    @Override
-    public void loop() {
-
-        // These loop the movements of the robot, these must be called continuously in order to work
-        follower.update();
-        autonomousPathUpdate();
-
-        // Feedback to Driver Hub for debugging
-        telemetry.addData("Shooter Power", shooter.getShooterPower());
-        telemetry.addData("Shooter distance", shooter.getDistanceToTarget());
-        telemetry.addData("path state", pathState);
-
-        telemetry.addData("x", follower.getPose().getX());
-        telemetry.addData("y", follower.getPose().getY());
-        telemetry.addData("heading", follower.getPose().getHeading());
-
-        telemetry.update();
-
-        shooter.periodic();
-        spindexer.periodic();
-        intake.periodic();
-    }
-
-    /** This method is called once at the init of the OpMode. **/
     @Override
     public void init() {
-        pathTimer = new Timer();
-        opmodeTimer = new Timer();
-        opmodeTimer.resetTimer();
-        actionTimer = new Timer();
-
-
-        follower = Constants.createFollower(hardwareMap);
-        buildPaths();
-
-        robotHardware = RobotHardware.getInstance();
-        robotHardware.init(hardwareMap);
-        follower.setStartingPose(startPose);
-
-        shooter = new Shooter();
-        intake = new Intake();
-        spindexer = new Spindexer();
+        super.init();
         shooter.enableAutonMode();
         shooter.disableLimelight();
-
-
     }
-
-    /** This method is called continuously after Init while waiting for "play". **/
-    @Override
-    public void init_loop() {}
-
-    /** This method is called once at the start of the OpMode.
-     * It runs all the setup actions, including building paths and starting the path system **/
-    @Override
-    public void start() {
-        opmodeTimer.resetTimer();
-        setPathState(0);
-    }
-
-    /** We do not use this because everything should automatically disable **/
-    @Override
-    public void stop() {}
-
 }
+
+
+
+
+
+
+
+
+
+
+
+
+

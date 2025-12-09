@@ -28,17 +28,6 @@ public class MecanumDrive implements Subsystem {
         return pose;
     }
 
-    public boolean getSlowMode() {
-        return slowmode;
-    }
-
-    public void setCurrentPose(Pose pose) {
-        this.pose = pose;
-    }
-
-    public void setSlowMode(boolean set) {
-        slowmode = set;
-    }
     public void toggleSlowMode() {
         slowmode = !slowmode;
     }

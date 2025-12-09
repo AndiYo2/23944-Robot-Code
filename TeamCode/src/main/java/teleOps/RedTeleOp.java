@@ -11,7 +11,7 @@ import utility.RobotHardware;
 
 
 @TeleOp
-public class RedTeleOp extends OpModeTemplate {
+public class RedTeleOp extends TeleOpTemplate {
 
 
 
