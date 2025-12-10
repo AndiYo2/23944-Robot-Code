@@ -1,5 +1,6 @@
 package utility;
 
+import com.arcrobotics.ftclib.hardware.motors.Motor;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;

@@ -1,8 +1,8 @@
 package subsystems;
 
-import android.graphics.Color;
 import com.arcrobotics.ftclib.command.Subsystem;
-import utility.BallPattern;
+import utility.RobotConstants;
+import utility.RobotConstants.Enums.FlickState;
 import utility.RobotHardware;
 
 public class Spindexer implements Subsystem {
@@ -12,28 +12,46 @@ public class Spindexer implements Subsystem {
     private boolean isAtGoal = true;
     private double motorPos = 0;
     int tempUnstick = 1;
+    FlickState flickState = FlickState.Idle;
 
     // State tracking for ball detection
-    private BallPattern.BallType lastDetectedBall = BallPattern.BallType.NONE;
-    private boolean hasRotatedForCurrentBall = false;
 
-    public static BallPattern currentBallPattern;
+
 
     public Spindexer() {
         this.robot = RobotHardware.getInstance();
-        currentBallPattern = new BallPattern();
     }
+
+
 
     public void flickBallOut() {
-        robot.spindexerServo.setPosition(.65);
-        try {
-            Thread.sleep(400);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        robot.spindexerServo.setPosition(0.25);
+        flickState = FlickState.Start;
     }
 
+    public FlickState getFlipperState(){
+        return flickState;
+    }
+
+    private void flipperPeriodic(){
+        switch(flickState){
+            case Retracted:
+                break;
+            case Start:
+                if(robot.spindexerServo.getPosition() == RobotConstants.Spindexer.FLIPPER_POSITION_EXTENDED){
+                    flickState = FlickState.Extended;
+                    break;
+                }
+                robot.spindexerServo.setPosition(RobotConstants.Spindexer.FLIPPER_POSITION_EXTENDED);
+                break;
+            case Extended:
+                if(robot.spindexerServo.getPosition() == RobotConstants.Spindexer.FLIPPER_POSITION_RETRACT){
+                    flickState = FlickState.Retracted;
+                    break;
+                }
+                robot.spindexerServo.setPosition(RobotConstants.Spindexer.FLIPPER_POSITION_RETRACT);
+                break;
+        }
+    }
     public double getEncoderDegrees() {
         //Voltage / 3.3V * 360 Degrees
         motorPos = (robot.spindexerEncoder.getVoltage() / 3.3) * 360;
@@ -60,18 +78,18 @@ public class Spindexer implements Subsystem {
         setPositionAdd(-120);
     }
 
+    public boolean isDoneRotating(){return isAtGoal;}
+
     private double getAngularDistance(double angleA, double angleB) {
         double diff = Math.abs(angleA - angleB);
         return Math.min(diff, 360 - diff);
     }
 
-public boolean isAtTheGoal(){
-        return isAtGoal;
-}
 
     @Override
     public void periodic() {
         getEncoderDegrees();
+        flipperPeriodic();
 
         // Handle motor rotation to goal position
         if (!isAtGoal) {
@@ -89,72 +107,5 @@ public boolean isAtTheGoal(){
         }
     }
 
-    public static boolean addBallLogic() {
-        BallPattern.BallType ball = ColorSensorSubsytem.getBallColor();
-
-        if (currentBallPattern.getBallInSlotX(1) == BallPattern.BallType.NONE) {
-            currentBallPattern.setBallInSlotX(1, ball);
-            return true;
-        }
-        return false;
-    }
-
-    public void startIntake() {
-        robot.intakeBeltMotor.setPower(1);
-        robot.intakeMotor.setPower(1);
-    }
-
-    public void stopIntake() {
-        robot.intakeBeltMotor.setPower(0);
-        robot.intakeMotor.setPower(0);
-    }
-
-    public void indexBalls() {
-        // Start the intake motors
-        startIntake();
-
-        while (!currentBallPattern.isFull()) {
-            BallPattern.BallType detectedBall = ColorSensorSubsytem.getBallColor();
-
-            // Ball detected and we haven't rotated for it yet
-            if (detectedBall != BallPattern.BallType.NONE && !hasRotatedForCurrentBall) {
-                // Add ball to pattern
-                currentBallPattern.setBallInSlotX(1, detectedBall);
-
-                // Rotate to next slot
-                rotate();
-
-                // Mark that we've rotated for this ball
-                hasRotatedForCurrentBall = true;
-                lastDetectedBall = detectedBall;
-
-                // Wait for rotation to complete before continuing
-                while (!isAtGoal) {
-                    try {
-                        Thread.sleep(50);
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        stopIntake();
-                        return;
-                    }
-                }
-            }
-            // No ball detected - reset the flag so we can detect the next ball
-            else if (detectedBall == BallPattern.BallType.NONE) {
-                hasRotatedForCurrentBall = false;
-            }
-
-            // Small delay to prevent CPU spinning
-            try {
-                Thread.sleep(50);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
-            }
-        }
-
-        // Stop intake when pattern is full or interrupted
-        stopIntake();
-    }
 
 }

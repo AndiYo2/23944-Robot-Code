@@ -45,7 +45,7 @@ public class RedBackAuton extends AutonTemplate {
             case 0:
                 spindexer.rotate();
                 wait(1.5);
-                autonShoot();
+                startAutonShoot();
                 setPathState(1);
                 break;
 
@@ -71,7 +71,7 @@ public class RedBackAuton extends AutonTemplate {
             case 3:
                 if (follower.isBusy())
                     break;
-                autonShoot();
+                startAutonShoot();
                 follower.followPath(shootToStop, true);
                 setPathState(4);
                 break;
@@ -81,6 +81,5 @@ public class RedBackAuton extends AutonTemplate {
     @Override
     public void init() {
         super.init();
-        shooter.disableLimelight();
     }
 }

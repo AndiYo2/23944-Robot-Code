@@ -6,6 +6,8 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import pedroPathing.Constants;
 import subsystems.*;
+import utility.RobotConstants.Enums.FlickState;
+import utility.RobotConstants.Enums.ShooterCases;
 import utility.RobotHardware;
 
 /**
@@ -17,10 +19,13 @@ public abstract class AutonTemplate extends OpMode {
     protected Timer pathTimer, actionTimer, opmodeTimer;
     protected int pathState;
 
+    protected int ballsToShoot;
+
     protected RobotHardware robotHardware;
     protected Shooter shooter;
     protected Intake intake;
     protected Spindexer spindexer;
+    protected ShooterCases shootCases;
 
     /**
      * Set the current path state and reset the path timer
@@ -29,6 +34,7 @@ public abstract class AutonTemplate extends OpMode {
         pathState = state;
         pathTimer.resetTimer();
     }
+
 
     /**
      * Wait for a specified amount of time while keeping subsystems updated
@@ -46,17 +52,44 @@ public abstract class AutonTemplate extends OpMode {
     /**
      * Execute autonomous shooting sequence (3 balls)
      */
-    protected void autonShoot() {
-        for (int i = 0; i < 3; i++) {
-            wait(.3);
-            spindexer.flickBallOut();
-            wait(.2);
+    protected void startAutonShoot() {
+        ballsToShoot = 3;
+        shootCases = ShooterCases.Start;
+    }
+    private void checkAutonShoot(){
+        if(ballsToShoot > 0)
+            shootCases = ShooterCases.Start;
+    }
 
-            shooter.shootBall();
-            wait(.2);
 
-            spindexer.rotate();
-            wait(.5);
+
+    protected void shootingPeriodic(){
+        switch (shootCases){
+            case Idle:
+                break;
+            case Start:
+                spindexer.flickBallOut();
+                shootCases = ShooterCases.SpindexerFlicking;
+                break;
+            case SpindexerFlicking:
+                if(spindexer.getFlipperState() == FlickState.Extended){
+                    shootCases = ShooterCases.ShooterFlicking;
+                    shooter.shootBall();
+                }
+                break;
+            case ShooterFlicking:
+                if(spindexer.getFlipperState() == FlickState.Retracted){
+                    spindexer.rotate();
+                    shootCases = ShooterCases.SpindexerRotating;
+                }
+                break;
+            case SpindexerRotating:
+                if(spindexer.isDoneRotating()){
+                    shootCases = ShooterCases.Idle;
+                    ballsToShoot--;
+                    checkAutonShoot();
+                }
+                break;
         }
     }
 
@@ -116,6 +149,7 @@ public abstract class AutonTemplate extends OpMode {
         shooter = new Shooter();
         intake = new Intake();
         spindexer = new Spindexer();
+        shootCases = ShooterCases.Idle;
 
         buildPaths();
     }
@@ -143,6 +177,8 @@ public abstract class AutonTemplate extends OpMode {
         telemetry.addData("heading", follower.getPose().getHeading());
         telemetry.update();
 
+
+        shootingPeriodic();
         shooter.periodic();
         spindexer.periodic();
         intake.periodic();

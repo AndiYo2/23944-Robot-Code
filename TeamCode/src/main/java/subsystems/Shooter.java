@@ -4,23 +4,17 @@ import com.arcrobotics.ftclib.command.Subsystem;
 import com.qualcomm.hardware.limelightvision.LLResult;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import utility.RobotConstants;
+import utility.RobotConstants.Enums.FlickState;
 import utility.RobotHardware;
 
 public class Shooter implements Subsystem {
 
-    private final double FLIPPER_POSITION_EXTEND = .6;
-    private final double FLIPPER_POSITION_RETRACT = .325;
+
     RobotHardware robot;
-    private final double[] txValues = new double[10];
-    private int txValuesIndex = 0;
-    private int txValuesCount = 0;
+    private double requiredVelocity = 1;
+    FlickState shootState = FlickState.Idle;
 
-    private boolean limelightDisabled = false;
-
-    private boolean autonModeEnabled = false;
-    public boolean disbaleCalcs = false;
 
     public Shooter() {
         this.robot = RobotHardware.getInstance();;
@@ -29,125 +23,12 @@ public class Shooter implements Subsystem {
     }
 
 
-
-    // ============================================================
-    // ====================== SHOOTER =============================
-    // ============================================================
-
-    public double getShooterMotorVelocity() {
-        return robot.shooterMotor.getVelocity(AngleUnit.RADIANS);
-    }
-
-    public void setShooterMotorVelocity(double speed) {
-        robot.shooterMotor.setVelocity(speed, AngleUnit.RADIANS);
-    }
-
     public double getShooterPower() {
         return robot.shooterMotor.getPower();
     }
-
     public void setShooterPower(double power) {
         robot.shooterMotor.setPower(power);
     }
-
-    public void stopShooterMotor() {
-        robot.shooterMotor.setPower(0);
-    }
-
-    // ============================================================
-    // ====================== STAGING FLIPPER =====================
-    // ============================================================
-
-    public void flip(){
-        robot.shooterFlipper.setPosition(FLIPPER_POSITION_EXTEND);
-        try {
-            Thread.sleep(400);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-        robot.shooterFlipper.setPosition(FLIPPER_POSITION_RETRACT);
-    }
-
-    // ============================================================
-    // ====================== VELOCITY CALCULATION ================
-    // ============================================================
-
-    // Configuration constants
-    private static final double LIMELIGHT_HEIGHT = 0.41; // Height of limelight from ground in meters
-    private static final double LIMELIGHT_ANGLE = 10.0; // Angle of limelight from horizontal in degrees
-    private static final double APRILTAG_HEIGHT = 0.75; // Height of AprilTag center from ground (could be 1.0m - verify this!)
-    private static final double TARGET_OFFSET = .1; // How much higher than AprilTag we want to aim (meters)
-    private static final double TARGET_HEIGHT = APRILTAG_HEIGHT + TARGET_OFFSET; // Actual target height (1.0m or 1.25m)
-    private static final double LAUNCH_HEIGHT = 0.38; // Height of ball launch point from ground in meters
-    private static final double LAUNCH_ANGLE = 40.0; // Launch angle in degrees (adjust based on your hood)
-    private static final double GRAVITY = 9.81; // m/s^2
-
-    // Velocity lookup table - every 0.05m from 0.5m to 1.5m
-    // Format: {distance in meters, velocity in rad/s}
-    // Tune each value by testing at that exact distance
-    private static final double[][] VELOCITY_MAP = {
-            {0.50, .55},
-            {0.55, .55},
-            {0.60, .6},
-            {0.65, .6},
-            {0.70, .6},
-            {0.75, .625}, //l
-            {0.80, .65}, //locked
-            {0.85, .7},
-            {0.90, .75},
-            {0.95, .8},
-            {1.00, 1}
-
-    };
-
-    private double requiredVelocity = 1; // Store calculated velocity
-
-    /**
-     * Calculate required shooter velocity based on distance to target
-     * Finds the closest entry in the lookup table (rounded to nearest 0.05m)
-     */
-    public void calculateRequiredVelocity() {
-        if(disbaleCalcs){
-            return;
-        }
-
-        double distance = getDistanceToTarget();
-
-        if (distance > 0) {
-            // Round distance to nearest 0.05m
-            double roundedDistance = Math.round(distance / 0.05) * 0.05;
-
-            // Find exact match in table
-            double closestVelocity = VELOCITY_MAP[VELOCITY_MAP.length / 2][1]; // default to middle
-            double closestDistanceDiff = Double.MAX_VALUE;
-
-            for (int i = 0; i < VELOCITY_MAP.length; i++) {
-                double distDiff = Math.abs(VELOCITY_MAP[i][0] - roundedDistance);
-                if (distDiff < closestDistanceDiff) {
-                    closestDistanceDiff = distDiff;
-                    closestVelocity = VELOCITY_MAP[i][1];
-                }
-            }
-
-            requiredVelocity = closestVelocity;
-
-        } else {
-            if(autonModeEnabled){
-                requiredVelocity = .625;
-            }else {
-                // No valid target - use middle value from lookup table
-                requiredVelocity = 1;
-            }
-        }
-    }
-
-
-    public void enableAutonMode(){
-         autonModeEnabled = true;
-    }
-    /**
-     * Get the currently calculated required velocity
-     */
     public double getRequiredVelocity() {
         return requiredVelocity;
     }
@@ -169,113 +50,55 @@ public class Shooter implements Subsystem {
         robot.turretServo.setPower(power);
     }
 
-    /**
-     * Get horizontal distance to target in meters
-     */
-    public double getDistanceToTarget() {
-        LLResult result = robot.limelight.getLatestResult();
 
-        if (result != null && result.isValid()) {
-            double ty = result.getTy();
-            double angleToTarget = LIMELIGHT_ANGLE + ty;
-            double heightDifference = APRILTAG_HEIGHT - LIMELIGHT_HEIGHT;
-            double distance = heightDifference / Math.tan(Math.toRadians(angleToTarget));
-            return distance > 0 ? distance : -1;
-        }
+    public double getDistanceToTarget() {
 
         return -1; // Invalid
     }
 
-    /**
-     * Check if shooter is ready to fire
-     */
 
-    // ============================================================
-    // ====================== FULL METHODS ========================
-    // ============================================================
-
-    public boolean shootBall(){
-        // Calculate required velocity based on current distance
-        // Check if shooter is at speed and flipper is ready
-
-        flip();
-        return true;
-
+    public void shootBall(){
+        shootState = FlickState.Start;
     }
 
 
-    // ============================================================
-    // ======================== TURRET SYSTEM ======================
-    // ============================================================
-
-    private static final double DEADBAND = 8.0;  // Stop moving within 8 degrees
-    private static final double POWER_SCALE = 0.015;  // How fast to turn (tune this)
-
-    public void toggleLimelight(){
-        limelightDisabled = !limelightDisabled;
+    private void flipperPeriodic(){
+        switch(shootState){
+            case Retracted:
+                break;
+            case Start:
+                if(robot.shooterFlipper.getPosition() == RobotConstants.Shooter.FLIPPER_POSITION_EXTENDED){
+                    shootState = FlickState.Extended;
+                    break;
+                }
+                robot.shooterFlipper.setPosition(RobotConstants.Shooter.FLIPPER_POSITION_EXTENDED);
+                break;
+            case Extended:
+                if(robot.shooterFlipper.getPosition() == RobotConstants.Shooter.FLIPPER_POSITION_RETRACT){
+                    shootState = FlickState.Retracted;
+                    break;
+                }
+                robot.shooterFlipper.setPosition(RobotConstants.Shooter.FLIPPER_POSITION_RETRACT);
+                break;
+        }
     }
-    public void disableLimelight(){
-        limelightDisabled = true;
+    public FlickState getFlipperState(){
+        return shootState;
     }
 
-    public boolean limelightDisabled(){
-        return limelightDisabled;
-    }
+    public void toggleLimelight(){RobotConstants.Limelight.isLimelightDisabled = !RobotConstants.Limelight.isLimelightDisabled;}
+
 
 
     @Override
     public void periodic() {
-
-        // Calculate required velocity continuously
-
-
         robot.shooterMotor.setPower(1);
+        flipperPeriodic();
 
 
         // Get Limelight data
         LLResult result = robot.limelight.getLatestResult();
 
-        if (result != null && result.isValid() && !limelightDisabled) {
-            double tx = result.getTx();  // Raw horizontal error in degrees
 
-            // Store tx value in circular buffer
-            txValues[txValuesIndex] = tx;
-            txValuesIndex = (txValuesIndex + 1) % 10;
-            txValuesCount = Math.min(txValuesCount + 1, 10);
-
-            // Wait until we have enough samples
-            if (txValuesCount < 10) {
-                robot.turretServo.setPower(0);
-                return;
-            }
-
-            // Calculate average tx
-            double avgTx = 0;
-            for (double value : txValues) {
-                avgTx += value;
-            }
-            avgTx /= 10;
-
-            // If we're close enough, stop
-            if (Math.abs(avgTx) < DEADBAND) {
-                robot.turretServo.setPower(0);
-                return;
-            }
-
-            // Calculate power proportional to error
-            double power = avgTx * POWER_SCALE;
-
-            // Limit max power to prevent wild movements
-            if (power > 0.5) power = 0.5;
-            if (power < -0.5) power = -0.5;
-
-            // Apply power (positive tx = target is right, so turn right)
-            robot.turretServo.setPower(power);
-        } else {
-            if(!disbaleCalcs) {
-                // No target visible, stop moving
-                robot.turretServo.setPower(0);
-            }
-        }
     }
 }

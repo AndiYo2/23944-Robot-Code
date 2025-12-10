@@ -69,7 +69,7 @@ public class BlueFrontAuton extends AutonTemplate {
             case 1:
                 if (follower.isBusy())
                     break;
-                autonShoot();
+                startAutonShoot();
                 follower.followPath(shootToFirst, true);
                 setPathState(2);
                 follower.setMaxPower(.5);
@@ -89,7 +89,7 @@ public class BlueFrontAuton extends AutonTemplate {
             case 3:
                 if (follower.isBusy())
                     break;
-                autonShoot();
+                startAutonShoot();
                 follower.followPath(shootToSecond, true);
                 setPathState(4);
                 follower.setMaxPower(.5);
@@ -109,7 +109,7 @@ public class BlueFrontAuton extends AutonTemplate {
             case 5:
                 if (follower.isBusy())
                     break;
-                autonShoot();
+                startAutonShoot();
                 follower.followPath(shootToStop, true);
                 setPathState(6);
                 break;
@@ -119,8 +119,6 @@ public class BlueFrontAuton extends AutonTemplate {
     @Override
     public void init() {
         super.init();
-        shooter.enableAutonMode();
-        shooter.disableLimelight();
     }
 }
 
