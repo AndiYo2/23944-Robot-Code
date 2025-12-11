@@ -16,7 +16,7 @@ import utility.RobotHardware;
         protected Shooter shooter;
         protected Intake intake;
         protected Spindexer spindexer;
-        protected ColorSensorSubsytem colorSensorIntake;
+        protected ColorSensorSubsytem colorSensor;
         protected GamepadEx driverGamepad;
         private final RobotHardware robot = RobotHardware.getInstance();
         protected Limelight limelight;
@@ -31,9 +31,9 @@ import utility.RobotHardware;
 
             intake = new Intake();
             shooter = new Shooter();
-            colorSensorIntake = new ColorSensorSubsytem();
+            colorSensor = new ColorSensorSubsytem();
             spindexer = new Spindexer();
-            register(intake, shooter, spindexer,  colorSensorIntake);
+            register(intake, shooter, spindexer, colorSensor);
 
         }
 
@@ -108,13 +108,6 @@ import utility.RobotHardware;
             }
         }
 
-        public enum Alliance {
-            RED,
-            BLUE;
-            public double adjust(double input) {
-                return this == RED ? input : -input;
-            }
-        }
 
         @Override
         public void run() {
@@ -128,7 +121,9 @@ import utility.RobotHardware;
             shootingPeriodic();
 
             telemetry.addData("Shooter Power:", shooter.getRequiredVelocity());
-            telemetry.addData("shooter distance:", shooter.getDistanceToTarget());
+            telemetry.addData("Shooter distance:", shooter.getDistanceToTarget());
+            telemetry.addData("Color Detected:", colorSensor.getBallColor());
+            telemetry.addData("Color String:", colorSensor.getColorDataString());
             telemetry.update();
         }
     }

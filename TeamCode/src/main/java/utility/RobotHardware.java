@@ -9,8 +9,11 @@ import com.qualcomm.robotcore.hardware.*;
 
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.seattlesolvers.solverslib.hardware.AbsoluteAnalogEncoder;
+import com.seattlesolvers.solverslib.hardware.motors.CRServoEx;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import utility.RobotConstants.Enums.BallColor;
 
 public class RobotHardware {
     // Drivetrain
@@ -41,17 +44,19 @@ public class RobotHardware {
     public Limelight3A limelight;
 
     // Color Sensor
-    public ColorSensor colorSensorIntake;
+    public ColorSensor colorSensor;
 
     //Spindexer
-    public CRServo spindexerMotor;
-    public AnalogInput spindexerEncoder;
+    public CRServoEx spindexerMotor;
+    public AbsoluteAnalogEncoder spindexerEncoder;
 
     public TelemetryManager telemetryManager;
 
     public Servo spindexerServo;
 
     public GoBildaPinpointDriver pinpoint;
+
+    public RobotConstants.SpindxerPattern spindexerPattern;
 
 
 
@@ -99,13 +104,21 @@ public class RobotHardware {
         intakeBeltMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         intakeBeltMotor.setDirection(DcMotor.Direction.REVERSE);
 
-        colorSensorIntake = hardwareMap.get(ColorSensor.class, RobotConstants.ColorSensor.colorSensor);
+        colorSensor = hardwareMap.get(ColorSensor.class, RobotConstants.ColorSensor.colorSensor);
 
         // ******************* SPINDEXER ******************* //
-
-        spindexerMotor = hardwareMap.get(CRServo.class, RobotConstants.Spindexer.spindexer);
-        spindexerEncoder = hardwareMap.get(AnalogInput.class, RobotConstants.Spindexer.spindexerEncoder);
         spindexerServo = hardwareMap.get(Servo.class, RobotConstants.Spindexer.spindexerFLipperServo);
+
+
+        spindexerPattern = new RobotConstants.SpindxerPattern(BallColor.None, BallColor.None, BallColor.None);
+        spindexerMotor = new CRServoEx(
+                hardwareMap,
+                RobotConstants.Spindexer.spindexer
+                // The analog encoder
+        );
+
+
+
 
 
         // ******************* OUTTAKE ******************* //

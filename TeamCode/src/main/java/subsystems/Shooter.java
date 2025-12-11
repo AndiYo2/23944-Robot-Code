@@ -92,9 +92,9 @@ public class Shooter implements Subsystem {
 
     @Override
     public void periodic() {
-        robot.shooterMotor.setPower(1);
+        robot.shooterMotor.setPower(0);
         flipperPeriodic();
-
+        //Set back to 1
 
         // Get Limelight data
         LLResult result = robot.limelight.getLatestResult();

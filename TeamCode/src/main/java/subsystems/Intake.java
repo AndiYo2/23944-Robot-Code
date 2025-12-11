@@ -57,9 +57,4 @@ public class Intake implements Subsystem {
     }
 
 
-    public void tryAddBallInSpindexer(){
-        if(robot.spindexerMotor.getPower() == 0){
-            robot.intakeBeltMotor.setPower(1);
-        }
-    }
 }

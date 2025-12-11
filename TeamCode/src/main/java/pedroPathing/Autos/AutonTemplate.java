@@ -50,26 +50,32 @@ public abstract class AutonTemplate extends OpMode {
     }
 
     /**
-     * Execute autonomous shooting sequence (3 balls)
+     * Execute an autonomous shooting sequence (3 balls)
      */
     protected void startAutonShoot() {
         ballsToShoot = 3;
         shootCases = ShooterCases.Start;
+        follower.pausePathFollowing();
     }
     private void checkAutonShoot(){
         if(ballsToShoot > 0)
             shootCases = ShooterCases.Start;
+        else{
+            follower.resumePathFollowing();
+        }
     }
 
 
 
     protected void shootingPeriodic(){
-        switch (shootCases){
+        switch (shootCases) {
             case Idle:
                 break;
             case Start:
-                spindexer.flickBallOut();
-                shootCases = ShooterCases.SpindexerFlicking;
+                if (shooter.getFlipperState() == FlickState.Retracted){
+                    shootCases = ShooterCases.SpindexerFlicking;
+                    spindexer.flickBallOut();
+                }
                 break;
             case SpindexerFlicking:
                 if(spindexer.getFlipperState() == FlickState.Extended){
@@ -79,8 +85,8 @@ public abstract class AutonTemplate extends OpMode {
                 break;
             case ShooterFlicking:
                 if(spindexer.getFlipperState() == FlickState.Retracted){
-                    spindexer.rotate();
                     shootCases = ShooterCases.SpindexerRotating;
+                    spindexer.rotate();
                 }
                 break;
             case SpindexerRotating:

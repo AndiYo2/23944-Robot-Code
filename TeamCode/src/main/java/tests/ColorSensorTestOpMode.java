@@ -24,27 +24,28 @@ public class ColorSensorTestOpMode extends LinearOpMode {
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
+        double red;
+        double blue;
+        double green;
+
         waitForStart(); // Wait for the start button to be pressed
 
         while (opModeIsActive()) {
             // Get the normalized RGBA values from the sensor
             NormalizedRGBA colors = colorSensor.getNormalizedColors();
 
+            red = colors.red/ colors.alpha;
+            green = colors.green/ colors.alpha;
+            blue = colors.blue/ colors.alpha;
+
+
+
             // Display the color values on the Driver Station telemetry
-            telemetry.addData("Red", "%.3f", colors.red);
-            telemetry.addData("Green", "%.3f", colors.green);
-            telemetry.addData("Blue", "%.3f", colors.blue);
-            telemetry.addData("Alpha", "%.3f", colors.alpha); // Alpha represents overall brightness/intensity
+            telemetry.addData("Red",  red);
+            telemetry.addData("Green",  green);
+            telemetry.addData("Blue",  blue);
+            telemetry.addData("Alpha",  colors.alpha); // Alpha represents overall brightness/intensity
 
-            // Example of using light detected (if the sensor also functions as an OpticalDistanceSensor)
-            if (colorSensor instanceof OpticalDistanceSensor) {
-                telemetry.addData("Light Detected", ((OpticalDistanceSensor) colorSensor).getLightDetected());
-            }
-
-            // Add logic here to react to specific colors, e.g.,
-            // if (colors.red > colors.blue && colors.red > colors.green && colors.red > 0.5) {
-            //     telemetry.addData("Detected", "Red");
-            // }
 
             telemetry.update(); // Update the telemetry display
         }
