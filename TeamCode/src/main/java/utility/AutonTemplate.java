@@ -85,7 +85,7 @@ public abstract class AutonTemplate extends OpMode {
             case ShooterFlicking:
                 if(spindexer.getFlipperState() == FlickState.Retracted){
                     shootCases = ShooterCases.SpindexerRotating;
-                    spindexer.rotate();
+                    spindexer.rotate(120);
                 }
                 break;
             case SpindexerRotating:
@@ -104,10 +104,10 @@ public abstract class AutonTemplate extends OpMode {
     protected void addToSpindexer() {
         runAutonIntake();
 
-        spindexer.rotate();
+        spindexer.rotate(120);
         wait(.5);
 
-        spindexer.rotate();
+        spindexer.rotate(120);
         wait(.5);
 
         stopAutonIntake();

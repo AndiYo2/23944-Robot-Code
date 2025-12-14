@@ -3,6 +3,7 @@ package subsystems;
 import com.arcrobotics.ftclib.command.Subsystem;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import utility.RobotConstants;
+import utility.RobotConstants.Enums.BallColor;
 import utility.RobotConstants.Enums.FlickState;
 import utility.RobotHardware;
 
@@ -22,6 +23,9 @@ public class Spindexer implements Subsystem {
     private double lastError = 0;
     private double integral = 0;
     private double lastTime;
+    private boolean autoRotate = true;
+
+    private boolean rotating = false;
 
 
     public Spindexer() {
@@ -75,8 +79,6 @@ public class Spindexer implements Subsystem {
     }
 
     public void rotationUpdater() {
-        position = getServoPosition();
-
         // Calculate shortest path
         double error = targetPosition - position;
         if (error > 180) error -= 360;
@@ -103,7 +105,6 @@ public class Spindexer implements Subsystem {
     }
 
     public boolean isDoneRotating() {
-        position = getServoPosition();
         double error = Math.abs(targetPosition - position);
         error = Math.min(error, 360 - error);
         return error < angleRange;
@@ -114,11 +115,46 @@ public class Spindexer implements Subsystem {
         this.lastError = 0;
         this.integral = 0;
     }
+    private void handleBallDetectionAndRotation() {
+        // Check if ball entered slot 0 (intake position)
+        if (ColorSensorSubsytem.ballJustEntered() && !waitingForRotation) {
+            BallColor detectedColor = ColorSensorSubsytem.getBallColor();
+            robot.spindexerPattern.setBallInSlotX(0, detectedColor);
+
+            // Auto-rotate to make room for next ball
+            rotate(120); // Move to next slot
+            waitingForRotation = true;
+        }
+
+        // Handle rotation
+        if (targetPosition != position) {
+            rotationUpdater();
+        }
+
+        // Update state after rotation completes
+        if (waitingForRotation && isDoneRotating()) {
+            waitingForRotation = false;
+            shiftPattern();
+        }
+    }
+
+    private void shiftPattern() {
+        BallColor temp = robot.spindexerPattern.getBallInSlotX(2);
+        robot.spindexerPattern.setBallInSlotX(2, robot.spindexerPattern.getBallInSlotX(1));
+        robot.spindexerPattern.setBallInSlotX(1, robot.spindexerPattern.getBallInSlotX(0));
+        robot.spindexerPattern.setBallInSlotX(0, temp);
+    }
 
     @Override
     public void periodic() {
+        position = getServoPosition();
         flipperPeriodic();
         if(targetPosition != position)
             rotationUpdater();
+
+        if(autoRotate){
+
+        }
+
     }
 }

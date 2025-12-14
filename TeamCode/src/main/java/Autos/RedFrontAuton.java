@@ -59,7 +59,7 @@ public class RedFrontAuton extends AutonTemplate {
     protected void autonomousPathUpdate() {
         switch (pathState) {
             case 0:
-                spindexer.rotate();
+                spindexer.rotate(120);
                 if (follower.isBusy())
                     break;
                 follower.followPath(startToShoot, true);

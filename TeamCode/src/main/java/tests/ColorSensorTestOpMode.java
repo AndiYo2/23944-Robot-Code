@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.OpticalDistanceSensor; // For getLightDetected() if needed
 
-@TeleOp(name = "ColorSensorTestOpMode", group = "Sensor")
+@TeleOp(name = "ColorSensorTestOpMode", group = "Tests")
 public class ColorSensorTestOpMode extends LinearOpMode {
 
     private NormalizedColorSensor colorSensor; // Declare the color sensor object

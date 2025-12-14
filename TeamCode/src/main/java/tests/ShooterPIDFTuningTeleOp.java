@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
-@TeleOp
+@TeleOp(name = "ShooterPIDF", group = "Tests")
 public class ShooterPIDFTuningTeleOp extends OpMode {
 
     public DcMotorEx flywheelMotor1, flywheelMotor2;

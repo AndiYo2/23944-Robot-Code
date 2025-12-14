@@ -13,6 +13,7 @@ public class ColorSensorSubsytem implements Subsystem {
     static double red, green, blue, alpha;
     static final double[] RED = {0.6, 0.5, 0.4};
     static final double[] GREEN = {0.3, 0.5, 0.2};
+    private static BallColor lastDetectedColor = BallColor.None;
     RobotHardware robot;
 
 
@@ -32,35 +33,33 @@ public class ColorSensorSubsytem implements Subsystem {
 
     }
     public double getRed(){
-        refreshScan();
         return red;
     }
     public double getGreen(){
-        refreshScan();
         return green;
     }
     public double getBlue(){
-        refreshScan();
         return colors.blue;
     }
     public double getAlpha(){
-        refreshScan();
         return colors.alpha;
-
     }
     public static BallColor getBallColor(){
-        refreshScan();
         if(red > RED[0] && green > RED[1] && blue > RED[2])
             return BallColor.Purple;
         else if(red > GREEN[0] && green < GREEN[0] && blue < GREEN[0])
             return BallColor.Green;
         return BallColor.None;
     }
-    public static boolean isBallInSlotZero(){
-        return getBallColor() == BallColor.Purple || getBallColor() == BallColor.Green;
+
+
+    public static boolean ballJustEntered() {
+        BallColor current = getBallColor();
+        boolean entered = (lastDetectedColor == BallColor.None && current != BallColor.None);
+        lastDetectedColor = current;
+        return entered;
     }
     public String getColorDataString(){
-        refreshScan();
         return "red = [" + red + "] green = [ "+ green + "] blue = [ "+ blue + "]";
     }
     @Override

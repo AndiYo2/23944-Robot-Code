@@ -121,7 +121,7 @@ public class RobotHardware {
 
         // ******************* LIMELIGHT ******************* //
          limelight = hardwareMap.get(Limelight3A.class, RobotConstants.Limelight.limelight);
-        limelight.setPollRateHz(100);
+        limelight.setPollRateHz(30);
         limelight.pipelineSwitch(0);
         limelight.start();
 

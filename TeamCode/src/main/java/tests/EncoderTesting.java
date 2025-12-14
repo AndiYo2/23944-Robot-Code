@@ -6,7 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
-@TeleOp
+@TeleOp(name = "Encoder", group = "Tests")
 public class EncoderTesting extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {

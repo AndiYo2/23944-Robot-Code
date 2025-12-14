@@ -40,7 +40,7 @@ public class BlueBackAuton extends AutonTemplate {
     protected void autonomousPathUpdate() {
         switch (pathState) {
             case 0:
-                spindexer.rotate();
+                spindexer.rotate(120);
                 wait(1.5);
                 startAutonShoot();
                 setPathState(1);

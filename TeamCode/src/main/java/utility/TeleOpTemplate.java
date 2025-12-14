@@ -54,14 +54,14 @@ abstract public class TeleOpTemplate extends CommandOpMode {
             new GamepadButton(driverGamepad, GamepadKeys.Button.Y)
                     .whenPressed(() -> shooter.shootBall());
             new GamepadButton(driverGamepad, GamepadKeys.Button.A)
-                    .whenPressed(() -> spindexer.rotate());
+                    .whenPressed(() -> spindexer.rotate(120));
             new GamepadButton(driverGamepad, GamepadKeys.Button.X)
                     .whenPressed(() -> spindexer.flickBallOut());
 
             new GamepadButton(driverGamepad, GamepadKeys.Button.LEFT_BUMPER)
                     .whenPressed(() -> shooter.toggleLimelight());
             new GamepadButton(driverGamepad, GamepadKeys.Button.RIGHT_BUMPER)
-                    .whenPressed(() -> spindexer.unstick());
+                    .whenPressed(() -> spindexer.rotate(-120));
 
             new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_DOWN)
                     .whenPressed(() -> shooter.lowerRequiredVelocity());
@@ -91,7 +91,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
                     break;
                 case ShooterFlicking:
                     if(spindexer.getFlipperState() == RobotConstants.Enums.FlickState.Retracted){
-                        spindexer.rotate();
+                        spindexer.rotate(120);
                         shootCases = ShooterCases.SpindexerRotating;
                     }
                     break;
