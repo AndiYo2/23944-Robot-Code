@@ -46,6 +46,7 @@ public class ColorSensorSubsytem implements Subsystem {
     public double getAlpha(){
         refreshScan();
         return colors.alpha;
+
     }
     public static BallColor getBallColor(){
         refreshScan();

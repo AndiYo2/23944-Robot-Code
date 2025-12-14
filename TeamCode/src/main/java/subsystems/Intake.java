@@ -14,13 +14,7 @@ public class Intake implements Subsystem {
     public Intake(){
         robot = RobotHardware.getInstance();
     }
-    public double getIntakeMotorVelocity() {
-        return robot.intakeMotor.getVelocity(AngleUnit.RADIANS);
-    }
 
-    public void setIntakeMotorVelocity(double speed) {
-        robot.intakeMotor.setVelocity(speed, AngleUnit.RADIANS);
-    }
 
     public double getIntakePower() {
         return robot.intakeMotor.getPower();
@@ -36,13 +30,6 @@ public class Intake implements Subsystem {
 
     // ****** STAGING MOTOR ******
 
-    public void setStagingMotorSpeed(double speed) {
-        robot.intakeBeltMotor.setVelocity(speed, AngleUnit.RADIANS);
-    }
-
-    public double getStagingMotorSpeed() {
-        return robot.intakeBeltMotor.getVelocity(AngleUnit.RADIANS);
-    }
 
     public void setStagingMotorPower(double power) {
         robot.intakeBeltMotor.setPower(power);
@@ -54,6 +41,16 @@ public class Intake implements Subsystem {
 
     public void stopStagingMotor() {
         robot.intakeBeltMotor.setPower(0);
+    }
+
+    // ****** INTAKE METHODS ******
+    public void runIntake(){
+        setIntakePower(1);
+        setStagingMotorPower(1);
+    }
+    public void stopIntake(){
+        setIntakePower(0);
+        setStagingMotorPower(0);
     }
 
 

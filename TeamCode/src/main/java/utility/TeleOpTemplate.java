@@ -1,17 +1,14 @@
-package teleOps;
+package utility;
+
 
 import com.arcrobotics.ftclib.command.CommandOpMode;
 import com.arcrobotics.ftclib.command.button.GamepadButton;
 import com.arcrobotics.ftclib.command.button.Trigger;
-import com.arcrobotics.ftclib.gamepad.GamepadEx;
-
-import com.arcrobotics.ftclib.gamepad.GamepadKeys;
+import com.arcrobotics.ftclib.gamepad.*;
 import subsystems.*;
-import utility.RobotConstants;
 import utility.RobotConstants.Enums.ShooterCases;
-import utility.RobotHardware;
 
-    abstract public class TeleOpTemplate extends CommandOpMode {
+abstract public class TeleOpTemplate extends CommandOpMode {
         protected MecanumDrive mecanumDrive;
         protected Shooter shooter;
         protected Intake intake;
@@ -43,10 +40,8 @@ import utility.RobotHardware;
         }
         protected void configureButtonBindings() {
             new Trigger(() -> gamepad1.left_trigger > 0.3)
-                    .whenActive(() -> intake.setIntakePower(1))
-                    .whenActive(() -> intake.setStagingMotorPower(1))
-                    .whenInactive(() -> intake.stopStagingMotor())
-                    .whenInactive(() -> intake.stopIntakeMotor());
+                    .whenActive(() -> intake.runIntake())
+                    .whenInactive(() -> intake.stopIntake());
             new Trigger(() -> gamepad1.right_trigger > 0.3)
                     .whenActive(() -> startShoot());
 

@@ -1,4 +1,4 @@
-package pedroPathing.Autos;
+package utility;
 
 import com.pedropathing.follower.Follower;
 import com.pedropathing.util.Timer;
@@ -8,7 +8,6 @@ import pedroPathing.Constants;
 import subsystems.*;
 import utility.RobotConstants.Enums.FlickState;
 import utility.RobotConstants.Enums.ShooterCases;
-import utility.RobotHardware;
 
 /**
  * Base template for all autonomous OpModes.
@@ -118,16 +117,14 @@ public abstract class AutonTemplate extends OpMode {
      * Start intake motors for autonomous
      */
     protected void runAutonIntake() {
-        intake.setIntakePower(1);
-        intake.setStagingMotorPower(1);
+        intake.runIntake();
     }
 
     /**
      * Stop intake motors
      */
     protected void stopAutonIntake() {
-        intake.setIntakePower(0);
-        intake.setStagingMotorPower(0);
+        intake.stopIntake();
     }
 
     /**

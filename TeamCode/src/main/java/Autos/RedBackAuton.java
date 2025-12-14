@@ -1,12 +1,13 @@
 
 
-package pedroPathing.Autos;
+package Autos;
 
 import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import utility.AutonTemplate;
 
 @Autonomous(name = "RedBackAuton", group = "Autonomous")
 public class RedBackAuton extends AutonTemplate {

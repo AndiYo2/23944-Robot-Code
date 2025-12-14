@@ -1,5 +1,7 @@
 package utility;
 
+import com.qualcomm.robotcore.hardware.PIDCoefficients;
+
 public class RobotConstants {
     public static class Drivetrain {
         public static String frontLeftMotor = "frontLeftMotor";
@@ -16,21 +18,23 @@ public class RobotConstants {
     }
 
     public static class Spindexer {
-        public static String spindexer = "spindexerServo";
+        public static String spindexerServo = "spindexerServo";
         public static String spindexerEncoder = "spindexerServoEncoder";
-        public static String spindexerMotor = "spindexerServoEncoder2";
 
         public static String spindexerFLipperServo = "spindexerFlipperServo";
         //Constant Positions
         public final static double FLIPPER_POSITION_EXTENDED = 0.65;
         public final static double FLIPPER_POSITION_RETRACT = 0.25;
 
+        public final static PIDCoefficients SPINDEXER_PID = new PIDCoefficients(0.0001, 0, 0);
+
     }
 
 
     public static class Shooter {
         //hardware
-        public static String shooter = "shooterMotor";
+        public static String shooter1 = "shooterMotor1";
+        public static String shooter2 = "shooterMotor2";
         public static String turret = "turretServo";
         public static String shooterFlipperServo = "shooterFlipperServo";
         public static String shooterEncoder = "shooterEncoder";

@@ -18,16 +18,17 @@ public class Shooter implements Subsystem {
 
     public Shooter() {
         this.robot = RobotHardware.getInstance();;
-        robot.shooterMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        robot.shooterMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        robot.shooterMotor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        robot.shooterMotor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
 
     public double getShooterPower() {
-        return robot.shooterMotor.getPower();
+        return robot.shooterMotor1.getPower();
     }
     public void setShooterPower(double power) {
-        robot.shooterMotor.setPower(power);
+        robot.shooterMotor1.setPower(power);
+        robot.shooterMotor2.setPower(power);
     }
     public double getRequiredVelocity() {
         return requiredVelocity;
@@ -39,7 +40,7 @@ public class Shooter implements Subsystem {
         }
     }
     public double getWheelVelocity(){
-        return robot.shooterMotor.getVelocity();
+        return robot.shooterMotor1.getVelocity();
     }
 
     public void raiseRequiredVelocity(){
@@ -92,7 +93,8 @@ public class Shooter implements Subsystem {
 
     @Override
     public void periodic() {
-        robot.shooterMotor.setPower(0);
+        robot.shooterMotor1.setPower(1);
+        robot.shooterMotor2.setPower(1);
         flipperPeriodic();
         //Set back to 1
 

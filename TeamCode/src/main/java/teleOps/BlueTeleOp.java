@@ -2,6 +2,7 @@ package teleOps;
 
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import utility.RobotHardware;
+import utility.TeleOpTemplate;
 
 
 @TeleOp

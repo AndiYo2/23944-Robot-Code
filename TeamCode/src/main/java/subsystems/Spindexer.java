@@ -1,6 +1,7 @@
 package subsystems;
 
 import com.arcrobotics.ftclib.command.Subsystem;
+import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import utility.RobotConstants;
 import utility.RobotConstants.Enums.FlickState;
 import utility.RobotHardware;
@@ -11,47 +12,113 @@ public class Spindexer implements Subsystem {
 
     FlickState flickState = FlickState.Idle;
 
+    private double position;
+    private double targetPosition;
+    private double power = 1;
+
+    private double angleRange = 5;
+
+    private PIDCoefficients pid;
+    private double lastError = 0;
+    private double integral = 0;
+    private double lastTime;
+
+
     public Spindexer() {
         this.robot = RobotHardware.getInstance();
+        position = getServoPosition();
+        targetPosition = position;
+        setPidCoeffs(RobotConstants.Spindexer.SPINDEXER_PID);
+        lastTime = 0;
     }
+
     public void flickBallOut() {
         flickState = FlickState.Start;
     }
-    private void flipperPeriodic(){
-        switch(flickState){
+
+    private void flipperPeriodic() {
+        switch (flickState) {
             case Retracted:
                 break;
             case Start:
-                if(robot.spindexerServo.getPosition() == RobotConstants.Spindexer.FLIPPER_POSITION_EXTENDED){
+                if (robot.spindexerFlipperServo.getPosition() == RobotConstants.Spindexer.FLIPPER_POSITION_EXTENDED) {
                     flickState = FlickState.Extended;
                     break;
                 }
-                robot.spindexerServo.setPosition(RobotConstants.Spindexer.FLIPPER_POSITION_EXTENDED);
+                robot.spindexerFlipperServo.setPosition(RobotConstants.Spindexer.FLIPPER_POSITION_EXTENDED);
                 break;
             case Extended:
-                if(robot.spindexerServo.getPosition() == RobotConstants.Spindexer.FLIPPER_POSITION_RETRACT){
+                if (robot.spindexerFlipperServo.getPosition() == RobotConstants.Spindexer.FLIPPER_POSITION_RETRACT) {
                     flickState = FlickState.Retracted;
                     break;
                 }
-                robot.spindexerServo.setPosition(RobotConstants.Spindexer.FLIPPER_POSITION_RETRACT);
+                robot.spindexerFlipperServo.setPosition(RobotConstants.Spindexer.FLIPPER_POSITION_RETRACT);
                 break;
         }
     }
 
-    public FlickState getFlipperState(){return flickState;}
+    public FlickState getFlipperState() {
+        return flickState;
+    }
 
-    public void rotate() {
-        robot.spindexerMotor.setTargetPosition(robot.spindexerMotor.getCurrentPosition() + 120);
-        robot.spindexerMotor.set(1);
+    public void rotate(double positionChange) {
+        targetPosition += positionChange;
+        // Wrap target position between 0-359
+        targetPosition = ((targetPosition % 360) + 360) % 360;
     }
-    public void unstick(){
-        robot.spindexerMotor.setTargetPosition(robot.spindexerMotor.getCurrentPosition() - 120);
-        robot.spindexerMotor.set(1);
+
+    public double getServoPosition() {
+        double pos = robot.spindexerEncoder.getVoltage();
+        pos /= 3.3;
+        pos *= 360;
+        return pos;
     }
-    public boolean isDoneRotating(){return robot.spindexerMotor.atTargetPosition();}
+
+    public void rotationUpdater() {
+        position = getServoPosition();
+
+        // Calculate shortest path
+        double error = targetPosition - position;
+        if (error > 180) error -= 360;
+        if (error < -180) error += 360;
+
+        // Calculate dt
+        double currentTime = System.nanoTime() / 1e9;
+        double dt = currentTime - lastTime;
+        lastTime = currentTime;
+
+        // Update integral and derivative terms
+        integral += error * dt;
+        double derivative = (error - lastError) / dt;
+        lastError = error;
+
+        // Calculate PID output
+        double output = pid.p * error + pid.i * integral + pid.d * derivative;
+
+        // Clamp output between -1 and 1
+        output = Math.max(-1, Math.min(1, output));
+
+        // Set motor power
+        robot.spindexerServo.setPower(output);
+    }
+
+    public boolean isDoneRotating() {
+        position = getServoPosition();
+        double error = Math.abs(targetPosition - position);
+        error = Math.min(error, 360 - error);
+        return error < angleRange;
+    }
+
+    public void setPidCoeffs(PIDCoefficients pid) {
+        this.pid = pid;
+        this.lastError = 0;
+        this.integral = 0;
+    }
 
     @Override
     public void periodic() {
         flipperPeriodic();
+        if(targetPosition != position)
+            rotationUpdater();
     }
 }
