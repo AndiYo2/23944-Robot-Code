@@ -18,8 +18,8 @@ public class ShootingStrategy {
     }
 
     public enum StrategyMode {
-        SMART,      // Try to match colors first, then dump the rest
-        DUMP_ONLY   // Ignore colors, just shoot nearest balls until empty
+        SMART,      // Greedy: Match correct colors in order, then dump remaining
+        FAST        // Greedy: Always shoot nearest ball regardless of color
     }
 
     public enum GoalPattern {
@@ -60,8 +60,8 @@ public class ShootingStrategy {
 
     /**
      * Toggles the strategy mode and re-initializes the lookup map.
-     * Call this when game state changes (e.g., end of match, panic mode).
-     * @param mode The new mode to use (SMART or DUMP_ONLY)
+     * Call this when game state changes.
+     * @param mode The new mode to use (SMART or FAST)
      */
     public static void setStrategyMode(StrategyMode mode) {
         if (currentMode != mode) {
@@ -99,33 +99,37 @@ public class ShootingStrategy {
         // Mutable simulation of the robot state
         BallColor[] currentBalls = {b0, b1, b2};
 
-        // --- PHASE 1: Attempt to fulfill the Goal Pattern (SMART MODE ONLY) ---
-        if (currentMode == StrategyMode.SMART) {
+        if (currentMode == StrategyMode.FAST) {
+            // FAST MODE: Greedy - always shoot nearest ball
+            while (hasAnyBall(currentBalls)) {
+                int nearestBallIndex = getNearestSlotWithAnyBall(currentBalls);
+                processShot(actions, currentBalls, nearestBallIndex);
+            }
+        } else {
+            // SMART MODE: Greedy - match correct colors in order, then dump remaining
             BallColor[] targetSequence = getTargetArray(goal);
 
+            // Phase 1: Greedily shoot correct colors in order
             for (BallColor neededColor : targetSequence) {
                 if (neededColor == BallColor.None) continue;
 
-                // Find the index of the NEAREST ball with the needed color
+                // Find the NEAREST ball with the needed color
                 int bestSlotIndex = getNearestSlotWithColor(currentBalls, neededColor);
 
                 if (bestSlotIndex != -1) {
-                    // We found the correct color. Go get it.
+                    // Found correct color - shoot it
                     processShot(actions, currentBalls, bestSlotIndex);
                 } else {
-                    // We need a specific color, but we don't have it.
-                    // Stop trying to match pattern and fall through to Dump Mode.
+                    // No more of this color - stop trying to match pattern
                     break;
                 }
             }
-        }
 
-        // --- PHASE 2: Dump Mode (Shoot the rest) ---
-        // Runs if DUMP_ONLY is active, OR if SMART mode finished/failed matching.
-        while (hasAnyBall(currentBalls)) {
-            // Find the nearest slot that is NOT None
-            int nearestBallIndex = getNearestSlotWithAnyBall(currentBalls);
-            processShot(actions, currentBalls, nearestBallIndex);
+            // Phase 2: Greedily dump remaining balls (nearest first)
+            while (hasAnyBall(currentBalls)) {
+                int nearestBallIndex = getNearestSlotWithAnyBall(currentBalls);
+                processShot(actions, currentBalls, nearestBallIndex);
+            }
         }
 
         return actions.toArray(new Action[0]);
