@@ -133,7 +133,8 @@ public class RobotConstants {
             Start,
             SpindexerFlicking,
             ShooterFlicking,
-            SpindexerRotating
+            SpindexerRotating,
+            BallShot
 
         }
 

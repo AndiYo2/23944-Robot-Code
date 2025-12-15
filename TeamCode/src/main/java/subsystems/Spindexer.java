@@ -6,6 +6,7 @@ import utility.RobotConstants;
 import utility.RobotConstants.Enums.BallColor;
 import utility.RobotConstants.Enums.FlickState;
 import utility.RobotHardware;
+import utility.ShootingStrategy;
 
 public class Spindexer implements Subsystem {
 
@@ -26,6 +27,9 @@ public class Spindexer implements Subsystem {
     private boolean autoRotate = true;
 
     private boolean rotating = false;
+
+    private ShootingStrategy.Action[] shootingSequence = null;
+    private int sequenceIndex = 0;
 
 
     public Spindexer() {
@@ -78,6 +82,10 @@ public class Spindexer implements Subsystem {
         return pos;
     }
 
+    public double getTargetPosition(){
+        return targetPosition;
+    }
+
     public void rotationUpdater() {
         // Calculate shortest path
         double error = targetPosition - position;
@@ -117,13 +125,13 @@ public class Spindexer implements Subsystem {
     }
     private void handleBallDetectionAndRotation() {
         // Check if ball entered slot 0 (intake position)
-        if (ColorSensorSubsytem.ballJustEntered() && !waitingForRotation) {
+        if (ColorSensorSubsytem.ballJustEntered() && !rotating) {
             BallColor detectedColor = ColorSensorSubsytem.getBallColor();
             robot.spindexerPattern.setBallInSlotX(0, detectedColor);
 
             // Auto-rotate to make room for next ball
             rotate(120); // Move to next slot
-            waitingForRotation = true;
+            rotating = true;
         }
 
         // Handle rotation
@@ -132,8 +140,8 @@ public class Spindexer implements Subsystem {
         }
 
         // Update state after rotation completes
-        if (waitingForRotation && isDoneRotating()) {
-            waitingForRotation = false;
+        if (rotating && isDoneRotating()) {
+            rotating = false;
             shiftPattern();
         }
     }
@@ -145,16 +153,48 @@ public class Spindexer implements Subsystem {
         robot.spindexerPattern.setBallInSlotX(0, temp);
     }
 
+
+
+    // Start the shooting sequence
+    public void startShootingSequence(RobotConstants.MotiffPattern goalPattern) {
+        shootingSequence = ShootingStrategy.getShootingSequence(
+                robot.spindexerPattern,
+                goalPattern
+        );
+        sequenceIndex = 0;
+    }
+
+    // Get the next action in the sequence
+    public ShootingStrategy.Action getNextAction() {
+        if (shootingSequence != null && sequenceIndex < shootingSequence.length) {
+            return shootingSequence[sequenceIndex];
+        }
+        return null;
+    }
+
+    // Mark current action as complete and move to next
+    public void completeCurrentAction() {
+        if (shootingSequence != null) {
+            sequenceIndex++;
+            if (sequenceIndex >= shootingSequence.length) {
+                shootingSequence = null;
+                sequenceIndex = 0;
+            }
+        }
+    }
+
+    // Check if we have more actions to execute
+    public boolean hasMoreActions() {
+        return shootingSequence != null && sequenceIndex < shootingSequence.length;
+    }
+
+
     @Override
     public void periodic() {
         position = getServoPosition();
         flipperPeriodic();
         if(targetPosition != position)
             rotationUpdater();
-
-        if(autoRotate){
-
-        }
 
     }
 }
