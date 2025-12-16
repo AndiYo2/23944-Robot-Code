@@ -18,6 +18,7 @@ public class RobotConstants {
     }
 
     public static class Spindexer {
+        public static final int ENCODER_OFFSET = 20;
         public static String spindexerServo = "spindexerServo";
         public static String spindexerEncoder = "spindexerServoEncoder";
 
@@ -26,7 +27,7 @@ public class RobotConstants {
         public final static double FLIPPER_POSITION_EXTENDED = 0.65;
         public final static double FLIPPER_POSITION_RETRACT = 0.25;
 
-        public final static PIDCoefficients SPINDEXER_PID = new PIDCoefficients(0.0001, 0, 0);
+        public final static PIDCoefficients SPINDEXER_PID = new PIDCoefficients(0.005, 0, 0.002);
 
     }
 

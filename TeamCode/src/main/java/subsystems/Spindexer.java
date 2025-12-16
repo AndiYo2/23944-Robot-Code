@@ -1,43 +1,32 @@
 package subsystems;
 
 import com.arcrobotics.ftclib.command.Subsystem;
-import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import utility.RobotConstants;
-import utility.RobotConstants.Enums.BallColor;
 import utility.RobotConstants.Enums.FlickState;
 import utility.RobotHardware;
 import utility.ShootingStrategy;
 
 public class Spindexer implements Subsystem {
-
     private final RobotHardware robot;
-
     FlickState flickState = FlickState.Idle;
-
-    private double position;
     private double targetPosition;
-    private double power = 1;
-
-    private double angleRange = 5;
-
-    private PIDCoefficients pid;
-    private double lastError = 0;
-    private double integral = 0;
-    private double lastTime;
-    private boolean autoRotate = true;
-
-    private boolean rotating = false;
-
+    private double angleRange = 3;
+    private boolean shouldRotate = false;
     private ShootingStrategy.Action[] shootingSequence = null;
     private int sequenceIndex = 0;
 
+    // PID variables
+    private double kP = 0.01;
+    private double kI = 0.0;
+    private double kD = 0.0;
+    private double lastError = 0;
+    private double integral = 0;
+    private long lastTime = 0;
 
     public Spindexer() {
         this.robot = RobotHardware.getInstance();
-        position = getServoPosition();
-        targetPosition = position;
-        setPidCoeffs(RobotConstants.Spindexer.SPINDEXER_PID);
-        lastTime = 0;
+        targetPosition = getServoPosition();
+        lastTime = System.nanoTime();
     }
 
     public void flickBallOut() {
@@ -71,14 +60,22 @@ public class Spindexer implements Subsystem {
 
     public void rotate(double positionChange) {
         targetPosition += positionChange;
-        // Wrap target position between 0-359
-        targetPosition = ((targetPosition % 360) + 360) % 360;
+        // Wrap to [0, 360)
+        while (targetPosition >= 360) targetPosition -= 360;
+        while (targetPosition < 0) targetPosition += 360;
+        shouldRotate = true;
+        // Reset PID
+        integral = 0;
+        lastError = 0;
     }
 
     public double getServoPosition() {
         double pos = robot.spindexerEncoder.getVoltage();
         pos /= 3.3;
         pos *= 360;
+        // Wrap to [0, 360)
+        while (pos >= 360) pos -= 360;
+        while (pos < 0) pos += 360;
         return pos;
     }
 
@@ -87,75 +84,50 @@ public class Spindexer implements Subsystem {
     }
 
     public void rotationUpdater() {
-        // Calculate shortest path
-        double error = targetPosition - position;
+        double currentPosition = getServoPosition();
+        double error = targetPosition - currentPosition;
+
+        // Take shortest path
         if (error > 180) error -= 360;
         if (error < -180) error += 360;
 
+        // Are we close enough?
+        if (Math.abs(error) < angleRange) {
+            robot.spindexerServo.setPower(0);
+            shouldRotate = false;
+            integral = 0;
+            return;
+        }
+
         // Calculate dt
-        double currentTime = System.nanoTime() / 1e9;
-        double dt = currentTime - lastTime;
+        long currentTime = System.nanoTime();
+        double dt = (currentTime - lastTime) / 1e9;
         lastTime = currentTime;
 
-        // Update integral and derivative terms
+        // PID calculations
         integral += error * dt;
         double derivative = (error - lastError) / dt;
         lastError = error;
 
-        // Calculate PID output
-        double output = pid.p * error + pid.i * integral + pid.d * derivative;
+        double power = (kP * error) + (kI * integral) + (kD * derivative);
 
-        // Clamp output between -1 and 1
-        output = Math.max(-1, Math.min(1, output));
+        // Clamp power to [-1, 1]
+        power = Math.max(-1, Math.min(1, power));
 
-        // Set motor power
-        robot.spindexerServo.setPower(output);
+        robot.spindexerServo.setPower(power);
     }
 
     public boolean isDoneRotating() {
-        double error = Math.abs(targetPosition - position);
-        error = Math.min(error, 360 - error);
-        return error < angleRange;
+        double currentPosition = getServoPosition();
+        double difference = targetPosition - currentPosition;
+
+        // Take shortest path
+        if (difference > 180) difference -= 360;
+        if (difference < -180) difference += 360;
+
+        return Math.abs(difference) < angleRange;
     }
 
-    public void setPidCoeffs(PIDCoefficients pid) {
-        this.pid = pid;
-        this.lastError = 0;
-        this.integral = 0;
-    }
-    private void handleBallDetectionAndRotation() {
-        // Check if ball entered slot 0 (intake position)
-        if (ColorSensorSubsytem.ballJustEntered() && !rotating) {
-            BallColor detectedColor = ColorSensorSubsytem.getBallColor();
-            robot.spindexerPattern.setBallInSlotX(0, detectedColor);
-
-            // Auto-rotate to make room for next ball
-            rotate(120); // Move to next slot
-            rotating = true;
-        }
-
-        // Handle rotation
-        if (targetPosition != position) {
-            rotationUpdater();
-        }
-
-        // Update state after rotation completes
-        if (rotating && isDoneRotating()) {
-            rotating = false;
-            shiftPattern();
-        }
-    }
-
-    private void shiftPattern() {
-        BallColor temp = robot.spindexerPattern.getBallInSlotX(2);
-        robot.spindexerPattern.setBallInSlotX(2, robot.spindexerPattern.getBallInSlotX(1));
-        robot.spindexerPattern.setBallInSlotX(1, robot.spindexerPattern.getBallInSlotX(0));
-        robot.spindexerPattern.setBallInSlotX(0, temp);
-    }
-
-
-
-    // Start the shooting sequence
     public void startShootingSequence(RobotConstants.MotiffPattern goalPattern) {
         shootingSequence = ShootingStrategy.getShootingSequence(
                 robot.spindexerPattern,
@@ -164,7 +136,6 @@ public class Spindexer implements Subsystem {
         sequenceIndex = 0;
     }
 
-    // Get the next action in the sequence
     public ShootingStrategy.Action getNextAction() {
         if (shootingSequence != null && sequenceIndex < shootingSequence.length) {
             return shootingSequence[sequenceIndex];
@@ -172,7 +143,6 @@ public class Spindexer implements Subsystem {
         return null;
     }
 
-    // Mark current action as complete and move to next
     public void completeCurrentAction() {
         if (shootingSequence != null) {
             sequenceIndex++;
@@ -183,18 +153,14 @@ public class Spindexer implements Subsystem {
         }
     }
 
-    // Check if we have more actions to execute
     public boolean hasMoreActions() {
         return shootingSequence != null && sequenceIndex < shootingSequence.length;
     }
 
-
     @Override
     public void periodic() {
-        position = getServoPosition();
         flipperPeriodic();
-        if(targetPosition != position)
+        if(shouldRotate)
             rotationUpdater();
-
     }
 }

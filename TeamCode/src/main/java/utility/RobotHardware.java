@@ -108,7 +108,7 @@ public class RobotHardware {
         spindexerPattern = new RobotConstants.SpindxerPattern(BallColor.None, BallColor.None, BallColor.None);
         spindexerEncoder = hardwareMap.get(AnalogInput.class, RobotConstants.Spindexer.spindexerEncoder);
         spindexerServo = hardwareMap.get(CRServo.class, RobotConstants.Spindexer.spindexerServo);
-        spindexerServo.setDirection(DcMotorSimple.Direction.FORWARD);
+        spindexerServo.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // ******************* OUTTAKE ******************* //
         shooterMotor1 = hardwareMap.get(DcMotorEx.class, RobotConstants.Shooter.shooter1);
