@@ -4,28 +4,30 @@ import com.qualcomm.robotcore.hardware.PIDCoefficients;
 
 public class RobotConstants {
     public static class Drivetrain {
-        public static String frontLeftMotor = "frontLeftMotor";
-        public static String backLeftMotor = "backLeftMotor";
-        public static String frontRightMotor= "frontRightMotor";
-        public static String backRightMotor = "backRightMotor";
+        public static String frontLeftMotor = "frontLeftMotor"; //E0
+        public static String backLeftMotor = "backLeftMotor"; // E1
+        public static String frontRightMotor= "frontRightMotor"; // E2
+        public static String backRightMotor = "backRightMotor"; // E3
         public static double DRIVE_HEADING = 0;
     }
 
     public static class Intake {
-        public static String intake = "intakeMotor";
-        public static String intakeBelt = "intakeBeltMotor";
+        public static String intake = "intakeMotor"; //C 3
+        public static String intakeBelt = "intakeBeltMotor"; // C 2
 
     }
 
     public static class Spindexer {
         public static final int ENCODER_OFFSET = 20;
-        public static String spindexerServo = "spindexerServo";
-        public static String spindexerEncoder = "spindexerServoEncoder";
+        public static String spindexerServo = "spindexerServo"; // E4
+        public static String spindexerEncoder = "spindexerServoEncoder"; // E Analog 0-1
 
-        public static String spindexerFLipperServo = "spindexerFlipperServo";
+        public static String spindexerFLipperServo = "spindexerFlipperServo"; // E5
         //Constant Positions
-        public final static double FLIPPER_POSITION_EXTENDED = 0.65;
-        public final static double FLIPPER_POSITION_RETRACT = 0.25;
+        public final static double FLIPPER_POSITION_EXTENDED = 0.85;
+        public final static double FLIPPER_POSITION_RETRACT = 0.525;
+
+        public static final double FLICK_TIME = 0.15;
 
         public final static PIDCoefficients SPINDEXER_PID = new PIDCoefficients(0.005, 0, 0.002);
 
@@ -34,15 +36,16 @@ public class RobotConstants {
 
     public static class Shooter {
         //hardware
-        public static String shooter1 = "shooterMotor1";
-        public static String shooter2 = "shooterMotor2";
-        public static String turret = "turretServo";
-        public static String shooterFlipperServo = "shooterFlipperServo";
-        public static String shooterEncoder = "shooterEncoder";
+        public static String shooter1 = "shooterMotor1"; // Left(from back) shooter, C0
+        public static String shooter2 = "shooterMotor2"; // Right(from back) shooter, C1
+        public static String turret = "turretServo"; //E3
+        public static String shooterFlipperServo = "shooterFlipperServo"; // C 0
+        public static String shooterEncoder = "shooterEncoder"; // N/A
 
         //Constant Positions
-        public final static double FLIPPER_POSITION_EXTENDED = 0.6;
-        public final static double FLIPPER_POSITION_RETRACT = 0.325;
+        public final static double FLIPPER_POSITION_EXTENDED = 0.35;
+        public final static double FLIPPER_POSITION_RETRACT = 0.15;
+        public static final double FLICK_TIME = 0.15;
 
 
 
@@ -50,7 +53,7 @@ public class RobotConstants {
     }
 
     public static class ColorSensor {
-        public static String colorSensor = "colorSensor";
+        public static String colorSensor = "colorSensor"; // E I2C 0
     }
 
     public static class Limelight{
@@ -70,7 +73,7 @@ public class RobotConstants {
     }
 
     public static class Pinpoint{
-        public static String pinpoint = "pinpoint";
+        public static String pinpoint = "pinpoint"; //E I2C 1
     }
 
     public static class MotiffPattern{

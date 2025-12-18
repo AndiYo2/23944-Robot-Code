@@ -1,10 +1,13 @@
 package subsystems;
 
 import com.arcrobotics.ftclib.command.Subsystem;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import utility.RobotConstants;
 import utility.RobotConstants.Enums.FlickState;
 import utility.RobotHardware;
 import utility.ShootingStrategy;
+
+import static utility.RobotConstants.Spindexer.FLICK_TIME;
 
 public class Spindexer implements Subsystem {
     private final RobotHardware robot;
@@ -15,42 +18,48 @@ public class Spindexer implements Subsystem {
     private ShootingStrategy.Action[] shootingSequence = null;
     private int sequenceIndex = 0;
 
-    // PID variables
-    private double kP = 0.01;
+    // PID variables - Tuned values from SpindexerPIDFTuningTeleOp
+    private double kP = 0.0122;
     private double kI = 0.0;
-    private double kD = 0.0;
+    private double kD = 0.0005;
     private double lastError = 0;
     private double integral = 0;
     private long lastTime = 0;
 
+    private ElapsedTime flickerTimer = new ElapsedTime();
+
     public Spindexer() {
         this.robot = RobotHardware.getInstance();
-        targetPosition = getServoPosition();
+        targetPosition = 60;
         lastTime = System.nanoTime();
     }
 
-    public void flickBallOut() {
-        flickState = FlickState.Start;
-    }
-
     private void flipperPeriodic() {
+        if (flickState == FlickState.Idle) return; // Don't run unless activated
+
         switch (flickState) {
-            case Retracted:
+            case Idle:
                 break;
             case Start:
-                if (robot.spindexerFlipperServo.getPosition() == RobotConstants.Spindexer.FLIPPER_POSITION_EXTENDED) {
-                    flickState = FlickState.Extended;
-                    break;
-                }
                 robot.spindexerFlipperServo.setPosition(RobotConstants.Spindexer.FLIPPER_POSITION_EXTENDED);
+                flickerTimer.reset();
+                flickState = FlickState.Extended;
                 break;
             case Extended:
-                if (robot.spindexerFlipperServo.getPosition() == RobotConstants.Spindexer.FLIPPER_POSITION_RETRACT) {
-                    flickState = FlickState.Retracted;
-                    break;
-                }
+                if (flickerTimer.seconds() < FLICK_TIME) break;
                 robot.spindexerFlipperServo.setPosition(RobotConstants.Spindexer.FLIPPER_POSITION_RETRACT);
+                flickerTimer.reset();
+                flickState = FlickState.Retracted;
                 break;
+            case Retracted:
+                flickState = FlickState.Idle; // Return to idle after completion
+                break;
+        }
+    }
+
+    public void flickBallOut() {
+        if (flickState == FlickState.Idle) { // Only start if not already running
+            flickState = FlickState.Start;
         }
     }
 

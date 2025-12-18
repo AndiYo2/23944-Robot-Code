@@ -42,7 +42,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
         // Shooting controls
         new Trigger(() -> gamepad1.right_trigger > 0.3)
-                .whenActive(() -> sequenceManager.startShootingSequence());
+                .whenActive(() -> shooter.shootBall());
 
         // Drive controls
         new GamepadButton(driverGamepad, GamepadKeys.Button.START)
@@ -54,6 +54,8 @@ abstract public class TeleOpTemplate extends CommandOpMode {
                 .whenPressed(() -> shooter.shootBall());
         new GamepadButton(driverGamepad, GamepadKeys.Button.X)
                 .whenPressed(() -> spindexer.flickBallOut());
+        new GamepadButton(driverGamepad, GamepadKeys.Button.A)
+                .whenPressed(() -> sequenceManager.startShootingSequence());
 
         // Manual spindexer controls
         new GamepadButton(driverGamepad, GamepadKeys.Button.LEFT_BUMPER)

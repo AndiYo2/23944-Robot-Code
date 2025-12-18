@@ -24,8 +24,6 @@ dependencies {
     implementation 'com.bylazar:fullpanels:1.0.2'
     implementation 'com.github.FTCLib:FTCLib:v2.1.1'
 
-
-
 }
 
 

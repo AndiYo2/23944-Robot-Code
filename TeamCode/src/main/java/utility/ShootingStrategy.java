@@ -52,7 +52,7 @@ public class ShootingStrategy {
     private static final int SHOOTING_POSITION = 1;  // Position 1 is outtake (shoots)
 
     // Default mode is SMART
-    private static StrategyMode currentMode = StrategyMode.SMART;
+    private static StrategyMode currentMode = StrategyMode.FAST;
 
     static {
         initializeStrategies();

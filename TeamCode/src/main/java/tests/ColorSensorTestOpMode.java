@@ -34,9 +34,9 @@ public class ColorSensorTestOpMode extends LinearOpMode {
             // Get the normalized RGBA values from the sensor
             NormalizedRGBA colors = colorSensor.getNormalizedColors();
 
-            red = colors.red/ colors.alpha;
-            green = colors.green/ colors.alpha;
-            blue = colors.blue/ colors.alpha;
+            red = colors.red;
+            green = colors.green;
+            blue = colors.blue;
 
 
 
@@ -45,7 +45,6 @@ public class ColorSensorTestOpMode extends LinearOpMode {
             telemetry.addData("Green",  green);
             telemetry.addData("Blue",  blue);
             telemetry.addData("Alpha",  colors.alpha); // Alpha represents overall brightness/intensity
-
 
             telemetry.update(); // Update the telemetry display
         }

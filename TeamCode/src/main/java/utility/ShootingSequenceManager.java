@@ -50,7 +50,7 @@ public class ShootingSequenceManager {
     public void update() {
         switch (currentState) {
             case Idle:
-                break;
+                return;
             case Start:
                 handleStart();
                 break;
@@ -125,6 +125,6 @@ public class ShootingSequenceManager {
     private void executeRotation(double degrees) {
         spindexer.rotate(degrees);
         spindexer.completeCurrentAction();
-        processNextAction(); // Immediately process next action
+        processNextAction(); // Immediately process the next action
     }
 }
