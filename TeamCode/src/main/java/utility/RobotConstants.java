@@ -25,7 +25,7 @@ public class RobotConstants {
         public static String spindexerFLipperServo = "spindexerFlipperServo"; // E5
         //Constant Positions
         public final static double FLIPPER_POSITION_EXTENDED = 0.85;
-        public final static double FLIPPER_POSITION_RETRACT = 0.525;
+        public final static double FLIPPER_POSITION_RETRACT = 0.51;
 
         public static final double FLICK_TIME = 0.15;
 
