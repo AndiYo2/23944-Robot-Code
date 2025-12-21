@@ -11,7 +11,7 @@ import static utility.RobotConstants.Spindexer.FLICK_TIME;
 
 public class Spindexer implements Subsystem {
     private final RobotHardware robot;
-    FlickState flickState = FlickState.Idle;
+    FlickState currentState = FlickState.Idle;
     private double targetPosition;
     private double angleRange = 3;
     private boolean shouldRotate = false;
@@ -34,37 +34,42 @@ public class Spindexer implements Subsystem {
         lastTime = System.nanoTime();
     }
 
-    private void flipperPeriodic() {
-        if (flickState == FlickState.Idle) return; // Don't run unless activated
+    private void stateMachinePeriodic() {
+        if (currentState == FlickState.Idle) return; // Don't run unless activated
 
-        switch (flickState) {
+        switch (currentState) {
             case Idle:
                 break;
             case Start:
                 robot.spindexerFlipperServo.setPosition(RobotConstants.Spindexer.FLIPPER_POSITION_EXTENDED);
                 flickerTimer.reset();
-                flickState = FlickState.Extended;
+                currentState = FlickState.Extended;
                 break;
             case Extended:
                 if (flickerTimer.seconds() < FLICK_TIME) break;
                 robot.spindexerFlipperServo.setPosition(RobotConstants.Spindexer.FLIPPER_POSITION_RETRACT);
                 flickerTimer.reset();
-                flickState = FlickState.Retracted;
+                currentState = FlickState.Retracted;
                 break;
             case Retracted:
-                flickState = FlickState.Idle; // Return to idle after completion
+                currentState = FlickState.Idle; // Return to idle after completion
                 break;
         }
     }
 
     public void flickBallOut() {
-        if (flickState == FlickState.Idle) { // Only start if not already running
-            flickState = FlickState.Start;
+        if (currentState == FlickState.Idle) { // Only start if not already running
+            currentState = FlickState.Start;
         }
     }
 
-    public FlickState getFlipperState() {
-        return flickState;
+    // ****** STATE QUERIES ******
+    public FlickState getCurrentState() {
+        return currentState;
+    }
+
+    public boolean isIdle() {
+        return currentState == FlickState.Idle;
     }
 
     public void rotate(double positionChange) {
@@ -137,7 +142,7 @@ public class Spindexer implements Subsystem {
         return Math.abs(difference) < angleRange;
     }
 
-    public void startShootingSequence(RobotConstants.MotiffPattern goalPattern) {
+    public void startShootingSequence(RobotConstants.MotifPattern goalPattern) {
         shootingSequence = ShootingStrategy.getShootingSequence(
                 robot.spindexerPattern,
                 goalPattern
@@ -168,7 +173,7 @@ public class Spindexer implements Subsystem {
 
     @Override
     public void periodic() {
-        flipperPeriodic();
+        stateMachinePeriodic();
         if(shouldRotate)
             rotationUpdater();
     }

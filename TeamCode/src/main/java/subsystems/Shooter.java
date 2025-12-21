@@ -16,7 +16,7 @@ public class Shooter implements Subsystem {
 
     RobotHardware robot;
     private double requiredVelocity = 1;
-    FlickState shootState = FlickState.Idle;
+    FlickState currentState = FlickState.Idle;
     private ElapsedTime flickerTimer = new ElapsedTime();
 
 
@@ -39,8 +39,8 @@ public class Shooter implements Subsystem {
     }
 
     public void lowerRequiredVelocity(){
-        if(requiredVelocity > .5){
-            requiredVelocity -= .5;
+        if(requiredVelocity > RobotConstants.Shooter.VELOCITY_ADJUSTMENT_STEP){
+            requiredVelocity -= RobotConstants.Shooter.VELOCITY_ADJUSTMENT_STEP;
         }
     }
     public double getWheelVelocity(){
@@ -48,7 +48,7 @@ public class Shooter implements Subsystem {
     }
 
     public void raiseRequiredVelocity(){
-        requiredVelocity += .5;
+        requiredVelocity += RobotConstants.Shooter.VELOCITY_ADJUSTMENT_STEP;
     }
 
     public void setTurretTurnerPower(double power){
@@ -62,36 +62,41 @@ public class Shooter implements Subsystem {
     }
 
 
-    private void flipperPeriodic() {
-        if (shootState == FlickState.Idle) return; // Don't run unless activated
+    private void stateMachinePeriodic() {
+        if (currentState == FlickState.Idle) return; // Don't run unless activated
 
-        switch (shootState ) {
+        switch (currentState) {
             case Idle:
                 break;
             case Start:
                 robot.shooterFlipper.setPosition(RobotConstants.Shooter.FLIPPER_POSITION_EXTENDED);
                 flickerTimer.reset();
-                shootState  = FlickState.Extended;
+                currentState = FlickState.Extended;
                 break;
             case Extended:
                 if (flickerTimer.seconds() < FLICK_TIME) break;
                 robot.shooterFlipper.setPosition(RobotConstants.Shooter.FLIPPER_POSITION_RETRACT);
                 flickerTimer.reset();
-                shootState  = FlickState.Retracted;
+                currentState = FlickState.Retracted;
                 break;
             case Retracted:
-                shootState  = FlickState.Idle; // Return to idle after completion
+                currentState = FlickState.Idle; // Return to idle after completion
                 break;
         }
     }
 
     public void shootBall() {
-        if (shootState == FlickState.Idle) { // Only start if not already running
-            shootState = FlickState.Start;
+        if (currentState == FlickState.Idle) { // Only start if not already running
+            currentState = FlickState.Start;
         }
     }
-    public FlickState getFlipperState(){
-        return shootState;
+    // ****** STATE QUERIES ******
+    public FlickState getCurrentState(){
+        return currentState;
+    }
+
+    public boolean isIdle() {
+        return currentState == FlickState.Idle;
     }
 
     public void toggleLimelight(){RobotConstants.Limelight.isLimelightDisabled = !RobotConstants.Limelight.isLimelightDisabled;}
@@ -100,10 +105,10 @@ public class Shooter implements Subsystem {
 
     @Override
     public void periodic() {
-        robot.shooterMotor1.setPower(1);
-        robot.shooterMotor2.setPower(1);
-        flipperPeriodic();
-        //Set back to 1
+        robot.shooterMotor1.setPower(RobotConstants.Shooter.FULL_POWER);
+        robot.shooterMotor2.setPower(RobotConstants.Shooter.FULL_POWER);
+        stateMachinePeriodic();
+        //Set back to FULL_POWER
 
         // Get Limelight data
         LLResult result = robot.limelight.getLatestResult();

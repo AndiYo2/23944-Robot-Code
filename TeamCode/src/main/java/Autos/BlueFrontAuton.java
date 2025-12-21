@@ -7,6 +7,7 @@ import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import utility.AutonTemplate;
+import utility.RobotConstants;
 
 @Autonomous(name = "BlueFrontAuton", group = "Autonomous")
 public class BlueFrontAuton extends AutonTemplate {
@@ -60,7 +61,7 @@ public class BlueFrontAuton extends AutonTemplate {
     protected void autonomousPathUpdate() {
         switch (pathState) {
             case 0:
-                spindexer.rotate(120);
+                spindexer.rotate(RobotConstants.Spindexer.ROTATION_FORWARD);
                 if (follower.isBusy())
                     break;
                 follower.followPath(startToShoot, true);

@@ -3,7 +3,9 @@ package subsystems;
 import com.arcrobotics.ftclib.command.Subsystem;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
+import utility.RobotConstants;
 import utility.RobotConstants.Enums.BallColor;
+import utility.RobotConstants.Enums.ColorSensorState;
 import utility.RobotHardware;
 
 public class ColorSensorSubsytem implements Subsystem {
@@ -11,9 +13,9 @@ public class ColorSensorSubsytem implements Subsystem {
     static NormalizedRGBA colors;
     private static NormalizedColorSensor colorSensor;
     static double red, green, blue, alpha;
-    static final double[] RED = {0.6, 0.5, 0.4};
-    static final double[] GREEN = {0.3, 0.5, 0.2};
     private static BallColor lastDetectedColor = BallColor.None;
+    private ColorSensorState currentState = ColorSensorState.Scanning;
+    private BallColor lastStableColor = BallColor.None;
     RobotHardware robot;
 
 
@@ -45,9 +47,13 @@ public class ColorSensorSubsytem implements Subsystem {
         return colors.alpha;
     }
     public static BallColor getBallColor(){
-        if(red > RED[0] && green > RED[1] && blue > RED[2])
+        if(red > RobotConstants.ColorSensor.PURPLE_THRESHOLDS[0] &&
+           green > RobotConstants.ColorSensor.PURPLE_THRESHOLDS[1] &&
+           blue > RobotConstants.ColorSensor.PURPLE_THRESHOLDS[2])
             return BallColor.Purple;
-        else if(red > GREEN[0] && green < GREEN[0] && blue < GREEN[0])
+        else if(red > RobotConstants.ColorSensor.GREEN_THRESHOLDS[0] &&
+                green < RobotConstants.ColorSensor.GREEN_THRESHOLDS[0] &&
+                blue < RobotConstants.ColorSensor.GREEN_THRESHOLDS[0])
             return BallColor.Green;
         return BallColor.None;
     }
@@ -62,9 +68,61 @@ public class ColorSensorSubsytem implements Subsystem {
     public String getColorDataString(){
         return "red = [" + red + "] green = [ "+ green + "] blue = [ "+ blue + "]";
     }
+
+    private void stateMachinePeriodic() {
+        switch (currentState) {
+            case Idle:
+                // Sensor not actively used
+                break;
+            case Scanning:
+                // Already refreshing in periodic()
+                if (ballJustEntered()) {
+                    currentState = ColorSensorState.BallDetected;
+                }
+                break;
+            case BallDetected:
+                // Transition to BallHeld after one cycle
+                currentState = ColorSensorState.BallHeld;
+                lastStableColor = getBallColor();
+                break;
+            case BallHeld:
+                // Check if ball is still present
+                BallColor current = getBallColor();
+                if (current == BallColor.None && lastStableColor != BallColor.None) {
+                    // Ball removed
+                    currentState = ColorSensorState.Scanning;
+                    lastStableColor = BallColor.None;
+                }
+                break;
+        }
+    }
+
+    // ****** STATE CONTROL ******
+    public void startScanning() {
+        currentState = ColorSensorState.Scanning;
+    }
+
+    public void stopScanning() {
+        currentState = ColorSensorState.Idle;
+    }
+
+    public boolean ballJustDetected() {
+        return currentState == ColorSensorState.BallDetected;
+    }
+
+    // ****** STATE QUERIES ******
+    public ColorSensorState getCurrentState() {
+        return currentState;
+    }
+
+    public boolean isIdle() {
+        return currentState == ColorSensorState.Idle;
+    }
+
     @Override
     public void periodic() {
         refreshScan();
+        stateMachinePeriodic();
     }
 
 }

@@ -27,7 +27,7 @@ public class ShootingSequenceManager {
      */
     public void startShootingSequence() {
         if (isIdle()) {
-            RobotConstants.MotiffPattern goalPattern = RobotConstants.Limelight.motiffPatern;
+            RobotConstants.MotifPattern goalPattern = RobotConstants.Limelight.motifPattern;
             spindexer.startShootingSequence(goalPattern);
             processNextAction();
         }
@@ -82,14 +82,14 @@ public class ShootingSequenceManager {
     }
 
     private void handleSpindexerFlicking() {
-        if (spindexer.getFlipperState() == FlickState.Extended) {
+        if (spindexer.getCurrentState() == FlickState.Extended) {
             shooter.shootBall();
             currentState = ShooterCases.ShooterFlicking;
         }
     }
 
     private void handleShooterFlicking() {
-        if (spindexer.getFlipperState() == FlickState.Retracted) {
+        if (spindexer.getCurrentState() == FlickState.Retracted) {
             currentState = ShooterCases.BallShot;
         }
     }

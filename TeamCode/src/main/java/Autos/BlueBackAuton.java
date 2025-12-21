@@ -6,6 +6,7 @@ import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import utility.AutonTemplate;
+import utility.RobotConstants;
 
 @Autonomous(name = "BlueBackAuton", group = "Autonomous")
 public class BlueBackAuton extends AutonTemplate {
@@ -40,7 +41,7 @@ public class BlueBackAuton extends AutonTemplate {
     protected void autonomousPathUpdate() {
         switch (pathState) {
             case 0:
-                spindexer.rotate(120);
+                spindexer.rotate(RobotConstants.Spindexer.ROTATION_FORWARD);
                 wait(1.5);
                 startAutonShoot();
                 setPathState(1);

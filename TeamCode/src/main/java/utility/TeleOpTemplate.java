@@ -3,9 +3,14 @@ package utility;
 import com.arcrobotics.ftclib.command.CommandOpMode;
 import com.arcrobotics.ftclib.command.button.GamepadButton;
 import com.arcrobotics.ftclib.command.button.Trigger;
-import com.arcrobotics.ftclib.gamepad.*;
-import subsystems.*;
-import utility.RobotConstants.Enums.ShooterCases;
+import com.arcrobotics.ftclib.gamepad.GamepadEx;
+import com.arcrobotics.ftclib.gamepad.GamepadKeys;
+import subsystems.MecanumDrive;
+import subsystems.Shooter;
+import subsystems.Intake;
+import subsystems.Spindexer;
+import subsystems.ColorSensorSubsytem;
+import subsystems.Limelight;
 
 abstract public class TeleOpTemplate extends CommandOpMode {
     protected MecanumDrive mecanumDrive;
@@ -36,12 +41,12 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
     protected void configureButtonBindings() {
         // Intake controls
-        new Trigger(() -> gamepad1.left_trigger > 0.3)
+        new Trigger(() -> gamepad1.left_trigger > RobotConstants.Controls.TRIGGER_THRESHOLD)
                 .whenActive(() -> intake.runIntake())
                 .whenInactive(() -> intake.stopIntake());
 
         // Shooting controls
-        new Trigger(() -> gamepad1.right_trigger > 0.3)
+        new Trigger(() -> gamepad1.right_trigger > RobotConstants.Controls.TRIGGER_THRESHOLD)
                 .whenActive(() -> shooter.shootBall());
 
         // Drive controls
@@ -59,10 +64,10 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
         // Manual spindexer controls
         new GamepadButton(driverGamepad, GamepadKeys.Button.LEFT_BUMPER)
-                .whenPressed(() -> spindexer.rotate(120));
+                .whenPressed(() -> spindexer.rotate(RobotConstants.Spindexer.ROTATION_FORWARD));
 
         new GamepadButton(driverGamepad, GamepadKeys.Button.RIGHT_BUMPER)
-                .whenPressed(() -> spindexer.rotate(-120));
+                .whenPressed(() -> spindexer.rotate(RobotConstants.Spindexer.ROTATION_BACKWARD));
 
         // Mode toggles
         new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_DOWN)
@@ -101,6 +106,11 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         telemetry.addData("Shooter Power:", shooter.getRequiredVelocity());
         telemetry.addData("Color Detected:", colorSensor.getBallColor());
         telemetry.addData("Spindexer Pattern:", getSpindexerPatternString());
+        telemetry.addData("Drive State:", mecanumDrive.getCurrentState());
+        telemetry.addData("Intake State:", intake.getCurrentState());
+        telemetry.addData("Color State:", colorSensor.getCurrentState());
+        telemetry.addData("Shooter State:", shooter.getCurrentState());
+        telemetry.addData("Spindexer State:", spindexer.getCurrentState());
         telemetry.update();
     }
 

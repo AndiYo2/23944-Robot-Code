@@ -1,5 +1,6 @@
 package utility;
 
+import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 
 public class RobotConstants {
@@ -8,7 +9,6 @@ public class RobotConstants {
         public static String backLeftMotor = "backLeftMotor"; // E1
         public static String frontRightMotor= "frontRightMotor"; // E2
         public static String backRightMotor = "backRightMotor"; // E3
-        public static double DRIVE_HEADING = 0;
     }
 
     public static class Intake {
@@ -29,6 +29,10 @@ public class RobotConstants {
 
         public static final double FLICK_TIME = 0.15;
 
+        // Rotation angles (120 degrees = 1/3 rotation for 3-slot indexer)
+        public static final double ROTATION_FORWARD = 120;
+        public static final double ROTATION_BACKWARD = -120;
+
         public final static PIDCoefficients SPINDEXER_PID = new PIDCoefficients(0.005, 0, 0.002);
 
     }
@@ -47,20 +51,29 @@ public class RobotConstants {
         public final static double FLIPPER_POSITION_RETRACT = 0.15;
         public static final double FLICK_TIME = 0.15;
 
-
-
-
+        // Shooter power settings
+        public static final double FULL_POWER = 1.0;
+        public static final double VELOCITY_ADJUSTMENT_STEP = 0.5;
     }
 
     public static class ColorSensor {
         public static String colorSensor = "colorSensor"; // E I2C 0
+
+        // Color detection thresholds [red, green, blue]
+        public static final double[] PURPLE_THRESHOLDS = {0.6, 0.5, 0.4};
+        public static final double[] GREEN_THRESHOLDS = {0.3, 0.5, 0.2};
+    }
+
+    public static class Controls {
+        // Gamepad trigger activation threshold
+        public static final double TRIGGER_THRESHOLD = 0.3;
     }
 
     public static class Limelight{
 
         public static String limelight = "limelight";
         public static boolean isLimelightDisabled = false;
-        public static MotiffPattern motiffPatern = new MotiffPattern(Enums.BallColor.None, Enums.BallColor.None, Enums.BallColor.None);
+        public static MotifPattern motifPattern = new MotifPattern(Enums.BallColor.None, Enums.BallColor.None, Enums.BallColor.None);
         public static final double LIMELIGHT_HEIGHT = 0.41; // Height of limelight from ground in meters
         public static final double LIMELIGHT_ANGLE = 10.0; // Angle of limelight from horizontal in degrees
         public static final double APRILTAG_HEIGHT = 0.75; // Height of AprilTag center from ground (could be 1.0m - verify this!)
@@ -75,10 +88,14 @@ public class RobotConstants {
     public static class Pinpoint{
         public static String pinpoint = "pinpoint"; //E I2C 1
     }
+    public static class UpdatableConstants{
+        public static double shooterVelocity;
+        public static Pose endingAutonPose;
+    }
 
-    public static class MotiffPattern{
+    public static class MotifPattern{
         public static Enums.BallColor[] ballPattern;
-        public MotiffPattern(Enums.BallColor zero, Enums.BallColor one, Enums.BallColor two){
+        public MotifPattern(Enums.BallColor zero, Enums.BallColor one, Enums.BallColor two){
             ballPattern = new Enums.BallColor[]{zero, one, two};
         }
         public Enums.BallColor getBallColorInSlotX(int x){
@@ -92,13 +109,13 @@ public class RobotConstants {
         }
     }
 
-    public static class SpindxerPattern{
+    public static class SpindexerPattern{
         // ZERO - Intake
         // ONE - Outtake
         // TWO - Top Slot
 
         public static Enums.BallColor[] spindexerPattern;
-        public SpindxerPattern(Enums.BallColor zero, Enums.BallColor one, Enums.BallColor two){
+        public SpindexerPattern(Enums.BallColor zero, Enums.BallColor one, Enums.BallColor two){
             spindexerPattern = new Enums.BallColor[]{zero, one, two};
         }
         public Enums.BallColor getBallInSlotX(int x){
@@ -119,10 +136,6 @@ public class RobotConstants {
         public void setBallPattern(Enums.BallColor zero, Enums.BallColor one, Enums.BallColor two){
             spindexerPattern = new Enums.BallColor[]{zero, one, two};
         }
-
-
-
-
     }
 
     public static class Enums{
@@ -141,14 +154,31 @@ public class RobotConstants {
             BallShot
 
         }
-
         public enum BallColor{
             Purple,
             Green,
             None
         }
+        public enum IntakeState {
+            Idle,           // Motors stopped
+            Intaking,       // Both motors forward (runs continuously)
+            Reversing,      // Both motors backward (eject)
+            StagingOnly,    // Only staging belt
+            IntakeOnly      // Only intake motor
+        }
+        public enum DriveState {
+            Idle,               // Not moving
+            FieldRelative,      // Field-centric (default)
+            RobotRelative,      // Robot-centric
+            SlowMode,           // Precision mode
+            AutoDriving,        // Autonomous navigation
+            Locked              // Defense mode (X-pattern)
+        }
+        public enum ColorSensorState {
+            Idle,           // Not monitoring
+            Scanning,       // Active monitoring
+            BallDetected,   // Ball just entered
+            BallHeld        // Ball present and stable
+        }
     }
-
-
-
 }

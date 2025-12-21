@@ -5,7 +5,15 @@ import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
-import com.qualcomm.robotcore.hardware.*;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.AnalogInput;
+import com.qualcomm.robotcore.hardware.ColorSensor;
+import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
@@ -43,7 +51,7 @@ public class RobotHardware {
     public CRServo spindexerServo;
     public Servo spindexerFlipperServo;
     public AnalogInput spindexerEncoder;
-    public RobotConstants.SpindxerPattern spindexerPattern;
+    public RobotConstants.SpindexerPattern spindexerPattern;
 
     // ******************* GAME CONTROL ******************* //
     public GamepadEx driver;
@@ -70,6 +78,7 @@ public class RobotHardware {
     public void init(final HardwareMap hardwareMap) {
         this.hardwareMap = hardwareMap;
         this.telemetryManager = PanelsTelemetry.INSTANCE.getTelemetry();
+
 
 
         // ******************* DRIVETRAIN ******************* //
@@ -105,7 +114,7 @@ public class RobotHardware {
 
         // ******************* SPINDEXER ******************* //
         spindexerFlipperServo = hardwareMap.get(Servo.class, RobotConstants.Spindexer.spindexerFLipperServo);
-        spindexerPattern = new RobotConstants.SpindxerPattern(BallColor.None, BallColor.None, BallColor.None);
+        spindexerPattern = new RobotConstants.SpindexerPattern(BallColor.None, BallColor.None, BallColor.None);
         spindexerEncoder = hardwareMap.get(AnalogInput.class, RobotConstants.Spindexer.spindexerEncoder);
         spindexerServo = hardwareMap.get(CRServo.class, RobotConstants.Spindexer.spindexerServo);
         spindexerServo.setDirection(DcMotorSimple.Direction.REVERSE);

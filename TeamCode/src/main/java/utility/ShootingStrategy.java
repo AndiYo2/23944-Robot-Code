@@ -1,7 +1,7 @@
 package utility;
 
 import utility.RobotConstants.Enums.BallColor;
-import utility.RobotConstants.SpindxerPattern;
+import utility.RobotConstants.SpindexerPattern;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -244,7 +244,7 @@ public class ShootingStrategy {
     }
 
     // PUBLIC API
-    public static Action[] getShootingSequence(SpindxerPattern current, GoalPattern goal) {
+    public static Action[] getShootingSequence(SpindexerPattern current, GoalPattern goal) {
         StateKey key = new StateKey(
                 current.getBallInSlotX(0),
                 current.getBallInSlotX(1),
@@ -254,15 +254,15 @@ public class ShootingStrategy {
         return STRATEGY_MAP.get(key);
     }
 
-    public static Action[] getShootingSequence(SpindxerPattern current, RobotConstants.MotiffPattern motiffGoal) {
-        GoalPattern goal = convertMotiffToGoal(motiffGoal);
+    public static Action[] getShootingSequence(SpindexerPattern current, RobotConstants.MotifPattern motifGoal) {
+        GoalPattern goal = convertMotifToGoal(motifGoal);
         return getShootingSequence(current, goal);
     }
 
-    private static GoalPattern convertMotiffToGoal(RobotConstants.MotiffPattern motiff) {
-        BallColor b0 = motiff.getBallColorInSlotX(0);
-        BallColor b1 = motiff.getBallColorInSlotX(1);
-        BallColor b2 = motiff.getBallColorInSlotX(2);
+    private static GoalPattern convertMotifToGoal(RobotConstants.MotifPattern motif) {
+        BallColor b0 = motif.getBallColorInSlotX(0);
+        BallColor b1 = motif.getBallColorInSlotX(1);
+        BallColor b2 = motif.getBallColorInSlotX(2);
 
         if (b0 == BallColor.Purple && b1 == BallColor.Green && b2 == BallColor.Purple) return GoalPattern.PGP;
         else if (b0 == BallColor.Green && b1 == BallColor.Purple && b2 == BallColor.Purple) return GoalPattern.GPP;

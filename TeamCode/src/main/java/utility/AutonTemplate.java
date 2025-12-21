@@ -5,7 +5,9 @@ import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import pedroPathing.Constants;
-import subsystems.*;
+import subsystems.Shooter;
+import subsystems.Intake;
+import subsystems.Spindexer;
 import utility.RobotConstants.Enums.FlickState;
 import utility.RobotConstants.Enums.ShooterCases;
 
@@ -55,6 +57,7 @@ public abstract class AutonTemplate extends OpMode {
         ballsToShoot = 3;
         shootCases = ShooterCases.Start;
         follower.pausePathFollowing();
+
     }
     private void checkAutonShoot(){
         if(ballsToShoot > 0)
@@ -71,21 +74,21 @@ public abstract class AutonTemplate extends OpMode {
             case Idle:
                 break;
             case Start:
-                if (shooter.getFlipperState() == FlickState.Retracted){
+                if (shooter.getCurrentState() == FlickState.Retracted){
                     shootCases = ShooterCases.SpindexerFlicking;
                     spindexer.flickBallOut();
                 }
                 break;
             case SpindexerFlicking:
-                if(spindexer.getFlipperState() == FlickState.Extended){
+                if(spindexer.getCurrentState() == FlickState.Extended){
                     shootCases = ShooterCases.ShooterFlicking;
                     shooter.shootBall();
                 }
                 break;
             case ShooterFlicking:
-                if(spindexer.getFlipperState() == FlickState.Retracted){
+                if(spindexer.getCurrentState() == FlickState.Retracted){
                     shootCases = ShooterCases.SpindexerRotating;
-                    spindexer.rotate(120);
+                    spindexer.rotate(RobotConstants.Spindexer.ROTATION_FORWARD);
                 }
                 break;
             case SpindexerRotating:
@@ -104,10 +107,10 @@ public abstract class AutonTemplate extends OpMode {
     protected void addToSpindexer() {
         runAutonIntake();
 
-        spindexer.rotate(120);
+        spindexer.rotate(RobotConstants.Spindexer.ROTATION_FORWARD);
         wait(.5);
 
-        spindexer.rotate(120);
+        spindexer.rotate(RobotConstants.Spindexer.ROTATION_FORWARD);
         wait(.5);
 
         stopAutonIntake();
@@ -188,5 +191,7 @@ public abstract class AutonTemplate extends OpMode {
     }
 
     @Override
-    public void stop() {}
+    public void stop() {
+        RobotConstants.UpdatableConstants.endingAutonPose = follower.getPose();
+    }
 }

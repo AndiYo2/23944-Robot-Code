@@ -1,18 +1,44 @@
 package subsystems;
 
 import com.arcrobotics.ftclib.command.Subsystem;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import utility.RobotConstants.Enums.IntakeState;
 import utility.RobotHardware;
 
 public class Intake implements Subsystem {
     RobotHardware robot;
+    private IntakeState currentState = IntakeState.Idle;
 
     @Override
     public void periodic() {
-
+        stateMachinePeriodic();
     }
+
     public Intake(){
         robot = RobotHardware.getInstance();
+    }
+
+    private void stateMachinePeriodic() {
+        switch (currentState) {
+            case Idle:
+                // Motors stopped
+                break;
+            case Intaking:
+                setIntakePower(1.0);
+                setStagingMotorPower(1.0);
+                break;
+            case Reversing:
+                setIntakePower(-1.0);
+                setStagingMotorPower(-1.0);
+                break;
+            case StagingOnly:
+                setIntakePower(0);
+                setStagingMotorPower(1.0);
+                break;
+            case IntakeOnly:
+                setIntakePower(1.0);
+                setStagingMotorPower(0);
+                break;
+        }
     }
 
 
@@ -45,12 +71,34 @@ public class Intake implements Subsystem {
 
     // ****** INTAKE METHODS ******
     public void runIntake(){
-        setIntakePower(1);
-        setStagingMotorPower(1);
+        currentState = IntakeState.Intaking;
     }
+
     public void stopIntake(){
+        currentState = IntakeState.Idle;
         setIntakePower(0);
         setStagingMotorPower(0);
+    }
+
+    public void reverseIntake() {
+        currentState = IntakeState.Reversing;
+    }
+
+    public void runStagingOnly() {
+        currentState = IntakeState.StagingOnly;
+    }
+
+    public void runIntakeOnly() {
+        currentState = IntakeState.IntakeOnly;
+    }
+
+    // ****** STATE QUERIES ******
+    public IntakeState getCurrentState() {
+        return currentState;
+    }
+
+    public boolean isIdle() {
+        return currentState == IntakeState.Idle;
     }
 
 
