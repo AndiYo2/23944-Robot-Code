@@ -39,6 +39,7 @@ public class RobotHardware {
     public Servo shooterFlipper;
     public AnalogInput shooterEncoder;
     public CRServo turretServo;
+    public AnalogInput turretEncoder;
 
 
     // ******************* LIMELIGHT ******************* //
@@ -124,6 +125,7 @@ public class RobotHardware {
         shooterMotor2 = hardwareMap.get(DcMotorEx.class, RobotConstants.Shooter.shooter2);
         shooterMotor2.setDirection(DcMotorEx.Direction.REVERSE);
         turretServo = hardwareMap.get(CRServo.class, RobotConstants.Shooter.turret);
+        turretEncoder = hardwareMap.get(AnalogInput.class, RobotConstants.Shooter.turretEncoder);
         shooterEncoder = hardwareMap.get(AnalogInput.class, RobotConstants.Shooter.shooterEncoder);
         shooterFlipper = hardwareMap.get(Servo.class, RobotConstants.Shooter.shooterFlipperServo);
 

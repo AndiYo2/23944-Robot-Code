@@ -11,6 +11,12 @@ public class RobotConstants {
         public static String backRightMotor = "backRightMotor"; // E3
     }
 
+    public static class Robot {
+        // Robot dimensions (inches)
+        public static final double ROBOT_SIZE = 17.25; // Robot width/length (square)
+        public static final double HALF_SIZE = ROBOT_SIZE / 2.0; // Distance from center to edge
+    }
+
     public static class Intake {
         public static String intake = "intakeMotor"; //C 3
         public static String intakeBelt = "intakeBeltMotor"; // C 2
@@ -43,6 +49,7 @@ public class RobotConstants {
         public static String shooter1 = "shooterMotor1"; // Left(from back) shooter, C0
         public static String shooter2 = "shooterMotor2"; // Right(from back) shooter, C1
         public static String turret = "turretServo"; //E3
+        public static String turretEncoder = "turretServoEncoder"; // Encoder port TBD
         public static String shooterFlipperServo = "shooterFlipperServo"; // C 0
         public static String shooterEncoder = "shooterEncoder"; // N/A
 
@@ -54,6 +61,22 @@ public class RobotConstants {
         // Shooter power settings
         public static final double FULL_POWER = 1.0;
         public static final double VELOCITY_ADJUSTMENT_STEP = 0.5;
+
+        // Turret offset from robot center (in inches)
+        public static final double TURRET_OFFSET_X = 0.0; // TODO: Set actual X offset (+ is forward)
+        public static final double TURRET_OFFSET_Y = 0.0; // TODO: Set actual Y offset (+ is left)
+
+        // Turret positioning
+        public static final double CENTER = 0.0;
+        public static final int ENCODER_OFFSET = 0; // Encoder offset at center position
+        public static final double ANGLE_RANGE = 3.0; // Acceptable error in degrees
+
+        // SAFETY: Maximum rotation from center (HARDWARE LIMIT - DO NOT EXCEED!)
+        public static final double MAX_TURRET_ANGLE = 350.0; // ±350° max (10° safety margin from ±360°)
+        public static final double TURRET_WARNING_ANGLE = 300.0; // Warn when exceeding ±300°
+
+        // Turret PID coefficients (similar to spindexer, tune as needed)
+        public static final PIDCoefficients TURRET_PID = new PIDCoefficients(0.0122, 0, 0.0005);
     }
 
     public static class ColorSensor {
@@ -91,6 +114,8 @@ public class RobotConstants {
     public static class UpdatableConstants{
         public static double shooterVelocity;
         public static Pose endingAutonPose;
+
+        public static Enums.AllianceColor allianceColor;
     }
 
     public static class MotifPattern{
@@ -139,6 +164,16 @@ public class RobotConstants {
     }
 
     public static class Enums{
+        public enum FieldState{
+            IdleZone,
+            ShootingZone,
+            ParkZone,
+            PenaltyZone
+        }
+        public enum AllianceColor {
+            Red,
+            Blue
+        }
         public enum FlickState {
             Idle,
             Start,

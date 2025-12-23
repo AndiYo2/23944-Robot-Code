@@ -13,9 +13,14 @@ public class FieldMap {
         return letterBitmap[y][x];
     }
 
-    static Pose getBlueGoalTarget() {
+    public static Pose getGoalPosition() {
+        if(RobotConstants.UpdatableConstants.allianceColor == RobotConstants.Enums.AllianceColor.Red){
+            return redGoalTarget;
+        }
         return blueGoalTarget;
     }
+
+
     static char[][] letterBitmap;
 
     // Bitmap data stored as string to avoid Java bytecode size limit
