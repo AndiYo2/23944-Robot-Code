@@ -67,7 +67,7 @@ public class MecanumDrive implements Subsystem {
         return follower;
     }
 
-    public void stopAll() {
+    public void stop() {
         robot.frontLeft.setPower(0);
         robot.backLeft.setPower(0);
         robot.frontRight.setPower(0);

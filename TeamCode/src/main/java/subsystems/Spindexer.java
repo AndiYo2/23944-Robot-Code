@@ -52,12 +52,13 @@ public class Spindexer implements Subsystem {
                 currentState = FlickState.Retracted;
                 break;
             case Retracted:
+                robot.spindexerPattern.setBallPatternNone(1); // Clear shooter slot after flick
                 currentState = FlickState.Idle; // Return to idle after completion
                 break;
         }
     }
 
-    public void flickBallOut() {
+    public void triggerFlick() {
         if (currentState == FlickState.Idle) { // Only start if not already running
             currentState = FlickState.Start;
         }
@@ -72,7 +73,7 @@ public class Spindexer implements Subsystem {
         return currentState == FlickState.Idle;
     }
 
-    public void rotate(double positionChange) {
+    public void rotateBy(double positionChange) {
         targetPosition += positionChange;
         // Wrap to [0, 360)
         while (targetPosition >= 360) targetPosition -= 360;
@@ -81,6 +82,43 @@ public class Spindexer implements Subsystem {
         // Reset PID
         integral = 0;
         lastError = 0;
+    }
+
+    // ****** CATALOGING METHODS ******
+
+    /**
+     * Rotates the spindexer to the next slot (120 degrees forward)
+     */
+    public void rotateToNextSlot() {
+        rotateBy(RobotConstants.Spindexer.ROTATION_FORWARD);
+    }
+
+    /**
+     * Checks if the spindexer is full (all 3 slots occupied)
+     * @return true if all slots contain a ball, false otherwise
+     */
+    public boolean isFull() {
+        return robot.spindexerPattern.getBallInSlotX(0) != RobotConstants.Enums.BallColor.None &&
+               robot.spindexerPattern.getBallInSlotX(1) != RobotConstants.Enums.BallColor.None &&
+               robot.spindexerPattern.getBallInSlotX(2) != RobotConstants.Enums.BallColor.None;
+    }
+
+    /**
+     * Catalogs a ball in the specified slot
+     * @param slot The slot index (0-2)
+     * @param color The color of the ball
+     */
+    public void catalogBall(int slot, RobotConstants.Enums.BallColor color) {
+        robot.spindexerPattern.setBallInSlotX(slot, color);
+    }
+
+    /**
+     * Gets the color of the ball in the specified slot
+     * @param slot The slot index (0-2)
+     * @return The ball color
+     */
+    public RobotConstants.Enums.BallColor getBallInSlot(int slot) {
+        return robot.spindexerPattern.getBallInSlotX(slot);
     }
 
     public double getServoPosition() {

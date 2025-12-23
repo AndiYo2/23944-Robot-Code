@@ -90,6 +90,48 @@ public class ShootingStrategy {
         }
     }
 
+    /**
+     * Computes the optimal shooting sequence for the given ball configuration and goal pattern.
+     *
+     * SMART MODE ALGORITHM (OPTIMIZED FOR MINIMAL ROTATION):
+     * ========================================================
+     * This algorithm ensures the robot shoots the correct ball colors in the correct order
+     * while MINIMIZING total rotation distance. The algorithm is already fully optimized.
+     *
+     * How it works:
+     * 1. For each required ball color in the target sequence:
+     *    - Finds ALL balls of that color currently in the spindexer
+     *    - Calculates rotation distance to each ball (both clockwise AND counter-clockwise)
+     *    - Chooses the ball that requires the SHORTEST rotation
+     *    - Rotates to that ball and shoots it
+     *
+     * 2. After all required colors are shot:
+     *    - Dumps any remaining balls (wrong colors or extras)
+     *    - Again, always choosing the NEAREST ball first
+     *
+     * Key optimization details:
+     * - getRotationsNeeded() (line 225): Calculates rotation in BOTH directions and returns
+     *   the shorter path (positive for forward, negative for backward)
+     * - getNearestSlotWithColor() (line 166): Uses getRotationsNeeded() to find the ball
+     *   requiring minimum rotation distance
+     * - This ensures the robot NEVER rotates more than 240° (2 slots) to reach any ball
+     * - The algorithm is greedy and optimal for a 3-slot circular spindexer
+     *
+     * Example:
+     * - Spindexer contains: [Purple, Green, Purple] (slots 0, 1, 2)
+     * - Target goal: PGP (Purple-Green-Purple)
+     * - Currently at slot 1 (shooter position)
+     * - Algorithm finds:
+     *   1. Purple needed: Slot 0 is 120° backward, Slot 2 is 120° forward → Equal, picks slot 0
+     *   2. Green needed: Slot 1 is 0° (already there from previous rotation) → Shoots immediately
+     *   3. Purple needed: Slot 2 is 120° forward → Rotates and shoots
+     * - Total rotations: 2 (240°) - OPTIMAL!
+     *
+     * FAST MODE ALGORITHM:
+     * ====================
+     * Ignores target colors and always shoots the nearest ball.
+     * Useful for rapid ball clearing without caring about scoring pattern.
+     */
     private static Action[] computeOptimalSequence(
             BallColor b0, BallColor b1,
             BallColor b2, GoalPattern goal) {

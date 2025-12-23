@@ -8,6 +8,7 @@ import pedroPathing.Constants;
 import subsystems.Shooter;
 import subsystems.Intake;
 import subsystems.Spindexer;
+import subsystems.ColorSensorSubsytem;
 import utility.RobotConstants.Enums.FlickState;
 import utility.RobotConstants.Enums.ShooterCases;
 
@@ -26,6 +27,8 @@ public abstract class AutonTemplate extends OpMode {
     protected Shooter shooter;
     protected Intake intake;
     protected Spindexer spindexer;
+    protected ColorSensorSubsytem colorSensor;
+    protected CatalogManager catalogManager;
     protected ShooterCases shootCases;
 
     /**
@@ -76,19 +79,19 @@ public abstract class AutonTemplate extends OpMode {
             case Start:
                 if (shooter.getCurrentState() == FlickState.Retracted){
                     shootCases = ShooterCases.SpindexerFlicking;
-                    spindexer.flickBallOut();
+                    spindexer.triggerFlick();
                 }
                 break;
             case SpindexerFlicking:
                 if(spindexer.getCurrentState() == FlickState.Extended){
                     shootCases = ShooterCases.ShooterFlicking;
-                    shooter.shootBall();
+                    shooter.triggerShot();
                 }
                 break;
             case ShooterFlicking:
                 if(spindexer.getCurrentState() == FlickState.Retracted){
                     shootCases = ShooterCases.SpindexerRotating;
-                    spindexer.rotate(RobotConstants.Spindexer.ROTATION_FORWARD);
+                    spindexer.rotateBy(RobotConstants.Spindexer.ROTATION_FORWARD);
                 }
                 break;
             case SpindexerRotating:
@@ -107,10 +110,10 @@ public abstract class AutonTemplate extends OpMode {
     protected void addToSpindexer() {
         runAutonIntake();
 
-        spindexer.rotate(RobotConstants.Spindexer.ROTATION_FORWARD);
+        spindexer.rotateBy(RobotConstants.Spindexer.ROTATION_FORWARD);
         wait(.5);
 
-        spindexer.rotate(RobotConstants.Spindexer.ROTATION_FORWARD);
+        spindexer.rotateBy(RobotConstants.Spindexer.ROTATION_FORWARD);
         wait(.5);
 
         stopAutonIntake();
@@ -128,6 +131,36 @@ public abstract class AutonTemplate extends OpMode {
      */
     protected void stopAutonIntake() {
         intake.stopIntake();
+    }
+
+    /**
+     * Catalog a ball in autonomous mode
+     * Call this after running intake to catalog the ball and rotate the spindexer
+     */
+    protected void catalogBallAuton() {
+        // Refresh color sensor reading
+        colorSensor.refreshScan();
+
+        // Get detected ball color
+        RobotConstants.Enums.BallColor detectedColor = ColorSensorSubsytem.getBallColor();
+
+        // Only catalog if we detected an actual ball (not None)
+        if (detectedColor != RobotConstants.Enums.BallColor.None) {
+            // Catalog the ball at the intake slot (slot 0)
+            spindexer.catalogBall(0, detectedColor);
+
+            // Rotate to next slot
+            spindexer.rotateBy(RobotConstants.Spindexer.ROTATION_FORWARD);
+
+            // Wait for rotation to complete
+            while (!spindexer.isDoneRotating()) {
+                follower.update();
+                shooter.periodic();
+                spindexer.periodic();
+                intake.periodic();
+                colorSensor.periodic();
+            }
+        }
     }
 
     /**
@@ -155,6 +188,8 @@ public abstract class AutonTemplate extends OpMode {
         shooter = new Shooter();
         intake = new Intake();
         spindexer = new Spindexer();
+        colorSensor = new ColorSensorSubsytem();
+        catalogManager = new CatalogManager(colorSensor, spindexer, intake);
         shootCases = ShooterCases.Idle;
 
         buildPaths();
@@ -175,7 +210,7 @@ public abstract class AutonTemplate extends OpMode {
         autonomousPathUpdate();
 
         // Common telemetry
-        telemetry.addData("Shooter Power", shooter.getShooterPower());
+        telemetry.addData("Shooter Power", shooter.getFlywheelPower());
         telemetry.addData("Shooter distance", shooter.getDistanceToTarget());
         telemetry.addData("path state", pathState);
         telemetry.addData("x", follower.getPose().getX());
@@ -188,6 +223,7 @@ public abstract class AutonTemplate extends OpMode {
         shooter.periodic();
         spindexer.periodic();
         intake.periodic();
+        colorSensor.periodic();
     }
 
     @Override

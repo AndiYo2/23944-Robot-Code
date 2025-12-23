@@ -77,13 +77,13 @@ public class ShootingSequenceManager {
     // ============= Private State Handlers =============
 
     private void handleStart() {
-        spindexer.flickBallOut();
+        spindexer.triggerFlick();
         currentState = ShooterCases.SpindexerFlicking;
     }
 
     private void handleSpindexerFlicking() {
         if (spindexer.getCurrentState() == FlickState.Extended) {
-            shooter.shootBall();
+            shooter.triggerShot();
             currentState = ShooterCases.ShooterFlicking;
         }
     }
@@ -123,7 +123,7 @@ public class ShootingSequenceManager {
     }
 
     private void executeRotation(double degrees) {
-        spindexer.rotate(degrees);
+        spindexer.rotateBy(degrees);
         spindexer.completeCurrentAction();
         processNextAction(); // Immediately process the next action
     }

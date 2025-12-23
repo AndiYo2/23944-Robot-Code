@@ -119,18 +119,18 @@ public class RobotConstants {
     }
 
     public static class MotifPattern{
-        public static Enums.BallColor[] ballPattern;
+        private Enums.BallColor[] ballPattern;
         public MotifPattern(Enums.BallColor zero, Enums.BallColor one, Enums.BallColor two){
-            ballPattern = new Enums.BallColor[]{zero, one, two};
+            this.ballPattern = new Enums.BallColor[]{zero, one, two};
         }
         public Enums.BallColor getBallColorInSlotX(int x){
-            return ballPattern[x];
+            return this.ballPattern[x];
         }
         public void setBallPattern(Enums.BallColor[] pattern){
-            ballPattern = pattern;
+            this.ballPattern = pattern;
         }
         public void setBallPattern(Enums.BallColor zero, Enums.BallColor one, Enums.BallColor two){
-            ballPattern = new Enums.BallColor[]{zero, one, two};
+            this.ballPattern = new Enums.BallColor[]{zero, one, two};
         }
     }
 
@@ -139,27 +139,27 @@ public class RobotConstants {
         // ONE - Outtake
         // TWO - Top Slot
 
-        public static Enums.BallColor[] spindexerPattern;
+        private Enums.BallColor[] spindexerPattern;
         public SpindexerPattern(Enums.BallColor zero, Enums.BallColor one, Enums.BallColor two){
-            spindexerPattern = new Enums.BallColor[]{zero, one, two};
+            this.spindexerPattern = new Enums.BallColor[]{zero, one, two};
         }
         public Enums.BallColor getBallInSlotX(int x){
-            return spindexerPattern[x];
+            return this.spindexerPattern[x];
         }
         public void setBallPatternNone(int x){
-            spindexerPattern[x] = Enums.BallColor.None;
+            this.spindexerPattern[x] = Enums.BallColor.None;
         }
         public void emptyBallPattern(){
-            spindexerPattern = new Enums.BallColor[]{Enums.BallColor.None, Enums.BallColor.None, Enums.BallColor.None};
+            this.spindexerPattern = new Enums.BallColor[]{Enums.BallColor.None, Enums.BallColor.None, Enums.BallColor.None};
         }
         public void setBallInSlotX(int x, Enums.BallColor ballType){
-            spindexerPattern[x] = ballType;
+            this.spindexerPattern[x] = ballType;
         }
         public void setBallPattern(Enums.BallColor[] pattern){
-            spindexerPattern = pattern;
+            this.spindexerPattern = pattern;
         }
         public void setBallPattern(Enums.BallColor zero, Enums.BallColor one, Enums.BallColor two){
-            spindexerPattern = new Enums.BallColor[]{zero, one, two};
+            this.spindexerPattern = new Enums.BallColor[]{zero, one, two};
         }
     }
 

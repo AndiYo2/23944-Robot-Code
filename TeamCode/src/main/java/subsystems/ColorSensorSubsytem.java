@@ -1,8 +1,7 @@
 package subsystems;
 
 import com.arcrobotics.ftclib.command.Subsystem;
-import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
-import com.qualcomm.robotcore.hardware.NormalizedRGBA;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import utility.RobotConstants;
 import utility.RobotConstants.Enums.BallColor;
 import utility.RobotConstants.Enums.ColorSensorState;
@@ -10,8 +9,7 @@ import utility.RobotHardware;
 
 public class ColorSensorSubsytem implements Subsystem {
 
-    static NormalizedRGBA colors;
-    private static NormalizedColorSensor colorSensor;
+    private static ColorSensor colorSensor;
     static double red, green, blue, alpha;
     private static BallColor lastDetectedColor = BallColor.None;
     private ColorSensorState currentState = ColorSensorState.Scanning;
@@ -21,18 +19,16 @@ public class ColorSensorSubsytem implements Subsystem {
 
     public ColorSensorSubsytem(){
         this.robot = RobotHardware.getInstance();
-        colorSensor = (NormalizedColorSensor) robot.colorSensor;
+        colorSensor = (ColorSensor) robot.colorSensor;
         refreshScan();
     }
 
 
     public static void refreshScan(){
-        colors = colorSensor.getNormalizedColors();
-        red = colors.red / colors.alpha;
-        green = colors.green / colors.alpha;
-        blue = colors.blue / colors.alpha;
-        alpha = colors.alpha;
-
+        red = colorSensor.red();
+        green = colorSensor.green();
+        blue = colorSensor.blue();
+        alpha = colorSensor.alpha();
     }
     public double getRed(){
         return red;
@@ -41,19 +37,21 @@ public class ColorSensorSubsytem implements Subsystem {
         return green;
     }
     public double getBlue(){
-        return colors.blue;
+        return blue;
     }
     public double getAlpha(){
-        return colors.alpha;
+        return alpha;
     }
     public static BallColor getBallColor(){
+        // Purple ball: High red, medium green, high blue
         if(red > RobotConstants.ColorSensor.PURPLE_THRESHOLDS[0] &&
            green > RobotConstants.ColorSensor.PURPLE_THRESHOLDS[1] &&
            blue > RobotConstants.ColorSensor.PURPLE_THRESHOLDS[2])
             return BallColor.Purple;
-        else if(red > RobotConstants.ColorSensor.GREEN_THRESHOLDS[0] &&
-                green < RobotConstants.ColorSensor.GREEN_THRESHOLDS[0] &&
-                blue < RobotConstants.ColorSensor.GREEN_THRESHOLDS[0])
+        // Green ball: Low red, high green, low blue
+        else if(red < RobotConstants.ColorSensor.GREEN_THRESHOLDS[0] &&
+                green > RobotConstants.ColorSensor.GREEN_THRESHOLDS[1] &&
+                blue < RobotConstants.ColorSensor.GREEN_THRESHOLDS[2])
             return BallColor.Green;
         return BallColor.None;
     }

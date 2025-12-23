@@ -37,17 +37,17 @@ public class Shooter implements Subsystem {
 
 
     public Shooter() {
-        this.robot = RobotHardware.getInstance();;
+        this.robot = RobotHardware.getInstance();
         robot.shooterMotor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         robot.shooterMotor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         lastTurretTime = System.nanoTime();
     }
 
 
-    public double getShooterPower() {
+    public double getFlywheelPower() {
         return robot.shooterMotor1.getPower();
     }
-    public void setShooterPower(double power) {
+    public void setFlywheelPower(double power) {
         robot.shooterMotor1.setPower(power);
         robot.shooterMotor2.setPower(power);
     }
@@ -73,12 +73,15 @@ public class Shooter implements Subsystem {
     }
 
 
-    public double getDistanceToTarget() {
+    /**
+     * Calculates the turret's position on the field
+     * Accounts for turret offset from robot center
+     * @return double array [turretX, turretY] in inches
+     */
+    private double[] getTurretFieldPosition() {
         Pose2D currentPose = robot.pinpoint.getPosition();
-        Pose goalPosition = FieldMap.getGoalPosition();
-
-        // Account for turret offset from robot center
         double robotHeading = currentPose.getHeading(AngleUnit.RADIANS);
+
         double turretX = currentPose.getX(DistanceUnit.INCH) +
                         (RobotConstants.Shooter.TURRET_OFFSET_X * Math.cos(robotHeading) -
                          RobotConstants.Shooter.TURRET_OFFSET_Y * Math.sin(robotHeading));
@@ -86,8 +89,15 @@ public class Shooter implements Subsystem {
                         (RobotConstants.Shooter.TURRET_OFFSET_X * Math.sin(robotHeading) +
                          RobotConstants.Shooter.TURRET_OFFSET_Y * Math.cos(robotHeading));
 
-        double deltaX = goalPosition.getX() - turretX;
-        double deltaY = goalPosition.getY() - turretY;
+        return new double[]{turretX, turretY};
+    }
+
+    public double getDistanceToTarget() {
+        double[] turretPos = getTurretFieldPosition();
+        Pose goalPosition = FieldMap.getGoalPosition();
+
+        double deltaX = goalPosition.getX() - turretPos[0];
+        double deltaY = goalPosition.getY() - turretPos[1];
         return Math.sqrt(deltaX * deltaX + deltaY * deltaY);
     }
 
@@ -127,27 +137,20 @@ public class Shooter implements Subsystem {
     }
     
     public void setTurretDegree(double degree){
-        rotateTurret(degree);
+        setTurretAngle(degree);
     }
     
     public double getDegreesToGoal(){
         Pose2D currentPose = robot.pinpoint.getPosition();
+        double[] turretPos = getTurretFieldPosition();
         Pose goalPosition = FieldMap.getGoalPosition();
 
-        // Account for turret offset from robot center
-        double robotHeading = currentPose.getHeading(AngleUnit.RADIANS);
-        double turretX = currentPose.getX(DistanceUnit.INCH) +
-                        (RobotConstants.Shooter.TURRET_OFFSET_X * Math.cos(robotHeading) -
-                         RobotConstants.Shooter.TURRET_OFFSET_Y * Math.sin(robotHeading));
-        double turretY = currentPose.getY(DistanceUnit.INCH) +
-                        (RobotConstants.Shooter.TURRET_OFFSET_X * Math.sin(robotHeading) +
-                         RobotConstants.Shooter.TURRET_OFFSET_Y * Math.cos(robotHeading));
-
-        double deltaX = goalPosition.getX() - turretX;
-        double deltaY = goalPosition.getY() - turretY;
+        double deltaX = goalPosition.getX() - turretPos[0];
+        double deltaY = goalPosition.getY() - turretPos[1];
 
         // Return angle relative to robot's heading (turret angle is robot-relative)
         double absoluteAngle = Math.atan2(deltaY, deltaX);
+        double robotHeading = currentPose.getHeading(AngleUnit.RADIANS);
         return Math.toDegrees(absoluteAngle - robotHeading);
     }
 
@@ -175,7 +178,7 @@ public class Shooter implements Subsystem {
      * Sets a new target angle for the turret
      * @param targetAngle Target angle in degrees (±MAX_TURRET_ANGLE from center)
      */
-    public void rotateTurret(double targetAngle) {
+    public void setTurretAngle(double targetAngle) {
         // SAFETY: Clamp to maximum safe angle to prevent hardware damage
         targetTurretAngle = Math.max(-RobotConstants.Shooter.MAX_TURRET_ANGLE,
                                      Math.min(RobotConstants.Shooter.MAX_TURRET_ANGLE, targetAngle));
@@ -263,7 +266,7 @@ public class Shooter implements Subsystem {
 
 
 
-    public void shootBall() {
+    public void triggerShot() {
         if (currentState == FlickState.Idle) { // Only start if not already running
             currentState = FlickState.Start;
         }
@@ -277,7 +280,9 @@ public class Shooter implements Subsystem {
         return currentState == FlickState.Idle;
     }
 
-    public void toggleLimelight(){RobotConstants.Limelight.isLimelightDisabled = !RobotConstants.Limelight.isLimelightDisabled;}
+    public void toggleLimelightEnabled(){
+        RobotConstants.Limelight.isLimelightDisabled = !RobotConstants.Limelight.isLimelightDisabled;
+    }
 
     // ****** ZONE DETECTION ******
 
@@ -335,12 +340,12 @@ public class Shooter implements Subsystem {
 
     @Override
     public void periodic() {
-        robot.shooterMotor1.setPower(RobotConstants.Shooter.FULL_POWER);
-        robot.shooterMotor2.setPower(RobotConstants.Shooter.FULL_POWER);
+        // Use the adjustable velocity instead of always full power
+        robot.shooterMotor1.setPower(requiredVelocity);
+        robot.shooterMotor2.setPower(requiredVelocity);
         flipperStateMachinePeriodic();
         turretRotationUpdater();
         updateFieldState(); // Update zone based on robot corner positions
-        //Set back to FULL_POWER
 
         // Get Limelight data
         LLResult result = robot.limelight.getLatestResult();

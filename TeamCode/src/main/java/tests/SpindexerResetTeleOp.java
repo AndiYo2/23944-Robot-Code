@@ -27,7 +27,7 @@ public class SpindexerResetTeleOp extends LinearOpMode {
             // Press A to reset to 0
             if (gamepad1.a) {
                 double currentPos = spindexer.getServoPosition();
-                spindexer.rotate(-currentPos); // Rotate back to 0
+                spindexer.rotateBy(-currentPos); // Rotate back to 0
             }
 
             telemetry.addData("Current Position", "%.1f°", spindexer.getServoPosition());

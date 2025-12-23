@@ -23,6 +23,8 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     protected Limelight limelight;
 
     private ShootingSequenceManager sequenceManager;
+    private CatalogManager catalogManager;
+    private ShootingValidator shootingValidator;
 
     protected void initHardware(boolean isAuto) {
         driverGamepad = new GamepadEx(gamepad1);
@@ -35,6 +37,8 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         spindexer = new Spindexer();
 
         sequenceManager = new ShootingSequenceManager(spindexer, shooter, robot);
+        catalogManager = new CatalogManager(colorSensor, spindexer, intake);
+        shootingValidator = new ShootingValidator(shooter, telemetry);
 
         register(intake, shooter, spindexer, colorSensor);
     }
@@ -45,35 +49,32 @@ abstract public class TeleOpTemplate extends CommandOpMode {
                 .whenActive(() -> intake.runIntake())
                 .whenInactive(() -> intake.stopIntake());
 
-        // Shooting controls
+        // Shooting controls (with zone validation)
         new Trigger(() -> gamepad1.right_trigger > RobotConstants.Controls.TRIGGER_THRESHOLD)
-                .whenActive(() -> shooter.shootBall());
+                .whenActive(() -> attemptShoot());
 
         // Drive controls
         new GamepadButton(driverGamepad, GamepadKeys.Button.START)
                 .whenPressed(() -> mecanumDrive.resetYaw());
         new GamepadButton(driverGamepad, GamepadKeys.Button.B)
                 .whenPressed(() -> mecanumDrive.toggleSlowMode());
-        // Manual shooting controls
-        new GamepadButton(driverGamepad, GamepadKeys.Button.Y)
-                .whenPressed(() -> shooter.shootBall());
         new GamepadButton(driverGamepad, GamepadKeys.Button.X)
-                .whenPressed(() -> spindexer.flickBallOut());
+                .whenPressed(() -> spindexer.triggerFlick());
         new GamepadButton(driverGamepad, GamepadKeys.Button.A)
-                .whenPressed(() -> sequenceManager.startShootingSequence());
+                .whenPressed(() -> attemptShootingSequence());
 
         // Manual spindexer controls
         new GamepadButton(driverGamepad, GamepadKeys.Button.LEFT_BUMPER)
-                .whenPressed(() -> spindexer.rotate(RobotConstants.Spindexer.ROTATION_FORWARD));
+                .whenPressed(() -> spindexer.rotateBy(RobotConstants.Spindexer.ROTATION_FORWARD));
 
         new GamepadButton(driverGamepad, GamepadKeys.Button.RIGHT_BUMPER)
-                .whenPressed(() -> spindexer.rotate(RobotConstants.Spindexer.ROTATION_BACKWARD));
+                .whenPressed(() -> spindexer.rotateBy(RobotConstants.Spindexer.ROTATION_BACKWARD));
 
         // Mode toggles
         new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_DOWN)
                 .whenPressed(() -> sequenceManager.toggleShootingMode());
         new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_UP)
-                .whenPressed(() -> shooter.toggleLimelight());
+                .whenPressed(() -> shooter.toggleLimelightEnabled());
     }
 
     @Override
@@ -93,19 +94,58 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         );
     }
 
+    /**
+     * Attempts to shoot with zone validation
+     * Checks if robot is in shooting zone or override is active
+     */
+    private void attemptShoot() {
+        // Override: Click right joystick (right_stick_button) to shoot outside zone
+        boolean overrideRequested = gamepad1.right_stick_button;
+
+        if (shootingValidator.canShoot(overrideRequested)) {
+            shooter.triggerShot();
+        } else {
+            // Shooting blocked - provide haptic feedback
+            gamepad1.rumble(200);
+        }
+    }
+
+    /**
+     * Attempts to start shooting sequence with zone validation
+     */
+    private void attemptShootingSequence() {
+        // Override: Click right joystick (right_stick_button) to shoot outside zone
+        boolean overrideRequested = gamepad1.right_stick_button;
+
+        if (shootingValidator.canShoot(overrideRequested)) {
+            sequenceManager.startShootingSequence();
+        } else {
+            // Shooting blocked - provide haptic feedback
+            gamepad1.rumble(200);
+        }
+    }
+
     private void updateSubsystems() {
         spindexer.periodic();
         sequenceManager.update();
+
+        // Update catalog manager (tracks intake releases to catalog balls)
+        boolean intakeActive = gamepad1.left_trigger > RobotConstants.Controls.TRIGGER_THRESHOLD;
+        catalogManager.update(intakeActive);
     }
 
     private void updateTelemetry() {
-        telemetry.addData("Servo Pos:", spindexer.getServoPosition());
-        telemetry.addData("GoalServoPos:", spindexer.getTargetPosition());
+        boolean overrideRequested = gamepad1.right_stick_button;
+
+
         telemetry.addData("Shooting Mode:", ShootingStrategy.getStrategyMode());
         telemetry.addData("Executing Sequence:", sequenceManager.isExecuting());
         telemetry.addData("Shooter Power:", shooter.getRequiredVelocity());
         telemetry.addData("Color Detected:", colorSensor.getBallColor());
         telemetry.addData("Spindexer Pattern:", getSpindexerPatternString());
+        telemetry.addData("Catalog Status:", catalogManager.getStatus());
+        telemetry.addData("Field Zone:", shooter.getFieldState());
+        telemetry.addData("Shooting Status:", shootingValidator.getStatus(overrideRequested));
         telemetry.addData("Drive State:", mecanumDrive.getCurrentState());
         telemetry.addData("Intake State:", intake.getCurrentState());
         telemetry.addData("Color State:", colorSensor.getCurrentState());
