@@ -13,7 +13,7 @@ public class RobotConstants {
 
     public static class Robot {
         // Robot dimensions (inches)
-        public static final double ROBOT_SIZE = 17.25; // Robot width/length (square)
+        public static final double ROBOT_SIZE = 17; // Robot width/length (square)
         public static final double HALF_SIZE = ROBOT_SIZE / 2.0; // Distance from center to edge
     }
 
@@ -24,7 +24,7 @@ public class RobotConstants {
     }
 
     public static class Spindexer {
-        public static final int ENCODER_OFFSET = 20;
+        public static final int ENCODER_OFFSET = 72;
         public static String spindexerServo = "spindexerServo"; // E4
         public static String spindexerEncoder = "spindexerServoEncoder"; // E Analog 0-1
 
@@ -59,12 +59,11 @@ public class RobotConstants {
         public static final double FLICK_TIME = 0.15;
 
         // Shooter power settings
-        public static final double FULL_POWER = 1.0;
         public static final double VELOCITY_ADJUSTMENT_STEP = 0.5;
 
-        // Turret offset from robot center (in inches)
-        public static final double TURRET_OFFSET_X = 0.0; // TODO: Set actual X offset (+ is forward)
-        public static final double TURRET_OFFSET_Y = 0.0; // TODO: Set actual Y offset (+ is left)
+        // Turret offset from robot center (in inches, robot-relative)
+        public static final double TURRET_OFFSET_X = 4.25; // TODO: Set actual X offset (+ is right, - is left)
+        public static final double TURRET_OFFSET_Y = 2; // TODO: Set actual Y offset (+ is forward, - is backward)
 
         // Turret positioning
         public static final double CENTER = 0.0;
@@ -80,7 +79,9 @@ public class RobotConstants {
     }
 
     public static class ColorSensor {
-        public static String colorSensor = "colorSensor"; // E I2C 0
+        // Intake sensors (2 sensors offset to avoid ball holes at first spindexer slot)
+        public static String intakeSensor1 = "intakeSensor1"; // First intake sensor
+        public static String intakeSensor2 = "intakeSensor2"; // Second intake sensor (offset from first)
 
         // Color detection thresholds [red, green, blue]
         public static final double[] PURPLE_THRESHOLDS = {0.6, 0.5, 0.4};
@@ -97,15 +98,6 @@ public class RobotConstants {
         public static String limelight = "limelight";
         public static boolean isLimelightDisabled = false;
         public static MotifPattern motifPattern = new MotifPattern(Enums.BallColor.None, Enums.BallColor.None, Enums.BallColor.None);
-        public static final double LIMELIGHT_HEIGHT = 0.41; // Height of limelight from ground in meters
-        public static final double LIMELIGHT_ANGLE = 10.0; // Angle of limelight from horizontal in degrees
-        public static final double APRILTAG_HEIGHT = 0.75; // Height of AprilTag center from ground (could be 1.0m - verify this!)
-        public static final double TARGET_OFFSET = .1; // How much higher than AprilTag we want to aim (meters)
-        public static final double TARGET_HEIGHT = APRILTAG_HEIGHT + TARGET_OFFSET; // Actual target height (1.0m or 1.25m)
-        public static final double LAUNCH_HEIGHT = 0.38; // Height of ball launch point from ground in meters
-        public static final double LAUNCH_ANGLE = 40.0; // Launch angle in degrees (adjust based on your hood)
-        public static final double GRAVITY = 9.81; // m/s^2
-        public static final double DEADBAND = 8.0;  //within 8 degrees
     }
 
     public static class Pinpoint{

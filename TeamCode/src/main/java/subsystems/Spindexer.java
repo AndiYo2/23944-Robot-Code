@@ -30,7 +30,7 @@ public class Spindexer implements Subsystem {
 
     public Spindexer() {
         this.robot = RobotHardware.getInstance();
-        targetPosition = 72;
+        targetPosition = RobotConstants.Spindexer.ENCODER_OFFSET;
         lastTime = System.nanoTime();
     }
 

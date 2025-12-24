@@ -19,7 +19,8 @@ public class ColorSensorSubsytem implements Subsystem {
 
     public ColorSensorSubsytem(){
         this.robot = RobotHardware.getInstance();
-        colorSensor = (ColorSensor) robot.colorSensor;
+        // For backward compatibility - uses the first intake sensor
+        colorSensor = robot.intakeSensor1;
         refreshScan();
     }
 

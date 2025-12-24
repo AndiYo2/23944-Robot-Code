@@ -1,7 +1,6 @@
 package utility;
 
 import com.qualcomm.robotcore.util.ElapsedTime;
-import subsystems.ColorSensorSubsytem;
 import subsystems.Intake;
 import subsystems.Spindexer;
 import utility.RobotConstants.Enums.BallColor;
@@ -18,7 +17,7 @@ import utility.RobotConstants.Enums.BallColor;
  * - When intake is released, it will automatically catalog and rotate
  */
 public class CatalogManager {
-    private final ColorSensorSubsytem colorSensor;
+    private final DualColorSensor intakeSensor;
     private final Spindexer spindexer;
     private final Intake intake;
 
@@ -31,8 +30,8 @@ public class CatalogManager {
     private static final double INTAKE_REVERSE_DURATION = 2.0; // seconds
     private static final int INTAKE_SLOT_INDEX = 0; // Slot 0 is the intake position
 
-    public CatalogManager(ColorSensorSubsytem colorSensor, Spindexer spindexer, Intake intake) {
-        this.colorSensor = colorSensor;
+    public CatalogManager(DualColorSensor intakeSensor, Spindexer spindexer, Intake intake) {
+        this.intakeSensor = intakeSensor;
         this.spindexer = spindexer;
         this.intake = intake;
     }
@@ -80,7 +79,8 @@ public class CatalogManager {
         }
 
         // Scan ball color
-        BallColor detectedColor = ColorSensorSubsytem.getBallColor();
+        intakeSensor.refreshScan();
+        BallColor detectedColor = intakeSensor.getBallColor();
 
         // Only catalog if we detected an actual ball (not None)
         if (detectedColor != BallColor.None) {

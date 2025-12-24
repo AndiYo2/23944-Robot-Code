@@ -45,8 +45,13 @@ public class RobotHardware {
     // ******************* LIMELIGHT ******************* //
     public Limelight3A limelight;
 
-    // ******************* COLOR SENSOR ******************* //
-    public ColorSensor colorSensor;
+    // ******************* COLOR SENSORS ******************* //
+    // Intake sensors (2 sensors offset at first spindexer slot to avoid ball holes)
+    public ColorSensor intakeSensor1;
+    public ColorSensor intakeSensor2;
+
+    // Dual sensor reader (combines 2 sensors for reliable detection)
+    public DualColorSensor intakeSensor;
 
     // ******************* SPINDEXER ******************* //
     public CRServo spindexerServo;
@@ -110,8 +115,11 @@ public class RobotHardware {
         intakeBeltMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         intakeBeltMotor.setDirection(DcMotor.Direction.REVERSE);
 
-        // ******************* COLOR SENSOR ******************* //
-        colorSensor = hardwareMap.get(ColorSensor.class, RobotConstants.ColorSensor.colorSensor);
+        // ******************* COLOR SENSORS ******************* //
+        // Intake sensors (2 offset sensors at first spindexer slot to avoid ball holes)
+        intakeSensor1 = hardwareMap.get(ColorSensor.class, RobotConstants.ColorSensor.intakeSensor1);
+        intakeSensor2 = hardwareMap.get(ColorSensor.class, RobotConstants.ColorSensor.intakeSensor2);
+        intakeSensor = new DualColorSensor(intakeSensor1, intakeSensor2);
 
         // ******************* SPINDEXER ******************* //
         spindexerFlipperServo = hardwareMap.get(Servo.class, RobotConstants.Spindexer.spindexerFLipperServo);

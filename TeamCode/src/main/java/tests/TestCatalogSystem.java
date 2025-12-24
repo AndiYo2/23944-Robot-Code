@@ -53,7 +53,7 @@ public class TestCatalogSystem extends OpMode {
         colorSensor = new ColorSensorSubsytem();
 
         // Initialize catalog manager
-        catalogManager = new CatalogManager(colorSensor, spindexer, intake);
+        catalogManager = new CatalogManager(robot.intakeSensor, spindexer, intake);
 
         telemetry.addData("Status", "Initialized");
         telemetry.addLine("Controls:");

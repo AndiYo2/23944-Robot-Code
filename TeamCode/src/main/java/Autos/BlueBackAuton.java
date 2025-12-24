@@ -5,7 +5,6 @@ import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import utility.AutonTemplate;
 import utility.RobotConstants;
 
 @Autonomous(name = "BlueBackAuton", group = "Autonomous")

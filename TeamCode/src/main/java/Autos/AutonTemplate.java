@@ -1,4 +1,4 @@
-package utility;
+package Autos;
 
 import com.pedropathing.follower.Follower;
 import com.pedropathing.util.Timer;
@@ -8,9 +8,12 @@ import pedroPathing.Constants;
 import subsystems.Shooter;
 import subsystems.Intake;
 import subsystems.Spindexer;
-import subsystems.ColorSensorSubsytem;
+import utility.CatalogManager;
+import utility.RobotConstants;
+import utility.RobotConstants.Enums.BallColor;
 import utility.RobotConstants.Enums.FlickState;
 import utility.RobotConstants.Enums.ShooterCases;
+import utility.RobotHardware;
 
 /**
  * Base template for all autonomous OpModes.
@@ -27,7 +30,6 @@ public abstract class AutonTemplate extends OpMode {
     protected Shooter shooter;
     protected Intake intake;
     protected Spindexer spindexer;
-    protected ColorSensorSubsytem colorSensor;
     protected CatalogManager catalogManager;
     protected ShooterCases shootCases;
 
@@ -139,13 +141,13 @@ public abstract class AutonTemplate extends OpMode {
      */
     protected void catalogBallAuton() {
         // Refresh color sensor reading
-        colorSensor.refreshScan();
+        robotHardware.intakeSensor.refreshScan();
 
         // Get detected ball color
-        RobotConstants.Enums.BallColor detectedColor = ColorSensorSubsytem.getBallColor();
+        BallColor detectedColor = robotHardware.intakeSensor.getBallColor();
 
         // Only catalog if we detected an actual ball (not None)
-        if (detectedColor != RobotConstants.Enums.BallColor.None) {
+        if (detectedColor != BallColor.None) {
             // Catalog the ball at the intake slot (slot 0)
             spindexer.catalogBall(0, detectedColor);
 
@@ -158,7 +160,6 @@ public abstract class AutonTemplate extends OpMode {
                 shooter.periodic();
                 spindexer.periodic();
                 intake.periodic();
-                colorSensor.periodic();
             }
         }
     }
@@ -188,8 +189,7 @@ public abstract class AutonTemplate extends OpMode {
         shooter = new Shooter();
         intake = new Intake();
         spindexer = new Spindexer();
-        colorSensor = new ColorSensorSubsytem();
-        catalogManager = new CatalogManager(colorSensor, spindexer, intake);
+        catalogManager = new CatalogManager(robotHardware.intakeSensor, spindexer, intake);
         shootCases = ShooterCases.Idle;
 
         buildPaths();
@@ -223,7 +223,6 @@ public abstract class AutonTemplate extends OpMode {
         shooter.periodic();
         spindexer.periodic();
         intake.periodic();
-        colorSensor.periodic();
     }
 
     @Override

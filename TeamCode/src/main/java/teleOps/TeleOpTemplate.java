@@ -1,4 +1,4 @@
-package utility;
+package teleOps;
 
 import com.arcrobotics.ftclib.command.CommandOpMode;
 import com.arcrobotics.ftclib.command.button.GamepadButton;
@@ -9,15 +9,14 @@ import subsystems.MecanumDrive;
 import subsystems.Shooter;
 import subsystems.Intake;
 import subsystems.Spindexer;
-import subsystems.ColorSensorSubsytem;
 import subsystems.Limelight;
+import utility.*;
 
 abstract public class TeleOpTemplate extends CommandOpMode {
     protected MecanumDrive mecanumDrive;
     protected Shooter shooter;
     protected Intake intake;
     protected Spindexer spindexer;
-    protected ColorSensorSubsytem colorSensor;
     protected GamepadEx driverGamepad;
     private final RobotHardware robot = RobotHardware.getInstance();
     protected Limelight limelight;
@@ -33,14 +32,13 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         mecanumDrive = new MecanumDrive();
         intake = new Intake();
         shooter = new Shooter();
-        colorSensor = new ColorSensorSubsytem();
         spindexer = new Spindexer();
 
         sequenceManager = new ShootingSequenceManager(spindexer, shooter, robot);
-        catalogManager = new CatalogManager(colorSensor, spindexer, intake);
+        catalogManager = new CatalogManager(robot.intakeSensor, spindexer, intake);
         shootingValidator = new ShootingValidator(shooter, telemetry);
 
-        register(intake, shooter, spindexer, colorSensor);
+        register(intake, shooter, spindexer);
     }
 
     protected void configureButtonBindings() {
@@ -137,18 +135,19 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     private void updateTelemetry() {
         boolean overrideRequested = gamepad1.right_stick_button;
 
+        // Refresh sensor readings for telemetry
+        robot.intakeSensor.refreshScan();
 
         telemetry.addData("Shooting Mode:", ShootingStrategy.getStrategyMode());
         telemetry.addData("Executing Sequence:", sequenceManager.isExecuting());
         telemetry.addData("Shooter Power:", shooter.getRequiredVelocity());
-        telemetry.addData("Color Detected:", colorSensor.getBallColor());
+        telemetry.addData("Intake Color:", robot.intakeSensor.getBallColor());
         telemetry.addData("Spindexer Pattern:", getSpindexerPatternString());
         telemetry.addData("Catalog Status:", catalogManager.getStatus());
         telemetry.addData("Field Zone:", shooter.getFieldState());
         telemetry.addData("Shooting Status:", shootingValidator.getStatus(overrideRequested));
         telemetry.addData("Drive State:", mecanumDrive.getCurrentState());
         telemetry.addData("Intake State:", intake.getCurrentState());
-        telemetry.addData("Color State:", colorSensor.getCurrentState());
         telemetry.addData("Shooter State:", shooter.getCurrentState());
         telemetry.addData("Spindexer State:", spindexer.getCurrentState());
         telemetry.update();
