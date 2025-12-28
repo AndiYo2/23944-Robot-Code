@@ -4,12 +4,18 @@ import com.pedropathing.geometry.Pose;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
 public class FieldMap {
-    static Pose blueGoalTarget= new Pose(7, 137, 0);
-    static Pose redGoalTarget = new Pose(137, 137, 0);
+    static Pose blueGoalTarget= new Pose(0, 143, 0);
+    static Pose redGoalTarget = new Pose(143, 143, 0);
 
     public static char getPosition(double pX, double pY) {
         int x = (int) Math.round(pX);
         int y = (int) Math.round( 143 - pY);
+
+        // Clamp to valid field bounds (0-143) to prevent array index errors
+        // This handles odometry drift or initialization issues
+        x = Math.max(0, Math.min(143, x));
+        y = Math.max(0, Math.min(143, y));
+
         return letterBitmap[y][x];
     }
 

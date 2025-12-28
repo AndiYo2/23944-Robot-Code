@@ -2,6 +2,9 @@ package utility;
 
 import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
 public class RobotConstants {
     public static class Drivetrain {
@@ -24,7 +27,7 @@ public class RobotConstants {
     }
 
     public static class Spindexer {
-        public static final int ENCODER_OFFSET = 72;
+        public static final int ENCODER_OFFSET = 62;
         public static String spindexerServo = "spindexerServo"; // E4
         public static String spindexerEncoder = "spindexerServoEncoder"; // E Analog 0-1
 
@@ -39,7 +42,13 @@ public class RobotConstants {
         public static final double ROTATION_FORWARD = 120;
         public static final double ROTATION_BACKWARD = -120;
 
-        public final static PIDCoefficients SPINDEXER_PID = new PIDCoefficients(0.005, 0, 0.002);
+        public final static PIDCoefficients SPINDEXER_PID = new PIDCoefficients(0.0086, 0, 0.0002);
+
+        // Stall detection configuration
+        public static final double STALL_DETECTION_TIME = 1.0;       // 1000ms - increased to reduce false positives
+        public static final double STALL_POSITION_THRESHOLD = 2.0;   // 2.0 degrees - require less movement sensitivity
+        public static final double INTAKE_CLEARING_TIME = 0.3;       // 300ms intake pulse (longer to ensure jam clears)
+        public static final int MAX_RETRY_ATTEMPTS = 2;              // Max retries before giving up (reduced to avoid spam)
 
     }
 
@@ -52,6 +61,8 @@ public class RobotConstants {
         public static String turretEncoder = "turretServoEncoder"; // Encoder port TBD
         public static String shooterFlipperServo = "shooterFlipperServo"; // C 0
         public static String shooterEncoder = "shooterEncoder"; // N/A
+
+        // 2600, 2100, is our powers
 
         //Constant Positions
         public final static double FLIPPER_POSITION_EXTENDED = 0.35;
@@ -69,13 +80,20 @@ public class RobotConstants {
         public static final double CENTER = 0.0;
         public static final int ENCODER_OFFSET = 0; // Encoder offset at center position
         public static final double ANGLE_RANGE = 3.0; // Acceptable error in degrees
+        public static final double GEAR_RATIO = 6.0; // 6:1 servo to turret (servo rotates 6° for 1° turret rotation)
 
-        // SAFETY: Maximum rotation from center (HARDWARE LIMIT - DO NOT EXCEED!)
-        public static final double MAX_TURRET_ANGLE = 350.0; // ±350° max (10° safety margin from ±360°)
-        public static final double TURRET_WARNING_ANGLE = 300.0; // Warn when exceeding ±300°
+        // Turret tracking offset (in turret degrees) - compensates for systematic tracking error
+        // Negative value shifts aim left, positive shifts aim right
+        public static final double TURRET_TRACKING_OFFSET = -5.0; // Adjust if tracking is still off
 
-        // Turret PID coefficients (similar to spindexer, tune as needed)
-        public static final PIDCoefficients TURRET_PID = new PIDCoefficients(0.0122, 0, 0.0005);
+        // Turret PID coefficients (tuned values)
+        public static final PIDCoefficients TURRET_PID = new PIDCoefficients(0.013, 0, 0.00030);
+
+        // Shooter PIDF coefficients (tuned values from ShooterPIDFTuningTeleOp)
+        public static final double SHOOTER_P = 5.0;
+        public static final double SHOOTER_I = 0.0;
+        public static final double SHOOTER_D = 0.0;
+        public static final double SHOOTER_F = 6.4;
     }
 
     public static class ColorSensor {
@@ -83,9 +101,12 @@ public class RobotConstants {
         public static String intakeSensor1 = "intakeSensor1"; // First intake sensor
         public static String intakeSensor2 = "intakeSensor2"; // Second intake sensor (offset from first)
 
-        // Color detection thresholds [red, green, blue]
-        public static final double[] PURPLE_THRESHOLDS = {0.6, 0.5, 0.4};
-        public static final double[] GREEN_THRESHOLDS = {0.3, 0.5, 0.2};
+        // Color detection thresholds
+        public static final double PURPLE_THRESHOLD = 700;
+        public static final double GREEN_THRESHOLD = 1500;
+        public static final double ALPHA_THRESHOLD = 500;
+
+        // Detection logic: Green ball detected if (green > red) AND (green > GREEN_THRESHOLD)
     }
 
     public static class Controls {
@@ -102,6 +123,7 @@ public class RobotConstants {
 
     public static class Pinpoint{
         public static String pinpoint = "pinpoint"; //E I2C 1
+        public static Pose2D standardStartPoint = new Pose2D(DistanceUnit.INCH,56.5, 8.5, AngleUnit.DEGREES, 90);
     }
     public static class UpdatableConstants{
         public static double shooterVelocity;
@@ -171,6 +193,12 @@ public class RobotConstants {
             Start,
             Extended,
             Retracted
+        }
+        public enum SpindexerRotationState {
+            IDLE,           // Not rotating
+            ROTATING,       // Actively rotating
+            STALLED,        // Detected stall - waiting for clearance
+            RETRY           // Retrying rotation after clearance
         }
         public enum ShooterCases{
             Idle,

@@ -87,7 +87,7 @@ public class TestShootingZones extends OpMode {
 
         // Handle odometry reset
         if (gamepad1.a) {
-            robot.pinpoint.resetPosAndIMU();
+            robot.pinpoint.recalibrateIMU();
         }
 
         // Drive control (field-relative mecanum)

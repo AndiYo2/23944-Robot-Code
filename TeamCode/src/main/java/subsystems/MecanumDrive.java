@@ -20,6 +20,7 @@ public class MecanumDrive implements Subsystem {
     private boolean slowmode;
     private DriveState currentState = DriveState.FieldRelative;
     private Follower activeFollower = null;
+    private double headingOffset = 0; // Offset applied when driver resets yaw
 
     private Pose pose;
 
@@ -46,12 +47,16 @@ public class MecanumDrive implements Subsystem {
     }
 
     public void resetYaw(){
-        robot.pinpoint.resetPosAndIMU();
-    }
-    public double getRobotHeading(){
+        // Store current heading as offset - makes current direction the new "forward"
+        // This preserves position (for shooter aiming) while resetting driver orientation
         robot.pinpoint.update();
-        return robot.pinpoint.getHeading(AngleUnit.RADIANS);
+        headingOffset = robot.pinpoint.getHeading(AngleUnit.RADIANS);
+    }
 
+    public double getRobotHeading(){
+        // Return heading relative to the reset point (subtract offset)
+        robot.pinpoint.update();
+        return robot.pinpoint.getHeading(AngleUnit.RADIANS) - headingOffset;
     }
 
     public Follower driveToPose(Pose target, HardwareMap hardwareMap) {

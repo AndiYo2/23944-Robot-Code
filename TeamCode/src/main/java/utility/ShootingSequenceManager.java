@@ -1,20 +1,47 @@
 package utility;
 
+import com.qualcomm.robotcore.util.ElapsedTime;
 import subsystems.Spindexer;
 import subsystems.Shooter;
+import utility.RobotConstants.Enums.BallColor;
 import utility.RobotConstants.Enums.FlickState;
-import utility.RobotConstants.Enums.ShooterCases;
 
 /**
- * Manages the shooting sequence state machine and coordinates
- * between Spindexer and Shooter subsystems.
+ * ShootingSequenceManager - Simple 3-ball shooting sequence
+ *
+ * Shoots 3 balls with this sequence for each:
+ * 1. Flick spindexer out
+ * 2. Wait 0.2s
+ * 3. Flick shooter out
+ * 4. Wait 0.1s
+ * 5. Rotate spindexer (except on 3rd ball)
+ * 6. Wait for rotation complete
+ * 7. Repeat
  */
 public class ShootingSequenceManager {
     private final Spindexer spindexer;
     private final Shooter shooter;
     private final RobotHardware robot;
 
-    private ShooterCases currentState = ShooterCases.Idle;
+    private enum State {
+        IDLE,
+        FLICK_SPINDEXER,
+        WAIT_BEFORE_SHOOTER,
+        FLICK_SHOOTER,
+        WAIT_AFTER_SHOOTER,
+        ROTATE_SPINDEXER,
+        WAIT_ROTATION,
+        CLEANUP
+    }
+
+    private State state = State.IDLE;
+    private int ballsShot = 0;
+    private static final int TOTAL_BALLS = 3;
+    private ElapsedTime timer = new ElapsedTime();
+
+    // Timing constants
+    private static final double DELAY_BEFORE_SHOOTER = 0.2;  // 200ms between spindexer and shooter
+    private static final double DELAY_AFTER_SHOOTER = 0.1;   // 100ms after shooter
 
     public ShootingSequenceManager(Spindexer spindexer, Shooter shooter, RobotHardware robot) {
         this.spindexer = spindexer;
@@ -23,108 +50,122 @@ public class ShootingSequenceManager {
     }
 
     /**
-     * Start a new shooting sequence using the current mode (SMART or DUMP_ONLY)
+     * Start shooting 3 balls
      */
     public void startShootingSequence() {
-        if (isIdle()) {
-            RobotConstants.MotifPattern goalPattern = RobotConstants.Limelight.motifPattern;
-            spindexer.startShootingSequence(goalPattern);
-            processNextAction();
+        if (state != State.IDLE) {
+            return; // Already running
         }
+
+        // Only start if spindexer is ready (not rotating, at rest)
+        if (!spindexer.isReadyToFlip()) {
+            return; // Wait until spindexer is at rest
+        }
+
+        ballsShot = 0;
+        state = State.FLICK_SPINDEXER;
+        spindexer.triggerFlick();
     }
 
     /**
-     * Toggle between SMART and DUMP_ONLY shooting modes
-     */
-    public void toggleShootingMode() {
-        if (ShootingStrategy.getStrategyMode() == ShootingStrategy.StrategyMode.SMART) {
-            ShootingStrategy.setStrategyMode(ShootingStrategy.StrategyMode.FAST);
-        } else {
-            ShootingStrategy.setStrategyMode(ShootingStrategy.StrategyMode.SMART);
-        }
-    }
-
-    /**
-     * Update the shooting state machine - call this every loop
+     * Update state machine - call every loop
      */
     public void update() {
-        switch (currentState) {
-            case Idle:
-                return;
-            case Start:
-                handleStart();
+        switch (state) {
+            case IDLE:
+                // Do nothing
                 break;
-            case SpindexerFlicking:
-                handleSpindexerFlicking();
+
+            case FLICK_SPINDEXER:
+                // Wait for spindexer to extend
+                if (spindexer.getCurrentState() == FlickState.Extended) {
+                    timer.reset();
+                    state = State.WAIT_BEFORE_SHOOTER;
+                }
                 break;
-            case ShooterFlicking:
-                handleShooterFlicking();
+
+            case WAIT_BEFORE_SHOOTER:
+                // Wait 0.2s
+                if (timer.seconds() >= DELAY_BEFORE_SHOOTER) {
+                    shooter.triggerShot();
+                    state = State.FLICK_SHOOTER;
+                }
                 break;
-            case BallShot:
-                handleBallShot();
+
+            case FLICK_SHOOTER:
+                // Wait for spindexer to retract (shooter auto-retracts)
+                if (spindexer.getCurrentState() == FlickState.Idle) {
+                    timer.reset();
+                    state = State.WAIT_AFTER_SHOOTER;
+                }
+                break;
+
+            case WAIT_AFTER_SHOOTER:
+                // Wait 0.1s
+                if (timer.seconds() >= DELAY_AFTER_SHOOTER) {
+                    state = State.CLEANUP;
+                }
+                break;
+
+            case CLEANUP:
+                // Clear ball from pattern
+                robot.spindexerPattern.setBallPatternNone(1);
+                ballsShot++;
+
+                // Check if done with all 3 balls
+                if (ballsShot >= TOTAL_BALLS) {
+                    state = State.IDLE;
+                } else {
+                    // More balls to shoot - rotate spindexer
+                    state = State.ROTATE_SPINDEXER;
+                    spindexer.rotateBy(RobotConstants.Spindexer.ROTATION_FORWARD);
+                    rotateBallPatternForward();
+                }
+                break;
+
+            case ROTATE_SPINDEXER:
+                // Rotation command sent, move to waiting
+                state = State.WAIT_ROTATION;
+                break;
+
+            case WAIT_ROTATION:
+                // Wait for spindexer to finish rotating (state = IDLE, regardless of position accuracy)
+                if (spindexer.isReadyToFlip()) {
+                    // Rotation attempt complete, shoot next ball
+                    state = State.FLICK_SPINDEXER;
+                    spindexer.triggerFlick();
+                }
                 break;
         }
     }
 
-    public boolean isExecuting() {
-        return spindexer.hasMoreActions();
+    private void rotateBallPatternForward() {
+        BallColor slot0 = robot.spindexerPattern.getBallInSlotX(0);
+        BallColor slot1 = robot.spindexerPattern.getBallInSlotX(1);
+        BallColor slot2 = robot.spindexerPattern.getBallInSlotX(2);
+        robot.spindexerPattern.setBallPattern(slot2, slot0, slot1);
     }
 
     public boolean isIdle() {
-        return currentState == ShooterCases.Idle;
+        return state == State.IDLE;
     }
 
-    // ============= Private State Handlers =============
-
-    private void handleStart() {
-        spindexer.triggerFlick();
-        currentState = ShooterCases.SpindexerFlicking;
+    public boolean isExecuting() {
+        return state != State.IDLE;
     }
 
-    private void handleSpindexerFlicking() {
-        if (spindexer.getCurrentState() == FlickState.Extended) {
-            shooter.triggerShot();
-            currentState = ShooterCases.ShooterFlicking;
+    public String getStatus() {
+        if (state == State.IDLE) {
+            return "IDLE";
         }
+        return String.format("%s - Ball %d/%d",
+            state.toString(),
+            ballsShot + 1,
+            TOTAL_BALLS
+        );
     }
 
-    private void handleShooterFlicking() {
-        if (spindexer.getCurrentState() == FlickState.Retracted) {
-            currentState = ShooterCases.BallShot;
-        }
-    }
-
-    private void handleBallShot() {
-        robot.spindexerPattern.setBallPatternNone(1); // Clear shooter position
-        spindexer.completeCurrentAction();
-        currentState = ShooterCases.Idle;
-
-        if (spindexer.hasMoreActions()) {
-            processNextAction();
-        }
-    }
-
-    private void processNextAction() {
-        if (isIdle() && spindexer.hasMoreActions()) {
-            ShootingStrategy.Action nextAction = spindexer.getNextAction();
-
-            switch (nextAction) {
-                case SHOOT:
-                    currentState = ShooterCases.Start;
-                    break;
-                case ROTATE_FORWARD:
-                    executeRotation(120);
-                    break;
-                case ROTATE_BACKWARD:
-                    executeRotation(-120);
-                    break;
-            }
-        }
-    }
-
-    private void executeRotation(double degrees) {
-        spindexer.rotateBy(degrees);
-        spindexer.completeCurrentAction();
-        processNextAction(); // Immediately process the next action
+    public int getBallsShot() {
+        return ballsShot;
     }
 }

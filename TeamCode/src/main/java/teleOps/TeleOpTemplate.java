@@ -24,6 +24,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     private ShootingSequenceManager sequenceManager;
     private CatalogManager catalogManager;
     private ShootingValidator shootingValidator;
+    private SpindexerJamClearance jamClearance;
 
     protected void initHardware(boolean isAuto) {
         driverGamepad = new GamepadEx(gamepad1);
@@ -37,6 +38,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         sequenceManager = new ShootingSequenceManager(spindexer, shooter, robot);
         catalogManager = new CatalogManager(robot.intakeSensor, spindexer, intake);
         shootingValidator = new ShootingValidator(shooter, telemetry);
+        jamClearance = new SpindexerJamClearance(intake, spindexer);
 
         register(intake, shooter, spindexer);
     }
@@ -45,7 +47,12 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         // Intake controls
         new Trigger(() -> gamepad1.left_trigger > RobotConstants.Controls.TRIGGER_THRESHOLD)
                 .whenActive(() -> intake.runIntake())
-                .whenInactive(() -> intake.stopIntake());
+                .whenInactive(() -> {
+                    // Don't stop intake if CatalogManager is controlling it
+                    if (!catalogManager.isCataloging()) {
+                        intake.stopIntake();
+                    }
+                });
 
         // Shooting controls (with zone validation)
         new Trigger(() -> gamepad1.right_trigger > RobotConstants.Controls.TRIGGER_THRESHOLD)
@@ -63,14 +70,14 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
         // Manual spindexer controls
         new GamepadButton(driverGamepad, GamepadKeys.Button.LEFT_BUMPER)
-                .whenPressed(() -> spindexer.rotateBy(RobotConstants.Spindexer.ROTATION_FORWARD));
+                .whenPressed(() -> manualRotateForward());
 
         new GamepadButton(driverGamepad, GamepadKeys.Button.RIGHT_BUMPER)
-                .whenPressed(() -> spindexer.rotateBy(RobotConstants.Spindexer.ROTATION_BACKWARD));
+                .whenPressed(() -> manualRotateBackward());
 
         // Mode toggles
         new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_DOWN)
-                .whenPressed(() -> sequenceManager.toggleShootingMode());
+                .whenPressed(() -> toggleShootingStrategy());
         new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_UP)
                 .whenPressed(() -> shooter.toggleLimelightEnabled());
     }
@@ -123,13 +130,83 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         }
     }
 
+    /**
+     * Manual rotation forward with ball pattern update
+     * Blocked during shooting sequence to prevent conflicts
+     */
+    private void manualRotateForward() {
+        if (sequenceManager.isExecuting()) {
+            return; // Block manual rotation during shooting sequence
+        }
+        spindexer.rotateBy(RobotConstants.Spindexer.ROTATION_FORWARD);
+        rotateBallPatternForward();
+    }
+
+    /**
+     * Manual rotation backward with ball pattern update
+     * Blocked during shooting sequence to prevent conflicts
+     */
+    private void manualRotateBackward() {
+        if (sequenceManager.isExecuting()) {
+            return; // Block manual rotation during shooting sequence
+        }
+        spindexer.rotateBy(RobotConstants.Spindexer.ROTATION_BACKWARD);
+        rotateBallPatternBackward();
+    }
+
+    /**
+     * Toggle between SMART and FAST shooting strategy modes
+     */
+    private void toggleShootingStrategy() {
+        if (ShootingStrategy.getStrategyMode() == ShootingStrategy.StrategyMode.SMART) {
+            ShootingStrategy.setStrategyMode(ShootingStrategy.StrategyMode.FAST);
+        } else {
+            ShootingStrategy.setStrategyMode(ShootingStrategy.StrategyMode.SMART);
+        }
+    }
+
+    /**
+     * Rotates the ball pattern forward to match physical spindexer rotation.
+     * When spindexer rotates forward 120°:
+     * - What was in slot 2 (storage) is now in slot 0 (intake)
+     * - What was in slot 0 (intake) is now in slot 1 (shooter)
+     * - What was in slot 1 (shooter) is now in slot 2 (storage)
+     */
+    private void rotateBallPatternForward() {
+        RobotConstants.Enums.BallColor slot0 = robot.spindexerPattern.getBallInSlotX(0);
+        RobotConstants.Enums.BallColor slot1 = robot.spindexerPattern.getBallInSlotX(1);
+        RobotConstants.Enums.BallColor slot2 = robot.spindexerPattern.getBallInSlotX(2);
+
+        robot.spindexerPattern.setBallPattern(slot2, slot0, slot1);
+    }
+
+    /**
+     * Rotates the ball pattern backward to match physical spindexer rotation.
+     * When spindexer rotates backward 120°:
+     * - What was in slot 1 (shooter) is now in slot 0 (intake)
+     * - What was in slot 2 (storage) is now in slot 1 (shooter)
+     * - What was in slot 0 (intake) is now in slot 2 (storage)
+     */
+    private void rotateBallPatternBackward() {
+        RobotConstants.Enums.BallColor slot0 = robot.spindexerPattern.getBallInSlotX(0);
+        RobotConstants.Enums.BallColor slot1 = robot.spindexerPattern.getBallInSlotX(1);
+        RobotConstants.Enums.BallColor slot2 = robot.spindexerPattern.getBallInSlotX(2);
+
+        robot.spindexerPattern.setBallPattern(slot1, slot2, slot0);
+    }
+
     private void updateSubsystems() {
         spindexer.periodic();
+        shooter.periodic();
         sequenceManager.update();
+        jamClearance.periodic();
 
         // Update catalog manager (tracks intake releases to catalog balls)
+        // Disable cataloging during shooting sequence to prevent rotation conflicts
         boolean intakeActive = gamepad1.left_trigger > RobotConstants.Controls.TRIGGER_THRESHOLD;
-        catalogManager.update(intakeActive);
+        if (!sequenceManager.isExecuting()) {
+            catalogManager.update(intakeActive);
+        }
     }
 
     private void updateTelemetry() {
@@ -140,6 +217,9 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
         telemetry.addData("Shooting Mode:", ShootingStrategy.getStrategyMode());
         telemetry.addData("Executing Sequence:", sequenceManager.isExecuting());
+        if (sequenceManager.isExecuting()) {
+            telemetry.addData("Sequence Status:", sequenceManager.getStatus());
+        }
         telemetry.addData("Shooter Power:", shooter.getRequiredVelocity());
         telemetry.addData("Intake Color:", robot.intakeSensor.getBallColor());
         telemetry.addData("Spindexer Pattern:", getSpindexerPatternString());
@@ -150,12 +230,27 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         telemetry.addData("Intake State:", intake.getCurrentState());
         telemetry.addData("Shooter State:", shooter.getCurrentState());
         telemetry.addData("Spindexer State:", spindexer.getCurrentState());
+        telemetry.addData("Jam Clearance:", jamClearance.getStatus());
+        telemetry.addData("Rotation State:", spindexer.getRotationState());
+        if (spindexer.getRetryAttempts() > 0) {
+            telemetry.addData("Retry Attempts:", spindexer.getRetryAttempts());
+        }
+
+        // Debug: Show position info when sequence is stuck
+        if (sequenceManager.isExecuting()) {
+            telemetry.addData("Current Pos:", String.format("%.1f°", spindexer.getServoPosition()));
+            telemetry.addData("Target Pos:", String.format("%.1f°", spindexer.getTargetPosition()));
+            telemetry.addData("Done Rotating?:", spindexer.isDoneRotating());
+            telemetry.addData("Ready to Flip?:", spindexer.isReadyToFlip());
+        }
+
         telemetry.update();
     }
 
     private String getSpindexerPatternString() {
-        return robot.spindexerPattern.getBallInSlotX(0) + ", " +
-                robot.spindexerPattern.getBallInSlotX(1) + ", " +
-                robot.spindexerPattern.getBallInSlotX(2);
+        return String.format("[I:%s S:%s T:%s]",
+                robot.spindexerPattern.getBallInSlotX(0),  // I = Intake
+                robot.spindexerPattern.getBallInSlotX(1),  // S = Shooter
+                robot.spindexerPattern.getBallInSlotX(2)); // T = sTorage
     }
 }

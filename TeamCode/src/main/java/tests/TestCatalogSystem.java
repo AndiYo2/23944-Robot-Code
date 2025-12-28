@@ -3,10 +3,10 @@ package tests;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import subsystems.ColorSensorSubsytem;
 import subsystems.Intake;
 import subsystems.Spindexer;
 import utility.CatalogManager;
+import utility.DualColorSensor;
 import utility.RobotHardware;
 import utility.RobotConstants.Enums.BallColor;
 
@@ -38,7 +38,7 @@ public class TestCatalogSystem extends OpMode {
     private CatalogManager catalogManager;
     private Intake intake;
     private Spindexer spindexer;
-    private ColorSensorSubsytem colorSensor;
+    private DualColorSensor intakeSensor;
 
     private int catalogCount = 0;
 
@@ -50,10 +50,10 @@ public class TestCatalogSystem extends OpMode {
         // Initialize subsystems
         intake = new Intake();
         spindexer = new Spindexer();
-        colorSensor = new ColorSensorSubsytem();
+        intakeSensor = robot.intakeSensor;
 
         // Initialize catalog manager
-        catalogManager = new CatalogManager(robot.intakeSensor, spindexer, intake);
+        catalogManager = new CatalogManager(intakeSensor, spindexer, intake);
 
         telemetry.addData("Status", "Initialized");
         telemetry.addLine("Controls:");
@@ -74,7 +74,6 @@ public class TestCatalogSystem extends OpMode {
         // Update subsystems
         intake.periodic();
         spindexer.periodic();
-        colorSensor.periodic();
 
         // Manual controls for testing
         if (gamepad1.a) {
@@ -127,9 +126,10 @@ public class TestCatalogSystem extends OpMode {
         telemetry.addData("", "");
 
         telemetry.addData("=== COLOR SENSOR ===", "");
-        BallColor currentColor = ColorSensorSubsytem.getBallColor();
+        intakeSensor.refreshScan();
+        BallColor currentColor = intakeSensor.getBallColor();
         telemetry.addData("Detected Color", currentColor.toString());
-        telemetry.addData("RGB Values", colorSensor.getColorDataString());
+        telemetry.addData("Sensor Data", intakeSensor.getDetailedColorData());
         telemetry.addData("", "");
 
         telemetry.addData("=== INTAKE STATE ===", "");
@@ -159,12 +159,6 @@ public class TestCatalogSystem extends OpMode {
         } else {
             telemetry.addData("Test 3", "Add more balls to fill spindexer");
         }
-
-        // Test 4: Reverse when full
-        if (catalogManager.isReversing()) {
-            telemetry.addData("Test 4", "PASS - Reversing intake (spindexer full!)");
-        }
-
         telemetry.update();
     }
 

@@ -37,22 +37,40 @@ public class ColorSensorReader {
 
     /**
      * Determines the ball color based on current sensor readings
+     * Uses alpha channel to detect ball presence, then RGB ratios to identify color
+     *
+     * Logic:
+     * 1. Check alpha to detect ball presence
+     * 2. Use green-to-red ratio for color determination:
+     *    - Green ball: green is significantly higher than red (ratio > 1.5)
+     *    - Purple ball: red is higher or similar to green
+     *
+     * This ratio-based approach is more robust than fixed thresholds
+     * because it works across different lighting conditions.
+     *
      * @return The detected ball color (Purple, Green, or None)
      */
     public BallColor getBallColor() {
-        // Purple ball: High red, medium green, high blue
-        if (red > RobotConstants.ColorSensor.PURPLE_THRESHOLDS[0] &&
-            green > RobotConstants.ColorSensor.PURPLE_THRESHOLDS[1] &&
-            blue > RobotConstants.ColorSensor.PURPLE_THRESHOLDS[2])
-            return BallColor.Purple;
+        // First check if a ball is present using alpha channel
+        if (alpha <= RobotConstants.ColorSensor.ALPHA_THRESHOLD) {
+            return BallColor.None;
+        }
 
-        // Green ball: Low red, high green, low blue
-        else if (red < RobotConstants.ColorSensor.GREEN_THRESHOLDS[0] &&
-                 green > RobotConstants.ColorSensor.GREEN_THRESHOLDS[1] &&
-                 blue < RobotConstants.ColorSensor.GREEN_THRESHOLDS[2])
+        // Ball is present - determine color using ratio
+        // Avoid division by zero
+        if (red < 10) {
+            // Very low red, likely green ball
+            return (green > RobotConstants.ColorSensor.GREEN_THRESHOLD) ? BallColor.Green : BallColor.None;
+        }
+
+        // Green ball: green must be higher than red AND exceed threshold
+        // Purple ball: red is higher or similar to green
+        if (green > red && green > RobotConstants.ColorSensor.GREEN_THRESHOLD) {
             return BallColor.Green;
+        }
 
-        return BallColor.None;
+        // Otherwise, it's a purple ball
+        return BallColor.Purple;
     }
 
     /**

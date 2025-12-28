@@ -53,9 +53,14 @@ public class DualColorSensor {
     /**
      * Gets the ball color using readings from both sensors
      *
-     * Strategy: If EITHER sensor detects a color, return that color.
-     * If sensors disagree, prioritize non-None readings.
-     * If both detect different colors, return sensor1's reading.
+     * Strategy: Prioritize the sensor with HIGHER ALPHA (stronger signal).
+     * - Compare alpha values from both sensors
+     * - Use the color from the sensor with higher alpha (better ball detection)
+     * - If both have low alpha, return None
+     *
+     * This alpha-based prioritization is more reliable than color prioritization
+     * because a higher alpha indicates the ball is closer to that sensor or more
+     * clearly detected, reducing false color readings.
      *
      * @return The detected ball color (Purple, Green, or None)
      */
@@ -63,12 +68,25 @@ public class DualColorSensor {
         BallColor color1 = sensor1.getBallColor();
         BallColor color2 = sensor2.getBallColor();
 
-        // If either sensor detects a color, use it
-        if (color1 != BallColor.None) return color1;
-        if (color2 != BallColor.None) return color2;
+        double alpha1 = sensor1.getAlpha();
+        double alpha2 = sensor2.getAlpha();
 
-        // Both sensors see nothing
-        return BallColor.None;
+        // If neither sensor detects a ball, return None
+        if (color1 == BallColor.None && color2 == BallColor.None) {
+            return BallColor.None;
+        }
+
+        // If only one sensor detects a ball, use that sensor's color
+        if (color1 == BallColor.None) return color2;
+        if (color2 == BallColor.None) return color1;
+
+        // Both sensors detect a ball - prioritize the one with higher alpha (stronger signal)
+        // This prevents weak/uncertain readings from overriding strong clear readings
+        if (alpha1 > alpha2) {
+            return color1;
+        } else {
+            return color2;
+        }
     }
 
     /**
@@ -118,10 +136,14 @@ public class DualColorSensor {
      * Gets formatted telemetry string showing both sensors
      */
     public String getTelemetryString() {
-        return String.format("S1: %s | S2: %s | Combined: %s",
-                sensor1.getBallColor(),
-                sensor2.getBallColor(),
-                getBallColor());
+        double alpha1 = sensor1.getAlpha();
+        double alpha2 = sensor2.getAlpha();
+        String priority = (alpha1 > alpha2) ? "S1" : "S2";
+
+        return String.format("S1: %s (α=%.0f) | S2: %s (α=%.0f) | Combined: %s [%s]",
+                sensor1.getBallColor(), alpha1,
+                sensor2.getBallColor(), alpha2,
+                getBallColor(), priority);
     }
 
     /**
@@ -131,5 +153,13 @@ public class DualColorSensor {
         return String.format("Sensor1: %s\nSensor2: %s",
                 sensor1.getColorDataString(),
                 sensor2.getColorDataString());
+    }
+
+    /**
+     * Get which sensor is currently being prioritized (has higher alpha)
+     * @return 1 if sensor1 is prioritized, 2 if sensor2 is prioritized
+     */
+    public int getPrioritizedSensor() {
+        return (sensor1.getAlpha() > sensor2.getAlpha()) ? 1 : 2;
     }
 }

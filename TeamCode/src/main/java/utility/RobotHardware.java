@@ -108,6 +108,7 @@ public class RobotHardware {
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
         pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
         pinpoint.setOffsets(0.0, 0.0, DistanceUnit.INCH);
+        pinpoint.setPosition(RobotConstants.Pinpoint.standardStartPoint);
 
         // ******************* INTAKE ******************* //
         intakeMotor = hardwareMap.get(DcMotorEx.class, RobotConstants.Intake.intake);
@@ -134,6 +135,7 @@ public class RobotHardware {
         shooterMotor2.setDirection(DcMotorEx.Direction.REVERSE);
         turretServo = hardwareMap.get(CRServo.class, RobotConstants.Shooter.turret);
         turretEncoder = hardwareMap.get(AnalogInput.class, RobotConstants.Shooter.turretEncoder);
+        turretServo.setDirection(DcMotorSimple.Direction.REVERSE);
         shooterEncoder = hardwareMap.get(AnalogInput.class, RobotConstants.Shooter.shooterEncoder);
         shooterFlipper = hardwareMap.get(Servo.class, RobotConstants.Shooter.shooterFlipperServo);
 

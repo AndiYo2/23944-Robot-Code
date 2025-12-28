@@ -12,18 +12,32 @@ public class TurretPIDFTuningTeleOp extends OpMode {
 
     private RobotHardware robot;
 
-    // Target positions (in degrees, within safe limits)
-    private double targetPosition = 0;
-    private double[] targetPositions = {0, 45, 90, -45, -90, 180, -180};
+    // Target positions in TURRET degrees (will be converted to servo degrees internally)
+    // Turret range: 45° CW, -60° CCW → Servo range: 270° CW, -360° CCW (6:1 ratio)
+    // Test sequence: 0→15→30→45→0 (CW), then 0→-15→-30→-45→-60→0 (CCW)
+    private double targetPositionTurret = 0; // Input in turret degrees
+    private double targetPositionServo = 0;  // Converted to servo degrees for PID
+    private double[] targetPositionsTurret = {
+        0,      // Start
+        15, 30, 45,  // Clockwise to 45° turret (270° servo)
+        0,      // Unwind back to center
+        -15, -30, -45, -60,  // Counter-clockwise to -60° turret (-360° servo)
+        0       // Unwind back to center
+    };
     private int targetIndex = 0;
 
     // Manual angle adjustment (for fine control)
     private boolean manualMode = false;
 
-    // PID coefficients - Starting values from spindexer
-    private double P = 0.0122;
+    // Position tracking across ±180 boundary
+    private double lastRawPosition = 0;
+    private double cumulativePosition = 0;
+    private int rotationCount = 0;
+
+    // PID coefficients - Tuned values
+    private double P = 0.013;
     private double I = 0;
-    private double D = 0.0005;
+    private double D = 0.00030;
 
     // PID calculation variables
     private double lastError = 0;
@@ -40,10 +54,24 @@ public class TurretPIDFTuningTeleOp extends OpMode {
         robot = RobotHardware.getInstance();
         robot.init(hardwareMap);
 
-        targetPosition = getCurrentPosition();
+        // Initialize position tracking (all in servo degrees)
+        double voltage = robot.turretEncoder.getVoltage();
+        double rawDegrees = (voltage / 3.3) * 360.0;
+        rawDegrees -= RobotConstants.Shooter.ENCODER_OFFSET;
+        while (rawDegrees > 180) rawDegrees -= 360;
+        while (rawDegrees < -180) rawDegrees += 360;
+
+        lastRawPosition = rawDegrees;
+        cumulativePosition = rawDegrees;
+        rotationCount = 0;
+
+        // Initialize target in servo degrees
+        targetPositionServo = cumulativePosition;
+        targetPositionTurret = 0; // Start at turret center
 
         telemetry.addData("Status", "Initialized");
-        telemetry.addData("Max Safe Angle", "±%.0f°", RobotConstants.Shooter.MAX_TURRET_ANGLE);
+        telemetry.addData("Hard Limits", "Turret: 45° / -60° | Servo: 270° / -360°");
+        telemetry.addData("Gear Ratio", "6:1 (servo → turret)");
         telemetry.addLine("========== CONTROLS ==========");
         telemetry.addLine("Y: Cycle Target Position");
         telemetry.addLine("A: Reset to Center (0°)");
@@ -75,69 +103,70 @@ public class TurretPIDFTuningTeleOp extends OpMode {
         }
 
         // Handle input for changing target position
-        if (gamepad1.y) {
-            targetIndex = (targetIndex + 1) % targetPositions.length;
-            targetPosition = targetPositions[targetIndex];
+        if (gamepad1.yWasPressed()) {
+            targetIndex = (targetIndex + 1) % targetPositionsTurret.length;
+            targetPositionTurret = targetPositionsTurret[targetIndex];
+            targetPositionServo = targetPositionTurret * RobotConstants.Shooter.GEAR_RATIO;
             manualMode = false;
             resetPID();
         }
 
         // Handle input for resetting to center
-        if (gamepad1.a) {
-            targetPosition = 0;
+        if (gamepad1.aWasPressed()) {
+            targetPositionTurret = 0;
+            targetPositionServo = 0;
             manualMode = false;
             resetPID();
         }
 
-        // Manual angle adjustment with left stick
+        // Manual angle adjustment with left stick (in turret degrees)
         if (Math.abs(gamepad1.left_stick_x) > 0.1) {
             manualMode = true;
-            targetPosition += gamepad1.left_stick_x * 2.0; // 2 degrees per tick at full stick
+            targetPositionTurret += gamepad1.left_stick_x * 2.0; // 2 degrees per tick at full stick
         }
 
-        // SAFETY: Clamp target position to safe limits
-        targetPosition = Math.max(-RobotConstants.Shooter.MAX_TURRET_ANGLE,
-                                  Math.min(RobotConstants.Shooter.MAX_TURRET_ANGLE, targetPosition));
+        // SAFETY: Clamp target position to asymmetric hard limits (45° CW, -60° CCW turret)
+        targetPositionTurret = Math.max(-60.0, Math.min(45.0, targetPositionTurret));
+        targetPositionServo = targetPositionTurret * RobotConstants.Shooter.GEAR_RATIO;
 
         // Handle input for changing step size
-        if (gamepad1.b) {
+        if (gamepad1.bWasPressed()) {
             stepIndex = (stepIndex + 1) % stepSizes.length;
         }
 
         // Handle P tuning
-        if (gamepad1.dpad_up) {
+        if (gamepad1.dpadUpWasPressed()) {
             P += stepSizes[stepIndex];
         }
-        if (gamepad1.dpad_down) {
+        if (gamepad1.dpadDownWasPressed()) {
             P -= stepSizes[stepIndex];
             P = Math.max(0, P);
         }
 
         // Handle D tuning
-        if (gamepad1.dpad_right) {
+        if (gamepad1.dpadRightWasPressed()) {
             D += stepSizes[stepIndex];
         }
-        if (gamepad1.dpad_left) {
+        if (gamepad1.dpadLeftWasPressed()) {
             D -= stepSizes[stepIndex];
             D = Math.max(0, D);
         }
 
         // Handle I tuning
-        if (gamepad1.right_bumper) {
+        if (gamepad1.rightBumperWasPressed()) {
             I += stepSizes[stepIndex];
         }
-        if (gamepad1.left_bumper) {
+        if (gamepad1.leftBumperWasPressed()) {
             I -= stepSizes[stepIndex];
             I = Math.max(0, I);
         }
 
-        // Get current position
-        double currentPosition = getCurrentPosition();
+        // Get current position (in servo degrees)
+        double currentServoPosition = getCurrentPosition();
 
-        // Calculate error (shortest path)
-        double error = targetPosition - currentPosition;
-        if (error > 180) error -= 360;
-        if (error < -180) error += 360;
+        // Calculate error in servo degrees (NO wrapping - always unwind to true position)
+        // This ensures when returning to 0° from 45° turret (270° servo), it fully rotates back
+        double error = targetPositionServo - currentServoPosition;
 
         // Calculate dt
         double currentTime = System.nanoTime() / 1e9;
@@ -175,24 +204,31 @@ public class TurretPIDFTuningTeleOp extends OpMode {
         // Set motor power
         robot.turretServo.setPower(output);
 
-        // Check if approaching limits
-        boolean nearLimit = Math.abs(currentPosition) > RobotConstants.Shooter.TURRET_WARNING_ANGLE;
-        boolean atLimit = Math.abs(targetPosition) >= RobotConstants.Shooter.MAX_TURRET_ANGLE;
+        // Check if approaching limits (servo: 270° CW, -360° CCW)
+        double currentTurretPosition = currentServoPosition / RobotConstants.Shooter.GEAR_RATIO;
+        boolean nearCWLimit = currentServoPosition > 240.0;  // Warn at 240° servo (40° turret)
+        boolean nearCCWLimit = currentServoPosition < -300.0; // Warn at -300° servo (-50° turret)
+        boolean atCWLimit = targetPositionTurret >= 45.0;
+        boolean atCCWLimit = targetPositionTurret <= -60.0;
 
         // Telemetry - Safety warnings first
-        if (atLimit) {
-            telemetry.addLine("⚠⚠⚠ AT MAXIMUM SAFE ANGLE ⚠⚠⚠");
-        } else if (nearLimit) {
-            telemetry.addLine("⚠ WARNING: Approaching limit!");
+        if (atCWLimit) {
+            telemetry.addLine("⚠⚠⚠ AT CW LIMIT (45° turret = 270° servo) ⚠⚠⚠");
+        } else if (atCCWLimit) {
+            telemetry.addLine("⚠⚠⚠ AT CCW LIMIT (-60° turret = -360° servo) ⚠⚠⚠");
+        } else if (nearCWLimit) {
+            telemetry.addLine("⚠ WARNING: Approaching CW limit!");
+        } else if (nearCCWLimit) {
+            telemetry.addLine("⚠ WARNING: Approaching CCW limit!");
         }
 
-        telemetry.addData("Target Position", "%.1f° %s", targetPosition,
-                         manualMode ? "(MANUAL)" : "");
-        telemetry.addData("Current Position", "%.1f°", currentPosition);
-        telemetry.addData("Error", "%.2f°", error);
-        telemetry.addData("Safe Range", "±%.0f° (Max: ±%.0f°)",
-                         RobotConstants.Shooter.TURRET_WARNING_ANGLE,
-                         RobotConstants.Shooter.MAX_TURRET_ANGLE);
+        telemetry.addData("Target Position", "%.1f° turret (%.1f° servo) %s",
+                         targetPositionTurret, targetPositionServo, manualMode ? "(MANUAL)" : "");
+        telemetry.addData("Current Position", "%.1f° turret (%.1f° servo)",
+                         currentTurretPosition, currentServoPosition);
+        telemetry.addData("Raw Position", "%.1f° (Rotations: %d)", lastRawPosition, rotationCount);
+        telemetry.addData("Error", "%.2f° servo", error);
+        telemetry.addData("Hard Limits", "Turret: 45° / -60° | Servo: 270° / -360°");
         telemetry.addLine("-----------------------------");
         telemetry.addData("P", "%.5f (D-Pad U/D)", P);
         telemetry.addData("I", "%.5f (Bumpers)", I);
@@ -214,21 +250,37 @@ public class TurretPIDFTuningTeleOp extends OpMode {
     }
 
     /**
-     * Gets the current turret position from the encoder
-     * @return Turret angle in degrees, centered at 0 with range ±180°
+     * Gets the current servo position from the encoder
+     * Tracks cumulative position across ±180° boundary to support full rotation range
+     * @return Servo angle in degrees, cumulative position
      */
     private double getCurrentPosition() {
         double voltage = robot.turretEncoder.getVoltage();
-        double degrees = (voltage / 3.3) * 360.0;
+        double rawDegrees = (voltage / 3.3) * 360.0;
 
-        // Convert from 0-360 range to ±180 range centered at encoder offset
-        degrees -= RobotConstants.Shooter.ENCODER_OFFSET;
+        // Apply encoder offset
+        rawDegrees -= RobotConstants.Shooter.ENCODER_OFFSET;
 
         // Normalize to [-180, 180]
-        while (degrees > 180) degrees -= 360;
-        while (degrees < -180) degrees += 360;
+        while (rawDegrees > 180) rawDegrees -= 360;
+        while (rawDegrees < -180) rawDegrees += 360;
 
-        return degrees;
+        // Track boundary crossings to maintain cumulative position
+        double delta = rawDegrees - lastRawPosition;
+
+        // Detect crossing from +180 to -180 (clockwise)
+        if (delta < -180) {
+            rotationCount++;
+        }
+        // Detect crossing from -180 to +180 (counter-clockwise)
+        else if (delta > 180) {
+            rotationCount--;
+        }
+
+        lastRawPosition = rawDegrees;
+        cumulativePosition = rawDegrees + (rotationCount * 360);
+
+        return cumulativePosition;
     }
 
     private void resetPID() {

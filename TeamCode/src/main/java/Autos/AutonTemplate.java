@@ -14,6 +14,7 @@ import utility.RobotConstants.Enums.BallColor;
 import utility.RobotConstants.Enums.FlickState;
 import utility.RobotConstants.Enums.ShooterCases;
 import utility.RobotHardware;
+import utility.SpindexerJamClearance;
 
 /**
  * Base template for all autonomous OpModes.
@@ -31,6 +32,7 @@ public abstract class AutonTemplate extends OpMode {
     protected Intake intake;
     protected Spindexer spindexer;
     protected CatalogManager catalogManager;
+    protected SpindexerJamClearance jamClearance;
     protected ShooterCases shootCases;
 
     /**
@@ -94,6 +96,7 @@ public abstract class AutonTemplate extends OpMode {
                 if(spindexer.getCurrentState() == FlickState.Retracted){
                     shootCases = ShooterCases.SpindexerRotating;
                     spindexer.rotateBy(RobotConstants.Spindexer.ROTATION_FORWARD);
+                    rotateBallPatternForward();
                 }
                 break;
             case SpindexerRotating:
@@ -113,9 +116,11 @@ public abstract class AutonTemplate extends OpMode {
         runAutonIntake();
 
         spindexer.rotateBy(RobotConstants.Spindexer.ROTATION_FORWARD);
+        rotateBallPatternForward();
         wait(.5);
 
         spindexer.rotateBy(RobotConstants.Spindexer.ROTATION_FORWARD);
+        rotateBallPatternForward();
         wait(.5);
 
         stopAutonIntake();
@@ -153,6 +158,7 @@ public abstract class AutonTemplate extends OpMode {
 
             // Rotate to next slot
             spindexer.rotateBy(RobotConstants.Spindexer.ROTATION_FORWARD);
+            rotateBallPatternForward();
 
             // Wait for rotation to complete
             while (!spindexer.isDoneRotating()) {
@@ -190,6 +196,7 @@ public abstract class AutonTemplate extends OpMode {
         intake = new Intake();
         spindexer = new Spindexer();
         catalogManager = new CatalogManager(robotHardware.intakeSensor, spindexer, intake);
+        jamClearance = new SpindexerJamClearance(intake, spindexer);
         shootCases = ShooterCases.Idle;
 
         buildPaths();
@@ -216,6 +223,11 @@ public abstract class AutonTemplate extends OpMode {
         telemetry.addData("x", follower.getPose().getX());
         telemetry.addData("y", follower.getPose().getY());
         telemetry.addData("heading", follower.getPose().getHeading());
+        telemetry.addData("Jam Clearance", jamClearance.getStatus());
+        telemetry.addData("Spindexer State", spindexer.getRotationState());
+        if (spindexer.getRetryAttempts() > 0) {
+            telemetry.addData("Retry Attempts", spindexer.getRetryAttempts());
+        }
         telemetry.update();
 
 
@@ -223,6 +235,37 @@ public abstract class AutonTemplate extends OpMode {
         shooter.periodic();
         spindexer.periodic();
         intake.periodic();
+        jamClearance.periodic();
+    }
+
+    /**
+     * Rotates the ball pattern forward to match physical spindexer rotation.
+     * When spindexer rotates forward 120°:
+     * - What was in slot 2 (storage) is now in slot 0 (intake)
+     * - What was in slot 0 (intake) is now in slot 1 (shooter)
+     * - What was in slot 1 (shooter) is now in slot 2 (storage)
+     */
+    protected void rotateBallPatternForward() {
+        RobotConstants.Enums.BallColor slot0 = robotHardware.spindexerPattern.getBallInSlotX(0);
+        RobotConstants.Enums.BallColor slot1 = robotHardware.spindexerPattern.getBallInSlotX(1);
+        RobotConstants.Enums.BallColor slot2 = robotHardware.spindexerPattern.getBallInSlotX(2);
+
+        robotHardware.spindexerPattern.setBallPattern(slot2, slot0, slot1);
+    }
+
+    /**
+     * Rotates the ball pattern backward to match physical spindexer rotation.
+     * When spindexer rotates backward 120°:
+     * - What was in slot 1 (shooter) is now in slot 0 (intake)
+     * - What was in slot 2 (storage) is now in slot 1 (shooter)
+     * - What was in slot 0 (intake) is now in slot 2 (storage)
+     */
+    protected void rotateBallPatternBackward() {
+        RobotConstants.Enums.BallColor slot0 = robotHardware.spindexerPattern.getBallInSlotX(0);
+        RobotConstants.Enums.BallColor slot1 = robotHardware.spindexerPattern.getBallInSlotX(1);
+        RobotConstants.Enums.BallColor slot2 = robotHardware.spindexerPattern.getBallInSlotX(2);
+
+        robotHardware.spindexerPattern.setBallPattern(slot1, slot2, slot0);
     }
 
     @Override

@@ -2,6 +2,8 @@ package tests;
 
 import com.arcrobotics.ftclib.command.CommandOpMode;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
+import com.arcrobotics.ftclib.geometry.Pose2d;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import subsystems.MecanumDrive;
@@ -9,6 +11,7 @@ import utility.FieldMap;
 import utility.RobotConstants;
 import utility.RobotHardware;
 
+@TeleOp (name = "FieldPositionTesting", group = "Tests")
 public class PinpointTestTeleop extends CommandOpMode {
     protected MecanumDrive mecanumDrive;
     protected GamepadEx driverGamepad;
@@ -16,6 +19,7 @@ public class PinpointTestTeleop extends CommandOpMode {
     double robotX;
     double robotY;
     int robotHeading;
+
 
 
 
@@ -34,7 +38,9 @@ public class PinpointTestTeleop extends CommandOpMode {
         robot.init(hardwareMap, driverGamepad);
 
         mecanumDrive = new MecanumDrive();
-        updateLocation();
+        robotX = 56.5;
+        robotY = 8.5;
+        robotHeading = 90;
     }
 
     private void updateDrivetrain() {
@@ -132,7 +138,7 @@ public class PinpointTestTeleop extends CommandOpMode {
         }
 
         telemetry.addLine("=============================");
-        telemetry.addData("In Shooting Zone?", inShootingZone ? "YES ✓" : "NO");
+        telemetry.addData("In Shooting Zone?", inShootingZone ? "YES" : "NO");
 
         telemetry.update();
     }

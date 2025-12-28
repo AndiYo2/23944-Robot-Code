@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 
+import utility.RobotConstants;
 import utility.RobotHardware;
 
 @TeleOp(name = "SpindexerPIDF", group = "Tests")
@@ -12,14 +13,14 @@ public class SpindexerPIDFTuningTeleOp extends OpMode {
     private RobotHardware robot;
 
     // Target positions (in degrees)
-    private double targetPosition = 60;
-    private double[] targetPositions = {60, 180, 300};
+    private double targetPosition = 62;
+    private double[] targetPositions = {62, 182, 302};
     private int targetIndex = 0;
 
     // PID coefficients - INCREASED starting values
-    private double P = 0.0122;  // Increased from 0.0001
-    private double I = 0;
-    private double D = 0.0005; // Added small D term
+    private double P = RobotConstants.Spindexer.SPINDEXER_PID.p;  // Increased from 0.0001
+    private double I = RobotConstants.Spindexer.SPINDEXER_PID.i;
+    private double D = RobotConstants.Spindexer.SPINDEXER_PID.d; // Added small D term
 
     // PID calculation variables
     private double lastError = 0;

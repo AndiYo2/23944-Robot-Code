@@ -10,13 +10,13 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 public class ShooterPIDFTuningTeleOp extends OpMode {
 
     public DcMotorEx flywheelMotor1, flywheelMotor2;
-    public double highVelocity = 1500;
-    public double lowVelocity = 1000;
+    public double highVelocity = 2700;
+    public double lowVelocity = 2200;
 
     double currentTargetVelocity = highVelocity;
 
-    double F = 0;
-    double P = 0;
+    double F = 6.4;
+    double P = 5;
 
     double[] stepSizes = {10, 1, 0.1, 0.001 ,0.0001};
     PIDFCoefficients pidCoefficients = new PIDFCoefficients(P,0,0,F);
@@ -35,6 +35,7 @@ public class ShooterPIDFTuningTeleOp extends OpMode {
         flywheelMotor2.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
         flywheelMotor2.setDirection(DcMotorEx.Direction.REVERSE);
         flywheelMotor2.setPIDFCoefficients(DcMotorEx.RunMode.RUN_USING_ENCODER, pidCoefficients);
+
         telemetry.addData("Status", "Initialized");
     }
 
@@ -64,6 +65,13 @@ public class ShooterPIDFTuningTeleOp extends OpMode {
         if(gamepad1.dpadDownWasPressed()){
             P -= stepSizes[stepIndex];
         }
+        if(gamepad1.leftBumperWasPressed()){
+            currentTargetVelocity -=100;
+        }
+        if(gamepad1.rightBumperWasPressed()){
+            currentTargetVelocity +=100;
+        }
+
         PIDFCoefficients pidCoefficients = new PIDFCoefficients(P,0,0,F);
         flywheelMotor1.setPIDFCoefficients(DcMotorEx.RunMode.RUN_USING_ENCODER, pidCoefficients);
         flywheelMotor2.setPIDFCoefficients(DcMotorEx.RunMode.RUN_USING_ENCODER, pidCoefficients);
@@ -71,17 +79,29 @@ public class ShooterPIDFTuningTeleOp extends OpMode {
         flywheelMotor1.setVelocity(currentTargetVelocity);
         flywheelMotor2.setVelocity(currentTargetVelocity);
 
-        double currentVelocity = flywheelMotor1.getVelocity();
-        double error = currentTargetVelocity - currentVelocity;
+        double currentVelocity2 = flywheelMotor2.getVelocity();
+        double currentVelocity1 = flywheelMotor1.getVelocity();
+        double error = currentTargetVelocity - currentVelocity2;
 
+        // Diagnostic info
+        int encoderPosition1 = flywheelMotor1.getCurrentPosition();
+        int encoderPosition2 = flywheelMotor2.getCurrentPosition();
+        double power1 = flywheelMotor1.getPower();
+        double power2 = flywheelMotor2.getPower();
 
         telemetry.addData("Target Velocity", currentTargetVelocity);
-        telemetry.addData("Current Velocity", "%.2f", currentVelocity);
-        telemetry.addData("Error", "%.2f", error);
+        telemetry.addData("Current Velocity2", currentVelocity2);
+        telemetry.addData("Current Velocity1", currentVelocity1);
+        telemetry.addData("Error", error);
         telemetry.addLine("-----------------------------");
-        telemetry.addData("Tuning P", "%.4f (D-Pad U/D) ",  P);
-        telemetry.addData("Tuning F", "%.4f (D-Pad L/R) ",  F);
-        telemetry.addData("Step Size", "%.4f (B Button) ",  F);
+        telemetry.addData("Motor1 Encoder Pos", encoderPosition1);
+        telemetry.addData("Motor2 Encoder Pos", encoderPosition2);
+        telemetry.addData("Motor1 Power", String.format("%.2f", power1));
+        telemetry.addData("Motor2 Power", String.format("%.2f", power2));
+        telemetry.addLine("-----------------------------");
+        telemetry.addData("Tuning P (D-Pad U/D)", P);
+        telemetry.addData("Tuning F (D-Pad L/R)", F);
+        telemetry.addData("Step Size (B Button)", stepSizes[stepIndex]);
         telemetry.update();
 
 

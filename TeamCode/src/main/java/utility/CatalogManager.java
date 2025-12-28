@@ -8,27 +8,45 @@ import utility.RobotConstants.Enums.BallColor;
 /**
  * CatalogManager
  *
- * Manages automatic ball cataloging when intake is released.
- * Detects ball color, stores it in the spindexer pattern, and rotates the spindexer.
- * If the spindexer is full (3 balls), it reverses the intake to expel extra balls.
+ * Manages automatic ball cataloging and filling sequence.
+ * When intake is released, automatically fills spindexer slots sequentially.
+ *
+ * Sequence:
+ * 1. When intake stops, if ball present, catalog it and rotate to nearest empty slot
+ * 2. After rotation completes, automatically run intake
+ * 3. Wait for ball to enter (with timeout)
+ * 4. If ball enters, repeat sequence
+ * 5. If timeout or spindexer full, end cycle
  *
  * Usage:
  * - Call update(intakeActive) in your TeleOp/Auto loop
- * - When intake is released, it will automatically catalog and rotate
  */
 public class CatalogManager {
     private final DualColorSensor intakeSensor;
     private final Spindexer spindexer;
     private final Intake intake;
 
+    // State machine states
+    private enum CatalogState {
+        IDLE,                   // Waiting for user to release intake
+        CATALOG_AND_ROTATE,     // Cataloging ball and initiating rotation
+        WAITING_FOR_ROTATION,   // Spindexer rotating to next empty slot
+        AUTO_INTAKE,            // Automatically running intake after rotation
+        WAITING_FOR_BALL,       // Waiting for ball to enter (with timeout)
+        DONE                    // Cycle complete (full or timeout)
+    }
+
+    private CatalogState currentState = CatalogState.IDLE;
     private boolean lastIntakeState = false;
-    private boolean catalogInProgress = false;
-    private boolean reverseInProgress = false;
-    private ElapsedTime reverseTimer = new ElapsedTime();
+    private boolean ballDetectedFlag = false;
+    private ElapsedTime ballWaitTimer = new ElapsedTime();
+    private int currentIntakeSlot = 0; // Tracks which slot (0, 1, or 2) is currently at the intake position
+    private BallColor pendingBallColor = BallColor.None; // Store detected color to avoid double-scan issues
 
     // Configuration
-    private static final double INTAKE_REVERSE_DURATION = 2.0; // seconds
-    private static final int INTAKE_SLOT_INDEX = 0; // Slot 0 is the intake position
+    private static final double BALL_WAIT_TIMEOUT = 2.0; // seconds to wait for ball
+    private static final double BALL_DETECTION_COOLDOWN = 0.3; // seconds between detections
+    private static final double INTAKE_START_DELAY = 0.5; // seconds to wait before starting ball detection
 
     public CatalogManager(DualColorSensor intakeSensor, Spindexer spindexer, Intake intake) {
         this.intakeSensor = intakeSensor;
@@ -37,97 +55,189 @@ public class CatalogManager {
     }
 
     /**
-     * Updates the catalog manager. Call this in your periodic loop.
-     * @param intakeActive true if intake is currently running, false otherwise
+     * Updates the catalog manager state machine. Call this in your periodic loop.
+     * @param intakeActive true if user is holding intake trigger, false otherwise
      */
     public void update(boolean intakeActive) {
-        // Handle reverse timeout
-        if (reverseInProgress) {
-            if (reverseTimer.seconds() >= INTAKE_REVERSE_DURATION) {
-                intake.stopIntake();
-                reverseInProgress = false;
-            }
-            return; // Don't catalog while reversing
-        }
-
-        // Detect intake release (was running, now stopped)
-        if (lastIntakeState && !intakeActive && !catalogInProgress) {
-            catalogBall();
-        }
-
+        // Detect intake trigger release (transition from active to inactive)
+        boolean intakeJustReleased = lastIntakeState && !intakeActive;
+        boolean intakeJustPressed = !lastIntakeState && intakeActive;
         lastIntakeState = intakeActive;
 
-        // Reset catalog flag when rotation is complete
-        if (catalogInProgress && spindexer.isDoneRotating()) {
-            catalogInProgress = false;
-        }
-    }
-
-    /**
-     * Catalogs the ball currently in the intake slot.
-     * If spindexer is full, reverses intake to expel extra balls.
-     * Otherwise, catalogs the ball and rotates the spindexer 120 degrees.
-     */
-    private void catalogBall() {
-        // Check if spindexer is full (3 balls)
-        if (spindexer.isFull()) {
-            // Reverse intake to expel extra balls
-            intake.reverseIntake();
-            reverseInProgress = true;
-            reverseTimer.reset();
+        // If user presses trigger during auto-cataloging, abort and return to manual control
+        if (intakeJustPressed && isCataloging()) {
+            reset();
             return;
         }
 
-        // Scan ball color
-        intakeSensor.refreshScan();
-        BallColor detectedColor = intakeSensor.getBallColor();
+        // If user manually starts intake while in DONE state, reset to IDLE
+        if (currentState == CatalogState.DONE && intakeActive) {
+            currentState = CatalogState.IDLE;
+        }
 
-        // Only catalog if we detected an actual ball (not None)
-        if (detectedColor != BallColor.None) {
-            // Add to spindexer catalog at intake slot (slot 0)
-            spindexer.catalogBall(INTAKE_SLOT_INDEX, detectedColor);
+        // State machine
+        switch (currentState) {
+            case IDLE:
+                // User is manually controlling intake
+                // When they release the trigger, check if there's a ball to catalog
+                if (intakeJustReleased) {
+                    intakeSensor.refreshScan();
+                    BallColor detectedColor = intakeSensor.getBallColor();
 
-            // Rotate 120 degrees forward to next slot
-            spindexer.rotateToNextSlot();
-            catalogInProgress = true;
+                    if (detectedColor != BallColor.None) {
+                        // Ball present - save it and start catalog sequence
+                        pendingBallColor = detectedColor;
+                        currentState = CatalogState.CATALOG_AND_ROTATE;
+                    }
+                }
+                break;
+
+            case CATALOG_AND_ROTATE:
+                // Check if spindexer is full
+                if (spindexer.isFull()) {
+                    // Stop the cycle - spindexer is full
+                    intake.stopIntake();
+                    currentState = CatalogState.DONE;
+                    pendingBallColor = BallColor.None;
+                    break;
+                }
+
+                // Use the pendingBallColor from previous detection
+                // DON'T re-scan here to avoid missing the ball due to sensor flicker
+                if (pendingBallColor != BallColor.None) {
+                    // Catalog ball at whichever slot is currently at the intake position
+                    spindexer.catalogBall(currentIntakeSlot, pendingBallColor);
+
+                    // Always rotate forward 120° to next slot
+                    spindexer.rotateToNextSlot();
+
+                    // Update which slot is now at intake (cycles: 0→1→2→0)
+                    currentIntakeSlot = (currentIntakeSlot + 1) % 3;
+
+                    // Clear pending ball
+                    pendingBallColor = BallColor.None;
+
+                    currentState = CatalogState.WAITING_FOR_ROTATION;
+                } else {
+                    // No ball detected - end cycle
+                    intake.stopIntake();
+                    currentState = CatalogState.DONE;
+                }
+                break;
+
+            case WAITING_FOR_ROTATION:
+                // Wait for spindexer to finish rotating
+                if (spindexer.isDoneRotating()) {
+                    // Rotation complete - automatically start intake
+                    currentState = CatalogState.AUTO_INTAKE;
+                }
+                break;
+
+            case AUTO_INTAKE:
+                // Start intake and begin waiting for ball
+                intake.runIntake();
+                ballWaitTimer.reset();
+                ballDetectedFlag = false;
+                currentState = CatalogState.WAITING_FOR_BALL;
+                break;
+
+            case WAITING_FOR_BALL:
+                // Check for timeout
+                if (ballWaitTimer.seconds() >= BALL_WAIT_TIMEOUT) {
+                    // Timeout - no ball entered, stop intake and end cycle
+                    intake.stopIntake();
+                    currentState = CatalogState.DONE;
+                    break;
+                }
+
+                // Check if spindexer became full (shouldn't happen, but safety check)
+                if (spindexer.isFull()) {
+                    intake.stopIntake();
+                    currentState = CatalogState.DONE;
+                    break;
+                }
+
+                // Wait for intake to stabilize before starting ball detection
+                if (ballWaitTimer.seconds() < INTAKE_START_DELAY) {
+                    break; // Still in startup delay
+                }
+
+                // Scan for ball
+                intakeSensor.refreshScan();
+                BallColor currentColor = intakeSensor.getBallColor();
+                boolean ballPresent = currentColor != BallColor.None;
+
+                // Detect ball entry (transition from no ball to ball present)
+                if (ballPresent && !ballDetectedFlag && ballWaitTimer.seconds() > BALL_DETECTION_COOLDOWN) {
+                    // Ball detected! Save color, stop intake, and catalog it
+                    pendingBallColor = currentColor;
+                    intake.stopIntake();
+                    currentState = CatalogState.CATALOG_AND_ROTATE;
+                }
+
+                ballDetectedFlag = ballPresent;
+                break;
+
+            case DONE:
+                // Cycle complete - wait for user to manually start intake again
+                // (transitions back to IDLE when user presses intake trigger)
+                break;
         }
     }
 
     /**
      * Resets the catalog manager state.
-     * Call this when you want to clear any in-progress cataloging.
+     * Call this when you want to abort any in-progress cataloging.
      */
     public void reset() {
-        catalogInProgress = false;
-        reverseInProgress = false;
-        lastIntakeState = false;
+        currentState = CatalogState.IDLE;
+        ballDetectedFlag = false;
+        currentIntakeSlot = 0;
+        pendingBallColor = BallColor.None;
+        intake.stopIntake();
     }
 
     /**
-     * Returns true if a catalog operation is currently in progress (rotating)
+     * Returns true if auto-fill cycle is running
      */
     public boolean isCataloging() {
-        return catalogInProgress;
-    }
-
-    /**
-     * Returns true if intake is currently reversing due to full spindexer
-     */
-    public boolean isReversing() {
-        return reverseInProgress;
+        return currentState != CatalogState.IDLE && currentState != CatalogState.DONE;
     }
 
     /**
      * Gets status string for telemetry
      */
     public String getStatus() {
-        if (reverseInProgress) {
-            return String.format("REVERSING (%.1fs remaining)",
-                INTAKE_REVERSE_DURATION - reverseTimer.seconds());
-        } else if (catalogInProgress) {
-            return "CATALOGING (rotating)";
-        } else {
-            return "READY";
+        switch (currentState) {
+            case IDLE:
+                return String.format("IDLE - Next slot: %d", currentIntakeSlot);
+            case CATALOG_AND_ROTATE:
+                return String.format("Cataloging slot %d", currentIntakeSlot);
+            case WAITING_FOR_ROTATION:
+                return "Rotating spindexer";
+            case AUTO_INTAKE:
+                return "Starting intake";
+            case WAITING_FOR_BALL:
+                return String.format("Waiting for ball in slot %d (%.1fs)",
+                    currentIntakeSlot, BALL_WAIT_TIMEOUT - ballWaitTimer.seconds());
+            case DONE:
+                return spindexer.isFull() ? "FULL - All slots filled" : "DONE - Timeout";
+            default:
+                return "UNKNOWN";
         }
+    }
+
+    /**
+     * Gets current state (for debugging)
+     */
+    public String getCurrentState() {
+        return currentState.toString();
+    }
+
+    /**
+     * Gets which slot is currently at the intake position
+     */
+    public int getCurrentIntakeSlot() {
+        return currentIntakeSlot;
     }
 }

@@ -51,6 +51,9 @@ public class TestSmartShooting extends OpMode {
     private int editingSlot = 0; // Which slot we're currently editing (0, 1, or 2)
     private int totalRotations = 0;
     private int totalShots = 0;
+    private boolean lastYState = false;
+    private boolean lastLeftTriggerState = false;
+    private boolean isRotating = false;
 
     @Override
     public void init() {
@@ -94,14 +97,12 @@ public class TestSmartShooting extends OpMode {
             targetGoal = GoalPattern.PPG;
         }
 
-        // Handle slot cycling
-        if (gamepad1.left_trigger > 0.5) {
+        // Handle slot cycling (on trigger press, not hold)
+        boolean leftTriggerPressed = gamepad1.left_trigger > 0.5;
+        if (leftTriggerPressed && !lastLeftTriggerState) {
             editingSlot = (editingSlot + 1) % 3;
-            // Wait for trigger release
-            while (gamepad1.left_trigger > 0.5) {
-                // Busy wait
-            }
         }
+        lastLeftTriggerState = leftTriggerPressed;
 
         // Handle manual slot editing
         if (gamepad1.a) {
@@ -112,9 +113,18 @@ public class TestSmartShooting extends OpMode {
             robot.spindexerPattern.setBallInSlotX(editingSlot, BallColor.None);
         }
 
-        // Handle manual rotation
-        if (gamepad1.y) {
+        // Handle manual rotation (on button press, not hold)
+        if (gamepad1.y && !lastYState && !isRotating) {
             spindexer.rotateToNextSlot();
+            isRotating = true;
+        }
+        lastYState = gamepad1.y;
+
+        // Check if rotation is complete and update ball positions
+        if (isRotating && spindexer.isDoneRotating()) {
+            isRotating = false;
+            // Rotate the ball pattern to match physical rotation
+            rotateBallPatternForward();
         }
 
         // Calculate shooting sequence
@@ -132,6 +142,21 @@ public class TestSmartShooting extends OpMode {
 
         // Build telemetry
         displayTelemetry();
+    }
+
+    /**
+     * Rotates the ball pattern forward to match physical spindexer rotation.
+     * When spindexer rotates forward 120°:
+     * - What was in slot 2 (storage) is now in slot 0 (intake)
+     * - What was in slot 0 (intake) is now in slot 1 (shooter)
+     * - What was in slot 1 (shooter) is now in slot 2 (storage)
+     */
+    private void rotateBallPatternForward() {
+        BallColor slot0 = robot.spindexerPattern.getBallInSlotX(0);
+        BallColor slot1 = robot.spindexerPattern.getBallInSlotX(1);
+        BallColor slot2 = robot.spindexerPattern.getBallInSlotX(2);
+
+        robot.spindexerPattern.setBallPattern(slot2, slot0, slot1);
     }
 
     private void analyzeSequence() {
