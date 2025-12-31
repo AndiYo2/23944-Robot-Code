@@ -14,7 +14,7 @@ public class Spindexer implements Subsystem {
     private final RobotHardware robot;
     FlickState currentState = FlickState.Idle;
     private double targetPosition;
-    private double angleRange = 3;
+    private double angleRange = RobotConstants.Spindexer.ANGLE_RANGE;
     private boolean shouldRotate = false;
     private ShootingStrategy.Action[] shootingSequence = null;
     private int sequenceIndex = 0;
@@ -29,19 +29,6 @@ public class Spindexer implements Subsystem {
 
     private ElapsedTime flickerTimer = new ElapsedTime();
 
-    // Stall detection state
-    private RobotConstants.Enums.SpindexerRotationState rotationState = RobotConstants.Enums.SpindexerRotationState.IDLE;
-    private ElapsedTime stallDetectionTimer = new ElapsedTime();
-    private double lastEncoderPosition = 0;
-    private int retryAttempts = 0;
-    private JamClearanceCallback jamClearanceCallback = null;
-
-    // Interface for jam clearance communication
-    public interface JamClearanceCallback {
-        void onJamDetected();
-        boolean isJamClearingInProgress();
-    }
-
     public Spindexer() {
         this.robot = RobotHardware.getInstance();
         targetPosition = RobotConstants.Spindexer.ENCODER_OFFSET;
@@ -51,9 +38,6 @@ public class Spindexer implements Subsystem {
         kD = SPINDEXER_PID.d;
     }
 
-    public void setJamClearanceCallback(JamClearanceCallback callback) {
-        this.jamClearanceCallback = callback;
-    }
 
     private void stateMachinePeriodic() {
         if (currentState == FlickState.Idle) return; // Don't run unless activated
@@ -96,10 +80,10 @@ public class Spindexer implements Subsystem {
 
     /**
      * Checks if the spindexer is at rest and ready for flipping
-     * @return true if not rotating and rotation state is IDLE, false otherwise
+     * @return true if not rotating, false otherwise
      */
     public boolean isReadyToFlip() {
-        return !shouldRotate && rotationState == RobotConstants.Enums.SpindexerRotationState.IDLE;
+        return !shouldRotate;
     }
 
     public void rotateBy(double positionChange) {
@@ -112,12 +96,6 @@ public class Spindexer implements Subsystem {
         // Reset PID
         integral = 0;
         lastError = 0;
-
-        // Initialize stall detection
-        rotationState = RobotConstants.Enums.SpindexerRotationState.ROTATING;
-        stallDetectionTimer.reset();
-        lastEncoderPosition = getServoPosition();
-        retryAttempts = 0;
     }
 
     // ****** CATALOGING METHODS ******
@@ -211,82 +189,28 @@ public class Spindexer implements Subsystem {
         return targetPosition;
     }
 
-    private boolean detectStall() {
-        if (!shouldRotate) return false;
+    // Runtime PID tuning methods
+    public void adjustP(double delta) {
+        kP += delta;
+        kP = Math.max(0, kP); // Don't go negative
+    }
 
-        // Don't check for stalls if we're already near the target
-        double currentPosition = getServoPosition();
-        double errorToTarget = targetPosition - currentPosition;
+    public void adjustD(double delta) {
+        kD += delta;
+        kD = Math.max(0, kD); // Don't go negative
+    }
 
-        // Normalize error to shortest path
-        if (errorToTarget > 180) errorToTarget -= 360;
-        if (errorToTarget < -180) errorToTarget += 360;
+    public double getKP() {
+        return kP;
+    }
 
-        // If within acceptable range of target, no stall
-        if (Math.abs(errorToTarget) < angleRange) {  // angleRange = 3 degrees
-            return false;
-        }
-
-        // Existing logic continues...
-        double positionChange = Math.abs(currentPosition - lastEncoderPosition);
-
-        // Normalize for wrap-around
-        if (positionChange > 180) {
-            positionChange = 360 - positionChange;
-        }
-
-        // Reset timer if position changed enough
-        if (positionChange >= RobotConstants.Spindexer.STALL_POSITION_THRESHOLD) {
-            stallDetectionTimer.reset();
-            lastEncoderPosition = currentPosition;
-            return false;
-        }
-
-        // Stalled if stuck for too long
-        return stallDetectionTimer.seconds() >= RobotConstants.Spindexer.STALL_DETECTION_TIME;
+    public double getKD() {
+        return kD;
     }
 
     public void rotationUpdater() {
-        switch (rotationState) {
-            case IDLE:
-                return;
-
-            case ROTATING:
-            case RETRY:
-                // Check for stall
-                if (detectStall()) {
-                    handleStallDetected();
-                    return;
-                }
-                performPIDRotation();
-                break;
-
-            case STALLED:
-                // Wait for jam clearance
-                if (jamClearanceCallback != null && !jamClearanceCallback.isJamClearingInProgress()) {
-                    // Clearance complete, retry rotation
-                    retryAttempts++;
-                    if (retryAttempts >= RobotConstants.Spindexer.MAX_RETRY_ATTEMPTS) {
-                        // Give up after max retries
-                        robot.spindexerServo.setPower(0);
-                        shouldRotate = false;
-                        rotationState = RobotConstants.Enums.SpindexerRotationState.IDLE;
-                    } else {
-                        rotationState = RobotConstants.Enums.SpindexerRotationState.RETRY;
-                        stallDetectionTimer.reset();
-                        lastEncoderPosition = getServoPosition();
-                    }
-                }
-                break;
-        }
-    }
-
-    private void handleStallDetected() {
-        robot.spindexerServo.setPower(0);
-        rotationState = RobotConstants.Enums.SpindexerRotationState.STALLED;
-        if (jamClearanceCallback != null) {
-            jamClearanceCallback.onJamDetected();
-        }
+        if (!shouldRotate) return;
+        performPIDRotation();
     }
 
     private void performPIDRotation() {
@@ -297,11 +221,10 @@ public class Spindexer implements Subsystem {
         if (error > 180) error -= 360;
         if (error < -180) error += 360;
 
-        // Are we close enough?
+        // Check if we're close enough (deadband)
         if (Math.abs(error) < angleRange) {
             robot.spindexerServo.setPower(0);
             shouldRotate = false;
-            rotationState = RobotConstants.Enums.SpindexerRotationState.IDLE;
             integral = 0;
             return;
         }
@@ -311,15 +234,32 @@ public class Spindexer implements Subsystem {
         double dt = (currentTime - lastTime) / 1e9;
         lastTime = currentTime;
 
-        // PID calculations
+        // Sanity check on dt
+        if (dt > 1.0 || dt < 0.001) {
+            dt = 0.02; // Default to 50Hz
+        }
+
+        // PID calculations with anti-windup
         integral += error * dt;
+        integral = Math.max(-50, Math.min(50, integral)); // Clamp integral
         double derivative = (error - lastError) / dt;
         lastError = error;
 
         double power = (kP * error) + (kI * integral) + (kD * derivative);
 
-        // Clamp power to [-1, 1]
-        power = Math.max(-1, Math.min(1, power));
+        // SAFETY: Check for NaN/Infinite values
+        if (!Double.isFinite(power)) {
+            robot.spindexerServo.setPower(0);
+            integral = 0;
+            lastError = 0;
+            return;
+        }
+
+        // Reduce max power to match turret behavior
+        double maxPower = 0.5;
+
+        // Clamp power
+        power = Math.max(-maxPower, Math.min(maxPower, power));
 
         robot.spindexerServo.setPower(power);
     }
@@ -364,18 +304,10 @@ public class Spindexer implements Subsystem {
         return shootingSequence != null && sequenceIndex < shootingSequence.length;
     }
 
-    public RobotConstants.Enums.SpindexerRotationState getRotationState() {
-        return rotationState;
-    }
-
-    public int getRetryAttempts() {
-        return retryAttempts;
-    }
 
     @Override
     public void periodic() {
         stateMachinePeriodic();
-        if(shouldRotate)
-            rotationUpdater();
+        rotationUpdater();
     }
 }

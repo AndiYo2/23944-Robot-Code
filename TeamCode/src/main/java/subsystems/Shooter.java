@@ -2,7 +2,6 @@ package subsystems;
 
 import com.arcrobotics.ftclib.command.Subsystem;
 import com.pedropathing.geometry.Pose;
-import com.qualcomm.hardware.limelightvision.LLResult;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -19,15 +18,13 @@ import static utility.RobotConstants.Shooter.CENTER;
 import static utility.RobotConstants.Shooter.FLICK_TIME;
 
 public class Shooter implements Subsystem {
-
     // Velocity lookup table: [distance in inches, velocity]
-    // Based on ShooterPIDFTuningTeleOp: lowVelocity=2200, highVelocity=2700
+    // < 24": 2100 | 24-86": 2200 | > 86": 2600
     private static final double[][] VELOCITY_LOOKUP = {
-        {36.0, 2200.0},   // 3 feet - close range zone (~3-4 feet from goal)
-        {48.0, 2300.0},   // 4 feet - interpolated
-        {66.0, 2450.0},   // 5.5 feet - mid range
-        {84.0, 2600.0},   // 7 feet - interpolated
-        {102.0, 2700.0}   // 8.5 feet - far zone (small triangle area)
+        {23.0, 2100.0},   // Very close range (< 24 inches)
+        {24.0, 2200.0},   // Transition to mid range at 24 inches
+        {88.0, 2300.0},   // Stay at 2200 through mid range
+        {100.0, 2600.0}    // Far zone (> 86 inches)
     };
 
     RobotHardware robot;
@@ -45,7 +42,7 @@ public class Shooter implements Subsystem {
     private double turretIntegral = 0;
     private long lastTurretTime = 0;
 
-    // Position tracking across ±180 boundary (supports 270° CW, -360° CCW range)
+    // Cumulative position tracking (needed because turret range exceeds 360°)
     private double lastRawTurretPosition = 0;
     private double cumulativeTurretPosition = 0;
     private int turretRotationCount = 0;
@@ -73,16 +70,20 @@ public class Shooter implements Subsystem {
 
         lastTurretTime = System.nanoTime();
 
-        // Initialize turret position tracking
+        // Initialize cumulative position tracking
         double voltage = robot.turretEncoder.getVoltage();
         double rawDegrees = (voltage / 3.3) * 360.0;
-        rawDegrees -= RobotConstants.Shooter.ENCODER_OFFSET;
+
+        // Normalize to [-180, 180] BEFORE applying offset
         while (rawDegrees > 180) rawDegrees -= 360;
         while (rawDegrees < -180) rawDegrees += 360;
 
         lastRawTurretPosition = rawDegrees;
-        cumulativeTurretPosition = rawDegrees;
         turretRotationCount = 0;
+
+        // Calculate initial cumulative position with offset applied
+        double cumulativeRaw = rawDegrees + (turretRotationCount * 360);
+        cumulativeTurretPosition = cumulativeRaw - RobotConstants.Shooter.ENCODER_OFFSET;
     }
 
 
@@ -250,37 +251,37 @@ public class Shooter implements Subsystem {
     // ****** TURRET CONTROL METHODS ******
 
     /**
-     * Gets the current servo position from the encoder
-     * Tracks cumulative position across ±180° boundary to support full rotation range
-     * @return Servo angle in degrees, cumulative position
+     * Gets the current servo position from the encoder with cumulative tracking
+     * Tracks position across ±180° boundary to support full servo range (-330° to +300°)
+     * @return Cumulative servo angle in degrees (with encoder offset applied)
      */
     public double getTurretPosition() {
         double voltage = robot.turretEncoder.getVoltage();
         double rawDegrees = (voltage / 3.3) * 360.0;
 
-        // Apply encoder offset
-        rawDegrees -= RobotConstants.Shooter.ENCODER_OFFSET;
-
-        // Normalize to [-180, 180]
+        // Normalize to [-180, 180] BEFORE applying offset (critical for boundary detection)
         while (rawDegrees > 180) rawDegrees -= 360;
         while (rawDegrees < -180) rawDegrees += 360;
 
         // Track boundary crossings to maintain cumulative position
         double delta = rawDegrees - lastRawTurretPosition;
 
-        // Detect crossing from +180 to -180 (clockwise)
+        // Detect crossing from +180 to -180 (clockwise rotation)
         if (delta < -180) {
             turretRotationCount++;
         }
-        // Detect crossing from -180 to +180 (counter-clockwise)
+        // Detect crossing from -180 to +180 (counter-clockwise rotation)
         else if (delta > 180) {
             turretRotationCount--;
         }
 
         lastRawTurretPosition = rawDegrees;
-        cumulativeTurretPosition = rawDegrees + (turretRotationCount * 360);
 
-        return cumulativeTurretPosition; // Returns servo degrees
+        // Calculate cumulative position, then apply encoder offset
+        double cumulativeRaw = rawDegrees + (turretRotationCount * 360);
+        cumulativeTurretPosition = cumulativeRaw - RobotConstants.Shooter.ENCODER_OFFSET;
+
+        return cumulativeTurretPosition; // Returns cumulative servo degrees with offset
     }
 
     /**
@@ -291,7 +292,8 @@ public class Shooter implements Subsystem {
         // SAFETY: Clamp input to turret limits (45° CW, -60° CCW)
         targetAngleTurret = Math.max(-60.0, Math.min(45.0, targetAngleTurret));
 
-        // Convert turret degrees to servo degrees for internal use (6:1 ratio)
+        // Convert turret degrees to offset-adjusted servo degrees
+        // Since getTurretPosition() already applies the offset, we just multiply by gear ratio
         double newTargetServo = targetAngleTurret * RobotConstants.Shooter.GEAR_RATIO;
 
         // Only update if target changed significantly (> 1° servo = ~0.17° turret)
@@ -327,14 +329,23 @@ public class Shooter implements Subsystem {
             return;
         }
 
-        // SAFETY: Limit power if approaching hard limits
-        boolean nearCWLimit = currentPosition > 250.0;  // 250° servo (~41.7° turret)
-        boolean nearCCWLimit = currentPosition < -340.0; // -340° servo (-56.7° turret)
+        // SAFETY: Hard limits in offset-adjusted servo degrees
+        // Turret limits: +45° CW, -60° CCW (in turret degrees)
+        // → Servo limits (offset-adjusted): +270° CW, -360° CCW
+        // Independent of ENCODER_OFFSET since we work in offset-adjusted coordinates
+        final double CW_LIMIT = 270.0;      // Maximum clockwise rotation (45° × 6)
+        final double CCW_LIMIT = -360.0;    // Maximum counter-clockwise rotation (-60° × 6)
+        final double LIMIT_MARGIN = 30.0;   // Start slowing down 30° before limit
 
-        // If at hard limit and trying to go further, stop completely
-        if ((currentPosition >= 270.0 && error > 0) || (currentPosition <= -360.0 && error < 0)) {
+        boolean nearCWLimit = currentPosition > (CW_LIMIT - LIMIT_MARGIN);
+        boolean nearCCWLimit = currentPosition < (CCW_LIMIT + LIMIT_MARGIN);
+
+        // If at hard limit and trying to go further, STOP IMMEDIATELY
+        if ((currentPosition >= CW_LIMIT && error > 0) ||
+            (currentPosition <= CCW_LIMIT && error < 0)) {
             robot.turretServo.setPower(0);
-            return; // Don't disable shouldRotateTurret - allow recovery
+            shouldRotateTurret = false;
+            return;
         }
 
         // Calculate dt
@@ -358,6 +369,14 @@ public class Shooter implements Subsystem {
         double kD = RobotConstants.Shooter.TURRET_PID.d;
 
         double power = (kP * error) + (kI * turretIntegral) + (kD * derivative);
+
+        // SAFETY: Check for NaN/Infinite values
+        if (!Double.isFinite(power)) {
+            robot.turretServo.setPower(0);
+            turretIntegral = 0;
+            lastTurretError = 0;
+            return;
+        }
 
         // Reduce max power to save energy and reduce wear
         double maxPower = 0.5;

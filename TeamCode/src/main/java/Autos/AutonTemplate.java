@@ -223,11 +223,7 @@ public abstract class AutonTemplate extends OpMode {
         telemetry.addData("x", follower.getPose().getX());
         telemetry.addData("y", follower.getPose().getY());
         telemetry.addData("heading", follower.getPose().getHeading());
-        telemetry.addData("Jam Clearance", jamClearance.getStatus());
-        telemetry.addData("Spindexer State", spindexer.getRotationState());
-        if (spindexer.getRetryAttempts() > 0) {
-            telemetry.addData("Retry Attempts", spindexer.getRetryAttempts());
-        }
+
         telemetry.update();
 
 

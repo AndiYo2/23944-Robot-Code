@@ -207,6 +207,20 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         if (!sequenceManager.isExecuting()) {
             catalogManager.update(intakeActive);
         }
+
+        // Runtime PID tuning (hold BACK + D-pad)
+        if (gamepad1.back) {
+            if (gamepad1.dpad_up) {
+                spindexer.adjustP(0.0001);  // Increase P
+            } else if (gamepad1.dpad_down) {
+                spindexer.adjustP(-0.0001); // Decrease P
+            }
+            if (gamepad1.dpad_right) {
+                spindexer.adjustD(0.00001);  // Increase D
+            } else if (gamepad1.dpad_left) {
+                spindexer.adjustD(-0.00001); // Decrease D
+            }
+        }
     }
 
     private void updateTelemetry() {
@@ -215,15 +229,36 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         // Refresh sensor readings for telemetry
         robot.intakeSensor.refreshScan();
 
+        // Show PID tuning values (when in tuning mode)
+        if (gamepad1.back) {
+            telemetry.addLine("=== PID TUNING MODE ===");
+            telemetry.addData("P (D-Pad Up/Down)", "%.5f", spindexer.getKP());
+            telemetry.addData("D (D-Pad Left/Right)", "%.5f", spindexer.getKD());
+            telemetry.addLine("Hold BACK + use D-pad to adjust");
+            telemetry.addLine("=======================");
+        }
+
         telemetry.addData("Shooting Mode:", ShootingStrategy.getStrategyMode());
         telemetry.addData("Executing Sequence:", sequenceManager.isExecuting());
         if (sequenceManager.isExecuting()) {
             telemetry.addData("Sequence Status:", sequenceManager.getStatus());
         }
-        telemetry.addData("Shooter Power:", shooter.getRequiredVelocity());
+        telemetry.addData("Shooter Power:", robot.shooterMotor2.getVelocity());
+        telemetry.addData("Shooter distance:", shooter.getDistanceToTarget());
+
+        // Turret debug telemetry
+        telemetry.addData("Turret Pos:", String.format("%.1f°", shooter.getTurretPosition()));
+        telemetry.addData("Turret Target:", String.format("%.1f°", shooter.getTargetTurretAngle()));
+        telemetry.addData("Turret Error:", String.format("%.1f°", shooter.getTargetTurretAngle() - shooter.getTurretPosition()));
         telemetry.addData("Intake Color:", robot.intakeSensor.getBallColor());
         telemetry.addData("Spindexer Pattern:", getSpindexerPatternString());
         telemetry.addData("Catalog Status:", catalogManager.getStatus());
+
+        // Spindexer position debugging
+        telemetry.addData("Spindexer Current:", String.format("%.1f°", spindexer.getServoPosition()));
+        telemetry.addData("Spindexer Target:", String.format("%.1f°", spindexer.getTargetPosition()));
+        telemetry.addData("Position Error:", String.format("%.1f°",
+            spindexer.getTargetPosition() - spindexer.getServoPosition()));
         telemetry.addData("Field Zone:", shooter.getFieldState());
         telemetry.addData("Shooting Status:", shootingValidator.getStatus(overrideRequested));
         telemetry.addData("Drive State:", mecanumDrive.getCurrentState());
@@ -231,10 +266,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         telemetry.addData("Shooter State:", shooter.getCurrentState());
         telemetry.addData("Spindexer State:", spindexer.getCurrentState());
         telemetry.addData("Jam Clearance:", jamClearance.getStatus());
-        telemetry.addData("Rotation State:", spindexer.getRotationState());
-        if (spindexer.getRetryAttempts() > 0) {
-            telemetry.addData("Retry Attempts:", spindexer.getRetryAttempts());
-        }
 
         // Debug: Show position info when sequence is stuck
         if (sequenceManager.isExecuting()) {

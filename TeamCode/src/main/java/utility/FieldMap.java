@@ -4,8 +4,8 @@ import com.pedropathing.geometry.Pose;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
 public class FieldMap {
-    static Pose blueGoalTarget= new Pose(0, 143, 0);
-    static Pose redGoalTarget = new Pose(143, 143, 0);
+    static Pose blueGoalTarget= new Pose(7.5, 137, 0);
+    static Pose redGoalTarget = new Pose(135.5, 137, 0);
 
     public static char getPosition(double pX, double pY) {
         int x = (int) Math.round(pX);

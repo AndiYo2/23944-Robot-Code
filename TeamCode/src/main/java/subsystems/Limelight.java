@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.jetbrains.annotations.NotNull;
 import utility.RobotHardware;
+import utility.RobotConstants;
 
 public class Limelight implements Subsystem {
     RobotHardware robot;
@@ -88,16 +89,39 @@ public class Limelight implements Subsystem {
         if (result != null && result.isValid()) {
             List<LLResultTypes.FiducialResult> fiducials = result.getFiducialResults();
             if (fiducials != null && !fiducials.isEmpty()) {
+                // Determine correct goal tag based on alliance (20 for Blue, 24 for Red)
+                int targetTagId = (RobotConstants.UpdatableConstants.allianceColor == RobotConstants.Enums.AllianceColor.Blue) ? 20 : 24;
+
+                // Find the correct alliance goal tag
+                LLResultTypes.FiducialResult targetFiducial = null;
+                for (LLResultTypes.FiducialResult fiducial : fiducials) {
+                    if (fiducial.getFiducialId() == targetTagId) {
+                        targetFiducial = fiducial;
+                        break;
+                    }
+                }
+
+                if (targetFiducial == null) {
+                    // Correct alliance goal not found
+                    handleNoTargetFound();
+                    lastOutputPower = 0.0;
+                    lastPIDOutput = 0.0;
+                    currentError = 0.0;
+                    lastTx = 0.0;
+                    currentTagId = -1;
+                    tagCount = 0;
+                    return;
+                }
+
                 targetWasVisible = true;
                 targetLostTimer.reset();
 
-                LLResultTypes.FiducialResult fiducial = fiducials.get(0);
-                double tx = fiducial.getTargetXDegrees();
+                double tx = targetFiducial.getTargetXDegrees();
 
                 //For telemetry purposes
                 lastTx = tx;
                 tagCount = fiducials.size();
-                currentTagId = fiducial.getFiducialId();
+                currentTagId = targetFiducial.getFiducialId();
 
                 double dt = timer.seconds();
                 timer.reset();

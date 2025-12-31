@@ -42,13 +42,10 @@ public class RobotConstants {
         public static final double ROTATION_FORWARD = 120;
         public static final double ROTATION_BACKWARD = -120;
 
-        public final static PIDCoefficients SPINDEXER_PID = new PIDCoefficients(0.0086, 0, 0.0002);
+        public final static PIDCoefficients SPINDEXER_PID = new PIDCoefficients(0.006, 0, 0.0003);
 
-        // Stall detection configuration
-        public static final double STALL_DETECTION_TIME = 1.0;       // 1000ms - increased to reduce false positives
-        public static final double STALL_POSITION_THRESHOLD = 2.0;   // 2.0 degrees - require less movement sensitivity
-        public static final double INTAKE_CLEARING_TIME = 0.3;       // 300ms intake pulse (longer to ensure jam clears)
-        public static final int MAX_RETRY_ATTEMPTS = 2;              // Max retries before giving up (reduced to avoid spam)
+        // Acceptable position error (degrees) - stops rotation when within this range
+        public static final double ANGLE_RANGE = 2.0;
 
     }
 
@@ -73,18 +70,18 @@ public class RobotConstants {
         public static final double VELOCITY_ADJUSTMENT_STEP = 0.5;
 
         // Turret offset from robot center (in inches, robot-relative)
-        public static final double TURRET_OFFSET_X = 4.25; // TODO: Set actual X offset (+ is right, - is left)
-        public static final double TURRET_OFFSET_Y = 2; // TODO: Set actual Y offset (+ is forward, - is backward)
+        public static final double TURRET_OFFSET_X = 4;
+        public static final double TURRET_OFFSET_Y = 1;
 
         // Turret positioning
         public static final double CENTER = 0.0;
-        public static final int ENCODER_OFFSET = 0; // Encoder offset at center position
-        public static final double ANGLE_RANGE = 3.0; // Acceptable error in degrees
+        public static final int ENCODER_OFFSET = -30; // Encoder offset: position that reads -60° raw is 0° actual
+        public static final double ANGLE_RANGE = 0.5; // Acceptable error in degrees
         public static final double GEAR_RATIO = 6.0; // 6:1 servo to turret (servo rotates 6° for 1° turret rotation)
 
         // Turret tracking offset (in turret degrees) - compensates for systematic tracking error
         // Negative value shifts aim left, positive shifts aim right
-        public static final double TURRET_TRACKING_OFFSET = -5.0; // Adjust if tracking is still off
+        public static final double TURRET_TRACKING_OFFSET = 0; // Adjust if tracking is still off
 
         // Turret PID coefficients (tuned values)
         public static final PIDCoefficients TURRET_PID = new PIDCoefficients(0.013, 0, 0.00030);
