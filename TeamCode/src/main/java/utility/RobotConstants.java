@@ -67,7 +67,6 @@ public class RobotConstants {
         public static final double FLICK_TIME = 0.15;
 
         // Shooter power settings
-        public static final double VELOCITY_ADJUSTMENT_STEP = 0.5;
 
         // Turret offset from robot center (in inches, robot-relative)
         public static final double TURRET_OFFSET_X = 4;

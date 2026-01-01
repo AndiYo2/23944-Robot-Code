@@ -90,30 +90,6 @@ public class Shooter implements Subsystem {
     public double getFlywheelPower() {
         return robot.shooterMotor1.getPower();
     }
-    public void setFlywheelPower(double power) {
-        robot.shooterMotor1.setPower(power);
-        robot.shooterMotor2.setPower(power);
-    }
-    public double getRequiredVelocity() {
-        return requiredVelocity;
-    }
-
-    public void lowerRequiredVelocity(){
-        if(requiredVelocity > RobotConstants.Shooter.VELOCITY_ADJUSTMENT_STEP){
-            requiredVelocity -= RobotConstants.Shooter.VELOCITY_ADJUSTMENT_STEP;
-        }
-    }
-    public double getWheelVelocity(){
-        return robot.shooterMotor1.getVelocity();
-    }
-
-    public void raiseRequiredVelocity(){
-        requiredVelocity += RobotConstants.Shooter.VELOCITY_ADJUSTMENT_STEP;
-    }
-
-    public void setTurretTurnerPower(double power){
-        robot.turretServo.setPower(power);
-    }
 
 
     /**
@@ -392,24 +368,9 @@ public class Shooter implements Subsystem {
         robot.turretServo.setPower(power);
     }
 
-    /**
-     * Checks if the turret has reached its target position
-     * @return true if at target, false otherwise
-     */
-    public boolean isDoneTurretRotating() {
-        double currentPosition = getTurretPosition(); // In servo degrees
-        double difference = targetTurretAngle - currentPosition;
-
-        return Math.abs(difference) < RobotConstants.Shooter.ANGLE_RANGE;
-    }
-
     public double getTargetTurretAngle() {
         return targetTurretAngle;
     }
-
-
-
-
     public void triggerShot() {
         if (currentState == FlickState.Idle) { // Only start if not already running
             currentState = FlickState.Start;
@@ -418,10 +379,6 @@ public class Shooter implements Subsystem {
     // ****** STATE QUERIES ******
     public FlickState getCurrentState(){
         return currentState;
-    }
-
-    public boolean isIdle() {
-        return currentState == FlickState.Idle;
     }
 
     public void toggleLimelightEnabled(){

@@ -8,13 +8,11 @@ import pedroPathing.Constants;
 import subsystems.Shooter;
 import subsystems.Intake;
 import subsystems.Spindexer;
-import utility.CatalogManager;
 import utility.RobotConstants;
 import utility.RobotConstants.Enums.BallColor;
 import utility.RobotConstants.Enums.FlickState;
 import utility.RobotConstants.Enums.ShooterCases;
 import utility.RobotHardware;
-import utility.SpindexerJamClearance;
 
 /**
  * Base template for all autonomous OpModes.
@@ -31,8 +29,6 @@ public abstract class AutonTemplate extends OpMode {
     protected Shooter shooter;
     protected Intake intake;
     protected Spindexer spindexer;
-    protected CatalogManager catalogManager;
-    protected SpindexerJamClearance jamClearance;
     protected ShooterCases shootCases;
 
     /**
@@ -195,8 +191,6 @@ public abstract class AutonTemplate extends OpMode {
         shooter = new Shooter();
         intake = new Intake();
         spindexer = new Spindexer();
-        catalogManager = new CatalogManager(robotHardware.intakeSensor, spindexer, intake);
-        jamClearance = new SpindexerJamClearance(intake, spindexer);
         shootCases = ShooterCases.Idle;
 
         buildPaths();
@@ -231,7 +225,6 @@ public abstract class AutonTemplate extends OpMode {
         shooter.periodic();
         spindexer.periodic();
         intake.periodic();
-        jamClearance.periodic();
     }
 
     /**

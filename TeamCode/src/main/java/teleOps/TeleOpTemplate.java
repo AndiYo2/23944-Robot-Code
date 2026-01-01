@@ -9,7 +9,6 @@ import subsystems.MecanumDrive;
 import subsystems.Shooter;
 import subsystems.Intake;
 import subsystems.Spindexer;
-import subsystems.Limelight;
 import utility.*;
 
 abstract public class TeleOpTemplate extends CommandOpMode {
@@ -19,12 +18,9 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     protected Spindexer spindexer;
     protected GamepadEx driverGamepad;
     private final RobotHardware robot = RobotHardware.getInstance();
-    protected Limelight limelight;
 
     private ShootingSequenceManager sequenceManager;
-    private CatalogManager catalogManager;
     private ShootingValidator shootingValidator;
-    private SpindexerJamClearance jamClearance;
 
     protected void initHardware(boolean isAuto) {
         driverGamepad = new GamepadEx(gamepad1);
@@ -36,9 +32,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         spindexer = new Spindexer();
 
         sequenceManager = new ShootingSequenceManager(spindexer, shooter, robot);
-        catalogManager = new CatalogManager(robot.intakeSensor, spindexer, intake);
         shootingValidator = new ShootingValidator(shooter, telemetry);
-        jamClearance = new SpindexerJamClearance(intake, spindexer);
 
         register(intake, shooter, spindexer);
     }
@@ -47,12 +41,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         // Intake controls
         new Trigger(() -> gamepad1.left_trigger > RobotConstants.Controls.TRIGGER_THRESHOLD)
                 .whenActive(() -> intake.runIntake())
-                .whenInactive(() -> {
-                    // Don't stop intake if CatalogManager is controlling it
-                    if (!catalogManager.isCataloging()) {
-                        intake.stopIntake();
-                    }
-                });
+                .whenInactive(() -> intake.stopIntake());
 
         // Shooting controls (with zone validation)
         new Trigger(() -> gamepad1.right_trigger > RobotConstants.Controls.TRIGGER_THRESHOLD)
@@ -201,13 +190,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         sequenceManager.update();
         jamClearance.periodic();
 
-        // Update catalog manager (tracks intake releases to catalog balls)
-        // Disable cataloging during shooting sequence to prevent rotation conflicts
-        boolean intakeActive = gamepad1.left_trigger > RobotConstants.Controls.TRIGGER_THRESHOLD;
-        if (!sequenceManager.isExecuting()) {
-            catalogManager.update(intakeActive);
-        }
-
         // Runtime PID tuning (hold BACK + D-pad)
         if (gamepad1.back) {
             if (gamepad1.dpad_up) {
@@ -252,7 +234,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         telemetry.addData("Turret Error:", String.format("%.1f°", shooter.getTargetTurretAngle() - shooter.getTurretPosition()));
         telemetry.addData("Intake Color:", robot.intakeSensor.getBallColor());
         telemetry.addData("Spindexer Pattern:", getSpindexerPatternString());
-        telemetry.addData("Catalog Status:", catalogManager.getStatus());
 
         // Spindexer position debugging
         telemetry.addData("Spindexer Current:", String.format("%.1f°", spindexer.getServoPosition()));

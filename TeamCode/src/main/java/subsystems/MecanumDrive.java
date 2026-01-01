@@ -16,7 +16,6 @@ import utility.RobotHardware;
 
 public class MecanumDrive implements Subsystem {
     private RobotHardware robot;
-    private double leftFrontPower, leftRearPower, rightFrontPower, rightRearPower, heading;
     private boolean slowmode;
     private DriveState currentState = DriveState.FieldRelative;
     private Follower activeFollower = null;
@@ -138,24 +137,7 @@ public class MecanumDrive implements Subsystem {
                     activeFollower = null;
                 }
                 break;
-            case Locked:
-                // X-pattern wheel lock (anti-defense)
-                robot.frontLeft.setPower(1.0);
-                robot.backLeft.setPower(-1.0);
-                robot.frontRight.setPower(-1.0);
-                robot.backRight.setPower(1.0);
-                break;
         }
-    }
-
-    // ****** STATE CONTROL ******
-
-    public void lockRobot() {
-        currentState = DriveState.Locked;
-    }
-
-    public void unlockRobot() {
-        currentState = DriveState.FieldRelative;
     }
 
     // ****** STATE QUERIES ******

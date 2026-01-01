@@ -275,36 +275,6 @@ public class Spindexer implements Subsystem {
         return Math.abs(difference) < angleRange;
     }
 
-    public void startShootingSequence(RobotConstants.MotifPattern goalPattern) {
-        shootingSequence = ShootingStrategy.getShootingSequence(
-                robot.spindexerPattern,
-                goalPattern
-        );
-        sequenceIndex = 0;
-    }
-
-    public ShootingStrategy.Action getNextAction() {
-        if (shootingSequence != null && sequenceIndex < shootingSequence.length) {
-            return shootingSequence[sequenceIndex];
-        }
-        return null;
-    }
-
-    public void completeCurrentAction() {
-        if (shootingSequence != null) {
-            sequenceIndex++;
-            if (sequenceIndex >= shootingSequence.length) {
-                shootingSequence = null;
-                sequenceIndex = 0;
-            }
-        }
-    }
-
-    public boolean hasMoreActions() {
-        return shootingSequence != null && sequenceIndex < shootingSequence.length;
-    }
-
-
     @Override
     public void periodic() {
         stateMachinePeriodic();
