@@ -1,6 +1,7 @@
-package utility;
+package utility.ColorDetection;
 
 import com.qualcomm.robotcore.hardware.ColorSensor;
+import utility.RobotConstants;
 import utility.RobotConstants.Enums.BallColor;
 
 /**

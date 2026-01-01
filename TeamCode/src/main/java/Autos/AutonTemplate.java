@@ -13,6 +13,7 @@ import utility.RobotConstants.Enums.BallColor;
 import utility.RobotConstants.Enums.FlickState;
 import utility.RobotConstants.Enums.ShooterCases;
 import utility.RobotHardware;
+import utility.SpindexerAndMotifStatus;
 
 /**
  * Base template for all autonomous OpModes.
@@ -91,8 +92,7 @@ public abstract class AutonTemplate extends OpMode {
             case ShooterFlicking:
                 if(spindexer.getCurrentState() == FlickState.Retracted){
                     shootCases = ShooterCases.SpindexerRotating;
-                    spindexer.rotateBy(RobotConstants.Spindexer.ROTATION_FORWARD);
-                    rotateBallPatternForward();
+                    spindexer.rotateCW();
                 }
                 break;
             case SpindexerRotating:
@@ -111,12 +111,10 @@ public abstract class AutonTemplate extends OpMode {
     protected void addToSpindexer() {
         runAutonIntake();
 
-        spindexer.rotateBy(RobotConstants.Spindexer.ROTATION_FORWARD);
-        rotateBallPatternForward();
+        spindexer.rotateCW();
         wait(.5);
 
-        spindexer.rotateBy(RobotConstants.Spindexer.ROTATION_FORWARD);
-        rotateBallPatternForward();
+        spindexer.rotateCW();
         wait(.5);
 
         stopAutonIntake();
@@ -150,11 +148,10 @@ public abstract class AutonTemplate extends OpMode {
         // Only catalog if we detected an actual ball (not None)
         if (detectedColor != BallColor.None) {
             // Catalog the ball at the intake slot (slot 0)
-            spindexer.catalogBall(0, detectedColor);
+            SpindexerAndMotifStatus.SpindexerPattern.setBallInSlotX(0, detectedColor);
 
             // Rotate to next slot
-            spindexer.rotateBy(RobotConstants.Spindexer.ROTATION_FORWARD);
-            rotateBallPatternForward();
+            spindexer.rotateCW();
 
             // Wait for rotation to complete
             while (!spindexer.isDoneRotating()) {
@@ -227,35 +224,6 @@ public abstract class AutonTemplate extends OpMode {
         intake.periodic();
     }
 
-    /**
-     * Rotates the ball pattern forward to match physical spindexer rotation.
-     * When spindexer rotates forward 120°:
-     * - What was in slot 2 (storage) is now in slot 0 (intake)
-     * - What was in slot 0 (intake) is now in slot 1 (shooter)
-     * - What was in slot 1 (shooter) is now in slot 2 (storage)
-     */
-    protected void rotateBallPatternForward() {
-        RobotConstants.Enums.BallColor slot0 = robotHardware.spindexerPattern.getBallInSlotX(0);
-        RobotConstants.Enums.BallColor slot1 = robotHardware.spindexerPattern.getBallInSlotX(1);
-        RobotConstants.Enums.BallColor slot2 = robotHardware.spindexerPattern.getBallInSlotX(2);
-
-        robotHardware.spindexerPattern.setBallPattern(slot2, slot0, slot1);
-    }
-
-    /**
-     * Rotates the ball pattern backward to match physical spindexer rotation.
-     * When spindexer rotates backward 120°:
-     * - What was in slot 1 (shooter) is now in slot 0 (intake)
-     * - What was in slot 2 (storage) is now in slot 1 (shooter)
-     * - What was in slot 0 (intake) is now in slot 2 (storage)
-     */
-    protected void rotateBallPatternBackward() {
-        RobotConstants.Enums.BallColor slot0 = robotHardware.spindexerPattern.getBallInSlotX(0);
-        RobotConstants.Enums.BallColor slot1 = robotHardware.spindexerPattern.getBallInSlotX(1);
-        RobotConstants.Enums.BallColor slot2 = robotHardware.spindexerPattern.getBallInSlotX(2);
-
-        robotHardware.spindexerPattern.setBallPattern(slot1, slot2, slot0);
-    }
 
     @Override
     public void stop() {

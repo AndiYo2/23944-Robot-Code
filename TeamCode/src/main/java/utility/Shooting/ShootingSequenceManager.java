@@ -1,8 +1,9 @@
-package utility;
+package utility.Shooting;
 
 import com.qualcomm.robotcore.util.ElapsedTime;
 import subsystems.Spindexer;
 import subsystems.Shooter;
+import utility.RobotConstants;
 import utility.RobotConstants.Enums.BallColor;
 import utility.RobotConstants.Enums.FlickState;
 
@@ -21,7 +22,6 @@ import utility.RobotConstants.Enums.FlickState;
 public class ShootingSequenceManager {
     private final Spindexer spindexer;
     private final Shooter shooter;
-    private final RobotHardware robot;
 
     private enum State {
         IDLE,
@@ -43,10 +43,9 @@ public class ShootingSequenceManager {
     private static final double DELAY_BEFORE_SHOOTER = 0.2;  // 200ms between spindexer and shooter
     private static final double DELAY_AFTER_SHOOTER = 0.1;   // 100ms after shooter
 
-    public ShootingSequenceManager(Spindexer spindexer, Shooter shooter, RobotHardware robot) {
+    public ShootingSequenceManager(Spindexer spindexer, Shooter shooter) {
         this.spindexer = spindexer;
         this.shooter = shooter;
-        this.robot = robot;
     }
 
     /**
@@ -109,7 +108,7 @@ public class ShootingSequenceManager {
 
             case CLEANUP:
                 // Clear ball from pattern
-                robot.spindexerPattern.setBallPatternNone(1);
+                RobotConstants.Spindexer.spindexerPattern.setBallPatternNone(1);
                 ballsShot++;
 
                 // Check if done with all 3 balls
@@ -118,7 +117,7 @@ public class ShootingSequenceManager {
                 } else {
                     // More balls to shoot - rotate spindexer
                     state = State.ROTATE_SPINDEXER;
-                    spindexer.rotateBy(RobotConstants.Spindexer.ROTATION_FORWARD);
+                    spindexer.rotateCW();
                     rotateBallPatternForward();
                 }
                 break;
@@ -140,10 +139,10 @@ public class ShootingSequenceManager {
     }
 
     private void rotateBallPatternForward() {
-        BallColor slot0 = robot.spindexerPattern.getBallInSlotX(0);
-        BallColor slot1 = robot.spindexerPattern.getBallInSlotX(1);
-        BallColor slot2 = robot.spindexerPattern.getBallInSlotX(2);
-        robot.spindexerPattern.setBallPattern(slot2, slot0, slot1);
+        BallColor slot0 = RobotConstants.Spindexer.spindexerPattern.getBallInSlotX(0);
+        BallColor slot1 = RobotConstants.Spindexer.spindexerPattern.getBallInSlotX(1);
+        BallColor slot2 = RobotConstants.Spindexer.spindexerPattern.getBallInSlotX(2);
+        RobotConstants.Spindexer.spindexerPattern.setBallPattern(slot2, slot0, slot1);
     }
 
     public boolean isIdle() {

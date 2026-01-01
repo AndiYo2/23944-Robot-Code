@@ -1,4 +1,4 @@
-package utility;
+package utility.Shooting;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import subsystems.Shooter;

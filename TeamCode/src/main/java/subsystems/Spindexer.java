@@ -4,42 +4,390 @@ import com.arcrobotics.ftclib.command.Subsystem;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import utility.RobotConstants;
 import utility.RobotConstants.Enums.FlickState;
+import utility.RobotConstants.Enums.RotationState;
 import utility.RobotHardware;
-import utility.ShootingStrategy;
+import utility.SpindexerAndMotifStatus;
 
-import static utility.RobotConstants.Spindexer.FLICK_TIME;
-import static utility.RobotConstants.Spindexer.SPINDEXER_PID;
+import static utility.RobotConstants.Spindexer.*;
 
+/**
+ * Spindexer Subsystem - Manages a 3-slot ball indexer with rotation and flicking mechanisms.
+ *
+ * <p>This subsystem controls:
+ * <ul>
+ *   <li>Rotation servo - Rotates indexer to position balls at shooter entrance</li>
+ *   <li>Flipper servo - Flicks balls from indexer into shooter</li>
+ *   <li>Ball tracking - Monitors which slots contain balls and their colors</li>
+ * </ul>
+ *
+ * <p>The spindexer has 3 slots positioned at 62°, 182°, and 302° (120° apart).
+ * Rotation uses PID control for smooth, accurate positioning.
+ *
+ * <p><b>State Machines:</b>
+ * <ul>
+ *   <li>Rotation: IDLE (ready) ↔ ROTATING (moving)</li>
+ *   <li>Flipper: Idle → Start → Extended → Retracted → Idle</li>
+ * </ul>
+ *
+ * @see RobotConstants.Spindexer for hardware mappings and tuning constants
+ * @see utility.RobotConstants.Enums.RotationState
+ * @see utility.RobotConstants.Enums.FlickState
+ */
 public class Spindexer implements Subsystem {
-    private final RobotHardware robot;
-    FlickState currentState = FlickState.Idle;
-    private double targetPosition;
-    private double angleRange = RobotConstants.Spindexer.ANGLE_RANGE;
-    private boolean shouldRotate = false;
-    private ShootingStrategy.Action[] shootingSequence = null;
-    private int sequenceIndex = 0;
 
-    // PID variables - Tuned values from SpindexerPIDFTuningTeleOp
-    private double kP;
-    private double kI;
-    private double kD;
+    // Hardware reference
+    private final RobotHardware robot;
+
+    // State tracking
+    private RotationState rotationState = RotationState.IDLE;
+    private FlickState currentState = FlickState.Idle;
+
+    // Position tracking
+    private int targetPosition;
+    private int spindPosTracker;
+
+    // PID state
     private double lastError = 0;
     private double integral = 0;
-    private long lastTime = 0;
 
-    private ElapsedTime flickerTimer = new ElapsedTime();
+    // Configuration
+    private final double angleRange = RobotConstants.Spindexer.ANGLE_RANGE;
 
+    // Timers
+    private final ElapsedTime flickerTimer = new ElapsedTime();
+
+    // ====================================================================
+    // CONSTRUCTOR
+    // ====================================================================
+
+    /**
+     * Initializes the Spindexer subsystem.
+     * Automatically finds and moves to the nearest slot position on startup.
+     */
     public Spindexer() {
         this.robot = RobotHardware.getInstance();
-        targetPosition = RobotConstants.Spindexer.ENCODER_OFFSET;
-        lastTime = System.nanoTime();
-        kP = SPINDEXER_PID.p;
-        kI = SPINDEXER_PID.i;
-        kD = SPINDEXER_PID.d;
+        spindPosTracker = getNearestStartIndex();
+        targetPosition = SPINDEXER_POSITIONS[spindPosTracker];
+    }
+
+    // ====================================================================
+    // ROTATION CONTROL METHODS
+    // ====================================================================
+
+    /**
+     * Rotates the spindexer clockwise to the next slot position.
+     * Automatically prevents rotation if already rotating (state protection).
+     *
+     * <p>The spindexer has 3 slots, so calling this 3 times returns to the start position.
+     */
+    public void rotateCW() {
+        if (rotationState != RotationState.IDLE) return; // Prevent conflicts
+
+        spindPosTracker = (spindPosTracker + 1) % SPINDEXER_POSITIONS.length;
+        targetPosition = SPINDEXER_POSITIONS[spindPosTracker];
+        rotationState = RotationState.ROTATING;
+        SpindexerAndMotifStatus.SpindexerPattern.rotateBallsCW();
+    }
+
+    /**
+     * Rotates the spindexer counter-clockwise to the previous slot position.
+     * Automatically prevents rotation if already rotating (state protection).
+     *
+     * <p>The spindexer has 3 slots, so calling this 3 times returns to the start position.
+     */
+    public void rotateCCW() {
+        if (rotationState != RotationState.IDLE) return; // Prevent conflicts
+
+        spindPosTracker = (spindPosTracker - 1 + SPINDEXER_POSITIONS.length) % SPINDEXER_POSITIONS.length;
+        targetPosition = SPINDEXER_POSITIONS[spindPosTracker];
+        rotationState = RotationState.ROTATING;
+        SpindexerAndMotifStatus.SpindexerPattern.rotateBallsCCW();
+    }
+
+    /**
+     * Rotates the spindexer clockwise to the next slot position.
+     * This is an alias for {@link #rotateCW()}.
+     */
+    public void rotateToNextSlot() {
+        rotateCW();
+    }
+
+    /**
+     * Rotates to the nearest slot that doesn't contain a ball.
+     * Does nothing if the spindexer is full or already rotating.
+     *
+     * <p>With only 3 slots, the nearest empty slot is always at most 1 rotation away.
+     * Uses rotateCW() or rotateCCW() to properly update ball tracking.
+     */
+    public void rotateToNearestEmptySlot() {
+        if (rotationState != RotationState.IDLE) return; // Prevent conflicts
+        if (SpindexerAndMotifStatus.SpindexerPattern.isFull()) return;
+
+        double currentPos = getServoPosition();
+        double minDistance = Double.MAX_VALUE;
+        int nearestSlotIndex = -1;
+
+        // Find nearest empty slot
+        for (int i = 0; i < SPINDEXER_POSITIONS.length; i++) {
+            if (spindexerPattern.getBallInSlotX(i) == RobotConstants.Enums.BallColor.None) {
+                double distance = calculateAngularDistance(currentPos, SPINDEXER_POSITIONS[i]);
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    nearestSlotIndex = i;
+                }
+            }
+        }
+
+        if (nearestSlotIndex == -1) return; // No empty slots found
+        if (nearestSlotIndex == spindPosTracker) return; // Already at empty slot
+
+        // Calculate which direction is shorter
+        int stepsToTarget = nearestSlotIndex - spindPosTracker;
+        int stepsCW = (stepsToTarget + SPINDEXER_POSITIONS.length) % SPINDEXER_POSITIONS.length;
+        int stepsCCW = (SPINDEXER_POSITIONS.length - stepsCW) % SPINDEXER_POSITIONS.length;
+
+        // Rotate once in the shorter direction
+        if (stepsCW <= stepsCCW) {
+            rotateCW();
+        } else {
+            rotateCCW();
+        }
+    }
+
+    // ====================================================================
+    // FLIPPER CONTROL METHODS
+    // ====================================================================
+
+    /**
+     * Triggers the flipper to flick a ball from the spindexer into the shooter.
+     * Only starts if the flipper is currently idle (prevents overlapping flicks).
+     *
+     * <p>The flick sequence runs automatically through the state machine:
+     * Idle → Start → Extended → Retracted → Idle
+     */
+    public void triggerFlick() {
+        if (currentState == FlickState.Idle) {
+            currentState = FlickState.Start;
+        }
     }
 
 
-    private void stateMachinePeriodic() {
+    // ====================================================================
+    // STATE QUERY METHODS
+    // ====================================================================
+
+    /**
+     * Checks if rotation is idle and ready for new commands.
+     *
+     * @return true if idle, false if rotating
+     */
+    public boolean isRotationIdle() {
+        return rotationState == RotationState.IDLE;
+    }
+
+    /**
+     * Checks if the spindexer is currently rotating.
+     *
+     * @return true if rotating, false if idle
+     */
+    public boolean isRotating() {
+        return rotationState == RotationState.ROTATING;
+    }
+
+    /**
+     * Gets the current rotation state.
+     *
+     * @return Current rotation state (IDLE or ROTATING)
+     */
+    public RotationState getRotationState() {
+        return rotationState;
+    }
+
+    /**
+     * Checks if the spindexer is at rest and ready for flipping.
+     *
+     * @return true if both rotation and flipper are idle (safe to start flick sequence)
+     */
+    public boolean isReadyToFlip() {
+        return rotationState == RotationState.IDLE && currentState == FlickState.Idle;
+    }
+
+    /**
+     * Gets the current flipper state.
+     *
+     * @return Current flipper state (Idle, Start, Extended, or Retracted)
+     */
+    public FlickState getCurrentState() {
+        return currentState;
+    }
+
+    /**
+     * Checks if the flipper is idle.
+     *
+     * @return true if flipper state is Idle
+     */
+    public boolean isIdle() {
+        return currentState == FlickState.Idle;
+    }
+
+    /**
+     * Gets the current servo position in degrees.
+     *
+     * <p>Reads the encoder voltage and converts it to an angle (0-360°).
+     *
+     * @return Current servo position in degrees (0-360)
+     */
+    public double getServoPosition() {
+        // Convert voltage (0-3.3V) to angle (0-360°)
+        double pos = robot.spindexerEncoder.getVoltage();
+        pos /= 3.3;  // Normalize to 0-1
+        pos *= 360;  // Scale to degrees
+
+        // Ensure angle stays in [0, 360) range
+        while (pos >= 360) pos -= 360;
+        while (pos < 0) pos += 360;
+        return pos;
+    }
+
+    /**
+     * Gets the target position the spindexer is rotating to.
+     *
+     * @return Target position in degrees
+     */
+    public int getTargetPosition() {
+        return targetPosition;
+    }
+
+    /**
+     * Checks if rotation is complete (within acceptable error range).
+     *
+     * @return true if current position is within tolerance of target position
+     */
+    public boolean isDoneRotating() {
+        double currentPosition = getServoPosition();
+        double difference = targetPosition - currentPosition;
+
+        // Take shortest path around circle
+        if (difference > 180) difference -= 360;
+        if (difference < -180) difference += 360;
+
+        return Math.abs(difference) < angleRange;
+    }
+
+    // ====================================================================
+    // INTERNAL HELPERS
+    // ====================================================================
+
+    /**
+     * Finds which of the 3 slot positions is closest to the current servo position.
+     * Used during initialization to snap to the nearest valid slot.
+     */
+    private int getNearestStartIndex() {
+        double currentPos = getServoPosition();
+
+        int nearestIndex = 0;
+        double minDistance = calculateAngularDistance(currentPos, SPINDEXER_POSITIONS[0]);
+
+        for (int i = 1; i < SPINDEXER_POSITIONS.length; i++) {
+            double distance = calculateAngularDistance(currentPos, SPINDEXER_POSITIONS[i]);
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearestIndex = i;
+            }
+        }
+
+        return nearestIndex;
+    }
+
+    /**
+     * Calculates the shortest angular distance between two angles.
+     * Accounts for wraparound at 360°/0°.
+     *
+     * @param angle1 First angle in degrees
+     * @param angle2 Second angle in degrees
+     * @return Shortest angular distance in degrees
+     */
+    private double calculateAngularDistance(double angle1, double angle2) {
+        double diff = Math.abs(angle1 - angle2);
+        // Take the shorter path around the circle
+        return Math.min(diff, 360 - diff);
+    }
+
+    // ====================================================================
+    // PERIODIC UPDATES
+    // ====================================================================
+
+    /**
+     * Main periodic update method called by the subsystem scheduler.
+     * Updates both flipper and rotation state machines.
+     */
+    @Override
+    public void periodic() {
+        flipperStateMachinePeriodic();
+        rotationUpdater();
+    }
+
+    /**
+     * Called by periodic() - runs PID controller if rotating.
+     */
+    private void rotationUpdater() {
+        if (rotationState == RotationState.IDLE) return;
+        performPIDRotation();
+    }
+
+    /**
+     * Internal PID controller for smooth rotation to target position.
+     *
+     * <p>Uses proportional-integral-derivative control with:
+     * <ul>
+     *   <li>Shortest path calculation (handles 360° wraparound)</li>
+     *   <li>Anti-windup integral clamping</li>
+     *   <li>Fixed dt (assumes ~50Hz loop rate)</li>
+     *   <li>Power clamping to ±0.5 for safety</li>
+     * </ul>
+     *
+     * <p>Automatically returns to IDLE state when within acceptable error range.
+     */
+    private void performPIDRotation() {
+        double currentPosition = getServoPosition();
+        double error = targetPosition - currentPosition;
+
+        // Take shortest path around circle (e.g., -350° error becomes +10°)
+        if (error > 180) error -= 360;
+        if (error < -180) error += 360;
+
+        // Check if we're close enough (deadband)
+        if (Math.abs(error) < angleRange) {
+            robot.spindexerServo.setPower(0);
+            rotationState = RotationState.IDLE;
+            integral = 0;
+            return;
+        }
+
+        // Fixed dt assuming ~50Hz loop rate
+        double dt = 0.02;
+
+        // PID calculations with anti-windup
+        integral += error * dt;
+        integral = Math.max(-50, Math.min(50, integral)); // Anti-windup: prevent integral from growing unbounded
+        double derivative = (error - lastError) / dt;
+        lastError = error;
+
+        double power = (SPINDEXER_PID.p * error) +
+                       (SPINDEXER_PID.i * integral) +
+                       (SPINDEXER_PID.d * derivative);
+
+        // Clamp power to safe limits
+        power = Math.max(-0.5, Math.min(0.5, power));
+
+        robot.spindexerServo.setPower(power);
+    }
+
+    /**
+     * State machine for flipper servo actuation sequence.
+     * Runs the flick sequence: Idle → Start → Extended → Retracted → Idle
+     */
+    private void flipperStateMachinePeriodic() {
         if (currentState == FlickState.Idle) return; // Don't run unless activated
 
         switch (currentState) {
@@ -57,227 +405,9 @@ public class Spindexer implements Subsystem {
                 currentState = FlickState.Retracted;
                 break;
             case Retracted:
-                robot.spindexerPattern.setBallPatternNone(1); // Clear shooter slot after flick
+                spindexerPattern.setBallPatternNone(1); // Clear shooter slot after flick
                 currentState = FlickState.Idle; // Return to idle after completion
                 break;
         }
-    }
-
-    public void triggerFlick() {
-        if (currentState == FlickState.Idle) { // Only start if not already running
-            currentState = FlickState.Start;
-        }
-    }
-
-    // ****** STATE QUERIES ******
-    public FlickState getCurrentState() {
-        return currentState;
-    }
-
-    public boolean isIdle() {
-        return currentState == FlickState.Idle;
-    }
-
-    /**
-     * Checks if the spindexer is at rest and ready for flipping
-     * @return true if not rotating, false otherwise
-     */
-    public boolean isReadyToFlip() {
-        return !shouldRotate;
-    }
-
-    public void rotateBy(double positionChange) {
-        targetPosition += positionChange;
-        // Wrap to [0, 360)
-        while (targetPosition >= 360) targetPosition -= 360;
-        while (targetPosition < 0) targetPosition += 360;
-        shouldRotate = true;
-
-        // Reset PID
-        integral = 0;
-        lastError = 0;
-    }
-
-    // ****** CATALOGING METHODS ******
-
-    /**
-     * Rotates the spindexer to the next slot (120 degrees forward)
-     */
-    public void rotateToNextSlot() {
-        rotateBy(RobotConstants.Spindexer.ROTATION_FORWARD);
-    }
-
-    /**
-     * Finds the nearest empty slot from the current intake position (slot 0)
-     * Priority order: slot 1 (120° forward), slot 2 (120° backward)
-     * @return slot index (1 or 2), or -1 if no empty slots
-     */
-    public int findNearestEmptySlot() {
-        // Check slot 1 first (forward rotation)
-        if (robot.spindexerPattern.getBallInSlotX(1) == RobotConstants.Enums.BallColor.None) {
-            return 1;
-        }
-        // Check slot 2 (backward rotation from slot 0)
-        if (robot.spindexerPattern.getBallInSlotX(2) == RobotConstants.Enums.BallColor.None) {
-            return 2;
-        }
-        // No empty slots found
-        return -1;
-    }
-
-    /**
-     * Rotates to a specific slot index
-     * Assumes current position is at slot 0 (intake position)
-     * @param targetSlot Target slot index (0, 1, or 2)
-     */
-    public void rotateToSlot(int targetSlot) {
-        switch (targetSlot) {
-            case 0:
-                // Already at intake position, no rotation needed
-                break;
-            case 1:
-                // Rotate forward 120° to shooter position
-                rotateBy(RobotConstants.Spindexer.ROTATION_FORWARD);
-                break;
-            case 2:
-                // Rotate backward 120° to top position (shorter path from slot 0)
-                rotateBy(RobotConstants.Spindexer.ROTATION_BACKWARD);
-                break;
-        }
-    }
-
-    /**
-     * Checks if the spindexer is full (all 3 slots occupied)
-     * @return true if all slots contain a ball, false otherwise
-     */
-    public boolean isFull() {
-        return robot.spindexerPattern.getBallInSlotX(0) != RobotConstants.Enums.BallColor.None &&
-               robot.spindexerPattern.getBallInSlotX(1) != RobotConstants.Enums.BallColor.None &&
-               robot.spindexerPattern.getBallInSlotX(2) != RobotConstants.Enums.BallColor.None;
-    }
-
-    /**
-     * Catalogs a ball in the specified slot
-     * @param slot The slot index (0-2)
-     * @param color The color of the ball
-     */
-    public void catalogBall(int slot, RobotConstants.Enums.BallColor color) {
-        robot.spindexerPattern.setBallInSlotX(slot, color);
-    }
-
-    /**
-     * Gets the color of the ball in the specified slot
-     * @param slot The slot index (0-2)
-     * @return The ball color
-     */
-    public RobotConstants.Enums.BallColor getBallInSlot(int slot) {
-        return robot.spindexerPattern.getBallInSlotX(slot);
-    }
-
-    public double getServoPosition() {
-        double pos = robot.spindexerEncoder.getVoltage();
-        pos /= 3.3;
-        pos *= 360;
-
-        // Wrap to [0, 360)
-        while (pos >= 360) pos -= 360;
-        while (pos < 0) pos += 360;
-        return pos;
-    }
-
-    public double getTargetPosition(){
-        return targetPosition;
-    }
-
-    // Runtime PID tuning methods
-    public void adjustP(double delta) {
-        kP += delta;
-        kP = Math.max(0, kP); // Don't go negative
-    }
-
-    public void adjustD(double delta) {
-        kD += delta;
-        kD = Math.max(0, kD); // Don't go negative
-    }
-
-    public double getKP() {
-        return kP;
-    }
-
-    public double getKD() {
-        return kD;
-    }
-
-    public void rotationUpdater() {
-        if (!shouldRotate) return;
-        performPIDRotation();
-    }
-
-    private void performPIDRotation() {
-        double currentPosition = getServoPosition();
-        double error = targetPosition - currentPosition;
-
-        // Take shortest path
-        if (error > 180) error -= 360;
-        if (error < -180) error += 360;
-
-        // Check if we're close enough (deadband)
-        if (Math.abs(error) < angleRange) {
-            robot.spindexerServo.setPower(0);
-            shouldRotate = false;
-            integral = 0;
-            return;
-        }
-
-        // Calculate dt
-        long currentTime = System.nanoTime();
-        double dt = (currentTime - lastTime) / 1e9;
-        lastTime = currentTime;
-
-        // Sanity check on dt
-        if (dt > 1.0 || dt < 0.001) {
-            dt = 0.02; // Default to 50Hz
-        }
-
-        // PID calculations with anti-windup
-        integral += error * dt;
-        integral = Math.max(-50, Math.min(50, integral)); // Clamp integral
-        double derivative = (error - lastError) / dt;
-        lastError = error;
-
-        double power = (kP * error) + (kI * integral) + (kD * derivative);
-
-        // SAFETY: Check for NaN/Infinite values
-        if (!Double.isFinite(power)) {
-            robot.spindexerServo.setPower(0);
-            integral = 0;
-            lastError = 0;
-            return;
-        }
-
-        // Reduce max power to match turret behavior
-        double maxPower = 0.5;
-
-        // Clamp power
-        power = Math.max(-maxPower, Math.min(maxPower, power));
-
-        robot.spindexerServo.setPower(power);
-    }
-
-    public boolean isDoneRotating() {
-        double currentPosition = getServoPosition();
-        double difference = targetPosition - currentPosition;
-
-        // Take shortest path
-        if (difference > 180) difference -= 360;
-        if (difference < -180) difference += 360;
-
-        return Math.abs(difference) < angleRange;
-    }
-
-    @Override
-    public void periodic() {
-        stateMachinePeriodic();
-        rotationUpdater();
     }
 }

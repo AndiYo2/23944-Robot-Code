@@ -27,6 +27,7 @@ public class RobotConstants {
     }
 
     public static class Spindexer {
+        public static SpindexerAndMotifStatus.SpindexerPattern spindexerPattern  = new SpindexerAndMotifStatus.SpindexerPattern(Enums.BallColor.None, Enums.BallColor.None, Enums.BallColor.None);
         public static final int ENCODER_OFFSET = 62;
         public static String spindexerServo = "spindexerServo"; // E4
         public static String spindexerEncoder = "spindexerServoEncoder"; // E Analog 0-1
@@ -46,6 +47,9 @@ public class RobotConstants {
 
         // Acceptable position error (degrees) - stops rotation when within this range
         public static final double ANGLE_RANGE = 2.0;
+
+        // Spindexer slot positions in degrees (3 equally-spaced slots: 120° apart)
+        public static final int[] SPINDEXER_POSITIONS = {62, 182, 302};
 
     }
 
@@ -114,7 +118,7 @@ public class RobotConstants {
 
         public static String limelight = "limelight";
         public static boolean isLimelightDisabled = false;
-        public static MotifPattern motifPattern = new MotifPattern(Enums.BallColor.None, Enums.BallColor.None, Enums.BallColor.None);
+        public static SpindexerAndMotifStatus.MotifPattern motifPattern = new SpindexerAndMotifStatus.MotifPattern(Enums.BallColor.None, Enums.BallColor.None, Enums.BallColor.None);
     }
 
     public static class Pinpoint{
@@ -128,50 +132,7 @@ public class RobotConstants {
         public static Enums.AllianceColor allianceColor;
     }
 
-    public static class MotifPattern{
-        private Enums.BallColor[] ballPattern;
-        public MotifPattern(Enums.BallColor zero, Enums.BallColor one, Enums.BallColor two){
-            this.ballPattern = new Enums.BallColor[]{zero, one, two};
-        }
-        public Enums.BallColor getBallColorInSlotX(int x){
-            return this.ballPattern[x];
-        }
-        public void setBallPattern(Enums.BallColor[] pattern){
-            this.ballPattern = pattern;
-        }
-        public void setBallPattern(Enums.BallColor zero, Enums.BallColor one, Enums.BallColor two){
-            this.ballPattern = new Enums.BallColor[]{zero, one, two};
-        }
-    }
 
-    public static class SpindexerPattern{
-        // ZERO - Intake
-        // ONE - Outtake
-        // TWO - Top Slot
-
-        private Enums.BallColor[] spindexerPattern;
-        public SpindexerPattern(Enums.BallColor zero, Enums.BallColor one, Enums.BallColor two){
-            this.spindexerPattern = new Enums.BallColor[]{zero, one, two};
-        }
-        public Enums.BallColor getBallInSlotX(int x){
-            return this.spindexerPattern[x];
-        }
-        public void setBallPatternNone(int x){
-            this.spindexerPattern[x] = Enums.BallColor.None;
-        }
-        public void emptyBallPattern(){
-            this.spindexerPattern = new Enums.BallColor[]{Enums.BallColor.None, Enums.BallColor.None, Enums.BallColor.None};
-        }
-        public void setBallInSlotX(int x, Enums.BallColor ballType){
-            this.spindexerPattern[x] = ballType;
-        }
-        public void setBallPattern(Enums.BallColor[] pattern){
-            this.spindexerPattern = pattern;
-        }
-        public void setBallPattern(Enums.BallColor zero, Enums.BallColor one, Enums.BallColor two){
-            this.spindexerPattern = new Enums.BallColor[]{zero, one, two};
-        }
-    }
 
     public static class Enums{
         public enum FieldState{
@@ -190,11 +151,9 @@ public class RobotConstants {
             Extended,
             Retracted
         }
-        public enum SpindexerRotationState {
-            IDLE,           // Not rotating
-            ROTATING,       // Actively rotating
-            STALLED,        // Detected stall - waiting for clearance
-            RETRY           // Retrying rotation after clearance
+        public enum RotationState {
+            IDLE,      // Ready for commands
+            ROTATING   // Busy rotating
         }
         public enum ShooterCases{
             Idle,
