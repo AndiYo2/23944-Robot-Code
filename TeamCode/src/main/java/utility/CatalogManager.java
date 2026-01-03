@@ -40,9 +40,8 @@ public class CatalogManager {
                     indexed++;
                     setBallInSlotX(0, result.color);
                     if(indexed == 3){
-                        state = CatalogingCases.Idle;
-                        intake.stopIntake();
-                        indexed = 0;
+                        state = CatalogingCases.RotateToEndLocation;
+                        break;
                     }else{
                         state = CatalogingCases.WaitingForRotation;
                         intake.runIntake();
@@ -56,6 +55,11 @@ public class CatalogManager {
                     state = CatalogingCases.Scanning;
                 }
                 break;
+            case RotateToEndLocation:
+                state = CatalogingCases.Idle;
+                intake.stopIntake();
+                indexed = 0;
+                spindexer.rotateToColor(SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(0));
 
         }
     }

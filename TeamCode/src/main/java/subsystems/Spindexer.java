@@ -122,12 +122,32 @@ public class Spindexer implements Subsystem {
         SpindexerAndMotifStatus.SpindexerPattern.rotateBallsCW();
     }
 
+    public boolean rotateToColor(RobotConstants.Enums.BallColor color){
+        if(SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(1) == color){
+            return true;
+        }
+        else if(SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(2) == color){
+            rotateCW();
+            return true;
+        } else if(SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(0) == color){
+            rotateCCW();
+            return true;
+        }
+        rotateToNextClosestBall();
+        return false;
+        }
+
     /**
      * Rotates the spindexer clockwise to the next slot position.
      * This is an alias for {@link #rotateCCW()}.
      */
-    public void rotateToNextSlot() {
-        rotateCCW();
+    public void rotateToNextClosestBall() {
+        if(SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(0) != RobotConstants.Enums.BallColor.None){
+            rotateCCW();
+        }
+        else if (SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(2) != RobotConstants.Enums.BallColor.None){
+            rotateCW();
+        }
     }
 
     /**

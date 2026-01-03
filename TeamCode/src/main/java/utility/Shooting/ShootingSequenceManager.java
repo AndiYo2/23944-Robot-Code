@@ -4,9 +4,9 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import subsystems.Spindexer;
 import subsystems.Shooter;
 import utility.RobotConstants;
-import utility.RobotConstants.Enums.BallColor;
 import utility.RobotConstants.Enums.FlickState;
-import utility.SpindexerAndMotifStatus;
+
+import static utility.SpindexerAndMotifStatus.*;
 
 /**
  * ShootingSequenceManager - Simple 3-ball shooting sequence
@@ -42,7 +42,6 @@ public class ShootingSequenceManager {
 
     // Timing constants
     private static final double DELAY_BEFORE_SHOOTER = 0.02;  // 200ms between spindexer and shooter
-    private static final double DELAY_AFTER_SHOOTER = 0.01;   // 100ms after shooter
 
     public ShootingSequenceManager(Spindexer spindexer, Shooter shooter) {
         this.spindexer = spindexer;
@@ -73,9 +72,7 @@ public class ShootingSequenceManager {
     public void update() {
         switch (state) {
             case IDLE:
-                // Do nothing
-                break;
-
+                return;
             case FLICK_SPINDEXER:
                 // Wait for spindexer to extend
                 if (spindexer.getCurrentState() == FlickState.Extended) {
@@ -102,15 +99,13 @@ public class ShootingSequenceManager {
                 } else {
                     // More balls to shoot - rotate spindexer
                     state = State.ROTATE_SPINDEXER;
-                    spindexer.rotateCCW();
+                    spindexer.rotateToColor( MotifPattern.getBallColorInSlotX(ballsShot));
                 }
                 break;
-
             case ROTATE_SPINDEXER:
                 // Rotation command sent, move to waiting
                 state = State.WAIT_ROTATION;
                 break;
-
             case WAIT_ROTATION:
                 // Wait for spindexer to finish rotating (state = IDLE, regardless of position accuracy)
                 if (spindexer.isReadyToFlip()) {

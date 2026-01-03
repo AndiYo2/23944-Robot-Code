@@ -54,6 +54,7 @@ public class SpindexerAndMotifStatus {
 
         }
 
+
         public static String getSpindexerPatternString() {
             return String.format("[I:%s S:%s T:%s]",
                     getBallInSlotX(0),  // I = Intake
@@ -66,18 +67,18 @@ public class SpindexerAndMotifStatus {
 
 
     public static class MotifPattern{
-        private RobotConstants.Enums.BallColor[] ballPattern;
+        private static RobotConstants.Enums.BallColor[] ballPattern;
         public MotifPattern(RobotConstants.Enums.BallColor zero, RobotConstants.Enums.BallColor one, RobotConstants.Enums.BallColor two){
-            this.ballPattern = new RobotConstants.Enums.BallColor[]{zero, one, two};
+            ballPattern = new RobotConstants.Enums.BallColor[]{zero, one, two};
         }
-        public RobotConstants.Enums.BallColor getBallColorInSlotX(int x){
-            return this.ballPattern[x];
+        public static RobotConstants.Enums.BallColor getBallColorInSlotX(int x){
+            return ballPattern[x];
         }
-        public void setBallPattern(RobotConstants.Enums.BallColor[] pattern){
-            this.ballPattern = pattern;
+        public static void setBallPattern(RobotConstants.Enums.BallColor[] pattern){
+            ballPattern = pattern;
         }
-        public void setBallPattern(RobotConstants.Enums.BallColor zero, RobotConstants.Enums.BallColor one, RobotConstants.Enums.BallColor two){
-            this.ballPattern = new RobotConstants.Enums.BallColor[]{zero, one, two};
+        public static void setBallPattern(RobotConstants.Enums.BallColor zero, RobotConstants.Enums.BallColor one, RobotConstants.Enums.BallColor two){
+            ballPattern = new RobotConstants.Enums.BallColor[]{zero, one, two};
         }
     }
 

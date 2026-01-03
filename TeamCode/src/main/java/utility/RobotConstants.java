@@ -113,7 +113,7 @@ public class RobotConstants {
 
         public static String limelight = "limelight";
         public static boolean isLimelightDisabled = false;
-        public static SpindexerAndMotifStatus.MotifPattern motifPattern = new SpindexerAndMotifStatus.MotifPattern(Enums.BallColor.None, Enums.BallColor.None, Enums.BallColor.None);
+        public static SpindexerAndMotifStatus.MotifPattern motifPattern = new SpindexerAndMotifStatus.MotifPattern(Enums.BallColor.Green, Enums.BallColor.Purple, Enums.BallColor.Purple);
     }
 
     public static class Pinpoint{
@@ -167,7 +167,8 @@ public class RobotConstants {
         public enum CatalogingCases{
             Idle,
             Scanning,
-            WaitingForRotation
+            WaitingForRotation,
+            RotateToEndLocation
         }
         public enum IntakeState {
             Idle,           // Motors stopped
