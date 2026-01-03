@@ -28,7 +28,6 @@ public class RobotConstants {
 
     public static class Spindexer {
         public static SpindexerAndMotifStatus.SpindexerPattern spindexerPattern  = new SpindexerAndMotifStatus.SpindexerPattern(Enums.BallColor.None, Enums.BallColor.None, Enums.BallColor.None);
-        public static final int ENCODER_OFFSET = 62;
         public static String spindexerServo = "spindexerServo"; // E4
         public static String spindexerEncoder = "spindexerServoEncoder"; // E Analog 0-1
 
@@ -39,14 +38,10 @@ public class RobotConstants {
 
         public static final double FLICK_TIME = 0.15;
 
-        // Rotation angles (120 degrees = 1/3 rotation for 3-slot indexer)
-        public static final double ROTATION_FORWARD = 120;
-        public static final double ROTATION_BACKWARD = -120;
-
-        public final static PIDCoefficients SPINDEXER_PID = new PIDCoefficients(0.006, 0, 0.0003);
+        public final static PIDCoefficients SPINDEXER_PID = new PIDCoefficients(0.006, 0, 0.00015);
 
         // Acceptable position error (degrees) - stops rotation when within this range
-        public static final double ANGLE_RANGE = 2.0;
+        public static final double ANGLE_RANGE = 7.5;
 
         // Spindexer slot positions in degrees (3 equally-spaced slots: 120° apart)
         public static final int[] SPINDEXER_POSITIONS = {62, 182, 302};
@@ -87,7 +82,7 @@ public class RobotConstants {
         public static final double TURRET_TRACKING_OFFSET = 0; // Adjust if tracking is still off
 
         // Turret PID coefficients (tuned values)
-        public static final PIDCoefficients TURRET_PID = new PIDCoefficients(0.013, 0, 0.00030);
+        public static final PIDCoefficients TURRET_PID = new PIDCoefficients(0.013, 0, 0.00020);
 
         // Shooter PIDF coefficients (tuned values from ShooterPIDFTuningTeleOp)
         public static final double SHOOTER_P = 5.0;

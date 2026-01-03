@@ -60,7 +60,7 @@ public class BlueFrontAuton extends AutonTemplate {
     protected void autonomousPathUpdate() {
         switch (pathState) {
             case 0:
-                spindexer.rotateBy(RobotConstants.Spindexer.ROTATION_FORWARD);
+                spindexer.rotateCW();
                 if (follower.isBusy())
                     break;
                 follower.followPath(startToShoot, true);

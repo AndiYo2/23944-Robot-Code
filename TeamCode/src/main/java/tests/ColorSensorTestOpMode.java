@@ -1,66 +1,72 @@
 package tests;
 
-import com.qualcomm.hardware.rev.RevColorSensorV3;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.ColorSensor;
-import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
-import com.qualcomm.robotcore.hardware.NormalizedRGBA;
-import com.qualcomm.robotcore.hardware.OpticalDistanceSensor; // For getLightDetected() if needed
-import utility.RobotConstants;
+import utility.ColorDetection.DualBallDetector;
 
 
 @TeleOp(name = "ColorSensorTestOpMode", group = "Tests")
 public class ColorSensorTestOpMode extends LinearOpMode {
 
-    private ColorSensor colorSensor1; // Declare the color sensor object
-    private ColorSensor colorSensor2; // Declare the color sensor object
+    private ColorSensor colorSensor1;
+    private ColorSensor colorSensor2;
+
+    private DualBallDetector ballDetector;
 
     @Override
     public void runOpMode() {
-        // Initialize the color sensor from the hardware map
-        // "color_sensor" should match the name configured in the Robot Configuration
+
         colorSensor1 = hardwareMap.get(ColorSensor.class, "intakeSensor1");
         colorSensor2 = hardwareMap.get(ColorSensor.class, "intakeSensor2");
 
-        // Set the sensor's gain (optional, adjust as needed for lighting conditions)
-        // A higher gain amplifies the signal, potentially making it more sensitive to subtle color differences
+        ballDetector = new DualBallDetector(
+                hardwareMap,
+                "intakeSensor1",
+                "intakeSensor2"
+        );
 
         telemetry.addData("Status", "Initialized");
         telemetry.update();
 
-        double red1;
-        double blue1;
-        double green1;
-        double red2;
-        double blue2;
-        double green2;
-
-        waitForStart(); // Wait for the start button to be pressed
+        waitForStart();
 
         while (opModeIsActive()) {
-            // Get the normalized RGBA values from the sensor
 
-            red1 = colorSensor1.red();
-            green1 = colorSensor1.green();
-            blue1 = colorSensor1.blue();
-            red2 = colorSensor1.red();
-            green2 = colorSensor1.green();
-            blue2 = colorSensor1.blue();
+            // === REQUIRED EVERY LOOP ===
+            ballDetector.update();
 
+            // === Get stabilized result ===
+            DualBallDetector.Result result = ballDetector.detectBall();
 
+            // ============================
+            // Raw Sensor Telemetry
+            // ============================
+            telemetry.addLine("=== RAW SENSOR DATA ===");
 
-            // Display the color values on the Driver Station telemetry
-            telemetry.addData("Red1",  red1);
-            telemetry.addData("Green1",  green1);
-            telemetry.addData("Blue1",  blue1);
-            telemetry.addData("Alpha1",  colorSensor1.alpha()); // Alpha represents overall brightness/intensity
-            telemetry.addData("Red2",  red2);
-            telemetry.addData("Green2",  green2);
-            telemetry.addData("Blue2",  blue2);
-            telemetry.addData("Alpha2",  colorSensor2.alpha()); // Alpha represents overall brightness/intensity
+            telemetry.addData("S1 R", colorSensor1.red());
+            telemetry.addData("S1 G", colorSensor1.green());
+            telemetry.addData("S1 B", colorSensor1.blue());
+            telemetry.addData("S1 A", colorSensor1.alpha());
 
-            telemetry.update(); // Update the telemetry display
+            telemetry.addLine();
+
+            telemetry.addData("S2 R", colorSensor2.red());
+            telemetry.addData("S2 G", colorSensor2.green());
+            telemetry.addData("S2 B", colorSensor2.blue());
+            telemetry.addData("S2 A", colorSensor2.alpha());
+
+            telemetry.addLine();
+
+            // ============================
+            // Processed Detection Telemetry
+            // ============================
+            telemetry.addLine("=== BALL DETECTION ===");
+            telemetry.addData("Ball Present", result.ballPresent);
+            telemetry.addData("Ball Color", result.color);
+            telemetry.addData("Confidence", "%.1f%%", result.confidence * 100);
+
+            telemetry.update();
         }
     }
 }

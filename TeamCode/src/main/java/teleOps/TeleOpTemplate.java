@@ -26,6 +26,20 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     private ShootingSequenceManager sequenceManager;
     private ShootingValidator shootingValidator;
 
+    // PID Tuning Mode (for Turret)
+    private boolean pidTuningMode = false;
+    private int selectedPIDParameter = 0; // 0=P, 1=I, 2=D
+    private double kP, kI, kD;
+    private boolean dpadUpPressed = false;
+    private boolean dpadDownPressed = false;
+    private boolean dpadLeftPressed = false;
+    private boolean dpadRightPressed = false;
+    private boolean bButtonPressed = false;
+
+    // Step sizes for tuning - press B (in tuning mode) to cycle
+    private double[] stepSizes = {0.1, 0.01, 0.001, 0.0001, 0.00001};
+    private int stepIndex = 3; // Start with 0.0001
+
     protected void initHardware(boolean isAuto) {
         driverGamepad = new GamepadEx(gamepad1);
         robot.init(hardwareMap, driverGamepad);
@@ -37,6 +51,11 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
         sequenceManager = new ShootingSequenceManager(spindexer, shooter);
         shootingValidator = new ShootingValidator(shooter, telemetry);
+
+        // Initialize PID tuning values from current turret settings
+        kP = RobotConstants.Shooter.TURRET_PID.p;
+        kI = RobotConstants.Shooter.TURRET_PID.i;
+        kD = RobotConstants.Shooter.TURRET_PID.d;
 
         register(intake, shooter, spindexer);
     }
@@ -68,15 +87,24 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         new GamepadButton(driverGamepad, GamepadKeys.Button.RIGHT_BUMPER)
                 .whenPressed(() -> manualRotateForward());
 
-        // Mode toggles
+        // PID Tuning Mode toggle
+        new GamepadButton(driverGamepad, GamepadKeys.Button.BACK)
+                .whenPressed(() -> togglePIDTuningMode());
+
+        // Mode toggles (when NOT in tuning mode)
         new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_UP)
-                .whenPressed(() -> shooter.toggleLimelightEnabled());
+                .whenPressed(() -> {
+                    if (!pidTuningMode) {
+                        shooter.toggleLimelightEnabled();
+                    }
+                });
     }
 
     @Override
     public void run() {
         super.run();
 
+        updatePIDTuning();
         updateDrivetrain();
         updateSubsystems();
         updateTelemetry();
@@ -144,10 +172,73 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     }
 
     /**
-     * Toggle between SMART and FAST shooting strategy modes
+     * Toggle PID tuning mode on/off
      */
+    private void togglePIDTuningMode() {
+        pidTuningMode = !pidTuningMode;
+        if (pidTuningMode) {
+            gamepad1.rumble(100); // Single short rumble on enable
+        } else {
+            gamepad1.rumble(500); // Long rumble on disable
+        }
+    }
 
+    /**
+     * Handle PID tuning controls when tuning mode is active
+     */
+    private void updatePIDTuning() {
+        if (!pidTuningMode) return;
 
+        // B button: Cycle step size
+        if (gamepad1.b && !bButtonPressed) {
+            stepIndex = (stepIndex + 1) % stepSizes.length;
+            gamepad1.rumble(50);
+        }
+        bButtonPressed = gamepad1.b;
+
+        // D-pad left/right: Select parameter (P, I, or D)
+        if (gamepad1.dpad_left && !dpadLeftPressed) {
+            selectedPIDParameter = (selectedPIDParameter - 1 + 3) % 3;
+            gamepad1.rumble(50);
+        }
+        dpadLeftPressed = gamepad1.dpad_left;
+
+        if (gamepad1.dpad_right && !dpadRightPressed) {
+            selectedPIDParameter = (selectedPIDParameter + 1) % 3;
+            gamepad1.rumble(50);
+        }
+        dpadRightPressed = gamepad1.dpad_right;
+
+        // D-pad up/down: Adjust selected parameter
+        double increment = stepSizes[stepIndex]; // Use current step size
+
+        if (gamepad1.dpad_up && !dpadUpPressed) {
+            switch (selectedPIDParameter) {
+                case 0: kP += increment; break;
+                case 1: kI += increment; break;
+                case 2: kD += increment; break;
+            }
+            updatePIDController();
+        }
+        dpadUpPressed = gamepad1.dpad_up;
+
+        if (gamepad1.dpad_down && !dpadDownPressed) {
+            switch (selectedPIDParameter) {
+                case 0: kP = Math.max(0, kP - increment); break;
+                case 1: kI = Math.max(0, kI - increment); break;
+                case 2: kD = Math.max(0, kD - increment); break;
+            }
+            updatePIDController();
+        }
+        dpadDownPressed = gamepad1.dpad_down;
+    }
+
+    /**
+     * Apply current PID values to the turret controller
+     */
+    private void updatePIDController() {
+        shooter.setTurretPID(kP, kI, kD);
+    }
 
     private void updateSubsystems() {
         spindexer.periodic();
@@ -164,7 +255,34 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         // Refresh sensor readings for telemetry
         robot.intakeSensor.refreshScan();
 
+        // PID TUNING MODE - Display prominently at top
+        if (pidTuningMode) {
+            telemetry.addLine("========================================");
+            telemetry.addLine("🔧 TURRET PID TUNING MODE ACTIVE 🔧");
+            telemetry.addLine("========================================");
 
+            String[] paramNames = {"kP", "kI", "kD"};
+            double[] paramValues = {kP, kI, kD};
+
+            for (int i = 0; i < 3; i++) {
+                String prefix = (i == selectedPIDParameter) ? ">>> " : "    ";
+                String suffix = (i == selectedPIDParameter) ? " <<<" : "";
+                telemetry.addData(prefix + paramNames[i] + suffix,
+                    String.format("%.6f", paramValues[i]));
+            }
+
+            telemetry.addLine("----------------------------------------");
+            telemetry.addData("Step Size", "%.6f (Press B to change)", stepSizes[stepIndex]);
+            telemetry.addLine("D-Pad Left/Right: Select parameter");
+            telemetry.addLine(String.format("D-Pad Up/Down: Adjust value (±%.6f)", stepSizes[stepIndex]));
+            telemetry.addLine("Back Button: Exit tuning mode");
+            telemetry.addLine("========================================");
+            telemetry.addData("Current PID", "new PIDCoefficients(%.5f, %.5f, %.5f)", kP, kI, kD);
+            telemetry.addLine("========================================");
+            telemetry.addLine("");
+        }
+
+        // Debug telemetry - always display
         telemetry.addData("Executing Sequence:", sequenceManager.isExecuting());
         if (sequenceManager.isExecuting()) {
             telemetry.addData("Sequence Status:", sequenceManager.getStatus());
@@ -181,7 +299,9 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
         // Spindexer position debugging
         telemetry.addData("Spindexer Current:", String.format("%.1f°", spindexer.getServoPosition()));
-        telemetry.addData("Spindexer Target:", String.format("%.1f°", spindexer.getTargetPosition()));
+        telemetry.addData("Spindexer Target:", String.format("%d°", spindexer.getTargetPosition()));
+        telemetry.addData("Spindexer Slot Index:", spindexer.getSpindPosTracker());
+        telemetry.addData("Rotation State:", spindexer.getRotationState());
         telemetry.addData("Position Error:", String.format("%.1f°",
             spindexer.getTargetPosition() - spindexer.getServoPosition()));
         telemetry.addData("Field Zone:", shooter.getFieldState());
@@ -194,7 +314,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         // Debug: Show position info when sequence is stuck
         if (sequenceManager.isExecuting()) {
             telemetry.addData("Current Pos:", String.format("%.1f°", spindexer.getServoPosition()));
-            telemetry.addData("Target Pos:", String.format("%.1f°", spindexer.getTargetPosition()));
+            telemetry.addData("Target Pos:", String.format("%d°", spindexer.getTargetPosition()));
             telemetry.addData("Done Rotating?:", spindexer.isDoneRotating());
             telemetry.addData("Ready to Flip?:", spindexer.isReadyToFlip());
         }

@@ -42,6 +42,11 @@ public class Shooter implements Subsystem {
     private double turretIntegral = 0;
     private long lastTurretTime = 0;
 
+    // Turret PID coefficients (can be updated during tuning)
+    private double turretKP = RobotConstants.Shooter.TURRET_PID.p;
+    private double turretKI = RobotConstants.Shooter.TURRET_PID.i;
+    private double turretKD = RobotConstants.Shooter.TURRET_PID.d;
+
     // Cumulative position tracking (needed because turret range exceeds 360°)
     private double lastRawTurretPosition = 0;
     private double cumulativeTurretPosition = 0;
@@ -340,11 +345,8 @@ public class Shooter implements Subsystem {
         double derivative = (error - lastTurretError) / dt;
         lastTurretError = error;
 
-        double kP = RobotConstants.Shooter.TURRET_PID.p;
-        double kI = RobotConstants.Shooter.TURRET_PID.i;
-        double kD = RobotConstants.Shooter.TURRET_PID.d;
-
-        double power = (kP * error) + (kI * turretIntegral) + (kD * derivative);
+        // Use instance variables for PID (can be updated during tuning)
+        double power = (turretKP * error) + (turretKI * turretIntegral) + (turretKD * derivative);
 
         // SAFETY: Check for NaN/Infinite values
         if (!Double.isFinite(power)) {
@@ -383,6 +385,18 @@ public class Shooter implements Subsystem {
 
     public void toggleLimelightEnabled(){
         RobotConstants.Limelight.isLimelightDisabled = !RobotConstants.Limelight.isLimelightDisabled;
+    }
+
+    /**
+     * Updates turret PID coefficients (for tuning mode)
+     * @param kP Proportional gain
+     * @param kI Integral gain
+     * @param kD Derivative gain
+     */
+    public void setTurretPID(double kP, double kI, double kD) {
+        this.turretKP = kP;
+        this.turretKI = kI;
+        this.turretKD = kD;
     }
 
     // ****** ZONE DETECTION ******

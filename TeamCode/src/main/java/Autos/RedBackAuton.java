@@ -44,7 +44,7 @@ public class RedBackAuton extends AutonTemplate {
     protected void autonomousPathUpdate() {
         switch (pathState) {
             case 0:
-                spindexer.rotateBy(RobotConstants.Spindexer.ROTATION_FORWARD);
+                spindexer.rotateCW();
                 wait(1.5);
                 startAutonShoot();
                 setPathState(1);

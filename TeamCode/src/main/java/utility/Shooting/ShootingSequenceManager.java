@@ -40,8 +40,8 @@ public class ShootingSequenceManager {
     private ElapsedTime timer = new ElapsedTime();
 
     // Timing constants
-    private static final double DELAY_BEFORE_SHOOTER = 0.2;  // 200ms between spindexer and shooter
-    private static final double DELAY_AFTER_SHOOTER = 0.1;   // 100ms after shooter
+    private static final double DELAY_BEFORE_SHOOTER = 0.02;  // 200ms between spindexer and shooter
+    private static final double DELAY_AFTER_SHOOTER = 0.01;   // 100ms after shooter
 
     public ShootingSequenceManager(Spindexer spindexer, Shooter shooter) {
         this.spindexer = spindexer;
@@ -87,25 +87,9 @@ public class ShootingSequenceManager {
                 // Wait 0.2s
                 if (timer.seconds() >= DELAY_BEFORE_SHOOTER) {
                     shooter.triggerShot();
-                    state = State.FLICK_SHOOTER;
-                }
-                break;
-
-            case FLICK_SHOOTER:
-                // Wait for spindexer to retract (shooter auto-retracts)
-                if (spindexer.getCurrentState() == FlickState.Idle) {
-                    timer.reset();
-                    state = State.WAIT_AFTER_SHOOTER;
-                }
-                break;
-
-            case WAIT_AFTER_SHOOTER:
-                // Wait 0.1s
-                if (timer.seconds() >= DELAY_AFTER_SHOOTER) {
                     state = State.CLEANUP;
                 }
                 break;
-
             case CLEANUP:
                 // Clear ball from pattern
                 RobotConstants.Spindexer.spindexerPattern.setBallPatternNone(1);

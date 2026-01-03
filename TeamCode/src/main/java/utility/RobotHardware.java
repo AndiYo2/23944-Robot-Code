@@ -1,5 +1,7 @@
 package utility;
 
+import com.arcrobotics.ftclib.controller.PIDController;
+import com.arcrobotics.ftclib.controller.PIDFController;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
@@ -17,7 +19,6 @@ import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import utility.ColorDetection.DualColorSensor;
-import utility.RobotConstants.Enums.BallColor;
 
 public class RobotHardware {
 
@@ -57,6 +58,8 @@ public class RobotHardware {
     public CRServo spindexerServo;
     public Servo spindexerFlipperServo;
     public AnalogInput spindexerEncoder;
+
+    public PIDController spindexerPID;
 
     // ******************* GAME CONTROL ******************* //
     public GamepadEx driver;
@@ -127,6 +130,7 @@ public class RobotHardware {
         spindexerEncoder = hardwareMap.get(AnalogInput.class, RobotConstants.Spindexer.spindexerEncoder);
         spindexerServo = hardwareMap.get(CRServo.class, RobotConstants.Spindexer.spindexerServo);
         spindexerServo.setDirection(DcMotorSimple.Direction.REVERSE);
+        spindexerPID = new PIDController(RobotConstants.Spindexer.SPINDEXER_PID.p, RobotConstants.Spindexer.SPINDEXER_PID.i, RobotConstants.Spindexer.SPINDEXER_PID.d);
 
         // ******************* OUTTAKE ******************* //
         shooterMotor1 = hardwareMap.get(DcMotorEx.class, RobotConstants.Shooter.shooter1);

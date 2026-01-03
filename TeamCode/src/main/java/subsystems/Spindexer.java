@@ -55,6 +55,19 @@ public class Spindexer implements Subsystem {
 
     // Timers
     private final ElapsedTime flickerTimer = new ElapsedTime();
+    private final ElapsedTime settlingTimer = new ElapsedTime();
+
+    // Settling state
+    private boolean isSettling = false;
+    private static final double SETTLING_TIME = 0.02; // Require 100ms stable before stopping
+
+    // Debug tracking
+    private double initPosition = 0;
+    private int initIndex = 0;
+
+    // Initialization state
+    private boolean needsInitialization = true;
+    private double initialEncoderVoltage = -1; // Track first voltage reading
 
     // ====================================================================
     // CONSTRUCTOR
@@ -62,12 +75,17 @@ public class Spindexer implements Subsystem {
 
     /**
      * Initializes the Spindexer subsystem.
-     * Automatically finds and moves to the nearest slot position on startup.
+     * Sets safe default position. Actual position will be determined in periodic()
+     * once encoder is ready (avoids 0V reading during init).
      */
     public Spindexer() {
         this.robot = RobotHardware.getInstance();
-        spindPosTracker = getNearestStartIndex();
-        targetPosition = SPINDEXER_POSITIONS[spindPosTracker];
+
+        // Set safe default position until encoder is ready
+        spindPosTracker = 0;
+        targetPosition = SPINDEXER_POSITIONS[0];
+        // needsInitialization is already true by default
+        // Actual position will be read in periodic() when encoder voltage is valid
     }
 
     // ====================================================================
@@ -80,13 +98,13 @@ public class Spindexer implements Subsystem {
      *
      * <p>The spindexer has 3 slots, so calling this 3 times returns to the start position.
      */
-    public void rotateCW() {
+    public void rotateCCW() {
         if (rotationState != RotationState.IDLE) return; // Prevent conflicts
 
         spindPosTracker = (spindPosTracker + 1) % SPINDEXER_POSITIONS.length;
         targetPosition = SPINDEXER_POSITIONS[spindPosTracker];
         rotationState = RotationState.ROTATING;
-        SpindexerAndMotifStatus.SpindexerPattern.rotateBallsCW();
+        SpindexerAndMotifStatus.SpindexerPattern.rotateBallsCCW();
     }
 
     /**
@@ -95,13 +113,13 @@ public class Spindexer implements Subsystem {
      *
      * <p>The spindexer has 3 slots, so calling this 3 times returns to the start position.
      */
-    public void rotateCCW() {
+    public void rotateCW() {
         if (rotationState != RotationState.IDLE) return; // Prevent conflicts
 
         spindPosTracker = (spindPosTracker - 1 + SPINDEXER_POSITIONS.length) % SPINDEXER_POSITIONS.length;
         targetPosition = SPINDEXER_POSITIONS[spindPosTracker];
         rotationState = RotationState.ROTATING;
-        SpindexerAndMotifStatus.SpindexerPattern.rotateBallsCCW();
+        SpindexerAndMotifStatus.SpindexerPattern.rotateBallsCW();
     }
 
     /**
@@ -231,6 +249,33 @@ public class Spindexer implements Subsystem {
     }
 
     /**
+     * Gets the current slot index (0, 1, or 2).
+     *
+     * @return Current slot index tracker
+     */
+    public int getSpindPosTracker() {
+        return spindPosTracker;
+    }
+
+    /**
+     * Gets the encoder position that was read during initialization.
+     *
+     * @return Initial position in degrees (0-360)
+     */
+    public double getInitPosition() {
+        return initPosition;
+    }
+
+    /**
+     * Gets the index that was selected during initialization.
+     *
+     * @return Initial slot index (0, 1, or 2)
+     */
+    public int getInitIndex() {
+        return initIndex;
+    }
+
+    /**
      * Gets the current servo position in degrees.
      *
      * <p>Reads the encoder voltage and converts it to an angle (0-360°).
@@ -279,24 +324,50 @@ public class Spindexer implements Subsystem {
     // ====================================================================
 
     /**
+     * Checks if the encoder has initialized and is providing valid voltage readings.
+     * Detects when voltage changes from the initial reading, indicating encoder is ready.
+     *
+     * @return true if encoder voltage has changed from initial reading
+     */
+    private boolean isEncoderReady() {
+        double currentVoltage = robot.spindexerEncoder.getVoltage();
+
+        // First call - record initial voltage
+        if (initialEncoderVoltage == -1) {
+            initialEncoderVoltage = currentVoltage;
+            return false; // Not ready yet, just recorded baseline
+        }
+
+        // Check if voltage has changed from initial reading
+        // Encoder is ready when it gives a different value than the initial stuck reading
+        return Math.abs(currentVoltage - initialEncoderVoltage) > 0.01;
+    }
+
+    /**
      * Finds which of the 3 slot positions is closest to the current servo position.
      * Used during initialization to snap to the nearest valid slot.
      */
     private int getNearestStartIndex() {
         double currentPos = getServoPosition();
+        if (isWithinRange(currentPos, SPINDEXER_POSITIONS[0])) return 0;
+        if (isWithinRange(currentPos, SPINDEXER_POSITIONS[1])) return 1;
+        return 2;
+    }
 
-        int nearestIndex = 0;
-        double minDistance = calculateAngularDistance(currentPos, SPINDEXER_POSITIONS[0]);
-
-        for (int i = 1; i < SPINDEXER_POSITIONS.length; i++) {
-            double distance = calculateAngularDistance(currentPos, SPINDEXER_POSITIONS[i]);
-            if (distance < minDistance) {
-                minDistance = distance;
-                nearestIndex = i;
-            }
+    /**
+     * Checks if an angle is within ±60 degrees of a target angle.
+     * Handles wraparound between 0° and 359°.
+     *
+     * @param angle  Angle to check (0-359)
+     * @param target Target angle (0-359)
+     * @return true if angle is within ±60° of target
+     */
+    private boolean isWithinRange(double angle, double target) {
+        double diff = Math.abs(angle - target);
+        if (diff > 180) {
+            diff = 360 - diff;
         }
-
-        return nearestIndex;
+        return diff <= 60;
     }
 
     /**
@@ -323,64 +394,86 @@ public class Spindexer implements Subsystem {
      */
     @Override
     public void periodic() {
+        // Lazy initialization - wait for encoder to be ready (avoids 0V reading at init)
+        if (needsInitialization && isEncoderReady()) {
+            initPosition = getServoPosition();
+            initIndex = getNearestStartIndex();
+            spindPosTracker = initIndex;
+            targetPosition = SPINDEXER_POSITIONS[spindPosTracker];
+            needsInitialization = false;
+        }
+
         flipperStateMachinePeriodic();
         rotationUpdater();
+
     }
 
     /**
-     * Called by periodic() - runs PID controller if rotating.
+     * Called by periodic() - runs PID controller continuously to maintain position.
+     * Always runs regardless of state to provide active position holding.
      */
     private void rotationUpdater() {
-        if (rotationState == RotationState.IDLE) return;
+        // Always run PID controller to actively maintain position
         performPIDRotation();
     }
 
     /**
-     * Internal PID controller for smooth rotation to target position.
+     * Internal PID controller for smooth rotation and active position holding.
      *
-     * <p>Uses proportional-integral-derivative control with:
+     * <p>Features:
      * <ul>
      *   <li>Shortest path calculation (handles 360° wraparound)</li>
-     *   <li>Anti-windup integral clamping</li>
-     *   <li>Fixed dt (assumes ~50Hz loop rate)</li>
-     *   <li>Power clamping to ±0.5 for safety</li>
+     *   <li>Continuous operation - NEVER stops correcting position</li>
+     *   <li>Active position holding - resists external forces and drift</li>
+     *   <li>Settling time verification before declaring rotation complete</li>
      * </ul>
      *
-     * <p>Automatically returns to IDLE state when within acceptable error range.
+     * <p>The controller runs continuously. State transitions to IDLE after settling,
+     * but corrections continue to maintain exact position.
      */
     private void performPIDRotation() {
         double currentPosition = getServoPosition();
-        double error = targetPosition - currentPosition;
+        boolean withinTolerance = isDoneRotating();
 
-        // Take shortest path around circle (e.g., -350° error becomes +10°)
-        if (error > 180) error -= 360;
-        if (error < -180) error += 360;
+        // Update state based on settling (for external code to know when rotation is "done")
+        if (rotationState == RotationState.ROTATING) {
+            if (withinTolerance) {
+                // Start settling timer if we just entered tolerance zone
+                if (!isSettling) {
+                    isSettling = true;
+                    settlingTimer.reset();
+                }
 
-        // Check if we're close enough (deadband)
-        if (Math.abs(error) < angleRange) {
-            robot.spindexerServo.setPower(0);
-            rotationState = RotationState.IDLE;
-            integral = 0;
-            return;
+                // Check if we've been stable long enough to declare rotation complete
+                if (settlingTimer.seconds() >= SETTLING_TIME) {
+                    rotationState = RotationState.IDLE;
+                    isSettling = false;
+                }
+            } else {
+                // Outside tolerance - reset settling
+                isSettling = false;
+            }
         }
 
-        // Fixed dt assuming ~50Hz loop rate
-        double dt = 0.02;
+        // ALWAYS calculate and apply PID correction (active position holding)
+        double correction = 0.0;
 
-        // PID calculations with anti-windup
-        integral += error * dt;
-        integral = Math.max(-50, Math.min(50, integral)); // Anti-windup: prevent integral from growing unbounded
-        double derivative = (error - lastError) / dt;
-        lastError = error;
+        if (!Double.isNaN(currentPosition)) {
+            // Calculate the shortest angular path (handle wraparound)
+            double error = targetPosition - currentPosition;
 
-        double power = (SPINDEXER_PID.p * error) +
-                       (SPINDEXER_PID.i * integral) +
-                       (SPINDEXER_PID.d * derivative);
+            // Normalize error to [-180, 180] range for shortest path
+            while (error > 180) error -= 360;
+            while (error < -180) error += 360;
 
-        // Clamp power to safe limits
-        power = Math.max(-0.5, Math.min(0.5, power));
+            // Create a "virtual" target that's on the shortest path from current position
+            double wrappedTarget = currentPosition + error;
 
-        robot.spindexerServo.setPower(power);
+            correction = robot.spindexerPID.calculate(currentPosition, wrappedTarget);
+        }
+
+        // Always apply correction - never let the servo coast
+        robot.spindexerServo.setPower(correction);
     }
 
     /**

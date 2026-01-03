@@ -34,10 +34,10 @@ public class TurretPIDFTuningTeleOp extends OpMode {
     private double cumulativePosition = 0;
     private int rotationCount = 0;
 
-    // PID coefficients - Tuned values
-    private double P = 0.013;
-    private double I = 0;
-    private double D = 0.00030;
+    // PID coefficients - Starting from RobotConstants or default values
+    private double P = RobotConstants.Shooter.TURRET_PID.p;
+    private double I = RobotConstants.Shooter.TURRET_PID.i;
+    private double D = RobotConstants.Shooter.TURRET_PID.d;
 
     // PID calculation variables
     private double lastError = 0;
@@ -45,7 +45,7 @@ public class TurretPIDFTuningTeleOp extends OpMode {
     private double lastTime = 0;
     private boolean firstLoop = true;
 
-    // Step sizes for tuning
+    // Step sizes for tuning - press B to cycle through these
     private double[] stepSizes = {0.1, 0.01, 0.001, 0.0001, 0.00001};
     private int stepIndex = 2; // Start with 0.001
 
