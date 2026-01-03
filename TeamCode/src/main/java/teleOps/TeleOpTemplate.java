@@ -18,6 +18,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     protected Shooter shooter;
     protected Intake intake;
     protected Spindexer spindexer;
+    protected subsystems.Limelight limelight;
     protected GamepadEx driverGamepad;
     private final RobotHardware robot = RobotHardware.getInstance();
 
@@ -48,6 +49,10 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         intake = new Intake();
         shooter = new Shooter();
         spindexer = new Spindexer();
+        limelight = new subsystems.Limelight();
+
+        // Link Limelight subsystem to Shooter for dual-mode tracking
+        shooter.setLimelightSubsystem(limelight);
 
         sequenceManager = new ShootingSequenceManager(spindexer, shooter);
         shootingValidator = new ShootingValidator(shooter, telemetry);
@@ -58,7 +63,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         kI = RobotConstants.Shooter.TURRET_PID.i;
         kD = RobotConstants.Shooter.TURRET_PID.d;
 
-        register(intake, shooter, spindexer);
+        register(intake, shooter, spindexer, limelight);
     }
 
     protected void configureButtonBindings() {
@@ -98,7 +103,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_UP)
                 .whenPressed(() -> {
                     if (!pidTuningMode) {
-                        shooter.toggleLimelightEnabled();
+                        limelight.toggleMode();
                     }
                 });
     }
@@ -283,6 +288,16 @@ abstract public class TeleOpTemplate extends CommandOpMode {
             telemetry.addData("Current PID", "new PIDCoefficients(%.5f, %.5f, %.5f)", kP, kI, kD);
             telemetry.addLine("========================================");
             telemetry.addLine("");
+        }
+
+        // Limelight mode and status
+        telemetry.addData("Limelight Mode:", limelight.getCurrentMode());
+        if (limelight.isMotifDetected()) {
+            telemetry.addData("Motif Tag Detected:", limelight.getDetectedTagId());
+            telemetry.addData("Motif Pattern:", String.format("[%s, %s, %s]",
+                RobotConstants.Limelight.motifPattern.getBallColorInSlotX(0),
+                RobotConstants.Limelight.motifPattern.getBallColorInSlotX(1),
+                RobotConstants.Limelight.motifPattern.getBallColorInSlotX(2)));
         }
 
         telemetry.addLine("Catalogging Debug stuff");

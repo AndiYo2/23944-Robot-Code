@@ -52,6 +52,9 @@ public class Shooter implements Subsystem {
     private double cumulativeTurretPosition = 0;
     private int turretRotationCount = 0;
 
+    // Limelight subsystem reference for dual-mode tracking
+    private subsystems.Limelight limelightSubsystem;
+
 
     public Shooter() {
         this.robot = RobotHardware.getInstance();
@@ -192,13 +195,21 @@ public class Shooter implements Subsystem {
     }
 
     public void turretPeriodic(){
-        switch (fieldState) {
-            case IdleZone:
-                setTurretDegree(CENTER);
-                break;
-            case ShootingZone:
-                setTurretDegree(getDegreesToGoal());
-                break;
+        // Check Limelight mode if subsystem is available
+        if (limelightSubsystem != null &&
+            limelightSubsystem.getCurrentMode() == RobotConstants.Enums.LimelightMode.TagTracking) {
+            // Tag Tracking mode: Point at TAG_GOAL_POSITION
+            setTurretDegree(getDegreesToTagGoal());
+        } else {
+            // Goal Tracking mode: Use field state logic
+            switch (fieldState) {
+                case IdleZone:
+                    setTurretDegree(CENTER);
+                    break;
+                case ShootingZone:
+                    setTurretDegree(getDegreesToGoal());
+                    break;
+            }
         }
     }
     
@@ -225,6 +236,30 @@ public class Shooter implements Subsystem {
 
         // Apply tracking offset to compensate for systematic error
         relativeAngle += RobotConstants.Shooter.TURRET_TRACKING_OFFSET;
+
+        return relativeAngle;
+    }
+
+    /**
+     * Calculates turret angle to point at TAG_GOAL_POSITION (72, 143)
+     * Used during Tag Tracking mode to position Limelight for tag detection
+     * @return Turret angle in degrees (robot-relative)
+     */
+    public double getDegreesToTagGoal() {
+        Pose2D currentPose = robot.pinpoint.getPosition();
+        double[] turretPos = getTurretFieldPosition();
+
+        double deltaX = RobotConstants.Limelight.TAG_GOAL_X - turretPos[0];
+        double deltaY = RobotConstants.Limelight.TAG_GOAL_Y - turretPos[1];
+
+        // Calculate angle relative to robot's heading
+        double absoluteAngle = Math.atan2(deltaY, deltaX);
+        double robotHeading = currentPose.getHeading(AngleUnit.RADIANS);
+        double relativeAngle = Math.toDegrees(absoluteAngle - robotHeading);
+
+        // Normalize to ±180° for shortest path
+        while (relativeAngle > 180) relativeAngle -= 360;
+        while (relativeAngle < -180) relativeAngle += 360;
 
         return relativeAngle;
     }
@@ -385,6 +420,14 @@ public class Shooter implements Subsystem {
 
     public void toggleLimelightEnabled(){
         RobotConstants.Limelight.isLimelightDisabled = !RobotConstants.Limelight.isLimelightDisabled;
+    }
+
+    /**
+     * Sets the Limelight subsystem reference for dual-mode tracking
+     * @param limelight The Limelight subsystem instance
+     */
+    public void setLimelightSubsystem(subsystems.Limelight limelight) {
+        this.limelightSubsystem = limelight;
     }
 
     /**

@@ -113,7 +113,31 @@ public class RobotConstants {
 
         public static String limelight = "limelight";
         public static boolean isLimelightDisabled = false;
-        public static SpindexerAndMotifStatus.MotifPattern motifPattern = new SpindexerAndMotifStatus.MotifPattern(Enums.BallColor.Green, Enums.BallColor.Purple, Enums.BallColor.Purple);
+        public static SpindexerAndMotifStatus.MotifPattern motifPattern = new SpindexerAndMotifStatus.MotifPattern(Enums.BallColor.Purple, Enums.BallColor.Green, Enums.BallColor.Purple);
+
+        // TAG_GOAL_POSITION for motif scanning (top center of field, slightly out of bounds)
+        public static final double TAG_GOAL_X = 72.0; // inches
+        public static final double TAG_GOAL_Y = 143.0; // inches
+
+        // AprilTag to Motif mappings
+        public static final Enums.BallColor[] APRILTAG_21_PATTERN = {
+            Enums.BallColor.Green, Enums.BallColor.Purple, Enums.BallColor.Purple
+        };
+        public static final Enums.BallColor[] APRILTAG_22_PATTERN = {
+            Enums.BallColor.Purple, Enums.BallColor.Green, Enums.BallColor.Purple
+        };
+        public static final Enums.BallColor[] APRILTAG_23_PATTERN = {
+            Enums.BallColor.Purple, Enums.BallColor.Purple, Enums.BallColor.Green
+        };
+
+        public static Enums.BallColor[] getMotifPatternForTag(int tagId) {
+            switch (tagId) {
+                case 21: return APRILTAG_21_PATTERN;
+                case 22: return APRILTAG_22_PATTERN;
+                case 23: return APRILTAG_23_PATTERN;
+                default: return null;
+            }
+        }
     }
 
     public static class Pinpoint{
@@ -184,6 +208,10 @@ public class RobotConstants {
             SlowMode,           // Precision mode
             AutoDriving,        // Autonomous navigation
             Locked              // Defense mode (X-pattern)
+        }
+        public enum LimelightMode {
+            GoalTracking,       // Track basket for shooting
+            TagTracking         // Scan for motif AprilTags
         }
     }
 }
