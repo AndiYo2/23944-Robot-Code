@@ -140,10 +140,9 @@ public abstract class AutonTemplate extends OpMode {
      */
     protected void catalogBallAuton() {
         // Refresh color sensor reading
-        robotHardware.intakeSensor.refreshScan();
 
         // Get detected ball color
-        BallColor detectedColor = robotHardware.intakeSensor.getBallColor();
+        BallColor detectedColor = BallColor.None;
 
         // Only catalog if we detected an actual ball (not None)
         if (detectedColor != BallColor.None) {

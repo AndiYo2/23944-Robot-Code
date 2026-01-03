@@ -124,10 +124,10 @@ public class Spindexer implements Subsystem {
 
     /**
      * Rotates the spindexer clockwise to the next slot position.
-     * This is an alias for {@link #rotateCW()}.
+     * This is an alias for {@link #rotateCCW()}.
      */
     public void rotateToNextSlot() {
-        rotateCW();
+        rotateCCW();
     }
 
     /**

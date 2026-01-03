@@ -3,7 +3,7 @@ package tests;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.ColorSensor;
-import utility.ColorDetection.DualBallDetector;
+import utility.DualBallDetector;
 
 
 @TeleOp(name = "ColorSensorTestOpMode", group = "Tests")
@@ -21,9 +21,8 @@ public class ColorSensorTestOpMode extends LinearOpMode {
         colorSensor2 = hardwareMap.get(ColorSensor.class, "intakeSensor2");
 
         ballDetector = new DualBallDetector(
-                hardwareMap,
-                "intakeSensor1",
-                "intakeSensor2"
+                colorSensor1,
+                colorSensor2
         );
 
         telemetry.addData("Status", "Initialized");

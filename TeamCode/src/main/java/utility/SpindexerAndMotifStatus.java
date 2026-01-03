@@ -28,18 +28,18 @@ public class SpindexerAndMotifStatus {
             spindexerPattern = new RobotConstants.Enums.BallColor[]{zero, one, two};
         }
 
+        public static void rotateBallsCCW(){
+            RobotConstants.Enums.BallColor temp0 = spindexerPattern[0];
+            spindexerPattern[0] = spindexerPattern[2];
+            spindexerPattern[2] = spindexerPattern[1];
+            spindexerPattern[1] = temp0;
+        }
+
         public static void rotateBallsCW(){
             RobotConstants.Enums.BallColor temp0 = spindexerPattern[0];
             spindexerPattern[0] = spindexerPattern[1];
             spindexerPattern[1] = spindexerPattern[2];
             spindexerPattern[2] = temp0;
-        }
-
-        public static void rotateBallsCCW(){
-            RobotConstants.Enums.BallColor temp0 = spindexerPattern[2];
-            spindexerPattern[2] = spindexerPattern[1];
-            spindexerPattern[1] = spindexerPattern[0];
-            spindexerPattern[0] = temp0;
         }
 
         /**

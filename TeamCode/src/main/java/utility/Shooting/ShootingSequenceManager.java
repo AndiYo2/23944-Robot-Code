@@ -6,6 +6,7 @@ import subsystems.Shooter;
 import utility.RobotConstants;
 import utility.RobotConstants.Enums.BallColor;
 import utility.RobotConstants.Enums.FlickState;
+import utility.SpindexerAndMotifStatus;
 
 /**
  * ShootingSequenceManager - Simple 3-ball shooting sequence
@@ -101,8 +102,7 @@ public class ShootingSequenceManager {
                 } else {
                     // More balls to shoot - rotate spindexer
                     state = State.ROTATE_SPINDEXER;
-                    spindexer.rotateCW();
-                    rotateBallPatternForward();
+                    spindexer.rotateCCW();
                 }
                 break;
 
@@ -120,13 +120,6 @@ public class ShootingSequenceManager {
                 }
                 break;
         }
-    }
-
-    private void rotateBallPatternForward() {
-        BallColor slot0 = RobotConstants.Spindexer.spindexerPattern.getBallInSlotX(0);
-        BallColor slot1 = RobotConstants.Spindexer.spindexerPattern.getBallInSlotX(1);
-        BallColor slot2 = RobotConstants.Spindexer.spindexerPattern.getBallInSlotX(2);
-        RobotConstants.Spindexer.spindexerPattern.setBallPattern(slot2, slot0, slot1);
     }
 
     public boolean isIdle() {

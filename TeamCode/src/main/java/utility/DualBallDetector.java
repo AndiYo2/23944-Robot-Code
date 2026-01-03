@@ -1,11 +1,10 @@
-package utility.ColorDetection;
+package utility;
 
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import utility.RobotConstants.Enums.BallColor;
 
 public class DualBallDetector {
-
-    public enum BallColor { GREEN, PURPLE, NONE }
 
     public static class Result {
         public final boolean ballPresent;
@@ -50,9 +49,9 @@ public class DualBallDetector {
     private final SensorState nearState;
     private final SensorState farState;
 
-    public DualBallDetector(HardwareMap hw, String nearName, String farName) {
-        near = hw.get(ColorSensor.class, nearName);
-        far  = hw.get(ColorSensor.class, farName);
+    public DualBallDetector(ColorSensor sensor1, ColorSensor sensor2) {
+        this.near = sensor1;
+        this.far = sensor2;
 
         nearState = new SensorState(MIN_ALPHA_NEAR);
         farState  = new SensorState(MIN_ALPHA_FAR);
@@ -76,7 +75,7 @@ public class DualBallDetector {
 
         // If neither sees a ball
         if (!nearResult.ballPresent && !farResult.ballPresent) {
-            return new Result(false, BallColor.NONE, 0.0);
+            return new Result(false, BallColor.None, 0.0);
         }
 
         // If only one sees a ball
@@ -139,7 +138,7 @@ public class DualBallDetector {
         Result evaluate() {
 
             if (samples < BUFFER_SIZE) {
-                return new Result(false, BallColor.NONE, 0.0);
+                return new Result(false, BallColor.None, 0.0);
             }
 
             int present = 0;
@@ -155,7 +154,7 @@ public class DualBallDetector {
             }
 
             if (present < REQUIRED_PRESENT) {
-                return new Result(false, BallColor.NONE, 0.0);
+                return new Result(false, BallColor.None, 0.0);
             }
 
             r /= present;
@@ -167,12 +166,12 @@ public class DualBallDetector {
 
             double bestC = Math.max(gC, pC);
             if (bestC < MIN_CONFIDENCE) {
-                return new Result(false, BallColor.NONE, bestC);
+                return new Result(false, BallColor.None, bestC);
             }
 
             return (gC > pC)
-                    ? new Result(true, BallColor.GREEN, gC)
-                    : new Result(true, BallColor.PURPLE, pC);
+                    ? new Result(true, BallColor.Green, gC)
+                    : new Result(true, BallColor.Purple, pC);
         }
     }
 

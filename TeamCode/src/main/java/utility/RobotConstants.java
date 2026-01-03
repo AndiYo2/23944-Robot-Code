@@ -41,7 +41,7 @@ public class RobotConstants {
         public final static PIDCoefficients SPINDEXER_PID = new PIDCoefficients(0.006, 0, 0.00015);
 
         // Acceptable position error (degrees) - stops rotation when within this range
-        public static final double ANGLE_RANGE = 7.5;
+        public static final double ANGLE_RANGE = 10;
 
         // Spindexer slot positions in degrees (3 equally-spaced slots: 120° apart)
         public static final int[] SPINDEXER_POSITIONS = {62, 182, 302};
@@ -164,6 +164,11 @@ public class RobotConstants {
             Green,
             None
         }
+        public enum CatalogingCases{
+            Idle,
+            Scanning,
+            WaitingForRotation
+        }
         public enum IntakeState {
             Idle,           // Motors stopped
             Intaking,       // Both motors forward (runs continuously)
@@ -178,12 +183,6 @@ public class RobotConstants {
             SlowMode,           // Precision mode
             AutoDriving,        // Autonomous navigation
             Locked              // Defense mode (X-pattern)
-        }
-        public enum ColorSensorState {
-            Idle,           // Not monitoring
-            Scanning,       // Active monitoring
-            BallDetected,   // Ball just entered
-            BallHeld        // Ball present and stable
         }
     }
 }

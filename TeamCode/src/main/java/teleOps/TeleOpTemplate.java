@@ -13,8 +13,6 @@ import utility.*;
 import utility.Shooting.ShootingSequenceManager;
 import utility.Shooting.ShootingValidator;
 
-import static utility.RobotConstants.Spindexer.spindexerPattern;
-
 abstract public class TeleOpTemplate extends CommandOpMode {
     protected MecanumDrive mecanumDrive;
     protected Shooter shooter;
@@ -25,6 +23,8 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
     private ShootingSequenceManager sequenceManager;
     private ShootingValidator shootingValidator;
+
+    private CatalogManager catalogManager;
 
     // PID Tuning Mode (for Turret)
     private boolean pidTuningMode = false;
@@ -51,6 +51,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
         sequenceManager = new ShootingSequenceManager(spindexer, shooter);
         shootingValidator = new ShootingValidator(shooter, telemetry);
+        catalogManager = new CatalogManager(spindexer, intake, telemetry, robot.intakeSensorPair);
 
         // Initialize PID tuning values from current turret settings
         kP = RobotConstants.Shooter.TURRET_PID.p;
@@ -79,13 +80,15 @@ abstract public class TeleOpTemplate extends CommandOpMode {
                 .whenPressed(() -> spindexer.triggerFlick());
         new GamepadButton(driverGamepad, GamepadKeys.Button.A)
                 .whenPressed(() -> attemptShootingSequence());
+        new GamepadButton(driverGamepad, GamepadKeys.Button.Y)
+                .whenPressed(() -> catalogManager.initiateCataloging());
 
         // Manual spindexer controls
         new GamepadButton(driverGamepad, GamepadKeys.Button.LEFT_BUMPER)
-                .whenPressed(() -> manualRotateBackward());
+                .whenPressed(() -> manualRotateCCW());
 
         new GamepadButton(driverGamepad, GamepadKeys.Button.RIGHT_BUMPER)
-                .whenPressed(() -> manualRotateForward());
+                .whenPressed(() -> manualRotateCW());
 
         // PID Tuning Mode toggle
         new GamepadButton(driverGamepad, GamepadKeys.Button.BACK)
@@ -153,7 +156,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
      * Manual rotation forward with ball pattern update
      * Blocked during shooting sequence to prevent conflicts
      */
-    private void manualRotateForward() {
+    private void manualRotateCW() {
         if (sequenceManager.isExecuting()) {
             return; // Block manual rotation during shooting sequence
         }
@@ -164,7 +167,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
      * Manual rotation backward with ball pattern update
      * Blocked during shooting sequence to prevent conflicts
      */
-    private void manualRotateBackward() {
+    private void manualRotateCCW() {
         if (sequenceManager.isExecuting()) {
             return; // Block manual rotation during shooting sequence
         }
@@ -244,6 +247,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         spindexer.periodic();
         shooter.periodic();
         sequenceManager.update();
+        catalogManager.update();
 
 
 
@@ -253,7 +257,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         boolean overrideRequested = gamepad1.right_stick_button;
 
         // Refresh sensor readings for telemetry
-        robot.intakeSensor.refreshScan();
 
         // PID TUNING MODE - Display prominently at top
         if (pidTuningMode) {
@@ -282,6 +285,14 @@ abstract public class TeleOpTemplate extends CommandOpMode {
             telemetry.addLine("");
         }
 
+        telemetry.addLine("Catalogging Debug stuff");
+        telemetry.addData("Spindexer Pattern:", SpindexerAndMotifStatus.SpindexerPattern.getSpindexerPatternString());
+        telemetry.addData("Catalog State:", this.catalogManager.getState());
+        telemetry.addLine("=== BALL DETECTION ===");
+        DualBallDetector.Result result = robot.intakeSensorPair.detectBall();
+        telemetry.addData("Ball Present", result.ballPresent);
+        telemetry.addData("Ball Color", result.color);
+        telemetry.addData("Confidence", "%.1f%%", result.confidence * 100);
         // Debug telemetry - always display
         telemetry.addData("Executing Sequence:", sequenceManager.isExecuting());
         if (sequenceManager.isExecuting()) {
@@ -294,7 +305,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         telemetry.addData("Turret Pos:", String.format("%.1f°", shooter.getTurretPosition()));
         telemetry.addData("Turret Target:", String.format("%.1f°", shooter.getTargetTurretAngle()));
         telemetry.addData("Turret Error:", String.format("%.1f°", shooter.getTargetTurretAngle() - shooter.getTurretPosition()));
-        telemetry.addData("Intake Color:", robot.intakeSensor.getBallColor());
         telemetry.addData("Spindexer Pattern:", SpindexerAndMotifStatus.SpindexerPattern.getSpindexerPatternString());
 
         // Spindexer position debugging

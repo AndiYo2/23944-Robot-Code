@@ -18,7 +18,6 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import utility.ColorDetection.DualColorSensor;
 
 public class RobotHardware {
 
@@ -50,9 +49,8 @@ public class RobotHardware {
     // Intake sensors (2 sensors offset at first spindexer slot to avoid ball holes)
     public ColorSensor intakeSensor1;
     public ColorSensor intakeSensor2;
+    public DualBallDetector intakeSensorPair;
 
-    // Dual sensor reader (combines 2 sensors for reliable detection)
-    public DualColorSensor intakeSensor;
 
     // ******************* SPINDEXER ******************* //
     public CRServo spindexerServo;
@@ -122,7 +120,8 @@ public class RobotHardware {
         // Intake sensors (2 offset sensors at first spindexer slot to avoid ball holes)
         intakeSensor1 = hardwareMap.get(ColorSensor.class, RobotConstants.ColorSensor.intakeSensor1);
         intakeSensor2 = hardwareMap.get(ColorSensor.class, RobotConstants.ColorSensor.intakeSensor2);
-        intakeSensor = new DualColorSensor(intakeSensor1, intakeSensor2);
+        intakeSensorPair = new DualBallDetector(intakeSensor1, intakeSensor2);
+
 
         // ******************* SPINDEXER ******************* //
         spindexerFlipperServo = hardwareMap.get(Servo.class, RobotConstants.Spindexer.spindexerFLipperServo);
