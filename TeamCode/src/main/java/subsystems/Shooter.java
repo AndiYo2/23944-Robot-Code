@@ -92,6 +92,9 @@ public class Shooter implements Subsystem {
         // Calculate initial cumulative position with offset applied
         double cumulativeRaw = rawDegrees + (turretRotationCount * 360);
         cumulativeTurretPosition = cumulativeRaw - RobotConstants.Shooter.ENCODER_OFFSET;
+
+        // Initialize flipper to retracted position
+        robot.shooterFlipper.setPosition(RobotConstants.Shooter.FLIPPER_POSITION_RETRACT);
     }
 
 

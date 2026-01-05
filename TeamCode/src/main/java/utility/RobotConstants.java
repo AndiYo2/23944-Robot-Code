@@ -38,13 +38,33 @@ public class RobotConstants {
 
         public static final double FLICK_TIME = 0.15;
 
-        public final static PIDCoefficients SPINDEXER_PID = new PIDCoefficients(0.006, 0, 0.00015);
+        // Spindexer PIDF coefficients - direction-specific for vertical mounting
+        // CW rotation (with gravity assist)
+        public static final double SPINDEXER_CW_P = 0.0089;
+        public static final double SPINDEXER_CW_I = 0.0;
+        public static final double SPINDEXER_CW_D = 0.0001;
+        public static final double SPINDEXER_CW_F = 0.0;
+
+        // CCW rotation (against gravity)
+        public static final double SPINDEXER_CCW_P = 0.0055;
+        public static final double SPINDEXER_CCW_I = 0.02;
+        public static final double SPINDEXER_CCW_D = 0.0003;
+        public static final double SPINDEXER_CCW_F = 0.0003;
+
+        // Legacy default values (backwards compatibility)
+        public static final double SPINDEXER_P = SPINDEXER_CCW_P;
+        public static final double SPINDEXER_I = SPINDEXER_CCW_I;
+        public static final double SPINDEXER_D = SPINDEXER_CCW_D;
+        public static final double SPINDEXER_F = SPINDEXER_CCW_F;
+
+        // Legacy PIDCoefficients for backwards compatibility
+        public final static PIDCoefficients SPINDEXER_PID = new PIDCoefficients(SPINDEXER_P, SPINDEXER_I, SPINDEXER_D);
 
         // Acceptable position error (degrees) - stops rotation when within this range
-        public static final double ANGLE_RANGE = 10;
+        public static final double ANGLE_RANGE = 7;
 
         // Spindexer slot positions in degrees (3 equally-spaced slots: 120° apart)
-        public static final int[] SPINDEXER_POSITIONS = {62, 182, 302};
+        public static final int[] SPINDEXER_POSITIONS = {65, 185, 305};
 
     }
 
@@ -88,7 +108,7 @@ public class RobotConstants {
         public static final double SHOOTER_P = 5.0;
         public static final double SHOOTER_I = 0.0;
         public static final double SHOOTER_D = 0.0;
-        public static final double SHOOTER_F = 6.4;
+        public static final double SHOOTER_F = 7.4;
     }
 
     public static class ColorSensor {

@@ -41,7 +41,7 @@ public class ShootingSequenceManager {
     private ElapsedTime timer = new ElapsedTime();
 
     // Timing constants
-    private static final double DELAY_BEFORE_SHOOTER = 0.02;  // 200ms between spindexer and shooter
+    private static final double DELAY_BEFORE_SHOOTER = 0.08;  // 200ms between spindexer and shooter
 
     public ShootingSequenceManager(Spindexer spindexer, Shooter shooter) {
         this.spindexer = spindexer;

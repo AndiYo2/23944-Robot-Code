@@ -57,7 +57,7 @@ public class RobotHardware {
     public Servo spindexerFlipperServo;
     public AnalogInput spindexerEncoder;
 
-    public PIDController spindexerPID;
+    public PIDFController spindexerPID;
 
     // ******************* GAME CONTROL ******************* //
     public GamepadEx driver;
@@ -129,7 +129,7 @@ public class RobotHardware {
         spindexerEncoder = hardwareMap.get(AnalogInput.class, RobotConstants.Spindexer.spindexerEncoder);
         spindexerServo = hardwareMap.get(CRServo.class, RobotConstants.Spindexer.spindexerServo);
         spindexerServo.setDirection(DcMotorSimple.Direction.REVERSE);
-        spindexerPID = new PIDController(RobotConstants.Spindexer.SPINDEXER_PID.p, RobotConstants.Spindexer.SPINDEXER_PID.i, RobotConstants.Spindexer.SPINDEXER_PID.d);
+        spindexerPID = new PIDFController(RobotConstants.Spindexer.SPINDEXER_P, RobotConstants.Spindexer.SPINDEXER_I, RobotConstants.Spindexer.SPINDEXER_D, RobotConstants.Spindexer.SPINDEXER_F);
 
         // ******************* OUTTAKE ******************* //
         shooterMotor1 = hardwareMap.get(DcMotorEx.class, RobotConstants.Shooter.shooter1);

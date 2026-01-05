@@ -17,10 +17,11 @@ public class SpindexerPIDFTuningTeleOp extends OpMode {
     private double[] targetPositions = {62, 182, 302};
     private int targetIndex = 0;
 
-    // PID coefficients - INCREASED starting values
-    private double P = RobotConstants.Spindexer.SPINDEXER_PID.p;  // Increased from 0.0001
-    private double I = RobotConstants.Spindexer.SPINDEXER_PID.i;
-    private double D = RobotConstants.Spindexer.SPINDEXER_PID.d; // Added small D term
+    // PIDF coefficients - starting values from constants
+    private double P = RobotConstants.Spindexer.SPINDEXER_P;
+    private double I = RobotConstants.Spindexer.SPINDEXER_I;
+    private double D = RobotConstants.Spindexer.SPINDEXER_D;
+    private double F = RobotConstants.Spindexer.SPINDEXER_F;
 
     // PID calculation variables
     private double lastError = 0;
@@ -47,6 +48,8 @@ public class SpindexerPIDFTuningTeleOp extends OpMode {
         telemetry.addLine("D-Pad Left/Right: Adjust D");
         telemetry.addLine("Left Bumper: Decrease I");
         telemetry.addLine("Right Bumper: Increase I");
+        telemetry.addLine("Left Trigger: Decrease F");
+        telemetry.addLine("Right Trigger: Increase F");
         telemetry.update();
     }
 
@@ -97,6 +100,14 @@ public class SpindexerPIDFTuningTeleOp extends OpMode {
             I = Math.max(0, I);
         }
 
+        // Handle F tuning
+        if (gamepad1.right_trigger > 0.1) {
+            F += stepSizes[stepIndex];
+        }
+        if (gamepad1.left_trigger > 0.1) {
+            F -= stepSizes[stepIndex];
+        }
+
         // Get current position
         double currentPosition = getCurrentPosition();
 
@@ -132,8 +143,10 @@ public class SpindexerPIDFTuningTeleOp extends OpMode {
         double derivative = (error - lastError) / dt;
         lastError = error;
 
-        // Calculate PID output
-        double output = P * error + I * integral + D * derivative;
+        // Calculate PIDF output
+        double pidOutput = P * error + I * integral + D * derivative;
+        double feedforward = F; // Constant feedforward term
+        double output = pidOutput + feedforward;
 
         // Clamp output
         output = Math.max(-1, Math.min(1, output));
@@ -149,17 +162,23 @@ public class SpindexerPIDFTuningTeleOp extends OpMode {
         telemetry.addData("P", "%.5f (D-Pad U/D)", P);
         telemetry.addData("I", "%.5f (Bumpers)", I);
         telemetry.addData("D", "%.5f (D-Pad L/R)", D);
+        telemetry.addData("F", "%.5f (Triggers)", F);
         telemetry.addData("Step Size", "%.5f (B)", stepSizes[stepIndex]);
         telemetry.addLine("-----------------------------");
-        telemetry.addData("PID Output", "%.3f", output);
+        telemetry.addData("PID Output", "%.3f", pidOutput);
+        telemetry.addData("Feedforward", "%.3f", feedforward);
+        telemetry.addData("Total Output", "%.3f", output);
         telemetry.addData("Motor Power", "%.3f", robot.spindexerServo.getPower());
         telemetry.addData("Integral", "%.3f", integral);
         telemetry.addData("Derivative", "%.3f", derivative);
         telemetry.addData("dt", "%.4f", dt);
         telemetry.addLine("-----------------------------");
         telemetry.addLine("Press Y to cycle target position");
-        telemetry.addLine("Current PID Coefficients:");
-        telemetry.addData("", "new PIDCoefficients(%.5f, %.5f, %.5f)", P, I, D);
+        telemetry.addLine("Current PIDF Constants:");
+        telemetry.addData("", "SPINDEXER_P = %.5f", P);
+        telemetry.addData("", "SPINDEXER_I = %.5f", I);
+        telemetry.addData("", "SPINDEXER_D = %.5f", D);
+        telemetry.addData("", "SPINDEXER_F = %.5f", F);
         telemetry.update();
     }
 

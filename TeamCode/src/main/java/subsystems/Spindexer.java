@@ -41,6 +41,7 @@ public class Spindexer implements Subsystem {
     // State tracking
     private RotationState rotationState = RotationState.IDLE;
     private FlickState currentState = FlickState.Idle;
+    private boolean cwRotationControlsIntake = false;
 
     // Position tracking
     private int targetPosition;
@@ -59,7 +60,7 @@ public class Spindexer implements Subsystem {
 
     // Settling state
     private boolean isSettling = false;
-    private static final double SETTLING_TIME = 0.02; // Require 100ms stable before stopping
+    private static final double SETTLING_TIME = 0.1; // Require 100ms stable before stopping
 
     // Debug tracking
     private double initPosition = 0;
@@ -84,8 +85,12 @@ public class Spindexer implements Subsystem {
         // Set safe default position until encoder is ready
         spindPosTracker = 0;
         targetPosition = SPINDEXER_POSITIONS[0];
+        cwRotationControlsIntake = false; // Ensure clean initial state
         // needsInitialization is already true by default
         // Actual position will be read in periodic() when encoder voltage is valid
+
+        // Initialize flipper to retracted position
+        robot.spindexerFlipperServo.setPosition(RobotConstants.Spindexer.FLIPPER_POSITION_RETRACT);
     }
 
     // ====================================================================
@@ -100,6 +105,21 @@ public class Spindexer implements Subsystem {
      */
     public void rotateCCW() {
         if (rotationState != RotationState.IDLE) return; // Prevent conflicts
+
+        robot.spindexerPID.reset();
+        // Set CCW-specific PID gains (against gravity)
+        robot.spindexerPID.setPIDF(
+            RobotConstants.Spindexer.SPINDEXER_CCW_P,
+            RobotConstants.Spindexer.SPINDEXER_CCW_I,
+            RobotConstants.Spindexer.SPINDEXER_CCW_D,
+            RobotConstants.Spindexer.SPINDEXER_CCW_F
+        );
+
+        // Clean up CW rotation intake control if switching directions
+        if (cwRotationControlsIntake) {
+            robot.intakeBeltMotor.setPower(0.0);
+            cwRotationControlsIntake = false;
+        }
 
         spindPosTracker = (spindPosTracker + 1) % SPINDEXER_POSITIONS.length;
         targetPosition = SPINDEXER_POSITIONS[spindPosTracker];
@@ -116,10 +136,23 @@ public class Spindexer implements Subsystem {
     public void rotateCW() {
         if (rotationState != RotationState.IDLE) return; // Prevent conflicts
 
+        robot.spindexerPID.reset();
+        // Set CW-specific PID gains (with gravity assist)
+        robot.spindexerPID.setPIDF(
+            RobotConstants.Spindexer.SPINDEXER_CW_P,
+            RobotConstants.Spindexer.SPINDEXER_CW_I,
+            RobotConstants.Spindexer.SPINDEXER_CW_D,
+            RobotConstants.Spindexer.SPINDEXER_CW_F
+        );
+
         spindPosTracker = (spindPosTracker - 1 + SPINDEXER_POSITIONS.length) % SPINDEXER_POSITIONS.length;
         targetPosition = SPINDEXER_POSITIONS[spindPosTracker];
         rotationState = RotationState.ROTATING;
         SpindexerAndMotifStatus.SpindexerPattern.rotateBallsCW();
+
+        // Start intake belt for CW rotation
+        robot.intakeBeltMotor.setPower(1.0);
+        cwRotationControlsIntake = true;
     }
 
     public boolean rotateToColor(RobotConstants.Enums.BallColor color){
@@ -339,6 +372,19 @@ public class Spindexer implements Subsystem {
         return Math.abs(difference) < angleRange;
     }
 
+/**
+     * Updates the PIDF coefficients for spindexer rotation control.
+     * Used for live tuning during TeleOp.
+     *
+     * @param kP Proportional coefficient
+     * @param kI Integral coefficient
+     * @param kD Derivative coefficient
+     * @param kF Feedforward coefficient
+     */
+    public void setSpindexerPIDF(double kP, double kI, double kD, double kF) {
+        robot.spindexerPID.setPIDF(kP, kI, kD, kF);
+    }
+
     // ====================================================================
     // INTERNAL HELPERS
     // ====================================================================
@@ -468,6 +514,12 @@ public class Spindexer implements Subsystem {
                 if (settlingTimer.seconds() >= SETTLING_TIME) {
                     rotationState = RotationState.IDLE;
                     isSettling = false;
+
+                    // Stop intake belt if CW rotation was controlling it
+                    if (cwRotationControlsIntake) {
+                        robot.intakeBeltMotor.setPower(0.0);
+                        cwRotationControlsIntake = false;
+                    }
                 }
             } else {
                 // Outside tolerance - reset settling
@@ -475,7 +527,7 @@ public class Spindexer implements Subsystem {
             }
         }
 
-        // ALWAYS calculate and apply PID correction (active position holding)
+        // ALWAYS calculate and apply PIDF correction (active position holding)
         double correction = 0.0;
 
         if (!Double.isNaN(currentPosition)) {
@@ -489,6 +541,7 @@ public class Spindexer implements Subsystem {
             // Create a "virtual" target that's on the shortest path from current position
             double wrappedTarget = currentPosition + error;
 
+            // Calculate PIDF correction (feedforward is handled internally by PIDFController)
             correction = robot.spindexerPID.calculate(currentPosition, wrappedTarget);
         }
 
