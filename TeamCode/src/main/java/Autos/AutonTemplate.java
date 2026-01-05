@@ -4,6 +4,7 @@ import com.pedropathing.follower.Follower;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
+import framework.ActionExecutor;
 import pedroPathing.Constants;
 import subsystems.Shooter;
 import subsystems.Intake;
@@ -32,6 +33,8 @@ public abstract class AutonTemplate extends OpMode {
     protected ShootingValidator shootingValidator;
 
     protected CatalogManager catalogManager;
+
+    protected ActionExecutor executor;
 
     /**
      * Set the current path state and reset the path timer
@@ -77,12 +80,21 @@ public abstract class AutonTemplate extends OpMode {
     public void start() {
         opmodeTimer.resetTimer();
         setPathState(0);
+
+        if (executor != null) {
+            executor.start();
+        }
     }
 
     @Override
     public void loop() {
         follower.update();
-        autonomousPathUpdate();
+
+        if (executor != null) {
+            executor.update();
+        } else {
+            autonomousPathUpdate();
+        }
 
         shooter.periodic();
         spindexer.periodic();
