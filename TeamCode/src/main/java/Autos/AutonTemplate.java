@@ -8,12 +8,11 @@ import pedroPathing.Constants;
 import subsystems.Shooter;
 import subsystems.Intake;
 import subsystems.Spindexer;
+import utility.CatalogManager;
 import utility.RobotConstants;
-import utility.RobotConstants.Enums.BallColor;
-import utility.RobotConstants.Enums.FlickState;
-import utility.RobotConstants.Enums.ShooterCases;
 import utility.RobotHardware;
-import utility.SpindexerAndMotifStatus;
+import utility.Shooting.ShootingSequenceManager;
+import utility.Shooting.ShootingValidator;
 
 /**
  * Base template for all autonomous OpModes.
@@ -24,13 +23,15 @@ public abstract class AutonTemplate extends OpMode {
     protected Timer pathTimer, actionTimer, opmodeTimer;
     protected int pathState;
 
-    protected int ballsToShoot;
-
     protected RobotHardware robotHardware;
     protected Shooter shooter;
     protected Intake intake;
     protected Spindexer spindexer;
-    protected ShooterCases shootCases;
+    protected subsystems.Limelight limelight;
+    protected ShootingSequenceManager sequenceManager;
+    protected ShootingValidator shootingValidator;
+
+    protected CatalogManager catalogManager;
 
     /**
      * Set the current path state and reset the path timer
@@ -39,137 +40,7 @@ public abstract class AutonTemplate extends OpMode {
         pathState = state;
         pathTimer.resetTimer();
     }
-
-
-    /**
-     * Wait for a specified amount of time while keeping subsystems updated
-     */
-    protected void wait(double time) {
-        actionTimer.resetTimer();
-        while (actionTimer.getElapsedTimeSeconds() < time) {
-            follower.update();
-            shooter.periodic();
-            spindexer.periodic();
-            intake.periodic();
-        }
-    }
-
-    /**
-     * Execute an autonomous shooting sequence (3 balls)
-     */
-    protected void startAutonShoot() {
-        ballsToShoot = 3;
-        shootCases = ShooterCases.Start;
-        follower.pausePathFollowing();
-
-    }
-    private void checkAutonShoot(){
-        if(ballsToShoot > 0)
-            shootCases = ShooterCases.Start;
-        else{
-            follower.resumePathFollowing();
-        }
-    }
-
-
-
-    protected void shootingPeriodic(){
-        switch (shootCases) {
-            case Idle:
-                break;
-            case Start:
-                if (shooter.getCurrentState() == FlickState.Retracted){
-                    shootCases = ShooterCases.SpindexerFlicking;
-                    spindexer.triggerFlick();
-                }
-                break;
-            case SpindexerFlicking:
-                if(spindexer.getCurrentState() == FlickState.Extended){
-                    shootCases = ShooterCases.ShooterFlicking;
-                    shooter.triggerShot();
-                }
-                break;
-            case ShooterFlicking:
-                if(spindexer.getCurrentState() == FlickState.Retracted){
-                    shootCases = ShooterCases.SpindexerRotating;
-                    spindexer.rotateCW();
-                }
-                break;
-            case SpindexerRotating:
-                if(spindexer.isDoneRotating()){
-                    shootCases = ShooterCases.Idle;
-                    ballsToShoot--;
-                    checkAutonShoot();
-                }
-                break;
-        }
-    }
-
-    /**
-     * Add balls to the spindexer from intake
-     */
-    protected void addToSpindexer() {
-        runAutonIntake();
-
-        spindexer.rotateCW();
-        wait(.5);
-
-        spindexer.rotateCW();
-        wait(.5);
-
-        stopAutonIntake();
-    }
-
-    /**
-     * Start intake motors for autonomous
-     */
-    protected void runAutonIntake() {
-        intake.runIntake();
-    }
-
-    /**
-     * Stop intake motors
-     */
-    protected void stopAutonIntake() {
-        intake.stopIntake();
-    }
-
-    /**
-     * Catalog a ball in autonomous mode
-     * Call this after running intake to catalog the ball and rotate the spindexer
-     */
-    protected void catalogBallAuton() {
-        // Refresh color sensor reading
-
-        // Get detected ball color
-        BallColor detectedColor = BallColor.None;
-
-        // Only catalog if we detected an actual ball (not None)
-        if (detectedColor != BallColor.None) {
-            // Catalog the ball at the intake slot (slot 0)
-            SpindexerAndMotifStatus.SpindexerPattern.setBallInSlotX(0, detectedColor);
-
-            // Rotate to next slot
-            spindexer.rotateCW();
-
-            // Wait for rotation to complete
-            while (!spindexer.isDoneRotating()) {
-                follower.update();
-                shooter.periodic();
-                spindexer.periodic();
-                intake.periodic();
-            }
-        }
-    }
-
-    /**
-     * Build paths - must be implemented by subclass
-     */
     protected abstract void buildPaths();
-
-    /**
-     * Update autonomous path state machine - must be implemented by subclass
-     */
     protected abstract void autonomousPathUpdate();
 
     @Override
@@ -184,10 +55,17 @@ public abstract class AutonTemplate extends OpMode {
         robotHardware = RobotHardware.getInstance();
         robotHardware.init(hardwareMap);
 
-        shooter = new Shooter();
         intake = new Intake();
+        shooter = new Shooter();
         spindexer = new Spindexer();
-        shootCases = ShooterCases.Idle;
+        limelight = new subsystems.Limelight();
+
+        shooter.setLimelightSubsystem(limelight);
+        sequenceManager = new ShootingSequenceManager(spindexer, shooter);
+        shootingValidator = new ShootingValidator(shooter, telemetry);
+        catalogManager = new CatalogManager(spindexer, intake, telemetry, robotHardware.intakeSensorPair);
+
+
 
         buildPaths();
     }
@@ -206,21 +84,14 @@ public abstract class AutonTemplate extends OpMode {
         follower.update();
         autonomousPathUpdate();
 
-        // Common telemetry
-        telemetry.addData("Shooter Power", shooter.getFlywheelPower());
-        telemetry.addData("Shooter distance", shooter.getDistanceToTarget());
-        telemetry.addData("path state", pathState);
-        telemetry.addData("x", follower.getPose().getX());
-        telemetry.addData("y", follower.getPose().getY());
-        telemetry.addData("heading", follower.getPose().getHeading());
-
-        telemetry.update();
-
-
-        shootingPeriodic();
         shooter.periodic();
         spindexer.periodic();
         intake.periodic();
+        limelight.periodic();
+
+
+        sequenceManager.update();
+        catalogManager.update();
     }
 
 
