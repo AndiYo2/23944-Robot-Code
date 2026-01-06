@@ -12,24 +12,20 @@ import utility.RobotConstants;
 @Autonomous(name = "BlueBackAuton", group = "Autonomous")
 public class BlueBackAuton extends AutonTemplate {
     private Path shootToFirst;
-    private PathChain firstToShoot, shootToSecondOne, shootToSecondTwo, shootToSecondThree, secondToShoot, secondShootToStop;
+    private PathChain firstToShoot, shootToSecond, secondToShoot, secondShootToStop;
 
     private final Pose startPose = new Pose(56.5, 8.5, Math.toRadians(90));
     private final Pose endPose = new Pose(54.5, 40, Math.toRadians(90));
 
     private final Pose firstPickupPose = new Pose(23, 37.5, Math.toRadians(180));
     private final Pose firstPickupPoseControlPoint = new Pose(56, 31);
-
     private final Pose firstShootPose = new Pose(56.5, 15.5, 135);
 
 
-    private final Pose secondPickupPose1 = new Pose(12, 49.5, 255);
-    private final Pose secondPickupPose2 = new Pose(10.25, 22.5, 255);
-    private final Pose secondPickupPose3 = new Pose(10, 9.5, 270);
-
-
+    private final Pose secondPickupPose = new Pose(18, 63.5, 255);
+    private final Pose secondPickupPoseControlPoint = new Pose(70.5, 60);
     private final Pose secondShootPose = new Pose(54.5, 13, 90);
-    private final Pose secondShootPoseControlPoint = new Pose(29.5, 20);
+
 
 
 
@@ -47,24 +43,14 @@ public class BlueBackAuton extends AutonTemplate {
                 .setLinearHeadingInterpolation(firstPickupPose.getHeading(), firstShootPose.getHeading())
                 .build();
 
-        shootToSecondOne = follower.pathBuilder()
-                .addPath(new BezierLine(firstShootPose, secondPickupPose1))
-                .setLinearHeadingInterpolation(firstShootPose.getHeading(), secondPickupPose1.getHeading())
-                .build();
-
-        shootToSecondTwo = follower.pathBuilder()
-                .addPath(new BezierLine(secondPickupPose1, secondPickupPose2))
-                .setLinearHeadingInterpolation(secondPickupPose1.getHeading(), secondPickupPose2.getHeading())
-                .build();
-
-        shootToSecondThree = follower.pathBuilder()
-                .addPath(new BezierLine(secondPickupPose2, secondPickupPose3))
-                .setLinearHeadingInterpolation(secondPickupPose2.getHeading(), secondPickupPose3.getHeading())
+        shootToSecond = follower.pathBuilder()
+                .addPath(new BezierCurve(firstShootPose, secondPickupPoseControlPoint, secondPickupPose))
+                .setLinearHeadingInterpolation(firstShootPose.getHeading(), secondPickupPose.getHeading())
                 .build();
 
         secondToShoot = follower.pathBuilder()
-                .addPath(new BezierCurve(secondPickupPose3, secondShootPoseControlPoint, secondShootPose))
-                .setLinearHeadingInterpolation(secondPickupPose3.getHeading(), secondShootPose.getHeading())
+                .addPath(new BezierLine(secondPickupPose, secondShootPose))
+                .setLinearHeadingInterpolation(secondPickupPose.getHeading(), secondShootPose.getHeading())
                 .build();
 
         secondShootToStop = follower.pathBuilder()
@@ -145,32 +131,12 @@ public class BlueBackAuton extends AutonTemplate {
                     break;
 
                 // Shooting done - start second pickup sequence
-                follower.followPath(shootToSecondOne, true);
+                follower.followPath(shootToSecond, true);
                 intake.runIntake();
                 setPathState(5);
                 break;
 
             case 5:
-                // Wait for second pickup path 1 to complete
-                if (follower.isBusy())
-                    break;
-
-                // Continue to second pickup path 2
-                follower.followPath(shootToSecondTwo, true);
-                setPathState(6);
-                break;
-
-            case 6:
-                // Wait for second pickup path 2 to complete
-                if (follower.isBusy())
-                    break;
-
-                // Continue to second pickup path 3
-                follower.followPath(shootToSecondThree, true);
-                setPathState(7);
-                break;
-
-            case 7:
                 // Wait for second pickup path 3 to complete
                 if (follower.isBusy())
                     break;
@@ -179,30 +145,30 @@ public class BlueBackAuton extends AutonTemplate {
                 intake.stopIntake();
                 catalogManager.initiateCataloging();
                 follower.followPath(secondToShoot, true);
-                setPathState(8);
+                setPathState(6);
                 break;
 
-            case 8:
+            case 6:
                 // Wait for BOTH path to second shoot pose AND cataloging to complete
                 if (follower.isBusy() || catalogManager.getState() != RobotConstants.Enums.CatalogingCases.Idle)
                     break;
 
                 // Both complete - start final shooting
                 sequenceManager.startShootingSequence();
-                setPathState(9);
+                setPathState(7);
                 break;
 
-            case 9:
+            case 7:
                 // Wait for final shooting to complete
                 if (sequenceManager.isExecuting())
                     break;
 
                 // Shooting done - move to park position
                 follower.followPath(secondShootToStop, true);
-                setPathState(10);
+                setPathState(8);
                 break;
 
-            case 10:
+            case 8:
                 // Wait for park path to complete
                 if (follower.isBusy())
                     break;
