@@ -19,12 +19,19 @@ import static utility.RobotConstants.Shooter.FLICK_TIME;
 
 public class Shooter implements Subsystem {
     // Velocity lookup table: [distance in inches, velocity]
-    // < 24": 2100 | 24-86": 2200 | > 86": 2600
+    // Optimal powers calibrated for each distance (range: 1980-2800)
     private static final double[][] VELOCITY_LOOKUP = {
-        {23.0, 2100.0},   // Very close range (< 24 inches)
-        {24.0, 2200.0},   // Transition to mid range at 24 inches
-        {88.0, 2300.0},   // Stay at 2200 through mid range
-        {100.0, 2600.0}    // Far zone (> 86 inches)
+        {45.0, 1980.0},
+        {55.0, 1950.0},
+        {70.0, 2100.0},
+        {81.0, 2100.0},
+        {97.0, 2250.0},
+        {132.0, 2500.0},
+        {134.0, 2550.0},
+        {138.0, 2550.0},
+        {156.0, 2760.0},
+        {160.0, 2780.0},
+        {200.0, 2800.0}    // Cap at 2800 for distances above 160"
     };
 
     RobotHardware robot;
