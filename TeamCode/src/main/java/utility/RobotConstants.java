@@ -68,6 +68,16 @@ public class RobotConstants {
 
     }
 
+    public static class Cataloging {
+        // Timeout for scanning state (no ball detected)
+        public static final double SCAN_TIMEOUT_SECONDS = 2.0;
+
+        // Timeout for rotation state (spindexer stuck)
+        public static final double ROTATION_TIMEOUT_SECONDS = 3.0;
+
+        // Number of retry attempts for stuck rotation
+        public static final int MAX_ROTATION_RETRIES = 1;
+    }
 
     public static class Shooter {
         //hardware
@@ -217,6 +227,7 @@ public class RobotConstants {
             Idle,
             Scanning,
             WaitingForRotation,
+            RetryRotation,
             RotateToEndLocation
         }
         public enum IntakeState {
