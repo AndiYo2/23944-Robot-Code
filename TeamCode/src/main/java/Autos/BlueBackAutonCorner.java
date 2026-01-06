@@ -23,9 +23,9 @@ public class BlueBackAutonCorner extends AutonTemplate {
     private final Pose firstShootPose = new Pose(56.5, 15.5, 135);
 
 
-    private final Pose secondPickupPose1 = new Pose(12, 49.5, 255);
-    private final Pose secondPickupPose2 = new Pose(10.25, 22.5, 255);
-    private final Pose secondPickupPose3 = new Pose(10, 9.5, 270);
+    private final Pose secondPickupPose1 = new Pose(13, 49.5, 255);
+    private final Pose secondPickupPose2 = new Pose(11.25, 22.5, 255);
+    private final Pose secondPickupPose3 = new Pose(11, 9.5, 270);
 
 
     private final Pose secondShootPose = new Pose(54.5, 13, 90);

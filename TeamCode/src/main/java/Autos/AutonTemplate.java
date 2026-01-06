@@ -92,6 +92,15 @@ public abstract class AutonTemplate extends OpMode {
 
         if (executor != null) {
             executor.update();
+
+            // Display autonomous sequence telemetry
+            telemetry.addData("Auto Status", executor.getStatusString());
+            telemetry.addData("Sequence Executing", executor.isExecuting());
+            telemetry.addData("Follower Busy", follower.isBusy());
+            telemetry.addData("Shooting State", sequenceManager.getStatus());
+            telemetry.addData("Catalog State", catalogManager.getState());
+            telemetry.addData("Limelight Mode", limelight.getCurrentMode());
+            telemetry.addData("Motif Detected", limelight.isMotifDetected());
         } else {
             autonomousPathUpdate();
         }
@@ -104,6 +113,8 @@ public abstract class AutonTemplate extends OpMode {
 
         sequenceManager.update();
         catalogManager.update();
+
+        telemetry.update();
     }
 
 

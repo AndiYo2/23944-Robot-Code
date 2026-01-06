@@ -32,6 +32,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     private int tuningSubsystem = 0; // 0=spindexer, 1=shooter, 2=turret
     private int selectedPIDParameter = 0; // 0=P, 1=I, 2=D, 3=F
     private boolean tuningSpindexerCW = true; // true = CW PIDs, false = CCW PIDs
+    private boolean adjustingPower = false; // false = adjust PIDF, true = adjust power/velocity
 
     // Spindexer PIDF values - CW rotation (with gravity)
     private double spindexer_cw_kP, spindexer_cw_kI, spindexer_cw_kD, spindexer_cw_kF;
@@ -123,16 +124,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
                     if (!pidTuningMode) mecanumDrive.toggleSlowMode();
                 });
         new GamepadButton(driverGamepad, GamepadKeys.Button.X)
-                .whenPressed(() -> {
-                    if (!pidTuningMode) {
-                        // Normal mode: trigger spindexer flick
-                        spindexer.triggerFlick();
-                    } else if (tuningSubsystem == 1) {
-                        // Tuning shooter: trigger shooter flipper to test
-                        shooter.triggerShot();
-                    }
-                    // Note: When tuning spindexer, X is handled in updatePIDTuning() to toggle CW/CCW
-                });
+                .whenPressed(() -> spindexer.triggerFlick());
         new GamepadButton(driverGamepad, GamepadKeys.Button.A)
                 .whenPressed(() -> attemptShootingSequence());
         new GamepadButton(driverGamepad, GamepadKeys.Button.Y)
@@ -300,15 +292,20 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         }
         rightStickButtonPressed = gamepad1.right_stick_button;
 
+        // Left thumbstick button: Toggle between PIDF tuning and Power tuning
+        if (gamepad1.left_stick_button && !leftStickButtonPressed) {
+            adjustingPower = !adjustingPower;
+            gamepad1.rumble(adjustingPower ? 200 : 100); // Longer rumble for power mode
+        }
+        leftStickButtonPressed = gamepad1.left_stick_button;
+
         // X button: Toggle between CW and CCW PIDs (when tuning spindexer)
         if (gamepad1.x && !xButtonPressed) {
             if (tuningSubsystem == 0) { // Spindexer
                 tuningSpindexerCW = !tuningSpindexerCW;
                 gamepad1.rumble(100); // Rumble to confirm switch
-            } else if (tuningSubsystem == 1) { // Shooter
-                // X triggers shooter flipper in shooter tuning mode
-                shooter.triggerShot();
             }
+            // X now always triggers spindexer flick (handled in configureButtonBindings)
         }
         xButtonPressed = gamepad1.x;
 
@@ -332,107 +329,102 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         }
         dpadRightPressed = gamepad1.dpad_right;
 
-        // D-pad up/down: Adjust selected parameter
-        double increment = stepSizes[stepIndex]; // Use current step size
-
+        // D-pad up/down: Adjust selected parameter OR power/velocity
         if (gamepad1.dpad_up && !dpadUpPressed) {
-            switch (tuningSubsystem) {
-                case 1: // Shooter
-                    switch (selectedPIDParameter) {
-                        case 0: shooter_kP += increment; break;
-                        case 1: shooter_kI += increment; break;
-                        case 2: shooter_kD += increment; break;
-                        case 3: shooter_kF += increment; break;
-                    }
-                    break;
-                case 2: // Turret
-                    switch (selectedPIDParameter) {
-                        case 0: turret_kP += increment; break;
-                        case 1: turret_kI += increment; break;
-                        case 2: turret_kD += increment; break;
-                    }
-                    break;
-                default: // Spindexer
-                    if (tuningSpindexerCW) {
+            if (adjustingPower && tuningSubsystem == 1) {
+                // Power mode: adjust shooter velocity by 10
+                double currentVelocity = shooter.getManualVelocity();
+                shooter.setManualVelocity(currentVelocity + 10);
+                gamepad1.rumble(50);
+            } else {
+                // PIDF mode: adjust selected PIDF parameter
+                double increment = stepSizes[stepIndex]; // Use current step size
+                switch (tuningSubsystem) {
+                    case 1: // Shooter
                         switch (selectedPIDParameter) {
-                            case 0: spindexer_cw_kP += increment; break;
-                            case 1: spindexer_cw_kI += increment; break;
-                            case 2: spindexer_cw_kD += increment; break;
-                            case 3: spindexer_cw_kF += increment; break;
+                            case 0: shooter_kP += increment; break;
+                            case 1: shooter_kI += increment; break;
+                            case 2: shooter_kD += increment; break;
+                            case 3: shooter_kF += increment; break;
                         }
-                    } else {
+                        break;
+                    case 2: // Turret
                         switch (selectedPIDParameter) {
-                            case 0: spindexer_ccw_kP += increment; break;
-                            case 1: spindexer_ccw_kI += increment; break;
-                            case 2: spindexer_ccw_kD += increment; break;
-                            case 3: spindexer_ccw_kF += increment; break;
+                            case 0: turret_kP += increment; break;
+                            case 1: turret_kI += increment; break;
+                            case 2: turret_kD += increment; break;
                         }
-                    }
-                    break;
+                        break;
+                    default: // Spindexer
+                        if (tuningSpindexerCW) {
+                            switch (selectedPIDParameter) {
+                                case 0: spindexer_cw_kP += increment; break;
+                                case 1: spindexer_cw_kI += increment; break;
+                                case 2: spindexer_cw_kD += increment; break;
+                                case 3: spindexer_cw_kF += increment; break;
+                            }
+                        } else {
+                            switch (selectedPIDParameter) {
+                                case 0: spindexer_ccw_kP += increment; break;
+                                case 1: spindexer_ccw_kI += increment; break;
+                                case 2: spindexer_ccw_kD += increment; break;
+                                case 3: spindexer_ccw_kF += increment; break;
+                            }
+                        }
+                        break;
+                }
+                updatePIDController();
             }
-            updatePIDController();
         }
         dpadUpPressed = gamepad1.dpad_up;
 
         if (gamepad1.dpad_down && !dpadDownPressed) {
-            switch (tuningSubsystem) {
-                case 1: // Shooter
-                    switch (selectedPIDParameter) {
-                        case 0: shooter_kP = Math.max(0, shooter_kP - increment); break;
-                        case 1: shooter_kI = Math.max(0, shooter_kI - increment); break;
-                        case 2: shooter_kD = Math.max(0, shooter_kD - increment); break;
-                        case 3: shooter_kF = Math.max(0, shooter_kF - increment); break;
-                    }
-                    break;
-                case 2: // Turret
-                    switch (selectedPIDParameter) {
-                        case 0: turret_kP = Math.max(0, turret_kP - increment); break;
-                        case 1: turret_kI = Math.max(0, turret_kI - increment); break;
-                        case 2: turret_kD = Math.max(0, turret_kD - increment); break;
-                    }
-                    break;
-                default: // Spindexer
-                    if (tuningSpindexerCW) {
+            if (adjustingPower && tuningSubsystem == 1) {
+                // Power mode: adjust shooter velocity by -10
+                double currentVelocity = shooter.getManualVelocity();
+                shooter.setManualVelocity(currentVelocity - 10);
+                gamepad1.rumble(50);
+            } else {
+                // PIDF mode: adjust selected PIDF parameter
+                double increment = stepSizes[stepIndex]; // Use current step size
+                switch (tuningSubsystem) {
+                    case 1: // Shooter
                         switch (selectedPIDParameter) {
-                            case 0: spindexer_cw_kP = Math.max(0, spindexer_cw_kP - increment); break;
-                            case 1: spindexer_cw_kI = Math.max(0, spindexer_cw_kI - increment); break;
-                            case 2: spindexer_cw_kD = Math.max(0, spindexer_cw_kD - increment); break;
-                            case 3: spindexer_cw_kF = Math.max(0, spindexer_cw_kF - increment); break;
+                            case 0: shooter_kP = Math.max(0, shooter_kP - increment); break;
+                            case 1: shooter_kI = Math.max(0, shooter_kI - increment); break;
+                            case 2: shooter_kD = Math.max(0, shooter_kD - increment); break;
+                            case 3: shooter_kF = Math.max(0, shooter_kF - increment); break;
                         }
-                    } else {
+                        break;
+                    case 2: // Turret
                         switch (selectedPIDParameter) {
-                            case 0: spindexer_ccw_kP = Math.max(0, spindexer_ccw_kP - increment); break;
-                            case 1: spindexer_ccw_kI = Math.max(0, spindexer_ccw_kI - increment); break;
-                            case 2: spindexer_ccw_kD = Math.max(0, spindexer_ccw_kD - increment); break;
-                            case 3: spindexer_ccw_kF = Math.max(0, spindexer_ccw_kF - increment); break;
+                            case 0: turret_kP = Math.max(0, turret_kP - increment); break;
+                            case 1: turret_kI = Math.max(0, turret_kI - increment); break;
+                            case 2: turret_kD = Math.max(0, turret_kD - increment); break;
                         }
-                    }
-                    break;
+                        break;
+                    default: // Spindexer
+                        if (tuningSpindexerCW) {
+                            switch (selectedPIDParameter) {
+                                case 0: spindexer_cw_kP = Math.max(0, spindexer_cw_kP - increment); break;
+                                case 1: spindexer_cw_kI = Math.max(0, spindexer_cw_kI - increment); break;
+                                case 2: spindexer_cw_kD = Math.max(0, spindexer_cw_kD - increment); break;
+                                case 3: spindexer_cw_kF = Math.max(0, spindexer_cw_kF - increment); break;
+                            }
+                        } else {
+                            switch (selectedPIDParameter) {
+                                case 0: spindexer_ccw_kP = Math.max(0, spindexer_ccw_kP - increment); break;
+                                case 1: spindexer_ccw_kI = Math.max(0, spindexer_ccw_kI - increment); break;
+                                case 2: spindexer_ccw_kD = Math.max(0, spindexer_ccw_kD - increment); break;
+                                case 3: spindexer_ccw_kF = Math.max(0, spindexer_ccw_kF - increment); break;
+                            }
+                        }
+                        break;
+                }
+                updatePIDController();
             }
-            updatePIDController();
         }
         dpadDownPressed = gamepad1.dpad_down;
-
-        // Bumpers: Adjust target velocity (when tuning shooter)
-        if (tuningSubsystem == 1) { // Shooter
-            if (gamepad1.left_bumper && !leftBumperPressed) {
-                double currentVelocity = shooter.getManualVelocity();
-                shooter.setManualVelocity(currentVelocity - 100);
-                gamepad1.rumble(50);
-            }
-            leftBumperPressed = gamepad1.left_bumper;
-
-            if (gamepad1.right_bumper && !rightBumperPressed) {
-                double currentVelocity = shooter.getManualVelocity();
-                shooter.setManualVelocity(currentVelocity + 100);
-                gamepad1.rumble(50);
-            }
-            rightBumperPressed = gamepad1.right_bumper;
-        } else {
-            // Reset bumper state when not tuning shooter (allows normal manual rotation)
-            leftBumperPressed = false;
-            rightBumperPressed = false;
-        }
     }
 
     /**
@@ -525,11 +517,19 @@ abstract public class TeleOpTemplate extends CommandOpMode {
                 }
 
                 telemetry.addLine("----------------------------------------");
-                telemetry.addData("Step Size", "%.3f (Press B to change)", stepSizes[stepIndex]);
-                telemetry.addLine("D-Pad Left/Right: Select parameter");
-                telemetry.addLine(String.format("D-Pad Up/Down: Adjust value (±%.3f)", stepSizes[stepIndex]));
-                telemetry.addLine("Left/Right Bumpers: Adjust velocity (±100)");
-                telemetry.addLine("X Button: Trigger shooter flipper");
+                telemetry.addData("Tuning Mode", adjustingPower ? "POWER (±10)" : "PIDF");
+                if (!adjustingPower) {
+                    telemetry.addData("Step Size", "%.3f (Press B to change)", stepSizes[stepIndex]);
+                }
+                telemetry.addLine("Left Stick Button: Toggle Power/PIDF mode");
+                if (adjustingPower) {
+                    telemetry.addLine("D-Pad Up/Down: Adjust velocity (±10)");
+                } else {
+                    telemetry.addLine("D-Pad Left/Right: Select parameter");
+                    telemetry.addLine(String.format("D-Pad Up/Down: Adjust value (±%.3f)", stepSizes[stepIndex]));
+                }
+                telemetry.addLine("Left/Right Bumpers: Manual spindexer rotation");
+                telemetry.addLine("X Button: Trigger spindexer flick");
                 telemetry.addLine("Y Button: Cycle subsystem | Right Stick: Jump to Turret");
                 telemetry.addLine("Back Button: Exit tuning mode");
                 telemetry.addLine("========================================");

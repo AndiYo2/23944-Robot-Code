@@ -76,7 +76,7 @@ public class RobotConstants {
         public static String turret = "turretServo"; //E3
         public static String turretEncoder = "turretServoEncoder"; // Encoder port TBD
         public static String shooterFlipperServo = "shooterFlipperServo"; // C 0
-        public static String shooterEncoder = "shooterEncoder"; // N/A
+        public static String shooterEncoder = "shooterEncoder";
 
         // 2600, 2100, is our powers
 
@@ -102,7 +102,7 @@ public class RobotConstants {
         public static final double TURRET_TRACKING_OFFSET = 0; // Adjust if tracking is off
 
         // Turret PID coefficients (tuned values)
-        public static final PIDCoefficients TURRET_PID = new PIDCoefficients(0.013, 0, 0.00020);
+        public static final PIDCoefficients TURRET_PID = new PIDCoefficients(0.0035, .0015, 0.00030);
 
         // Shooter PIDF coefficients (tuned values from ShooterPIDFTuningTeleOp)
         public static final double SHOOTER_P = 40;

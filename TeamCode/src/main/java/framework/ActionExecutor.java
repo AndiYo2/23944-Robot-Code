@@ -120,4 +120,35 @@ public class ActionExecutor {
     public int getCurrentActionIndex() {
         return currentActionIndex;
     }
+
+    /**
+     * Returns a formatted status string for telemetry display.
+     *
+     * @return formatted status string showing current action and progress
+     */
+    public String getStatusString() {
+        if (!started) {
+            return "Not started";
+        }
+        if (finished) {
+            return "Finished";
+        }
+        Action currentAction = getCurrentAction();
+        if (currentAction == null) {
+            return "No current action";
+        }
+        return String.format("[%d/%d] %s",
+            currentActionIndex + 1,
+            actions.size(),
+            currentAction.getName());
+    }
+
+    /**
+     * Returns whether the executor has started.
+     *
+     * @return true if started, false otherwise
+     */
+    public boolean isStarted() {
+        return started;
+    }
 }

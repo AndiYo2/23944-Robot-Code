@@ -16,7 +16,7 @@ public class LimelightScanAction implements Action {
 
     @Override
     public void start() {
-        limelight.toggleMode();
+        // Limelight starts in TagTracking mode - no toggle needed
     }
 
     @Override

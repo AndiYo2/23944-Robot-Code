@@ -36,6 +36,7 @@ public class PinpointTestTeleop extends CommandOpMode {
     public void initialize() {
         driverGamepad = new GamepadEx(gamepad1);
         robot.init(hardwareMap, driverGamepad);
+        robot.pinpoint.resetPosAndIMU();
 
         mecanumDrive = new MecanumDrive();
         robotX = 56.5;

@@ -9,24 +9,36 @@ import utility.Shooting.ShootingSequenceManager;
  */
 public class ShootAction implements Action {
     private final ShootingSequenceManager sequenceManager;
+    private boolean hasStarted;
 
     public ShootAction(ShootingSequenceManager sequenceManager) {
         this.sequenceManager = sequenceManager;
+        this.hasStarted = false;
     }
 
     @Override
     public void start() {
+        hasStarted = false;
         sequenceManager.startShootingSequence();
     }
 
     @Override
     public void update() {
-        // ShootingSequenceManager.update() is called in the main loop
+        // Keep trying to start the sequence if it hasn't started yet
+        if (!hasStarted && !sequenceManager.isExecuting()) {
+            sequenceManager.startShootingSequence();
+        }
+
+        // Track when it actually starts
+        if (!hasStarted && sequenceManager.isExecuting()) {
+            hasStarted = true;
+        }
     }
 
     @Override
     public boolean isComplete() {
-        return !sequenceManager.isExecuting();
+        // Only complete if the sequence has started AND finished
+        return hasStarted && !sequenceManager.isExecuting();
     }
 
     @Override
