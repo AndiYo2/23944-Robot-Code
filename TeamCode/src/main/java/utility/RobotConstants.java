@@ -127,6 +127,11 @@ public class RobotConstants {
     public static class Controls {
         // Gamepad trigger activation threshold
         public static final double TRIGGER_THRESHOLD = 0.3;
+
+        // Toggle to swap Red/Blue control mapping for testing
+        // When true: Red uses standard controls, Blue uses inverted controls
+        // When false (default): Blue uses standard controls, Red uses inverted controls
+        public static final boolean SWAP_ALLIANCE_CONTROLS = true;
     }
 
     public static class Limelight{

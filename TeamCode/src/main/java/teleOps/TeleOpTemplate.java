@@ -175,6 +175,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
      * Applies alliance-specific control mapping transformations.
      * Blue alliance uses standard field coordinates.
      * Red alliance inverts X and Y axes to account for mirrored starting position.
+     * Use SWAP_ALLIANCE_CONTROLS in RobotConstants to swap which alliance gets inverted controls.
      *
      * @return double array [fieldY, fieldX, rotation]
      */
@@ -183,13 +184,18 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         double rawX = gamepad1.left_stick_x;
         double rawRotation = gamepad1.right_stick_x;
 
+        // Determine which alliance should have inverted controls
+        RobotConstants.Enums.AllianceColor invertedAlliance = RobotConstants.Controls.SWAP_ALLIANCE_CONTROLS
+                ? RobotConstants.Enums.AllianceColor.Blue
+                : RobotConstants.Enums.AllianceColor.Red;
+
         // Check alliance color (defaults to Blue if not set)
         if (RobotConstants.UpdatableConstants.allianceColor != null &&
-                RobotConstants.UpdatableConstants.allianceColor == RobotConstants.Enums.AllianceColor.Red) {
-            // Red alliance: invert both translational axes (180° field rotation)
+                RobotConstants.UpdatableConstants.allianceColor == invertedAlliance) {
+            // Invert both translational axes (180° field rotation)
             return new double[] {-rawY, -rawX, rawRotation};
         } else {
-            // Blue alliance: standard mapping
+            // Standard mapping
             return new double[] {rawY, rawX, rawRotation};
         }
     }

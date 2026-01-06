@@ -149,6 +149,100 @@ public class AutonSequence {
         return this;
     }
 
+    // ==================== Inline Coordinate Path Methods ====================
+
+    /**
+     * Creates and follows a straight-line path using inline coordinates with linear heading interpolation.
+     *
+     * @param x1 starting x coordinate (inches)
+     * @param y1 starting y coordinate (inches)
+     * @param h1 starting heading (degrees)
+     * @param x2 ending x coordinate (inches)
+     * @param y2 ending y coordinate (inches)
+     * @param h2 ending heading (degrees)
+     * @return this builder for chaining
+     */
+    public AutonSequence moveTo(double x1, double y1, double h1, double x2, double y2, double h2) {
+        PathChain path = follower.pathBuilder()
+                .addPath(new com.pedropathing.geometry.BezierLine(
+                        new com.pedropathing.geometry.Pose(x1, y1),
+                        new com.pedropathing.geometry.Pose(x2, y2)))
+                .setLinearHeadingInterpolation(Math.toRadians(h1), Math.toRadians(h2))
+                .build();
+        executor.addAction(new MoveToAction(follower, path, true));
+        return this;
+    }
+
+    /**
+     * Creates and follows a straight-line path using inline coordinates with tangent heading.
+     * The robot heading will automatically align with the path direction.
+     *
+     * @param x1 starting x coordinate (inches)
+     * @param y1 starting y coordinate (inches)
+     * @param x2 ending x coordinate (inches)
+     * @param y2 ending y coordinate (inches)
+     * @return this builder for chaining
+     */
+    public AutonSequence moveToTangent(double x1, double y1, double x2, double y2) {
+        PathChain path = follower.pathBuilder()
+                .addPath(new com.pedropathing.geometry.BezierLine(
+                        new com.pedropathing.geometry.Pose(x1, y1),
+                        new com.pedropathing.geometry.Pose(x2, y2)))
+                .setTangentHeadingInterpolation()
+                .build();
+        executor.addAction(new MoveToAction(follower, path, true));
+        return this;
+    }
+
+    /**
+     * Creates and follows a straight-line path using inline coordinates with constant heading.
+     *
+     * @param x1 starting x coordinate (inches)
+     * @param y1 starting y coordinate (inches)
+     * @param x2 ending x coordinate (inches)
+     * @param y2 ending y coordinate (inches)
+     * @param heading constant heading to maintain (degrees)
+     * @return this builder for chaining
+     */
+    public AutonSequence moveTo(double x1, double y1, double x2, double y2, double heading) {
+        PathChain path = follower.pathBuilder()
+                .addPath(new com.pedropathing.geometry.BezierLine(
+                        new com.pedropathing.geometry.Pose(x1, y1),
+                        new com.pedropathing.geometry.Pose(x2, y2)))
+                .setConstantHeadingInterpolation(Math.toRadians(heading))
+                .build();
+        executor.addAction(new MoveToAction(follower, path, true));
+        return this;
+    }
+
+    /**
+     * Creates and follows a curved Bezier path using inline coordinates with linear heading interpolation.
+     *
+     * @param x1 starting x coordinate (inches)
+     * @param y1 starting y coordinate (inches)
+     * @param h1 starting heading (degrees)
+     * @param cx control point x coordinate (inches)
+     * @param cy control point y coordinate (inches)
+     * @param x2 ending x coordinate (inches)
+     * @param y2 ending y coordinate (inches)
+     * @param h2 ending heading (degrees)
+     * @return this builder for chaining
+     */
+    public AutonSequence moveToViaCurve(double x1, double y1, double h1, double cx, double cy,
+                                         double x2, double y2, double h2) {
+        PathChain path = follower.pathBuilder()
+                .addPath(new com.pedropathing.geometry.BezierCurve(
+                        new com.pedropathing.geometry.Pose(x1, y1),
+                        new com.pedropathing.geometry.Pose(cx, cy),
+                        new com.pedropathing.geometry.Pose(x2, y2)))
+                .setLinearHeadingInterpolation(Math.toRadians(h1), Math.toRadians(h2))
+                .build();
+        executor.addAction(new MoveToAction(follower, path, true));
+        return this;
+    }
+
+    // ==================== Action Methods ====================
+
     /**
      * Adds a shooting action.
      *
@@ -340,6 +434,98 @@ public class AutonSequence {
 
         public ParallelBuilder addAction(Action action) {
             group.addAction(action);
+            return this;
+        }
+
+        // ==================== Inline Coordinate Path Methods ====================
+
+        /**
+         * Creates and follows a straight-line path using inline coordinates with linear heading interpolation.
+         *
+         * @param x1 starting x coordinate (inches)
+         * @param y1 starting y coordinate (inches)
+         * @param h1 starting heading (degrees)
+         * @param x2 ending x coordinate (inches)
+         * @param y2 ending y coordinate (inches)
+         * @param h2 ending heading (degrees)
+         * @return this builder for chaining
+         */
+        public ParallelBuilder moveTo(double x1, double y1, double h1, double x2, double y2, double h2) {
+            PathChain path = follower.pathBuilder()
+                    .addPath(new com.pedropathing.geometry.BezierLine(
+                            new com.pedropathing.geometry.Pose(x1, y1),
+                            new com.pedropathing.geometry.Pose(x2, y2)))
+                    .setLinearHeadingInterpolation(Math.toRadians(h1), Math.toRadians(h2))
+                    .build();
+            group.addAction(new MoveToAction(follower, path, true));
+            return this;
+        }
+
+        /**
+         * Creates and follows a straight-line path using inline coordinates with tangent heading.
+         * The robot heading will automatically align with the path direction.
+         *
+         * @param x1 starting x coordinate (inches)
+         * @param y1 starting y coordinate (inches)
+         * @param x2 ending x coordinate (inches)
+         * @param y2 ending y coordinate (inches)
+         * @return this builder for chaining
+         */
+        public ParallelBuilder moveToTangent(double x1, double y1, double x2, double y2) {
+            PathChain path = follower.pathBuilder()
+                    .addPath(new com.pedropathing.geometry.BezierLine(
+                            new com.pedropathing.geometry.Pose(x1, y1),
+                            new com.pedropathing.geometry.Pose(x2, y2)))
+                    .setTangentHeadingInterpolation()
+                    .build();
+            group.addAction(new MoveToAction(follower, path, true));
+            return this;
+        }
+
+        /**
+         * Creates and follows a straight-line path using inline coordinates with constant heading.
+         *
+         * @param x1 starting x coordinate (inches)
+         * @param y1 starting y coordinate (inches)
+         * @param x2 ending x coordinate (inches)
+         * @param y2 ending y coordinate (inches)
+         * @param heading constant heading to maintain (degrees)
+         * @return this builder for chaining
+         */
+        public ParallelBuilder moveTo(double x1, double y1, double x2, double y2, double heading) {
+            PathChain path = follower.pathBuilder()
+                    .addPath(new com.pedropathing.geometry.BezierLine(
+                            new com.pedropathing.geometry.Pose(x1, y1),
+                            new com.pedropathing.geometry.Pose(x2, y2)))
+                    .setConstantHeadingInterpolation(Math.toRadians(heading))
+                    .build();
+            group.addAction(new MoveToAction(follower, path, true));
+            return this;
+        }
+
+        /**
+         * Creates and follows a curved Bezier path using inline coordinates with linear heading interpolation.
+         *
+         * @param x1 starting x coordinate (inches)
+         * @param y1 starting y coordinate (inches)
+         * @param h1 starting heading (degrees)
+         * @param cx control point x coordinate (inches)
+         * @param cy control point y coordinate (inches)
+         * @param x2 ending x coordinate (inches)
+         * @param y2 ending y coordinate (inches)
+         * @param h2 ending heading (degrees)
+         * @return this builder for chaining
+         */
+        public ParallelBuilder moveToViaCurve(double x1, double y1, double h1, double cx, double cy,
+                                               double x2, double y2, double h2) {
+            PathChain path = follower.pathBuilder()
+                    .addPath(new com.pedropathing.geometry.BezierCurve(
+                            new com.pedropathing.geometry.Pose(x1, y1),
+                            new com.pedropathing.geometry.Pose(cx, cy),
+                            new com.pedropathing.geometry.Pose(x2, y2)))
+                    .setLinearHeadingInterpolation(Math.toRadians(h1), Math.toRadians(h2))
+                    .build();
+            group.addAction(new MoveToAction(follower, path, true));
             return this;
         }
     }
