@@ -100,6 +100,56 @@ public class AutonSequence {
     }
 
     /**
+     * Adds a move-to-path action with custom speed.
+     *
+     * @param path the path to follow
+     * @param maxPower the maximum power/speed (0.0-1.0, where 0.5 = 50% speed)
+     * @return this builder for chaining
+     */
+    public AutonSequence moveTo(Path path, double maxPower) {
+        executor.addAction(new MoveToAction(follower, path, maxPower, true));
+        return this;
+    }
+
+    /**
+     * Adds a move-to-path action with custom speed and hold end setting.
+     *
+     * @param path the path to follow
+     * @param maxPower the maximum power/speed (0.0-1.0)
+     * @param holdEnd whether to hold position at the end
+     * @return this builder for chaining
+     */
+    public AutonSequence moveTo(Path path, double maxPower, boolean holdEnd) {
+        executor.addAction(new MoveToAction(follower, path, maxPower, holdEnd));
+        return this;
+    }
+
+    /**
+     * Adds a move-to-path-chain action with custom speed.
+     *
+     * @param pathChain the path chain to follow
+     * @param maxPower the maximum power/speed (0.0-1.0)
+     * @return this builder for chaining
+     */
+    public AutonSequence moveTo(PathChain pathChain, double maxPower) {
+        executor.addAction(new MoveToAction(follower, pathChain, maxPower, true));
+        return this;
+    }
+
+    /**
+     * Adds a move-to-path-chain action with custom speed and hold end setting.
+     *
+     * @param pathChain the path chain to follow
+     * @param maxPower the maximum power/speed (0.0-1.0)
+     * @param holdEnd whether to hold position at the end
+     * @return this builder for chaining
+     */
+    public AutonSequence moveTo(PathChain pathChain, double maxPower, boolean holdEnd) {
+        executor.addAction(new MoveToAction(follower, pathChain, maxPower, holdEnd));
+        return this;
+    }
+
+    /**
      * Adds a shooting action.
      *
      * @return this builder for chaining
@@ -235,6 +285,26 @@ public class AutonSequence {
 
         public ParallelBuilder moveTo(PathChain pathChain, boolean holdEnd) {
             group.addAction(new MoveToAction(follower, pathChain, holdEnd));
+            return this;
+        }
+
+        public ParallelBuilder moveTo(Path path, double maxPower) {
+            group.addAction(new MoveToAction(follower, path, maxPower, true));
+            return this;
+        }
+
+        public ParallelBuilder moveTo(Path path, double maxPower, boolean holdEnd) {
+            group.addAction(new MoveToAction(follower, path, maxPower, holdEnd));
+            return this;
+        }
+
+        public ParallelBuilder moveTo(PathChain pathChain, double maxPower) {
+            group.addAction(new MoveToAction(follower, pathChain, maxPower, true));
+            return this;
+        }
+
+        public ParallelBuilder moveTo(PathChain pathChain, double maxPower, boolean holdEnd) {
+            group.addAction(new MoveToAction(follower, pathChain, maxPower, holdEnd));
             return this;
         }
 
