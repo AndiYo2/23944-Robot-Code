@@ -41,7 +41,6 @@ public class Spindexer implements Subsystem {
     // State tracking
     private RotationState rotationState = RotationState.IDLE;
     private FlickState currentState = FlickState.Idle;
-    private boolean cwRotationControlsIntake = false;
 
     // Position tracking
     private int targetPosition;
@@ -50,6 +49,10 @@ public class Spindexer implements Subsystem {
     // PID state
     private double lastError = 0;
     private double integral = 0;
+
+    // Tunable PID coefficients (can be updated via setSpindexerPIDF)
+    private double cw_kP, cw_kI, cw_kD, cw_kF;
+    private double ccw_kP, ccw_kI, ccw_kD, ccw_kF;
 
     // Configuration
     private final double angleRange = RobotConstants.Spindexer.ANGLE_RANGE;
@@ -85,9 +88,19 @@ public class Spindexer implements Subsystem {
         // Set safe default position until encoder is ready
         spindPosTracker = 0;
         targetPosition = SPINDEXER_POSITIONS[0];
-        cwRotationControlsIntake = false; // Ensure clean initial state
         // needsInitialization is already true by default
         // Actual position will be read in periodic() when encoder voltage is valid
+
+        // Initialize PID coefficients from constants (can be tuned later)
+        cw_kP = RobotConstants.Spindexer.SPINDEXER_CW_P;
+        cw_kI = RobotConstants.Spindexer.SPINDEXER_CW_I;
+        cw_kD = RobotConstants.Spindexer.SPINDEXER_CW_D;
+        cw_kF = RobotConstants.Spindexer.SPINDEXER_CW_F;
+
+        ccw_kP = RobotConstants.Spindexer.SPINDEXER_CCW_P;
+        ccw_kI = RobotConstants.Spindexer.SPINDEXER_CCW_I;
+        ccw_kD = RobotConstants.Spindexer.SPINDEXER_CCW_D;
+        ccw_kF = RobotConstants.Spindexer.SPINDEXER_CCW_F;
 
         // Initialize flipper to retracted position
         robot.spindexerFlipperServo.setPosition(RobotConstants.Spindexer.FLIPPER_POSITION_RETRACT);
@@ -107,19 +120,8 @@ public class Spindexer implements Subsystem {
         if (rotationState != RotationState.IDLE) return; // Prevent conflicts
 
         robot.spindexerPID.reset();
-        // Set CCW-specific PID gains (against gravity)
-        robot.spindexerPID.setPIDF(
-            RobotConstants.Spindexer.SPINDEXER_CCW_P,
-            RobotConstants.Spindexer.SPINDEXER_CCW_I,
-            RobotConstants.Spindexer.SPINDEXER_CCW_D,
-            RobotConstants.Spindexer.SPINDEXER_CCW_F
-        );
-
-        // Clean up CW rotation intake control if switching directions
-        if (cwRotationControlsIntake) {
-            robot.intakeBeltMotor.setPower(0.0);
-            cwRotationControlsIntake = false;
-        }
+        // Set CCW-specific PID gains (against gravity) - uses tunable values
+        robot.spindexerPID.setPIDF(ccw_kP, ccw_kI, ccw_kD, ccw_kF);
 
         spindPosTracker = (spindPosTracker + 1) % SPINDEXER_POSITIONS.length;
         targetPosition = SPINDEXER_POSITIONS[spindPosTracker];
@@ -137,22 +139,13 @@ public class Spindexer implements Subsystem {
         if (rotationState != RotationState.IDLE) return; // Prevent conflicts
 
         robot.spindexerPID.reset();
-        // Set CW-specific PID gains (with gravity assist)
-        robot.spindexerPID.setPIDF(
-            RobotConstants.Spindexer.SPINDEXER_CW_P,
-            RobotConstants.Spindexer.SPINDEXER_CW_I,
-            RobotConstants.Spindexer.SPINDEXER_CW_D,
-            RobotConstants.Spindexer.SPINDEXER_CW_F
-        );
+        // Set CW-specific PID gains (with gravity assist) - uses tunable values
+        robot.spindexerPID.setPIDF(cw_kP, cw_kI, cw_kD, cw_kF);
 
         spindPosTracker = (spindPosTracker - 1 + SPINDEXER_POSITIONS.length) % SPINDEXER_POSITIONS.length;
         targetPosition = SPINDEXER_POSITIONS[spindPosTracker];
         rotationState = RotationState.ROTATING;
         SpindexerAndMotifStatus.SpindexerPattern.rotateBallsCW();
-
-        // Start intake belt for CW rotation
-        robot.intakeBeltMotor.setPower(1.0);
-        cwRotationControlsIntake = true;
     }
 
     public boolean rotateToColor(RobotConstants.Enums.BallColor color){
@@ -373,7 +366,7 @@ public class Spindexer implements Subsystem {
     }
 
 /**
-     * Updates the PIDF coefficients for spindexer rotation control.
+     * Updates the CW PIDF coefficients for spindexer rotation control.
      * Used for live tuning during TeleOp.
      *
      * @param kP Proportional coefficient
@@ -381,8 +374,44 @@ public class Spindexer implements Subsystem {
      * @param kD Derivative coefficient
      * @param kF Feedforward coefficient
      */
+    public void setCWPIDF(double kP, double kI, double kD, double kF) {
+        cw_kP = kP;
+        cw_kI = kI;
+        cw_kD = kD;
+        cw_kF = kF;
+    }
+
+    /**
+     * Updates the CCW PIDF coefficients for spindexer rotation control.
+     * Used for live tuning during TeleOp.
+     *
+     * @param kP Proportional coefficient
+     * @param kI Integral coefficient
+     * @param kD Derivative coefficient
+     * @param kF Feedforward coefficient
+     */
+    public void setCCWPIDF(double kP, double kI, double kD, double kF) {
+        ccw_kP = kP;
+        ccw_kI = kI;
+        ccw_kD = kD;
+        ccw_kF = kF;
+    }
+
+    /**
+     * Updates the PIDF coefficients for spindexer rotation control.
+     * Legacy method - updates both CW and CCW to the same values.
+     * Used for live tuning during TeleOp.
+     *
+     * @param kP Proportional coefficient
+     * @param kI Integral coefficient
+     * @param kD Derivative coefficient
+     * @param kF Feedforward coefficient
+     * @deprecated Use setCWPIDF or setCCWPIDF instead for direction-specific tuning
+     */
+    @Deprecated
     public void setSpindexerPIDF(double kP, double kI, double kD, double kF) {
-        robot.spindexerPID.setPIDF(kP, kI, kD, kF);
+        setCWPIDF(kP, kI, kD, kF);
+        setCCWPIDF(kP, kI, kD, kF);
     }
 
     // ====================================================================
@@ -514,12 +543,6 @@ public class Spindexer implements Subsystem {
                 if (settlingTimer.seconds() >= SETTLING_TIME) {
                     rotationState = RotationState.IDLE;
                     isSettling = false;
-
-                    // Stop intake belt if CW rotation was controlling it
-                    if (cwRotationControlsIntake) {
-                        robot.intakeBeltMotor.setPower(0.0);
-                        cwRotationControlsIntake = false;
-                    }
                 }
             } else {
                 // Outside tolerance - reset settling

@@ -34,10 +34,13 @@ public class Shooter implements Subsystem {
 
     private ElapsedTime flickerTimer = new ElapsedTime();
 
+    // Manual velocity override for tuning
+    private boolean manualVelocityMode = false;
+    private double manualVelocity = 2200;
+
     // Turret PID control variables
     private double targetTurretAngle = 0.0;
     private double lastTargetTurretAngle = 0.0; // Track last target to avoid unnecessary resets
-    private boolean shouldRotateTurret = false;
     private double lastTurretError = 0;
     private double turretIntegral = 0;
     private long lastTurretTime = 0;
@@ -59,7 +62,7 @@ public class Shooter implements Subsystem {
     public Shooter() {
         this.robot = RobotHardware.getInstance();
 
-        // Initialize both shooter motors for velocity control with tuned PIDF values
+        // Configure PIDF coefficients for velocity control
         com.qualcomm.robotcore.hardware.PIDFCoefficients pidCoefficients =
             new com.qualcomm.robotcore.hardware.PIDFCoefficients(
                 RobotConstants.Shooter.SHOOTER_P,
@@ -68,10 +71,13 @@ public class Shooter implements Subsystem {
                 RobotConstants.Shooter.SHOOTER_F
             );
 
+        // Motor 1: Configure for velocity control with encoder
         robot.shooterMotor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         robot.shooterMotor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         robot.shooterMotor1.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidCoefficients);
 
+        // Motor 2: Configure for velocity control with encoder (reversed direction)
+        robot.shooterMotor2.setDirection(DcMotor.Direction.REVERSE);
         robot.shooterMotor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         robot.shooterMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         robot.shooterMotor2.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidCoefficients);
@@ -82,16 +88,15 @@ public class Shooter implements Subsystem {
         double voltage = robot.turretEncoder.getVoltage();
         double rawDegrees = (voltage / 3.3) * 360.0;
 
-        // Normalize to [-180, 180] BEFORE applying offset
+        // Normalize to [-180, 180]
         while (rawDegrees > 180) rawDegrees -= 360;
         while (rawDegrees < -180) rawDegrees += 360;
 
         lastRawTurretPosition = rawDegrees;
         turretRotationCount = 0;
 
-        // Calculate initial cumulative position with offset applied
-        double cumulativeRaw = rawDegrees + (turretRotationCount * 360);
-        cumulativeTurretPosition = cumulativeRaw - RobotConstants.Shooter.ENCODER_OFFSET;
+        // Calculate initial cumulative position (encoder centered, no offset needed!)
+        cumulativeTurretPosition = rawDegrees + (turretRotationCount * 360);
 
         // Initialize flipper to retracted position
         robot.shooterFlipper.setPosition(RobotConstants.Shooter.FLIPPER_POSITION_RETRACT);
@@ -106,18 +111,23 @@ public class Shooter implements Subsystem {
     /**
      * Calculates the turret's position on the field
      * Accounts for turret offset from robot center
+     * COORDINATE SYSTEM: +X forward, +Y LEFT (standard robot frame)
      * @return double array [turretX, turretY] in inches
      */
     private double[] getTurretFieldPosition() {
         Pose2D currentPose = robot.pinpoint.getPosition();
         double robotHeading = currentPose.getHeading(AngleUnit.RADIANS);
 
+        // 2D rotation for Pedro Pathing coordinates (heading 90° = forward, 0° = right)
+        // Robot-relative: OFFSET_X = right (4"), OFFSET_Y = forward (1")
+        // Robot's right direction in field: (sin(θ), -cos(θ))
+        // Robot's forward direction in field: (cos(θ), sin(θ))
         double turretX = currentPose.getX(DistanceUnit.INCH) +
-                        (RobotConstants.Shooter.TURRET_OFFSET_X * Math.cos(robotHeading) -
-                         RobotConstants.Shooter.TURRET_OFFSET_Y * Math.sin(robotHeading));
-        double turretY = currentPose.getY(DistanceUnit.INCH) +
                         (RobotConstants.Shooter.TURRET_OFFSET_X * Math.sin(robotHeading) +
                          RobotConstants.Shooter.TURRET_OFFSET_Y * Math.cos(robotHeading));
+        double turretY = currentPose.getY(DistanceUnit.INCH) +
+                        (-RobotConstants.Shooter.TURRET_OFFSET_X * Math.cos(robotHeading) +
+                         RobotConstants.Shooter.TURRET_OFFSET_Y * Math.sin(robotHeading));
 
         return new double[]{turretX, turretY};
     }
@@ -264,6 +274,9 @@ public class Shooter implements Subsystem {
         while (relativeAngle > 180) relativeAngle -= 360;
         while (relativeAngle < -180) relativeAngle += 360;
 
+        // Apply tracking offset to compensate for systematic error
+        relativeAngle += RobotConstants.Shooter.TURRET_TRACKING_OFFSET;
+
         return relativeAngle;
     }
 
@@ -271,14 +284,14 @@ public class Shooter implements Subsystem {
 
     /**
      * Gets the current servo position from the encoder with cumulative tracking
-     * Tracks position across ±180° boundary to support full servo range (-330° to +300°)
-     * @return Cumulative servo angle in degrees (with encoder offset applied)
+     * Tracks position across ±180° boundary to support full servo range (-360° to +270°)
+     * @return Cumulative servo angle in degrees
      */
     public double getTurretPosition() {
         double voltage = robot.turretEncoder.getVoltage();
         double rawDegrees = (voltage / 3.3) * 360.0;
 
-        // Normalize to [-180, 180] BEFORE applying offset (critical for boundary detection)
+        // Normalize to [-180, 180] for boundary detection
         while (rawDegrees > 180) rawDegrees -= 360;
         while (rawDegrees < -180) rawDegrees += 360;
 
@@ -296,11 +309,10 @@ public class Shooter implements Subsystem {
 
         lastRawTurretPosition = rawDegrees;
 
-        // Calculate cumulative position, then apply encoder offset
-        double cumulativeRaw = rawDegrees + (turretRotationCount * 360);
-        cumulativeTurretPosition = cumulativeRaw - RobotConstants.Shooter.ENCODER_OFFSET;
+        // Calculate cumulative position (encoder now centered, no offset needed!)
+        cumulativeTurretPosition = rawDegrees + (turretRotationCount * 360);
 
-        return cumulativeTurretPosition; // Returns cumulative servo degrees with offset
+        return cumulativeTurretPosition; // Returns cumulative servo degrees
     }
 
     /**
@@ -311,17 +323,15 @@ public class Shooter implements Subsystem {
         // SAFETY: Clamp input to turret limits (45° CW, -60° CCW)
         targetAngleTurret = Math.max(-60.0, Math.min(45.0, targetAngleTurret));
 
-        // Convert turret degrees to offset-adjusted servo degrees
-        // Since getTurretPosition() already applies the offset, we just multiply by gear ratio
+        // Convert turret degrees to servo degrees
         double newTargetServo = targetAngleTurret * RobotConstants.Shooter.GEAR_RATIO;
 
-        // Only update if target changed significantly (> 1° servo = ~0.17° turret)
-        if (Math.abs(newTargetServo - lastTargetTurretAngle) > 1.0) {
-            targetTurretAngle = newTargetServo;
-            lastTargetTurretAngle = newTargetServo;
-            shouldRotateTurret = true;
+        // Always update target to prevent drift (small changes matter for tracking)
+        targetTurretAngle = newTargetServo;
 
-            // Reset PID only when target actually changes
+        // Reset PID only when target changes significantly (> 0.5° servo)
+        if (Math.abs(newTargetServo - lastTargetTurretAngle) > 0.5) {
+            lastTargetTurretAngle = newTargetServo;
             turretIntegral = 0;
             lastTurretError = 0;
         }
@@ -330,28 +340,18 @@ public class Shooter implements Subsystem {
     /**
      * PID control loop for turret rotation
      * Called automatically in periodic()
+     * Now always runs to prevent drift - no shouldRotateTurret flag needed!
      */
     public void turretRotationUpdater() {
-        if (!shouldRotateTurret) return;
-
         double currentPosition = getTurretPosition(); // In servo degrees
 
         // Calculate error (all in servo degrees)
         // NO wrapping - cumulative tracking allows us to reach any position directly
         double error = targetTurretAngle - currentPosition;
 
-        // Check if we're close enough (deadband)
-        if (Math.abs(error) < RobotConstants.Shooter.ANGLE_RANGE) {
-            robot.turretServo.setPower(0);
-            shouldRotateTurret = false;
-            turretIntegral = 0;
-            return;
-        }
-
-        // SAFETY: Hard limits in offset-adjusted servo degrees
+        // SAFETY: Hard limits in servo degrees
         // Turret limits: +45° CW, -60° CCW (in turret degrees)
-        // → Servo limits (offset-adjusted): +270° CW, -360° CCW
-        // Independent of ENCODER_OFFSET since we work in offset-adjusted coordinates
+        // → Servo limits: +270° CW, -360° CCW
         final double CW_LIMIT = 270.0;      // Maximum clockwise rotation (45° × 6)
         final double CCW_LIMIT = -360.0;    // Maximum counter-clockwise rotation (-60° × 6)
         final double LIMIT_MARGIN = 30.0;   // Start slowing down 30° before limit
@@ -363,7 +363,7 @@ public class Shooter implements Subsystem {
         if ((currentPosition >= CW_LIMIT && error > 0) ||
             (currentPosition <= CCW_LIMIT && error < 0)) {
             robot.turretServo.setPower(0);
-            shouldRotateTurret = false;
+            turretIntegral = 0;  // FIX: Reset integral to prevent windup at limits
             return;
         }
 
@@ -405,12 +405,23 @@ public class Shooter implements Subsystem {
         // Clamp power
         power = Math.max(-maxPower, Math.min(maxPower, power));
 
+        // Deadband to prevent jitter and save battery when very close
+        // PID still runs (tracks small changes) but we zero the output
+        if (Math.abs(error) < RobotConstants.Shooter.ANGLE_RANGE) {
+            power = 0;
+        }
+
         robot.turretServo.setPower(power);
     }
 
     public double getTargetTurretAngle() {
         return targetTurretAngle;
     }
+
+    public double getRequiredVelocity() {
+        return requiredVelocity;
+    }
+
     public void triggerShot() {
         if (currentState == FlickState.Idle) { // Only start if not already running
             currentState = FlickState.Start;
@@ -443,6 +454,39 @@ public class Shooter implements Subsystem {
         this.turretKP = kP;
         this.turretKI = kI;
         this.turretKD = kD;
+    }
+
+    /**
+     * Enables manual velocity mode for tuning
+     * When enabled, shooter uses manualVelocity instead of distance-based velocity
+     * @param enabled Whether to enable manual velocity mode
+     */
+    public void setManualVelocityMode(boolean enabled) {
+        this.manualVelocityMode = enabled;
+    }
+
+    /**
+     * Sets the manual velocity target (only used when manual mode is enabled)
+     * @param velocity Target velocity in ticks per second
+     */
+    public void setManualVelocity(double velocity) {
+        this.manualVelocity = velocity;
+    }
+
+    /**
+     * Gets the current manual velocity setting
+     * @return Manual velocity in ticks per second
+     */
+    public double getManualVelocity() {
+        return manualVelocity;
+    }
+
+    /**
+     * Checks if manual velocity mode is active
+     * @return true if manual velocity mode is enabled
+     */
+    public boolean isManualVelocityMode() {
+        return manualVelocityMode;
     }
 
     // ****** ZONE DETECTION ******
@@ -504,12 +548,20 @@ public class Shooter implements Subsystem {
         // Update Pinpoint odometry data before using it
         robot.pinpoint.update();
 
-        // Update velocity based on distance to goal (from lookup table)
-        updateVelocityFromDistance();
+        // Determine target velocity: manual mode (for tuning) or distance-based
+        double targetVelocity;
+        if (manualVelocityMode) {
+            targetVelocity = manualVelocity;
+        } else {
+            // Update velocity based on distance to goal (from lookup table)
+            updateVelocityFromDistance();
+            targetVelocity = requiredVelocity;
+        }
 
-        // Set shooter velocity (not power) based on distance
-        robot.shooterMotor1.setVelocity(requiredVelocity);
-        robot.shooterMotor2.setVelocity(requiredVelocity);
+        // Both motors: Use velocity control with PIDF to maintain constant speed
+        // This ensures the shooter stays at target velocity and recovers quickly after shooting
+        robot.shooterMotor1.setVelocity(targetVelocity);
+        robot.shooterMotor2.setVelocity(targetVelocity);
 
         flipperStateMachinePeriodic();
         updateFieldState(); // Update zone based on robot corner positions

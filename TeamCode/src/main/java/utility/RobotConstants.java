@@ -40,16 +40,16 @@ public class RobotConstants {
 
         // Spindexer PIDF coefficients - direction-specific for vertical mounting
         // CW rotation (with gravity assist)
-        public static final double SPINDEXER_CW_P = 0.0089;
+        public static final double SPINDEXER_CW_P = 0.0066;
         public static final double SPINDEXER_CW_I = 0.0;
-        public static final double SPINDEXER_CW_D = 0.0001;
-        public static final double SPINDEXER_CW_F = 0.0;
+        public static final double SPINDEXER_CW_D = 0.0003;
+        public static final double SPINDEXER_CW_F = 0.0001;
 
         // CCW rotation (against gravity)
-        public static final double SPINDEXER_CCW_P = 0.0055;
-        public static final double SPINDEXER_CCW_I = 0.02;
-        public static final double SPINDEXER_CCW_D = 0.0003;
-        public static final double SPINDEXER_CCW_F = 0.0003;
+        public static final double SPINDEXER_CCW_P = 0.0087;
+        public static final double SPINDEXER_CCW_I = 0.0001;
+        public static final double SPINDEXER_CCW_D = 0.0004;
+        public static final double SPINDEXER_CCW_F = 0.0001;
 
         // Legacy default values (backwards compatibility)
         public static final double SPINDEXER_P = SPINDEXER_CCW_P;
@@ -64,7 +64,7 @@ public class RobotConstants {
         public static final double ANGLE_RANGE = 7;
 
         // Spindexer slot positions in degrees (3 equally-spaced slots: 120° apart)
-        public static final int[] SPINDEXER_POSITIONS = {65, 185, 305};
+        public static final int[] SPINDEXER_POSITIONS = {52, 172, 292};
 
     }
 
@@ -93,22 +93,22 @@ public class RobotConstants {
 
         // Turret positioning
         public static final double CENTER = 0.0;
-        public static final int ENCODER_OFFSET = -30; // Encoder offset: position that reads -60° raw is 0° actual
         public static final double ANGLE_RANGE = 0.5; // Acceptable error in degrees
         public static final double GEAR_RATIO = 6.0; // 6:1 servo to turret (servo rotates 6° for 1° turret rotation)
 
         // Turret tracking offset (in turret degrees) - compensates for systematic tracking error
         // Negative value shifts aim left, positive shifts aim right
-        public static final double TURRET_TRACKING_OFFSET = 0; // Adjust if tracking is still off
+        // Tune this if turret consistently misses left/right of target
+        public static final double TURRET_TRACKING_OFFSET = 0; // Adjust if tracking is off
 
         // Turret PID coefficients (tuned values)
         public static final PIDCoefficients TURRET_PID = new PIDCoefficients(0.013, 0, 0.00020);
 
         // Shooter PIDF coefficients (tuned values from ShooterPIDFTuningTeleOp)
-        public static final double SHOOTER_P = 5.0;
+        public static final double SHOOTER_P = 40;
         public static final double SHOOTER_I = 0.0;
         public static final double SHOOTER_D = 0.0;
-        public static final double SHOOTER_F = 7.4;
+        public static final double SHOOTER_F = 10.0;
     }
 
     public static class ColorSensor {

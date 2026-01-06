@@ -57,7 +57,8 @@ public class TurretPIDFTuningTeleOp extends OpMode {
         // Initialize position tracking (all in servo degrees)
         double voltage = robot.turretEncoder.getVoltage();
         double rawDegrees = (voltage / 3.3) * 360.0;
-        rawDegrees -= RobotConstants.Shooter.ENCODER_OFFSET;
+
+        // Normalize to [-180, 180]
         while (rawDegrees > 180) rawDegrees -= 360;
         while (rawDegrees < -180) rawDegrees += 360;
 
@@ -257,9 +258,6 @@ public class TurretPIDFTuningTeleOp extends OpMode {
     private double getCurrentPosition() {
         double voltage = robot.turretEncoder.getVoltage();
         double rawDegrees = (voltage / 3.3) * 360.0;
-
-        // Apply encoder offset
-        rawDegrees -= RobotConstants.Shooter.ENCODER_OFFSET;
 
         // Normalize to [-180, 180]
         while (rawDegrees > 180) rawDegrees -= 360;
