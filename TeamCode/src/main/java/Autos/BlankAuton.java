@@ -28,7 +28,7 @@ public class BlankAuton extends AutonTemplate {
     // ============================================================
     // OPTION 1: Visualizer Paths (uncomment and paste export)
     // ============================================================
-    // private VisualizerPaths paths;
+    // private Paths paths;
 
     // ============================================================
     // OPTION 2: Named Paths (uncomment if needed)
@@ -42,7 +42,7 @@ public class BlankAuton extends AutonTemplate {
         follower.setStartingPose(new Pose(0, 0, Math.toRadians(0)));
 
         // OPTION 1: Instantiate visualizer paths
-        // paths = new VisualizerPaths(follower);
+        // paths = new Paths(follower);
 
         // OPTION 2: Build custom named paths
 

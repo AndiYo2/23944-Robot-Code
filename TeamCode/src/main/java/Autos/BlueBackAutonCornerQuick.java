@@ -18,14 +18,14 @@ import framework.AutonSequence;
 @Autonomous(name = "BlueBackAutonCorner (Quick)", group = "Autonomous")
 public class BlueBackAutonCornerQuick extends AutonTemplate {
     // Using visualizer export approach - paste the Paths class directly
-    private VisualizerPaths paths;
+    private Paths paths;
 
     @Override
     protected void buildPaths() {
         follower.setStartingPose(new Pose(56.5, 8.5, Math.toRadians(90)));
 
         // Instantiate paths from visualizer export
-        paths = new VisualizerPaths(follower);
+        paths = new Paths(follower);
     }
 
     @Override
@@ -79,12 +79,12 @@ public class BlueBackAutonCornerQuick extends AutonTemplate {
      *
      * This example shows manually created paths following the visualizer export pattern.
      */
-    private static class VisualizerPaths {
+    private static class Paths {
         public PathChain shootToFirst;
         public PathChain firstToShoot;
         public PathChain secondToShoot;
 
-        public VisualizerPaths(Follower follower) {
+        public Paths(Follower follower) {
             // First path: curved path from start to first pickup
             shootToFirst = follower.pathBuilder()
                     .addPath(new BezierCurve(
