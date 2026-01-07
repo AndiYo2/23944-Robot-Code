@@ -332,6 +332,54 @@ abstract public class TeleOpTemplate extends CommandOpMode {
             telemetry.addLine("");
         }
 
+        // ========================================
+        // TURRET TRACKING DEBUG (for visualizer comparison)
+        // ========================================
+        telemetry.addLine("=== TURRET TRACKING DEBUG ===");
+
+        // Robot Position (for visualizer comparison)
+        double robotX = robot.pinpoint.getPosX(org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit.INCH);
+        double robotY = robot.pinpoint.getPosY(org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit.INCH);
+        double robotHeadingRad = robot.pinpoint.getHeading(org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.RADIANS);
+        double robotHeadingDeg = Math.toDegrees(robotHeadingRad);
+
+        telemetry.addData("  Robot Pose", String.format("(%.1f, %.1f, %.1f°)", robotX, robotY, robotHeadingDeg));
+
+        // Goal Position
+        com.pedropathing.geometry.Pose goalPos = FieldMap.getGoalPosition();
+        telemetry.addData("  Goal Position", String.format("(%.0f, %.0f)", goalPos.getX(), goalPos.getY()));
+
+        // Delta to goal (from robot center)
+        double deltaX = goalPos.getX() - robotX;
+        double deltaY = goalPos.getY() - robotY;
+        telemetry.addData("  Delta to Goal", String.format("dx=%.1f, dy=%.1f", deltaX, deltaY));
+
+        // Field angle to goal
+        double fieldAngleRad = Math.atan2(deltaY, deltaX);
+        double fieldAngleDeg = Math.toDegrees(fieldAngleRad);
+        telemetry.addData("  Field Angle to Goal", String.format("%.1f°", fieldAngleDeg));
+
+        // Expected turret angle (field angle - robot heading)
+        double expectedTurretAngle = fieldAngleDeg - robotHeadingDeg;
+        // Normalize to [-180, 180]
+        while (expectedTurretAngle > 180) expectedTurretAngle -= 360;
+        while (expectedTurretAngle < -180) expectedTurretAngle += 360;
+        telemetry.addData("  Expected Turret Angle", String.format("%.1f°", expectedTurretAngle));
+
+        // Actual turret values
+        double turretTarget = shooter.getTargetTurretAngle() / RobotConstants.Shooter.GEAR_RATIO;  // Convert servo deg to turret deg
+        double turretActual = shooter.getTurretPosition() / RobotConstants.Shooter.GEAR_RATIO;    // Convert servo deg to turret deg
+        double turretError = turretTarget - turretActual;
+
+        telemetry.addData("  Turret Target", String.format("%.1f° (turret deg)", turretTarget));
+        telemetry.addData("  Turret Actual", String.format("%.1f° (turret deg)", turretActual));
+        telemetry.addData("  Turret Error", String.format("%.1f°", turretError));
+
+        // Comparison: Expected vs What code calculated
+        telemetry.addData("  Calc vs Expected Diff", String.format("%.1f°", turretTarget - expectedTurretAngle));
+
+        telemetry.addLine("");
+
         telemetry.update();
     }
 }

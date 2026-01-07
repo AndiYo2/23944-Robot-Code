@@ -3,13 +3,47 @@ package utility;
 import com.pedropathing.geometry.Pose;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
+/**
+ * Field zone map and goal position definitions.
+ *
+ * COORDINATE SYSTEM (Pedro Pathing / Pinpoint):
+ *   - Origin (0,0) at bottom-left of field
+ *   - +X = RIGHT (increases toward Red side)
+ *   - +Y = FORWARD/UP (increases toward goals)
+ *   - Field size: 144" x 144" (indices 0-143)
+ *
+ * BITMAP COORDINATE CONVERSION:
+ *   The letterBitmap array uses standard image coordinates where row 0 is at TOP.
+ *   To convert from Pinpoint/field coordinates to bitmap indices:
+ *     - bitmapX = fieldX (no change)
+ *     - bitmapY = 143 - fieldY (Y-flip: bottom of field is row 143)
+ *
+ * ZONE CHARACTERS:
+ *   'S' = Shooting zone (turret tracks goal)
+ *   'N' = Neutral zone (turret centers)
+ *   'G' = Goal zone (near baskets)
+ *   'R' = Red alliance area
+ *   'B' = Blue alliance area
+ */
 public class FieldMap {
-    static Pose blueGoalTarget= new Pose(0, 138, 0);
-    static Pose redGoalTarget = new Pose(143, 138, 0);
 
+    // Goal positions in FIELD/PINPOINT coordinates (not bitmap indices)
+    // Blue goal: top-left corner of field (X=0, Y=143)
+    // Red goal: top-right corner of field (X=143, Y=143)
+    static Pose blueGoalTarget = new Pose(0, 143, 0);
+    static Pose redGoalTarget = new Pose(143, 143, 0);
+
+    /**
+     * Returns the zone character at a field position.
+     *
+     * @param pX Field X coordinate (Pinpoint, 0-143, 0=left)
+     * @param pY Field Y coordinate (Pinpoint, 0-143, 0=bottom)
+     * @return Zone character: 'S'=shooting, 'N'=neutral, 'G'=goal, 'R'=red, 'B'=blue
+     */
     public static char getPosition(double pX, double pY) {
         int x = (int) Math.round(pX);
-        int y = (int) Math.round( 143 - pY);
+        // Y-flip: convert field Y (0=bottom) to bitmap row (0=top)
+        int y = (int) Math.round(143 - pY);
 
         // Clamp to valid field bounds (0-143) to prevent array index errors
         // This handles odometry drift or initialization issues
@@ -19,14 +53,21 @@ public class FieldMap {
         return letterBitmap[y][x];
     }
 
+    /**
+     * Returns the goal position for the current alliance.
+     * Goal positions are in FIELD coordinates (same as Pinpoint).
+     *
+     * @return Pose with goal X, Y in field coordinates (heading is 0)
+     */
     public static Pose getGoalPosition() {
-        if(RobotConstants.UpdatableConstants.allianceColor == RobotConstants.Enums.AllianceColor.Red){
+        if (RobotConstants.UpdatableConstants.allianceColor == RobotConstants.Enums.AllianceColor.Red) {
             return redGoalTarget;
         }
         return blueGoalTarget;
     }
 
 
+    // 144x144 zone bitmap (row 0 = top of field = Y=143 in field coords)
     static char[][] letterBitmap;
 
     // Bitmap data stored as string to avoid Java bytecode size limit

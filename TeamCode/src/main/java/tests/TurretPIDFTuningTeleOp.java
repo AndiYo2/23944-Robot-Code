@@ -13,15 +13,15 @@ public class TurretPIDFTuningTeleOp extends OpMode {
     private RobotHardware robot;
 
     // Target positions in TURRET degrees (will be converted to servo degrees internally)
-    // Turret range: 45° CW, -60° CCW → Servo range: 270° CW, -360° CCW (6:1 ratio)
+    // Turret range: 45° CW, -60° CCW → Servo range: 225° CW, -300° CCW (5:1 ratio)
     // Test sequence: 0→15→30→45→0 (CW), then 0→-15→-30→-45→-60→0 (CCW)
     private double targetPositionTurret = 0; // Input in turret degrees
     private double targetPositionServo = 0;  // Converted to servo degrees for PID
     private double[] targetPositionsTurret = {
         0,      // Start
-        15, 30, 45,  // Clockwise to 45° turret (270° servo)
+        15, 30, 45,  // Clockwise to 45° turret (225° servo)
         0,      // Unwind back to center
-        -15, -30, -45, -60,  // Counter-clockwise to -60° turret (-360° servo)
+        -15, -30, -45, -60,  // Counter-clockwise to -60° turret (-300° servo)
         0       // Unwind back to center
     };
     private int targetIndex = 0;
@@ -71,8 +71,8 @@ public class TurretPIDFTuningTeleOp extends OpMode {
         targetPositionTurret = 0; // Start at turret center
 
         telemetry.addData("Status", "Initialized");
-        telemetry.addData("Hard Limits", "Turret: 45° / -60° | Servo: 270° / -360°");
-        telemetry.addData("Gear Ratio", "6:1 (servo → turret)");
+        telemetry.addData("Hard Limits", "Turret: 45° / -60° | Servo: 225° / -300°");
+        telemetry.addData("Gear Ratio", "5:1 (servo → turret)");
         telemetry.addLine("========== CONTROLS ==========");
         telemetry.addLine("Y: Cycle Target Position");
         telemetry.addLine("A: Reset to Center (0°)");
@@ -205,18 +205,18 @@ public class TurretPIDFTuningTeleOp extends OpMode {
         // Set motor power
         robot.turretServo.setPower(output);
 
-        // Check if approaching limits (servo: 270° CW, -360° CCW)
+        // Check if approaching limits (servo: 225° CW, -300° CCW)
         double currentTurretPosition = currentServoPosition / RobotConstants.Shooter.GEAR_RATIO;
-        boolean nearCWLimit = currentServoPosition > 240.0;  // Warn at 240° servo (40° turret)
-        boolean nearCCWLimit = currentServoPosition < -300.0; // Warn at -300° servo (-50° turret)
+        boolean nearCWLimit = currentServoPosition > 200.0;  // Warn at 200° servo (40° turret)
+        boolean nearCCWLimit = currentServoPosition < -250.0; // Warn at -250° servo (-50° turret)
         boolean atCWLimit = targetPositionTurret >= 45.0;
         boolean atCCWLimit = targetPositionTurret <= -60.0;
 
         // Telemetry - Safety warnings first
         if (atCWLimit) {
-            telemetry.addLine("⚠⚠⚠ AT CW LIMIT (45° turret = 270° servo) ⚠⚠⚠");
+            telemetry.addLine("⚠⚠⚠ AT CW LIMIT (45° turret = 225° servo) ⚠⚠⚠");
         } else if (atCCWLimit) {
-            telemetry.addLine("⚠⚠⚠ AT CCW LIMIT (-60° turret = -360° servo) ⚠⚠⚠");
+            telemetry.addLine("⚠⚠⚠ AT CCW LIMIT (-60° turret = -300° servo) ⚠⚠⚠");
         } else if (nearCWLimit) {
             telemetry.addLine("⚠ WARNING: Approaching CW limit!");
         } else if (nearCCWLimit) {

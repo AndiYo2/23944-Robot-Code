@@ -6,6 +6,27 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
+/**
+ * Robot configuration constants and hardware mappings.
+ *
+ * COORDINATE SYSTEM (Pedro Pathing / Pinpoint):
+ *   - Origin (0,0) at bottom-left of field
+ *   - +X = RIGHT (increases toward Red alliance side)
+ *   - +Y = FORWARD/UP (increases toward goals)
+ *   - Heading: 0° = facing right (+X), 90° = facing forward (+Y)
+ *   - Rotation: Counter-clockwise is positive
+ *   - Field size: 144" x 144"
+ *
+ * ROBOT-RELATIVE FRAME:
+ *   - Forward = +Y direction when heading = 90°
+ *   - Right = +X direction when heading = 90°
+ *   - Turret offsets use robot-relative convention
+ *
+ * HARDWARE PORT COMMENTS:
+ *   - E = Expansion Hub
+ *   - C = Control Hub
+ *   - Numbers indicate port indices
+ */
 public class RobotConstants {
     public static class Drivetrain {
         public static String frontLeftMotor = "frontLeftMotor"; //E0
@@ -28,6 +49,14 @@ public class RobotConstants {
 
     public static class Spindexer {
         public static SpindexerAndMotifStatus.SpindexerPattern spindexerPattern  = new SpindexerAndMotifStatus.SpindexerPattern(Enums.BallColor.None, Enums.BallColor.None, Enums.BallColor.None);
+
+        // Default preload pattern for autonomous (skips cataloging)
+        // Slot 0 = Intake, Slot 1 = Shooter, Slot 2 = Top Storage
+        public static final Enums.BallColor[] DEFAULT_PRELOAD = {
+            Enums.BallColor.Purple,  // Intake
+            Enums.BallColor.Purple,  // Shooter
+            Enums.BallColor.Green    // Top Storage
+        };
         public static String spindexerServo = "spindexerServo"; // E4
         public static String spindexerEncoder = "spindexerServoEncoder"; // E Analog 0-1
 
@@ -80,41 +109,74 @@ public class RobotConstants {
     }
 
     public static class Shooter {
-        //hardware
-        public static String shooter1 = "shooterMotor1"; // Left(from back) shooter, C0
-        public static String shooter2 = "shooterMotor2"; // Right(from back) shooter, C1
-        public static String turret = "turretServo"; //E3
-        public static String turretEncoder = "turretServoEncoder"; // Encoder port TBD
-        public static String shooterFlipperServo = "shooterFlipperServo"; // C 0
+        // ==================== HARDWARE NAMES ====================
+        public static String shooter1 = "shooterMotor1";      // Left flywheel (from back), C0
+        public static String shooter2 = "shooterMotor2";      // Right flywheel (from back), C1
+        public static String turret = "turretServo";          // Continuous rotation servo, E3
+        public static String turretEncoder = "turretServoEncoder"; // Analog encoder for turret position
+        public static String shooterFlipperServo = "shooterFlipperServo"; // Ball flipper servo, C0
         public static String shooterEncoder = "shooterEncoder";
 
-        // 2600, 2100, is our powers
+        // ==================== FLIPPER POSITIONS ====================
+        public final static double FLIPPER_POSITION_EXTENDED = 0.35;  // Push ball into flywheel
+        public final static double FLIPPER_POSITION_RETRACT = 0.15;   // Ready position
+        public static final double FLICK_TIME = 0.15;                 // Seconds to hold extended
 
-        //Constant Positions
-        public final static double FLIPPER_POSITION_EXTENDED = 0.35;
-        public final static double FLIPPER_POSITION_RETRACT = 0.15;
-        public static final double FLICK_TIME = 0.15;
+        // ==================== TURRET LIMITS ====================
+        // Turret physical limits (turret degrees, not servo degrees)
+        // Negative = left (CCW), Positive = right (CW)
+        // Range: -45° to +60° turret degrees (×5 gear ratio = -225° to +300° servo degrees)
+        public static final double TURRET_MIN_ANGLE = -45.0;  // Max left rotation (CCW)
+        public static final double TURRET_MAX_ANGLE = 60.0;   // Max right rotation (CW)
 
-        // Shooter power settings
-
-        // Turret offset from robot center (in inches, robot-relative)
-        public static final double TURRET_OFFSET_X = 4;
-        public static final double TURRET_OFFSET_Y = 1;
-
-        // Turret positioning
+        // ==================== TURRET CONTROL ====================
+        // Target angle when not tracking (turret degrees)
         public static final double CENTER = 0.0;
-        public static final double ANGLE_RANGE = 3.0; // Acceptable error in SERVO degrees (0.5° turret degrees)
-        public static final double GEAR_RATIO = 6.0; // 6:1 servo to turret (servo rotates 6° for 1° turret rotation)
 
-        // Turret tracking offset (in turret degrees) - compensates for systematic tracking error
-        // Negative value shifts aim left, positive shifts aim right
-        // Tune this if turret consistently misses left/right of target
-        public static final double TURRET_TRACKING_OFFSET = 0; // Adjust if tracking is off
+        // PID deadband: stops motor when error < ANGLE_RANGE (servo degrees)
+        // 1.5° servo = 0.3° turret (due to 5:1 gear ratio)
+        public static final double ANGLE_RANGE = 1.5;
 
-        // Turret PID coefficients (tuned values)
-        public static final PIDCoefficients TURRET_PID = new PIDCoefficients(0.0035, .0015, 0.00030);
+        // Servo-to-turret gear ratio (5:1)
+        // Servo rotates GEAR_RATIO degrees for every 1° of turret rotation
+        // All PID math uses SERVO degrees; divide by GEAR_RATIO for turret degrees
+        //
+        // HOW TO VERIFY/TUNE:
+        //   1. Center turret (0°), note encoder reading
+        //   2. Manually rotate turret exactly 30° (use protractor)
+        //   3. Note new encoder reading
+        //   4. GEAR_RATIO = (encoder_change) / 30
+        //   Example: If encoder changes by 150° for 30° turret rotation, GEAR_RATIO = 150/30 = 5.0
+        public static double GEAR_RATIO = 5.0;
 
-        // Shooter PIDF coefficients (tuned values from ShooterPIDFTuningTeleOp)
+        // ==================== ENCODER CALIBRATION ====================
+        // TURRET_ENCODER_OFFSET: Encoder reading (in degrees) when turret is physically centered
+        //
+        // HOW TO CALIBRATE:
+        //   1. Manually center the turret so it points straight forward
+        //   2. Run the TurretCenteringTool or read encoder voltage
+        //   3. Calculate: offset = (voltage / 3.3) * 360.0
+        //   4. Set TURRET_ENCODER_OFFSET to that value
+        //
+        // This offset is SUBTRACTED from raw encoder reading so that
+        // "turret centered" = "0° encoder position"
+        //
+        // CRITICAL: If this is wrong, ALL turret angles will be off by a constant amount!
+        public static double TURRET_ENCODER_OFFSET = 0.0;  
+
+        // TURRET_TRACKING_OFFSET: Fine-tune adjustment for systematic aim error (turret degrees)
+        // Use this for small adjustments AFTER encoder is calibrated
+        // Positive = shift aim right, Negative = shift aim left
+        public static final double TURRET_TRACKING_OFFSET = 0;
+
+        // Turret PID gains (operates in servo degrees)
+        // P=0.0035: Low gain for smooth tracking (may need increase if slow)
+        // I=0.0015: Small integral for steady-state error
+        // D=0.00030: Damping to prevent overshoot
+        public static final PIDCoefficients TURRET_PID = new PIDCoefficients(0.0035, 0.0015, 0.00030);
+
+        // ==================== FLYWHEEL PIDF ====================
+        // Velocity control for flywheel motors (ticks/sec)
         public static final double SHOOTER_P = 40;
         public static final double SHOOTER_I = 0.0;
         public static final double SHOOTER_D = 0.0;
@@ -144,17 +206,22 @@ public class RobotConstants {
         public static final boolean SWAP_ALLIANCE_CONTROLS = true;
     }
 
-    public static class Limelight{
-
+    public static class Limelight {
         public static String limelight = "limelight";
         public static boolean isLimelightDisabled = false;
-        public static SpindexerAndMotifStatus.MotifPattern motifPattern = new SpindexerAndMotifStatus.MotifPattern(Enums.BallColor.Purple, Enums.BallColor.Green, Enums.BallColor.Purple);
 
-        // TAG_GOAL_POSITION for motif scanning (top center of field, slightly out of bounds)
-        public static final double TAG_GOAL_X = 72.0; // inches
-        public static final double TAG_GOAL_Y = 143.0; // inches
+        // Current motif pattern being matched
+        public static SpindexerAndMotifStatus.MotifPattern motifPattern =
+            new SpindexerAndMotifStatus.MotifPattern(Enums.BallColor.Purple, Enums.BallColor.Green, Enums.BallColor.Purple);
 
-        // AprilTag to Motif mappings
+        // AprilTag scanning target position (field coordinates)
+        // Top center of field where motif tags are located
+        // X=72 = center, Y=143 = top edge (near goals)
+        public static final double TAG_GOAL_X = 72.0;  // inches, field center
+        public static final double TAG_GOAL_Y = 143.0; // inches, top of field
+
+        // AprilTag ID to ball pattern mappings
+        // Each tag indicates which color ball should be in each spindexer slot
         public static final Enums.BallColor[] APRILTAG_21_PATTERN = {
             Enums.BallColor.Green, Enums.BallColor.Purple, Enums.BallColor.Purple
         };
@@ -164,8 +231,11 @@ public class RobotConstants {
         public static final Enums.BallColor[] APRILTAG_23_PATTERN = {
             Enums.BallColor.Purple, Enums.BallColor.Purple, Enums.BallColor.Green
         };
+
+        // Slows flywheel during tag scanning for camera stability
         public static boolean manuallySlowedForScan = true;
 
+        /** Returns the ball pattern for a given AprilTag ID, or null if unknown. */
         public static Enums.BallColor[] getMotifPatternForTag(int tagId) {
             switch (tagId) {
                 case 21: return APRILTAG_21_PATTERN;
@@ -178,7 +248,15 @@ public class RobotConstants {
 
     public static class Pinpoint{
         public static String pinpoint = "pinpoint"; //E I2C 1
-        public static Pose2D standardStartPoint = new Pose2D(DistanceUnit.INCH,56.5, 8.5, AngleUnit.DEGREES, 90);
+
+        // Alliance-specific start positions (robot facing forward at Y=8.5, heading 90°)
+        // Blue Alliance: left side of field (X=56.5)
+        // Red Alliance: right side of field (X=87.5)
+        public static Pose2D blueStartPoint = new Pose2D(DistanceUnit.INCH, 56.5, 8.5, AngleUnit.DEGREES, 90);
+        public static Pose2D redStartPoint = new Pose2D(DistanceUnit.INCH, 87.5, 8.5, AngleUnit.DEGREES, 90);
+
+        // Default start point (Blue alliance by default)
+        public static Pose2D standardStartPoint = blueStartPoint;
 
         // Yaw scalar for IMU drift correction
         // 1.0 = no correction (default starting point)

@@ -8,6 +8,7 @@ import framework.actions.*;
 import subsystems.Intake;
 import subsystems.Limelight;
 import utility.CatalogManager;
+import utility.RobotConstants;
 import utility.Shooting.ShootingSequenceManager;
 
 import java.util.function.Consumer;
@@ -264,6 +265,43 @@ public class AutonSequence {
     }
 
     /**
+     * Sets the initial spindexer ball pattern using the default preload (Purple, Purple, Green).
+     * Use this instead of catalog() when ball positions are known at match start.
+     *
+     * @return this builder for chaining
+     */
+    public AutonSequence preload() {
+        executor.addAction(new PreloadAction());
+        return this;
+    }
+
+    /**
+     * Sets the initial spindexer ball pattern with a custom configuration.
+     *
+     * @param pattern array of 3 BallColors: [Intake, Shooter, TopStorage]
+     * @return this builder for chaining
+     */
+    public AutonSequence preload(RobotConstants.Enums.BallColor[] pattern) {
+        executor.addAction(new PreloadAction(pattern));
+        return this;
+    }
+
+    /**
+     * Sets the initial spindexer ball pattern with explicit ball colors.
+     *
+     * @param intake ball color in intake slot (slot 0)
+     * @param shooter ball color in shooter slot (slot 1)
+     * @param topStorage ball color in top storage slot (slot 2)
+     * @return this builder for chaining
+     */
+    public AutonSequence preload(RobotConstants.Enums.BallColor intake,
+                                  RobotConstants.Enums.BallColor shooter,
+                                  RobotConstants.Enums.BallColor topStorage) {
+        executor.addAction(new PreloadAction(intake, shooter, topStorage));
+        return this;
+    }
+
+    /**
      * Adds an intake start action.
      *
      * @return this builder for chaining
@@ -409,6 +447,23 @@ public class AutonSequence {
 
         public ParallelBuilder catalog() {
             group.addAction(new CatalogAction(catalogManager));
+            return this;
+        }
+
+        public ParallelBuilder preload() {
+            group.addAction(new PreloadAction());
+            return this;
+        }
+
+        public ParallelBuilder preload(RobotConstants.Enums.BallColor[] pattern) {
+            group.addAction(new PreloadAction(pattern));
+            return this;
+        }
+
+        public ParallelBuilder preload(RobotConstants.Enums.BallColor intake,
+                                        RobotConstants.Enums.BallColor shooter,
+                                        RobotConstants.Enums.BallColor topStorage) {
+            group.addAction(new PreloadAction(intake, shooter, topStorage));
             return this;
         }
 
