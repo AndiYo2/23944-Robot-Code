@@ -155,6 +155,11 @@ public class Shooter implements Subsystem {
      * @return Required velocity in ticks per second
      */
     private double getVelocityFromDistance(double distance) {
+
+        if(RobotConstants.Limelight.manuallySlowedForScan){
+            return 2200.0;
+        }
+
         // Clamp to min/max if outside table range
         if (distance <= VELOCITY_LOOKUP[0][0]) {
             return VELOCITY_LOOKUP[0][1]; // Return minimum velocity
@@ -413,9 +418,10 @@ public class Shooter implements Subsystem {
         power = Math.max(-maxPower, Math.min(maxPower, power));
 
         // Deadband to prevent jitter and save battery when very close
-        // PID still runs (tracks small changes) but we zero the output
+        // CRITICAL: Reset integral when in deadband to prevent windup from slow heading drift
         if (Math.abs(error) < RobotConstants.Shooter.ANGLE_RANGE) {
             power = 0;
+            turretIntegral = 0; // Prevent integral windup during deadband
         }
 
         robot.turretServo.setPower(power);
@@ -552,8 +558,8 @@ public class Shooter implements Subsystem {
 
     @Override
     public void periodic() {
-        // Update Pinpoint odometry data before using it
-        robot.pinpoint.update();
+        // NOTE: Pinpoint update is now called at top level of run() loop
+        // No need to call it here anymore
 
         // Determine target velocity: manual mode (for tuning) or distance-based
         double targetVelocity;

@@ -97,6 +97,7 @@ public class RobotHardware {
         backLeft.setDirection(DcMotorEx.Direction.REVERSE);
 
         // ******************* IMU ******************* //
+        // NOTE: Control Hub IMU initialized but not used - we use Pinpoint's built-in IMU instead
         imu = hardwareMap.get(IMU.class, "imu");
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
                 RevHubOrientationOnRobot.LogoFacingDirection.RIGHT, //
@@ -107,8 +108,26 @@ public class RobotHardware {
         // ******************* PINPOINT ******************* //
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
         pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
-        pinpoint.setOffsets(0.0, 0.0, DistanceUnit.INCH);
-        pinpoint.setPosition(RobotConstants.Pinpoint.standardStartPoint);
+        pinpoint.setOffsets(0.0, 0.0, DistanceUnit.INCH); // Centered by design in CAD
+
+        // CRITICAL: Reset and calibrate IMU
+        // Robot MUST be stationary during this! Calibration takes ~250ms
+        // This resets position to (0,0,0) and calibrates the IMU to current orientation
+        pinpoint.resetPosAndIMU();
+
+        // Wait for calibration to complete before proceeding
+        try {
+            Thread.sleep(300); // 250ms calibration + 50ms buffer
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+
+        // Set yaw scalar for fine-tuning (1.0 = no scaling, tune if needed)
+        pinpoint.setYawScalar(RobotConstants.Pinpoint.yawScalar);
+
+        // Note: OpModes will set their starting position AFTER this init completes
+        // - Auton: Calls follower.setStartingPose() which updates the Pinpoint
+        // - TeleOp: Calls pinpoint.setPosition() with either auton ending pose or default start point
 
         // ******************* INTAKE ******************* //
         intakeMotor = hardwareMap.get(DcMotorEx.class, RobotConstants.Intake.intake);

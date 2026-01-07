@@ -70,6 +70,24 @@ abstract public class TeleOpTemplateTuning extends CommandOpMode {
         driverGamepad = new GamepadEx(gamepad1);
         robot.init(hardwareMap, driverGamepad);
 
+        // Set starting position for TeleOp
+        // If we have an ending auton pose, use it; otherwise use standard start point
+        if (RobotConstants.UpdatableConstants.endingAutonPose != null) {
+            // Convert Pedro Pose to FTC Pose2D
+            com.pedropathing.geometry.Pose autonPose = RobotConstants.UpdatableConstants.endingAutonPose;
+            robot.pinpoint.setPosition(new org.firstinspires.ftc.robotcore.external.navigation.Pose2D(
+                    org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit.INCH,
+                    autonPose.getX(),
+                    autonPose.getY(),
+                    org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.RADIANS,
+                    autonPose.getHeading()));
+        } else {
+            // No auton ran - use standard starting position
+            robot.pinpoint.setPosition(RobotConstants.Pinpoint.standardStartPoint);
+        }
+        // CRITICAL: Update Pinpoint after setting position to apply it
+        robot.pinpoint.update();
+
         mecanumDrive = new MecanumDrive();
         intake = new Intake();
         shooter = new Shooter();
@@ -159,6 +177,9 @@ abstract public class TeleOpTemplateTuning extends CommandOpMode {
     @Override
     public void run() {
         super.run();
+
+        // CRITICAL: Update Pinpoint odometry every loop (like in test OpMode)
+        robot.pinpoint.update();
 
         updatePIDTuning();
         updateDrivetrain();
@@ -714,9 +735,17 @@ abstract public class TeleOpTemplateTuning extends CommandOpMode {
         telemetry.addData("  Confidence", String.format("%.1f%%", result.confidence * 100));
         telemetry.addLine("");
 
+        // ODOMETRY section
+        telemetry.addLine("=== ODOMETRY ===");
+        telemetry.addData("  X Position", String.format("%.1f in", robot.pinpoint.getPosX(org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit.INCH)));
+        telemetry.addData("  Y Position", String.format("%.1f in", robot.pinpoint.getPosY(org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit.INCH)));
+        telemetry.addData("  Heading", String.format("%.3f rad", robot.pinpoint.getHeading(org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.RADIANS)));
+        telemetry.addLine("");
+
         // OTHER section
         telemetry.addLine("=== OTHER ===");
         telemetry.addData("  Alliance", RobotConstants.UpdatableConstants.allianceColor);
+        telemetry.addData("  IMU Calibration", "Auto on init (resetPosAndIMU)");
         telemetry.addLine("");
 
         // SEQUENCE DEBUG section (only when sequence executing)

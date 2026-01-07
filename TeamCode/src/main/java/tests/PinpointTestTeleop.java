@@ -18,7 +18,7 @@ public class PinpointTestTeleop extends CommandOpMode {
     private final RobotHardware robot = RobotHardware.getInstance();
     double robotX;
     double robotY;
-    int robotHeading;
+    double robotHeading;
 
 
 
@@ -36,12 +36,15 @@ public class PinpointTestTeleop extends CommandOpMode {
     public void initialize() {
         driverGamepad = new GamepadEx(gamepad1);
         robot.init(hardwareMap, driverGamepad);
-        robot.pinpoint.resetPosAndIMU();
+
+        // Set starting position for field testing
+        robot.pinpoint.setPosition(RobotConstants.Pinpoint.standardStartPoint);
+        robot.pinpoint.update(); // Apply the position
 
         mecanumDrive = new MecanumDrive();
         robotX = 56.5;
         robotY = 8.5;
-        robotHeading = 90;
+        robotHeading = Math.toRadians(90); // 90° = 1.571 radians
     }
 
     private void updateDrivetrain() {
@@ -102,17 +105,21 @@ public class PinpointTestTeleop extends CommandOpMode {
         return fieldCorners;
     }
     public void updateLocation(){
+        // CRITICAL: Update Pinpoint before reading values
+        robot.pinpoint.update();
+
         robotX = robot.pinpoint.getPosX(DistanceUnit.INCH);
         robotY = robot.pinpoint.getPosY(DistanceUnit.INCH);
-        robotHeading = (int) Math.round(robot.pinpoint.getHeading(AngleUnit.DEGREES));
+        robotHeading = robot.pinpoint.getHeading(AngleUnit.RADIANS);
     }
 
     private void updateTelemetry() {
-        telemetry.addData("RobotPosition:", robot.pinpoint.getPosition());
-        telemetry.addData("Robot X: ", "%.1f", robotX);
-        telemetry.addData("Robot Y: ", "%.1f", robotY);
-        telemetry.addData("Heading", "%d°", robotHeading);
-        telemetry.addData("Robot Center Zone:", getRobotMapType());
+        telemetry.addLine("========== POSITION ==========");
+        telemetry.addData("Robot X", "%.1f inches", robotX);
+        telemetry.addData("Robot Y", "%.1f inches", robotY);
+        telemetry.addData("Heading", robotHeading);
+        telemetry.addData("Center Zone", getRobotMapType());
+        telemetry.addLine("");
 
         telemetry.addLine("========== CORNERS ==========");
 
@@ -140,6 +147,16 @@ public class PinpointTestTeleop extends CommandOpMode {
 
         telemetry.addLine("=============================");
         telemetry.addData("In Shooting Zone?", inShootingZone ? "YES" : "NO");
+        telemetry.addLine("");
+
+        // IMU Status Info
+        telemetry.addLine("========== IMU STATUS ==========");
+        telemetry.addData("IMU Calibrated", "On Init (resetPosAndIMU)");
+        telemetry.addData("Note", "Keep robot STILL during init!");
+        telemetry.addLine("If heading drifts while stationary:");
+        telemetry.addLine("  1. Restart OpMode with robot still");
+        telemetry.addLine("  2. Check for vibration/movement");
+        telemetry.addLine("  3. Move Pinpoint away from motors");
 
         telemetry.update();
     }

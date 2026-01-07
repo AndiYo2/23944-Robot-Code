@@ -59,10 +59,10 @@ public class Limelight implements Subsystem {
                         // Turn off Limelight after detection
                         robot.limelight.stop();
                         RobotConstants.Limelight.isLimelightDisabled = true;
+                        RobotConstants.Limelight.manuallySlowedForScan = false;
 
                         // Auto-switch back to Goal Tracking mode
                         currentMode = RobotConstants.Enums.LimelightMode.GoalTracking;
-
                         return tagId;
                     }
                 }
@@ -93,6 +93,15 @@ public class Limelight implements Subsystem {
 
     public RobotConstants.Enums.LimelightMode getCurrentMode() {
         return currentMode;
+    }
+
+    public void resetLimelight() {
+        robot.limelight.start();
+        RobotConstants.Limelight.isLimelightDisabled = false;
+        currentMode = RobotConstants.Enums.LimelightMode.TagTracking;
+        motifDetected = false;
+        detectedTagId = -1;
+        RobotConstants.Limelight.manuallySlowedForScan = true;
     }
 
     public boolean isMotifDetected() {

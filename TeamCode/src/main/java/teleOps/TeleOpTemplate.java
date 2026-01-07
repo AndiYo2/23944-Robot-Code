@@ -5,10 +5,7 @@ import com.arcrobotics.ftclib.command.button.GamepadButton;
 import com.arcrobotics.ftclib.command.button.Trigger;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
-import subsystems.MecanumDrive;
-import subsystems.Shooter;
-import subsystems.Intake;
-import subsystems.Spindexer;
+import subsystems.*;
 import utility.*;
 import utility.Shooting.ShootingSequenceManager;
 import utility.Shooting.ShootingValidator;
@@ -35,9 +32,41 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
     private CatalogManager catalogManager;
 
+
+
+
     protected void initHardware(boolean isAuto) {
         driverGamepad = new GamepadEx(gamepad1);
         robot.init(hardwareMap, driverGamepad);
+
+        // Set starting position for TeleOp
+        // If we have an ending auton pose, use it; otherwise use standard start point
+        org.firstinspires.ftc.robotcore.external.navigation.Pose2D startPosition;
+        if (RobotConstants.UpdatableConstants.endingAutonPose != null) {
+            // Convert Pedro Pose to FTC Pose2D
+            com.pedropathing.geometry.Pose autonPose = RobotConstants.UpdatableConstants.endingAutonPose;
+            startPosition = new org.firstinspires.ftc.robotcore.external.navigation.Pose2D(
+                    org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit.INCH,
+                    autonPose.getX(),
+                    autonPose.getY(),
+                    org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.RADIANS,
+                    autonPose.getHeading());
+            telemetry.addData("TeleOp Init", "Using Auton End Position");
+        } else {
+            // No auton ran - use standard starting position
+            startPosition = RobotConstants.Pinpoint.standardStartPoint;
+            telemetry.addData("TeleOp Init", "Using Standard Start Position");
+        }
+
+        telemetry.addData("Setting Position To", startPosition);
+        telemetry.update();
+
+        robot.pinpoint.setPosition(startPosition);
+        // CRITICAL: Update Pinpoint after setting position to apply it
+        robot.pinpoint.update();
+
+        telemetry.addData("Position After Set", robot.pinpoint.getPosition());
+        telemetry.update();
 
         mecanumDrive = new MecanumDrive();
         intake = new Intake();
@@ -87,11 +116,18 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         // Mode toggles
         new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_UP)
                 .whenPressed(() -> limelight.toggleMode());
+        new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_DOWN)
+            .whenPressed(() -> limelight.resetLimelight());
+
+
     }
 
     @Override
     public void run() {
         super.run();
+
+        // CRITICAL: Update Pinpoint odometry every loop (like in test OpMode)
+        robot.pinpoint.update();
 
         updateDrivetrain();
         updateSubsystems();
@@ -275,9 +311,17 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         telemetry.addData("  Confidence", String.format("%.1f%%", result.confidence * 100));
         telemetry.addLine("");
 
+        // ODOMETRY section
+        telemetry.addLine("=== ODOMETRY ===");
+        telemetry.addData("  X Position", String.format("%.1f in", robot.pinpoint.getPosX(org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit.INCH)));
+        telemetry.addData("  Y Position", String.format("%.1f in", robot.pinpoint.getPosY(org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit.INCH)));
+        telemetry.addData("  Heading", String.format("%.3f rad", robot.pinpoint.getHeading(org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.RADIANS)));
+        telemetry.addLine("");
+
         // OTHER section
         telemetry.addLine("=== OTHER ===");
         telemetry.addData("  Alliance", RobotConstants.UpdatableConstants.allianceColor);
+        telemetry.addData("  IMU Calibration", "Auto on init (resetPosAndIMU)");
         telemetry.addLine("");
 
         // SEQUENCE DEBUG section (only when sequence executing)

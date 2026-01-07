@@ -103,7 +103,7 @@ public class RobotConstants {
 
         // Turret positioning
         public static final double CENTER = 0.0;
-        public static final double ANGLE_RANGE = 0.5; // Acceptable error in degrees
+        public static final double ANGLE_RANGE = 3.0; // Acceptable error in SERVO degrees (0.5° turret degrees)
         public static final double GEAR_RATIO = 6.0; // 6:1 servo to turret (servo rotates 6° for 1° turret rotation)
 
         // Turret tracking offset (in turret degrees) - compensates for systematic tracking error
@@ -164,6 +164,7 @@ public class RobotConstants {
         public static final Enums.BallColor[] APRILTAG_23_PATTERN = {
             Enums.BallColor.Purple, Enums.BallColor.Purple, Enums.BallColor.Green
         };
+        public static boolean manuallySlowedForScan = true;
 
         public static Enums.BallColor[] getMotifPatternForTag(int tagId) {
             switch (tagId) {
@@ -178,6 +179,14 @@ public class RobotConstants {
     public static class Pinpoint{
         public static String pinpoint = "pinpoint"; //E I2C 1
         public static Pose2D standardStartPoint = new Pose2D(DistanceUnit.INCH,56.5, 8.5, AngleUnit.DEGREES, 90);
+
+        // Yaw scalar for IMU drift correction
+        // 1.0 = no correction (default starting point)
+        // Tune this if heading drifts during rotation:
+        // - Drive robot in 10 full rotations (3600 degrees)
+        // - If Pinpoint reports 3580 degrees, set yawScalar = 3600/3580 = 1.0056
+        // - If Pinpoint reports 3620 degrees, set yawScalar = 3600/3620 = 0.9945
+        public static double yawScalar = 1.0;
     }
     public static class UpdatableConstants{
         public static double shooterVelocity;
