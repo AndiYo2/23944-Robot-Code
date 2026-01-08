@@ -30,8 +30,8 @@ public class FieldMap {
     // Goal positions in FIELD/PINPOINT coordinates (not bitmap indices)
     // Blue goal: top-left corner of field (X=0, Y=143)
     // Red goal: top-right corner of field (X=143, Y=143)
-    static Pose blueGoalTarget = new Pose(0, 143, 0);
-    static Pose redGoalTarget = new Pose(143, 143, 0);
+    static Pose blueGoalTarget = new Pose(2, 141, 0);
+    static Pose redGoalTarget = new Pose(141, 141, 0);
 
     /**
      * Returns the zone character at a field position.

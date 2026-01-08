@@ -8,6 +8,7 @@ import com.pedropathing.ftc.FollowerBuilder;
 import com.pedropathing.ftc.drivetrains.MecanumConstants;
 import com.pedropathing.ftc.localization.constants.PinpointConstants;
 import com.pedropathing.paths.PathConstraints;
+import com.pedropathing.paths.PathBuilder;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -18,17 +19,17 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 public class Constants {
 
-    static double yVelocity =72.241424480084276,
-            xVelocity = 83.29543178288017,
-            robotMass = 15;
+    static double yVelocity =64.26073113388904,
+            xVelocity = 78.42103348379062,
+            robotMass = 12.247;
 
 
 
 
     public static FollowerConstants followerConstants = new FollowerConstants()
         .mass(robotMass)
-        .forwardZeroPowerAcceleration(-33.661051028806696)
-        .lateralZeroPowerAcceleration(-62.9508309274868)
+        .forwardZeroPowerAcceleration(-24.35247829)
+        .lateralZeroPowerAcceleration(-58.772098)
     .translationalPIDFCoefficients(new PIDFCoefficients(
             0.1,
             0,
@@ -50,7 +51,11 @@ public class Constants {
                 //MAYBE SWITCH IF BROKEN
 ))
         ;
-    public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 1, 1);
+    // PathConstraints(tValueConstraint, timeoutConstraint, brakingStrength, brakingStart)
+    // brakingStart = how many inches from end to START braking (was 1.75, now 12 for earlier decel)
+    // brakingStrength = how aggressively to brake (15 is strong)
+    public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 1.05, 1);
+    //bs 15
 
     public static MecanumConstants driveConstants = new MecanumConstants()
             .rightFrontMotorName("frontRightMotor")
@@ -78,6 +83,15 @@ public class Constants {
                 .pinpointLocalizer(localizerConstants)
                 .pathConstraints(pathConstraints)
                 .mecanumDrivetrain(driveConstants)
+
                 .build();
+    }
+
+    /**
+     * Simple passthrough to follower.pathBuilder() - V4.0 style (NO deceleration).
+     * This is for testing without global deceleration.
+     */
+    public static PathBuilder pathBuilder(Follower follower) {
+        return follower.pathBuilder();
     }
 }

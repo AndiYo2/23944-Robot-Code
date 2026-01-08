@@ -63,7 +63,7 @@ abstract public class TeleOpTemplateTuning extends CommandOpMode {
     private boolean leftStickButtonPressed = false;
 
     // Step sizes for tuning - press B (in tuning mode) to cycle
-    private double[] stepSizes = {10.0, 1.0, 0.1, 0.01, 0.001, 0.0001};
+    private double[] stepSizes = {10.0, 1.0, 0.1, 0.01, 0.001, 0.0001, 0.00001, 0.000001, 0.0000001};
     private int stepIndex = 3; // Start with 0.01
 
     protected void initHardware(boolean isAuto) {
@@ -72,21 +72,32 @@ abstract public class TeleOpTemplateTuning extends CommandOpMode {
 
         // Set starting position for TeleOp
         // If we have an ending auton pose, use it; otherwise use standard start point
+        org.firstinspires.ftc.robotcore.external.navigation.Pose2D startPosition;
         if (RobotConstants.UpdatableConstants.endingAutonPose != null) {
             // Convert Pedro Pose to FTC Pose2D
             com.pedropathing.geometry.Pose autonPose = RobotConstants.UpdatableConstants.endingAutonPose;
-            robot.pinpoint.setPosition(new org.firstinspires.ftc.robotcore.external.navigation.Pose2D(
+            startPosition = new org.firstinspires.ftc.robotcore.external.navigation.Pose2D(
                     org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit.INCH,
                     autonPose.getX(),
                     autonPose.getY(),
                     org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.RADIANS,
-                    autonPose.getHeading()));
+                    autonPose.getHeading());
+            telemetry.addData("TeleOp Init", "Using Auton End Position");
         } else {
             // No auton ran - use standard starting position
-            robot.pinpoint.setPosition(RobotConstants.Pinpoint.standardStartPoint);
+            startPosition = RobotConstants.Pinpoint.standardStartPoint;
+            telemetry.addData("TeleOp Init", "Using Standard Start Position");
         }
+
+        telemetry.addData("Setting Position To", startPosition);
+        telemetry.update();
+
+        robot.pinpoint.setPosition(startPosition);
         // CRITICAL: Update Pinpoint after setting position to apply it
         robot.pinpoint.update();
+
+        telemetry.addData("Position After Set", robot.pinpoint.getPosition());
+        telemetry.update();
 
         mecanumDrive = new MecanumDrive();
         intake = new Intake();
@@ -170,6 +181,12 @@ abstract public class TeleOpTemplateTuning extends CommandOpMode {
                 .whenPressed(() -> {
                     if (!pidTuningMode) {
                         limelight.toggleMode();
+                    }
+                });
+        new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_DOWN)
+                .whenPressed(() -> {
+                    if (!pidTuningMode) {
+                        limelight.resetLimelight();
                     }
                 });
     }
@@ -660,6 +677,17 @@ abstract public class TeleOpTemplateTuning extends CommandOpMode {
                     telemetry.addData("", "SPINDEXER_CCW_D = %.5f", spindexer_ccw_kD);
                     telemetry.addData("", "SPINDEXER_CCW_F = %.5f", spindexer_ccw_kF);
                 }
+                // Show ACTUAL values in the PID controller (for debugging)
+                double[] actualPIDF = spindexer.getActivePIDFCoefficients();
+                telemetry.addLine("--- ACTUAL PID Controller Values ---");
+                telemetry.addData("  Active P", "%.5f", actualPIDF[0]);
+                telemetry.addData("  Active I", "%.5f", actualPIDF[1]);
+                telemetry.addData("  Active D", "%.5f", actualPIDF[2]);
+                telemetry.addData("  Active F", "%.5f", actualPIDF[3]);
+                telemetry.addLine("--- PID OUTPUT DEBUG ---");
+                telemetry.addData("  Error (deg)", "%.2f", spindexer.getLastError());
+                telemetry.addData("  PID Output", "%.4f", spindexer.getLastPIDOutput());
+                telemetry.addData("  Servo Power", "%.4f", robot.spindexerServo.getPower());
                     break;
             }
             telemetry.addLine("========================================");
@@ -755,6 +783,54 @@ abstract public class TeleOpTemplateTuning extends CommandOpMode {
             telemetry.addData("  Ready to Flip", spindexer.isReadyToFlip());
             telemetry.addLine("");
         }
+
+        // ========================================
+        // TURRET TRACKING DEBUG (for visualizer comparison)
+        // ========================================
+        telemetry.addLine("=== TURRET TRACKING DEBUG ===");
+
+        // Robot Position (for visualizer comparison)
+        double robotX = robot.pinpoint.getPosX(org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit.INCH);
+        double robotY = robot.pinpoint.getPosY(org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit.INCH);
+        double robotHeadingRad = robot.pinpoint.getHeading(org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.RADIANS);
+        double robotHeadingDeg = Math.toDegrees(robotHeadingRad);
+
+        telemetry.addData("  Robot Pose", String.format("(%.1f, %.1f, %.1f°)", robotX, robotY, robotHeadingDeg));
+
+        // Goal Position
+        com.pedropathing.geometry.Pose goalPos = FieldMap.getGoalPosition();
+        telemetry.addData("  Goal Position", String.format("(%.0f, %.0f)", goalPos.getX(), goalPos.getY()));
+
+        // Delta to goal (from robot center)
+        double deltaX = goalPos.getX() - robotX;
+        double deltaY = goalPos.getY() - robotY;
+        telemetry.addData("  Delta to Goal", String.format("dx=%.1f, dy=%.1f", deltaX, deltaY));
+
+        // Field angle to goal
+        double fieldAngleRad = Math.atan2(deltaY, deltaX);
+        double fieldAngleDeg = Math.toDegrees(fieldAngleRad);
+        telemetry.addData("  Field Angle to Goal", String.format("%.1f°", fieldAngleDeg));
+
+        // Expected turret angle (field angle - robot heading)
+        double expectedTurretAngle = fieldAngleDeg - robotHeadingDeg;
+        // Normalize to [-180, 180]
+        while (expectedTurretAngle > 180) expectedTurretAngle -= 360;
+        while (expectedTurretAngle < -180) expectedTurretAngle += 360;
+        telemetry.addData("  Expected Turret Angle", String.format("%.1f°", expectedTurretAngle));
+
+        // Actual turret values
+        double turretTarget = shooter.getTargetTurretAngle() / RobotConstants.Shooter.GEAR_RATIO;  // Convert servo deg to turret deg
+        double turretActual = shooter.getTurretPosition() / RobotConstants.Shooter.GEAR_RATIO;    // Convert servo deg to turret deg
+        double turretError = turretTarget - turretActual;
+
+        telemetry.addData("  Turret Target", String.format("%.1f° (turret deg)", turretTarget));
+        telemetry.addData("  Turret Actual", String.format("%.1f° (turret deg)", turretActual));
+        telemetry.addData("  Turret Error", String.format("%.1f°", turretError));
+
+        // Comparison: Expected vs What code calculated
+        telemetry.addData("  Calc vs Expected Diff", String.format("%.1f°", turretTarget - expectedTurretAngle));
+
+        telemetry.addLine("");
 
         telemetry.update();
     }

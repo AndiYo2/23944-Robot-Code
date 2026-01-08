@@ -10,7 +10,7 @@ import utility.RobotConstants;
  * To use clean version, keep: extends TeleOpTemplate
  */
 @TeleOp
-public class BlueTeleOp extends TeleOpTemplate {
+public class BlueTeleOp extends TeleOpTemplateTuning {
     private final utility.RobotHardware robot = utility.RobotHardware.getInstance();
 
     @Override

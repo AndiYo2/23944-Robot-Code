@@ -122,6 +122,15 @@ public class RobotConstants {
         public final static double FLIPPER_POSITION_RETRACT = 0.15;   // Ready position
         public static final double FLICK_TIME = 0.15;                 // Seconds to hold extended
 
+        // ==================== TURRET GEOMETRY ====================
+        // Turret offset from robot center (inches, robot-relative frame)
+        // When robot faces forward (heading=90°):
+        //   - OFFSET_X = 4" to the RIGHT of center
+        //   - OFFSET_Y = 1" FORWARD of center
+        // These are transformed to field coordinates using the robot heading
+        public static final double TURRET_OFFSET_X = 4.0;
+        public static final double TURRET_OFFSET_Y = 1.0;
+
         // ==================== TURRET LIMITS ====================
         // Turret physical limits (turret degrees, not servo degrees)
         // Negative = left (CCW), Positive = right (CW)

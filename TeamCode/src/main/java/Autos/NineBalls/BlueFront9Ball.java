@@ -1,7 +1,6 @@
 package Autos.NineBalls;
 
 import Autos.AutonTemplate;
-import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
@@ -9,28 +8,52 @@ import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import framework.AutonSequence;
 
-/**
- * Blank autonomous template - clone this to create new autos quickly!
- *
- * USAGE:
- * 1. Copy this file and rename (e.g., RedFrontAuto.java)
- * 2. Update the class name and @Autonomous annotation
- * 3. Set your starting pose
- * 4. Add paths using one of three approaches:
- *    - Inline coordinates: .moveTo(x1, y1, h1, x2, y2, h2)
- *    - Visualizer paste: Create VisualizerPaths class and instantiate
- *    - Named paths: Define Path/PathChain fields in buildPaths()
- * 5. Build your sequence in init()
- */
-@Autonomous(name = "BlueFront9Ball", group = "Templates")
+@Autonomous(name = "BlueFront9Ball", group = "NineBall")
 public class BlueFront9Ball extends AutonTemplate {
+    private PathChain startToShoot, shootToFirst, firstToShoot, shootToSecond, secondToShoot, shootToStop;
 
-     private Paths paths;
+    // Named pose constants (matching BlueBack9Ball pattern)
+    private final Pose startPose = new Pose(21, 122.5, Math.toRadians(54));
+    private final Pose shootPose = new Pose(54, 90, Math.toRadians(135));
+    private final Pose firstPickupPose = new Pose(28, 86, Math.toRadians(180));
+    private final Pose firstPickupControlPoint = new Pose(66.5, 78.5);
+    private final Pose secondPickupPose = new Pose(28, 61, Math.toRadians(180));
+    private final Pose secondPickupControlPoint = new Pose(69.7, 49.5);
+    private final Pose stopPose = new Pose(32, 85, Math.toRadians(180));
 
     @Override
     protected void buildPaths() {
-        follower.setStartingPose(new Pose(123.5, 122, Math.toRadians(126)));
-        paths = new Paths(follower);
+        follower.setStartingPose(startPose);
+
+        startToShoot = follower.pathBuilder()
+                .addPath(new BezierLine(startPose, shootPose))
+                .setLinearHeadingInterpolation(startPose.getHeading(), shootPose.getHeading())
+                .build();
+
+        shootToFirst = follower.pathBuilder()
+                .addPath(new BezierCurve(shootPose, firstPickupControlPoint, firstPickupPose))
+                .setLinearHeadingInterpolation(shootPose.getHeading(), firstPickupPose.getHeading())
+                .build();
+
+        firstToShoot = follower.pathBuilder()
+                .addPath(new BezierLine(firstPickupPose, shootPose))
+                .setLinearHeadingInterpolation(firstPickupPose.getHeading(), shootPose.getHeading())
+                .build();
+
+        shootToSecond = follower.pathBuilder()
+                .addPath(new BezierCurve(shootPose, secondPickupControlPoint, secondPickupPose))
+                .setLinearHeadingInterpolation(shootPose.getHeading(), secondPickupPose.getHeading())
+                .build();
+
+        secondToShoot = follower.pathBuilder()
+                .addPath(new BezierLine(secondPickupPose, shootPose))
+                .setLinearHeadingInterpolation(secondPickupPose.getHeading(), shootPose.getHeading())
+                .build();
+
+        shootToStop = follower.pathBuilder()
+                .addPath(new BezierLine(shootPose, stopPose))
+                .setLinearHeadingInterpolation(shootPose.getHeading(), stopPose.getHeading())
+                .build();
     }
 
     @Override
@@ -43,89 +66,17 @@ public class BlueFront9Ball extends AutonTemplate {
         super.init();
 
         executor = new AutonSequence(follower, intake, catalogManager, sequenceManager, limelight)
-
-                .parallel(p -> p.moveTo(paths.startToShoot).limelightScan().catalog())
+                .parallel(p -> p.moveTo(startToShoot).limelightScan().catalog())
                 .shoot()
-                .parallel(p -> p.moveTo(paths.shootToFirst).intakeStart())
+                .parallel(p -> p.moveTo(shootToFirst).intakeStart())
                 .intakeStop()
-                .parallel(p -> p.moveTo(paths.firstToShoot).catalog())
+                .parallel(p -> p.moveTo(firstToShoot).catalog())
                 .shoot()
-                .parallel(p -> p.moveTo(paths.shootToSecond).intakeStart())
+                .parallel(p -> p.moveTo(shootToSecond).intakeStart())
                 .intakeStop()
-                .parallel(p -> p.moveTo(paths.secondToShoot).catalog())
+                .parallel(p -> p.moveTo(secondToShoot).catalog())
                 .shoot()
-                .moveTo(paths.shootToStop)
+                .moveTo(shootToStop)
                 .build();
-    }
-
-    public static class Paths {
-        public PathChain startToShoot;
-        public PathChain shootToFirst;
-        public PathChain firstToShoot;
-        public PathChain shootToSecond;
-        public PathChain secondToShoot;
-        public PathChain shootToStop;
-
-        public Paths(Follower follower) {
-            startToShoot = follower.pathBuilder().addPath(
-                            new BezierLine(
-                                    new Pose(123.500, 122.000),
-
-                                    new Pose(90.000, 90.000)
-                            )
-                    ).setLinearHeadingInterpolation(Math.toRadians(126), Math.toRadians(45))
-
-                    .build();
-
-            shootToFirst = follower.pathBuilder().addPath(
-                            new BezierCurve(
-                                    new Pose(90.000, 90.000),
-                                    new Pose(85.500, 76.000),
-                                    new Pose(120.500, 82.000)
-                            )
-                    ).setLinearHeadingInterpolation(Math.toRadians(45), Math.toRadians(0))
-
-                    .build();
-
-            firstToShoot = follower.pathBuilder().addPath(
-                            new BezierLine(
-                                    new Pose(120.500, 82.000),
-
-                                    new Pose(90.000, 90.000)
-                            )
-                    ).setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(45))
-
-                    .build();
-
-            shootToSecond = follower.pathBuilder().addPath(
-                            new BezierCurve(
-                                    new Pose(90.000, 90.000),
-                                    new Pose(82.000, 53.000),
-                                    new Pose(120.500, 57.500)
-                            )
-                    ).setLinearHeadingInterpolation(Math.toRadians(45), Math.toRadians(0))
-
-                    .build();
-
-            secondToShoot = follower.pathBuilder().addPath(
-                            new BezierLine(
-                                    new Pose(120.500, 57.500),
-
-                                    new Pose(90.000, 90.000)
-                            )
-                    ).setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(45))
-
-                    .build();
-
-            shootToStop = follower.pathBuilder().addPath(
-                            new BezierLine(
-                                    new Pose(90.000, 90.000),
-
-                                    new Pose(116.000, 72.000)
-                            )
-                    ).setLinearHeadingInterpolation(Math.toRadians(45), Math.toRadians(0))
-
-                    .build();
-        }
     }
 }

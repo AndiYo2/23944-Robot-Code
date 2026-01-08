@@ -81,9 +81,13 @@ public abstract class AutonTemplate extends OpMode {
         opmodeTimer.resetTimer();
         setPathState(0);
 
+        // Activate all PIDF controllers for proper path following
+        follower.activateAllPIDFs();
+
         if (executor != null) {
             executor.start();
         }
+        limelight.resetLimelight();
     }
 
     @Override
@@ -97,6 +101,13 @@ public abstract class AutonTemplate extends OpMode {
             telemetry.addData("Auto Status", executor.getStatusString());
             telemetry.addData("Sequence Executing", executor.isExecuting());
             telemetry.addData("Follower Busy", follower.isBusy());
+
+            // DEBUG: Show follower position for debugging
+            telemetry.addLine("--- DECEL DEBUG ---");
+            telemetry.addData("Position", "X:%.1f Y:%.1f H:%.1f",
+                follower.getPose().getX(), follower.getPose().getY(),
+                Math.toDegrees(follower.getPose().getHeading()));
+
             telemetry.addData("Shooting State", sequenceManager.getStatus());
             telemetry.addData("Catalog State", catalogManager.getState());
             telemetry.addData("Limelight Mode", limelight.getCurrentMode());

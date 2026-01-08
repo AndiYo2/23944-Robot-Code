@@ -164,14 +164,30 @@ public class Shooter implements Subsystem {
      *   - Heading 0° = facing right (+X), 90° = facing forward (+Y)
      *   - Counter-clockwise rotation is positive
      *
+     * TURRET OFFSET (robot-relative):
+     *   - OFFSET_X = 4" to the RIGHT of robot center
+     *   - OFFSET_Y = 1" FORWARD of robot center
+     *
+     * TRANSFORM MATH:
+     *   - Robot's forward direction in field: (cos θ, sin θ)
+     *   - Robot's right direction in field: (sin θ, -cos θ)
+     *   - turretPos = robotPos + OFFSET_Y * forward + OFFSET_X * right
+     *
      * @return [turretX, turretY] in field coordinates (inches)
      */
     private double[] getTurretFieldPosition() {
         Pose2D currentPose = robot.pinpoint.getPosition();
-        return new double[]{
-            currentPose.getX(DistanceUnit.INCH),
-            currentPose.getY(DistanceUnit.INCH)
-        };
+        double robotHeading = currentPose.getHeading(AngleUnit.RADIANS);
+
+        // Apply 2D rotation to transform robot-relative offset to field coordinates
+        double turretX = currentPose.getX(DistanceUnit.INCH) +
+                        (RobotConstants.Shooter.TURRET_OFFSET_X * Math.sin(robotHeading) +
+                         RobotConstants.Shooter.TURRET_OFFSET_Y * Math.cos(robotHeading));
+        double turretY = currentPose.getY(DistanceUnit.INCH) +
+                        (-RobotConstants.Shooter.TURRET_OFFSET_X * Math.cos(robotHeading) +
+                         RobotConstants.Shooter.TURRET_OFFSET_Y * Math.sin(robotHeading));
+
+        return new double[]{turretX, turretY};
     }
 
     /** Returns straight-line distance from turret to goal (inches). */
@@ -190,6 +206,8 @@ public class Shooter implements Subsystem {
      * @return Flywheel velocity in ticks per second
      */
     private double getVelocityFromDistance(double distance) {
+        //Offset from 5,5 inch distance for shooting, fix goal eveentually lol
+        distance -= Math.sqrt(4);
         // Return fixed velocity during Limelight scan mode
         if (RobotConstants.Limelight.manuallySlowedForScan) {
             return 2200.0;

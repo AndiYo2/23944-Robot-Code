@@ -8,6 +8,7 @@ import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import framework.AutonSequence;
+import pedroPathing.Constants;
 
 /**
  * Example autonomous demonstrating streamlined path creation approaches:
@@ -86,7 +87,7 @@ public class BlueBackAutonCornerQuick extends AutonTemplate {
 
         public Paths(Follower follower) {
             // First path: curved path from start to first pickup
-            shootToFirst = follower.pathBuilder()
+            shootToFirst = Constants.pathBuilder(follower)
                     .addPath(new BezierCurve(
                             new Pose(56.5, 8.5),
                             new Pose(56, 31),  // control point
@@ -96,7 +97,7 @@ public class BlueBackAutonCornerQuick extends AutonTemplate {
                     .build();
 
             // Second path: straight line from first pickup to shoot position
-            firstToShoot = follower.pathBuilder()
+            firstToShoot = Constants.pathBuilder(follower)
                     .addPath(new BezierLine(
                             new Pose(23, 37.5),
                             new Pose(56.5, 15.5)
@@ -105,7 +106,7 @@ public class BlueBackAutonCornerQuick extends AutonTemplate {
                     .build();
 
             // Third path: curved path from third pickup back to shoot
-            secondToShoot = follower.pathBuilder()
+            secondToShoot = Constants.pathBuilder(follower)
                     .addPath(new BezierCurve(
                             new Pose(11, 9.5),
                             new Pose(29.5, 20),  // control point

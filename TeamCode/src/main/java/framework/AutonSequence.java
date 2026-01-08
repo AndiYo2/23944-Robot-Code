@@ -5,6 +5,7 @@ import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 
 import framework.actions.*;
+import pedroPathing.Constants;
 import subsystems.Intake;
 import subsystems.Limelight;
 import utility.CatalogManager;
@@ -164,7 +165,7 @@ public class AutonSequence {
      * @return this builder for chaining
      */
     public AutonSequence moveTo(double x1, double y1, double h1, double x2, double y2, double h2) {
-        PathChain path = follower.pathBuilder()
+        PathChain path = Constants.pathBuilder(follower)
                 .addPath(new com.pedropathing.geometry.BezierLine(
                         new com.pedropathing.geometry.Pose(x1, y1),
                         new com.pedropathing.geometry.Pose(x2, y2)))
@@ -185,7 +186,7 @@ public class AutonSequence {
      * @return this builder for chaining
      */
     public AutonSequence moveToTangent(double x1, double y1, double x2, double y2) {
-        PathChain path = follower.pathBuilder()
+        PathChain path = Constants.pathBuilder(follower)
                 .addPath(new com.pedropathing.geometry.BezierLine(
                         new com.pedropathing.geometry.Pose(x1, y1),
                         new com.pedropathing.geometry.Pose(x2, y2)))
@@ -206,7 +207,7 @@ public class AutonSequence {
      * @return this builder for chaining
      */
     public AutonSequence moveTo(double x1, double y1, double x2, double y2, double heading) {
-        PathChain path = follower.pathBuilder()
+        PathChain path = Constants.pathBuilder(follower)
                 .addPath(new com.pedropathing.geometry.BezierLine(
                         new com.pedropathing.geometry.Pose(x1, y1),
                         new com.pedropathing.geometry.Pose(x2, y2)))
@@ -231,7 +232,7 @@ public class AutonSequence {
      */
     public AutonSequence moveToViaCurve(double x1, double y1, double h1, double cx, double cy,
                                          double x2, double y2, double h2) {
-        PathChain path = follower.pathBuilder()
+        PathChain path = Constants.pathBuilder(follower)
                 .addPath(new com.pedropathing.geometry.BezierCurve(
                         new com.pedropathing.geometry.Pose(x1, y1),
                         new com.pedropathing.geometry.Pose(cx, cy),
@@ -506,7 +507,7 @@ public class AutonSequence {
          * @return this builder for chaining
          */
         public ParallelBuilder moveTo(double x1, double y1, double h1, double x2, double y2, double h2) {
-            PathChain path = follower.pathBuilder()
+            PathChain path = Constants.pathBuilder(follower)
                     .addPath(new com.pedropathing.geometry.BezierLine(
                             new com.pedropathing.geometry.Pose(x1, y1),
                             new com.pedropathing.geometry.Pose(x2, y2)))
@@ -527,7 +528,7 @@ public class AutonSequence {
          * @return this builder for chaining
          */
         public ParallelBuilder moveToTangent(double x1, double y1, double x2, double y2) {
-            PathChain path = follower.pathBuilder()
+            PathChain path = Constants.pathBuilder(follower)
                     .addPath(new com.pedropathing.geometry.BezierLine(
                             new com.pedropathing.geometry.Pose(x1, y1),
                             new com.pedropathing.geometry.Pose(x2, y2)))
@@ -548,7 +549,7 @@ public class AutonSequence {
          * @return this builder for chaining
          */
         public ParallelBuilder moveTo(double x1, double y1, double x2, double y2, double heading) {
-            PathChain path = follower.pathBuilder()
+            PathChain path = Constants.pathBuilder(follower)
                     .addPath(new com.pedropathing.geometry.BezierLine(
                             new com.pedropathing.geometry.Pose(x1, y1),
                             new com.pedropathing.geometry.Pose(x2, y2)))
@@ -573,7 +574,7 @@ public class AutonSequence {
          */
         public ParallelBuilder moveToViaCurve(double x1, double y1, double h1, double cx, double cy,
                                                double x2, double y2, double h2) {
-            PathChain path = follower.pathBuilder()
+            PathChain path = Constants.pathBuilder(follower)
                     .addPath(new com.pedropathing.geometry.BezierCurve(
                             new com.pedropathing.geometry.Pose(x1, y1),
                             new com.pedropathing.geometry.Pose(cx, cy),

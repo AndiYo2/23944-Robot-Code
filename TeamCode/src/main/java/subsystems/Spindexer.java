@@ -69,6 +69,11 @@ public class Spindexer implements Subsystem {
     private double initPosition = 0;
     private int initIndex = 0;
 
+    // Debug mode - bypass PID for raw servo testing
+    private boolean debugBypassPID = false;
+    private double debugManualPower = 0.0;
+    private double lastPIDOutput = 0.0;
+
     // Initialization state
     private boolean needsInitialization = true;
     private double initialEncoderVoltage = -1; // Track first voltage reading
@@ -139,7 +144,7 @@ public class Spindexer implements Subsystem {
         if (rotationState != RotationState.IDLE) return; // Prevent conflicts
 
         robot.spindexerPID.reset();
-        // Set CW-specific PID gains (with gravity assist) - uses tunable values
+       // Set CW-specific PID gains (with gravity assist) - uses tunable values
         robot.spindexerPID.setPIDF(cw_kP, cw_kI, cw_kD, cw_kF);
 
         spindPosTracker = (spindPosTracker - 1 + SPINDEXER_POSITIONS.length) % SPINDEXER_POSITIONS.length;
@@ -368,6 +373,7 @@ public class Spindexer implements Subsystem {
 /**
      * Updates the CW PIDF coefficients for spindexer rotation control.
      * Used for live tuning during TeleOp.
+     * Also immediately applies to the active PID controller for real-time tuning.
      *
      * @param kP Proportional coefficient
      * @param kI Integral coefficient
@@ -379,11 +385,17 @@ public class Spindexer implements Subsystem {
         cw_kI = kI;
         cw_kD = kD;
         cw_kF = kF;
+        // Immediately apply to active PID controller for real-time tuning
+        robot.spindexerPID.setP(kP);
+        robot.spindexerPID.setI(kI);
+        robot.spindexerPID.setD(kD);
+        robot.spindexerPID.setF(kF);
     }
 
     /**
      * Updates the CCW PIDF coefficients for spindexer rotation control.
      * Used for live tuning during TeleOp.
+     * Also immediately applies to the active PID controller for real-time tuning.
      *
      * @param kP Proportional coefficient
      * @param kI Integral coefficient
@@ -395,6 +407,36 @@ public class Spindexer implements Subsystem {
         ccw_kI = kI;
         ccw_kD = kD;
         ccw_kF = kF;
+        // Immediately apply to active PID controller for real-time tuning
+        robot.spindexerPID.setP(kP);
+        robot.spindexerPID.setI(kI);
+        robot.spindexerPID.setD(kD);
+        robot.spindexerPID.setF(kF);
+    }
+
+    /**
+     * Gets the actual PIDF coefficients currently in the PID controller.
+     * Useful for debugging to verify values were actually set.
+     * @return array of [P, I, D, F] values
+     */
+    public double[] getActivePIDFCoefficients() {
+        return robot.spindexerPID.getCoefficients();
+    }
+
+    /**
+     * Gets the last PID output value (for debugging).
+     * @return the correction value sent to servo
+     */
+    public double getLastPIDOutput() {
+        return lastPIDOutput;
+    }
+
+    /**
+     * Gets the last error value (for debugging).
+     * @return error in degrees
+     */
+    public double getLastError() {
+        return lastError;
     }
 
     /**
@@ -552,10 +594,11 @@ public class Spindexer implements Subsystem {
 
         // ALWAYS calculate and apply PIDF correction (active position holding)
         double correction = 0.0;
+        double error = 0.0;
 
         if (!Double.isNaN(currentPosition)) {
             // Calculate the shortest angular path (handle wraparound)
-            double error = targetPosition - currentPosition;
+            error = targetPosition - currentPosition;
 
             // Normalize error to [-180, 180] range for shortest path
             while (error > 180) error -= 360;
@@ -567,6 +610,10 @@ public class Spindexer implements Subsystem {
             // Calculate PIDF correction (feedforward is handled internally by PIDFController)
             correction = robot.spindexerPID.calculate(currentPosition, wrappedTarget);
         }
+
+        // Store for debug telemetry
+        lastPIDOutput = correction;
+        lastError = error;
 
         // Always apply correction - never let the servo coast
         robot.spindexerServo.setPower(correction);
