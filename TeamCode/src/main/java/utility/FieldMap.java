@@ -1,5 +1,6 @@
 package utility;
 
+import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.geometry.Pose;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
@@ -25,13 +26,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
  *   'R' = Red alliance area
  *   'B' = Blue alliance area
  */
+@Configurable
 public class FieldMap {
-
-    // Goal positions in FIELD/PINPOINT coordinates (not bitmap indices)
-    // Blue goal: top-left corner of field (X=0, Y=143)
-    // Red goal: top-right corner of field (X=143, Y=143)
-    static Pose blueGoalTarget = new Pose(2, 141, 0);
-    static Pose redGoalTarget = new Pose(141, 141, 0);
 
     /**
      * Returns the zone character at a field position.
@@ -56,14 +52,15 @@ public class FieldMap {
     /**
      * Returns the goal position for the current alliance.
      * Goal positions are in FIELD coordinates (same as Pinpoint).
+     * Uses configurable values from RobotConstants.Shooter.
      *
      * @return Pose with goal X, Y in field coordinates (heading is 0)
      */
     public static Pose getGoalPosition() {
         if (RobotConstants.UpdatableConstants.allianceColor == RobotConstants.Enums.AllianceColor.Red) {
-            return redGoalTarget;
+            return new Pose(RobotConstants.Shooter.RED_GOAL_X, RobotConstants.Shooter.RED_GOAL_Y, 0);
         }
-        return blueGoalTarget;
+        return new Pose(RobotConstants.Shooter.BLUE_GOAL_X, RobotConstants.Shooter.BLUE_GOAL_Y, 0);
     }
 
 

@@ -98,12 +98,12 @@ public class RobotHardware {
 
         // ******************* IMU ******************* //
         // NOTE: Control Hub IMU initialized but not used - we use Pinpoint's built-in IMU instead
-        imu = hardwareMap.get(IMU.class, "imu");
-        IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
-                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT, //
-                RevHubOrientationOnRobot.UsbFacingDirection.UP));
-        imu.initialize(parameters);
-        imu.resetYaw();
+//        imu = hardwareMap.get(IMU.class, "imu");
+//        IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
+//                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT, //
+//                RevHubOrientationOnRobot.UsbFacingDirection.UP));
+//        imu.initialize(parameters);
+//        imu.resetYaw();
 
         // ******************* PINPOINT ******************* //
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");

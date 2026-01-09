@@ -102,6 +102,12 @@ public class Limelight implements Subsystem {
         motifDetected = false;
         detectedTagId = -1;
         RobotConstants.Limelight.manuallySlowedForScan = true;
+
+        // Reset motif pattern to default PGP to clear stale pattern from previous runs
+        RobotConstants.Limelight.motifPattern.setBallPattern(
+            RobotConstants.Enums.BallColor.Purple,
+            RobotConstants.Enums.BallColor.Green,
+            RobotConstants.Enums.BallColor.Purple);
     }
 
     public boolean isMotifDetected() {

@@ -1,5 +1,6 @@
 package utility;
 
+import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -27,6 +28,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
  *   - C = Control Hub
  *   - Numbers indicate port indices
  */
+@Configurable
 public class RobotConstants {
     public static class Drivetrain {
         public static String frontLeftMotor = "frontLeftMotor"; //E0
@@ -46,7 +48,7 @@ public class RobotConstants {
         public static String intakeBelt = "intakeBeltMotor"; // C 2
 
     }
-
+    @Configurable
     public static class Spindexer {
         public static SpindexerAndMotifStatus.SpindexerPattern spindexerPattern  = new SpindexerAndMotifStatus.SpindexerPattern(Enums.BallColor.None, Enums.BallColor.None, Enums.BallColor.None);
 
@@ -62,23 +64,23 @@ public class RobotConstants {
 
         public static String spindexerFLipperServo = "spindexerFlipperServo"; // E5
         //Constant Positions
-        public final static double FLIPPER_POSITION_EXTENDED = 0.85;
-        public final static double FLIPPER_POSITION_RETRACT = 0.51;
+        public static double FLIPPER_POSITION_EXTENDED = 0.80;
+        public static double FLIPPER_POSITION_RETRACT = 0.55;
 
-        public static final double FLICK_TIME = 0.15;
+        public static double FLICK_TIME = 0.085;
 
         // Spindexer PIDF coefficients - direction-specific for vertical mounting
         // CW rotation (with gravity assist)
-        public static final double SPINDEXER_CW_P = 0.0066;
-        public static final double SPINDEXER_CW_I = 0.0;
-        public static final double SPINDEXER_CW_D = 0.0003;
-        public static final double SPINDEXER_CW_F = 0.0001;
+        public static double SPINDEXER_CW_P = 0.0066;
+        public static double SPINDEXER_CW_I = 0.0;
+        public static double SPINDEXER_CW_D = 0.0003;
+        public static double SPINDEXER_CW_F = 0.0001;
 
         // CCW rotation (against gravity)
-        public static final double SPINDEXER_CCW_P = 0.0087;
-        public static final double SPINDEXER_CCW_I = 0.0001;
-        public static final double SPINDEXER_CCW_D = 0.0004;
-        public static final double SPINDEXER_CCW_F = 0.0001;
+        public static double SPINDEXER_CCW_P = 0.0087;
+        public static double SPINDEXER_CCW_I = 0.0001;
+        public static double SPINDEXER_CCW_D = 0.0004;
+        public static double SPINDEXER_CCW_F = 0.0001;
 
         // Legacy default values (backwards compatibility)
         public static final double SPINDEXER_P = SPINDEXER_CCW_P;
@@ -87,27 +89,28 @@ public class RobotConstants {
         public static final double SPINDEXER_F = SPINDEXER_CCW_F;
 
         // Legacy PIDCoefficients for backwards compatibility
-        public final static PIDCoefficients SPINDEXER_PID = new PIDCoefficients(SPINDEXER_P, SPINDEXER_I, SPINDEXER_D);
+        public static PIDCoefficients SPINDEXER_PID = new PIDCoefficients(SPINDEXER_P, SPINDEXER_I, SPINDEXER_D);
 
         // Acceptable position error (degrees) - stops rotation when within this range
-        public static final double ANGLE_RANGE = 7;
+        public static double ANGLE_RANGE = 7;
 
         // Spindexer slot positions in degrees (3 equally-spaced slots: 120° apart)
-        public static final int[] SPINDEXER_POSITIONS = {52, 172, 292};
+        public static int[] SPINDEXER_POSITIONS = {52, 172, 292};
 
     }
 
+    @Configurable
     public static class Cataloging {
         // Timeout for scanning state (no ball detected)
-        public static final double SCAN_TIMEOUT_SECONDS = 2.0;
+        public static double SCAN_TIMEOUT_SECONDS = 2.0;
 
         // Timeout for rotation state (spindexer stuck)
-        public static final double ROTATION_TIMEOUT_SECONDS = 3.0;
+        public static double ROTATION_TIMEOUT_SECONDS = 3.0;
 
         // Number of retry attempts for stuck rotation
-        public static final int MAX_ROTATION_RETRIES = 1;
+        public static int MAX_ROTATION_RETRIES = 1;
     }
-
+    @Configurable
     public static class Shooter {
         // ==================== HARDWARE NAMES ====================
         public static String shooter1 = "shooterMotor1";      // Left flywheel (from back), C0
@@ -118,9 +121,18 @@ public class RobotConstants {
         public static String shooterEncoder = "shooterEncoder";
 
         // ==================== FLIPPER POSITIONS ====================
-        public final static double FLIPPER_POSITION_EXTENDED = 0.35;  // Push ball into flywheel
-        public final static double FLIPPER_POSITION_RETRACT = 0.15;   // Ready position
-        public static final double FLICK_TIME = 0.15;                 // Seconds to hold extended
+        public static double FLIPPER_POSITION_EXTENDED = 0.35;  // Push ball into flywheel
+        public static double FLIPPER_POSITION_RETRACT = 0.15;   // Ready position
+        public static double FLICK_TIME = 0.15;                 // Seconds to hold extended
+
+        // ==================== GOAL POSITIONS ====================
+        // Goal positions in FIELD/PINPOINT coordinates (inches)
+        // Blue goal: top-left corner of field
+        // Red goal: top-right corner of field
+        public static double BLUE_GOAL_X = 0.0;
+        public static double BLUE_GOAL_Y = 141.0;
+        public static double RED_GOAL_X = 139.0;
+        public static double RED_GOAL_Y = 141.0;
 
         // ==================== TURRET GEOMETRY ====================
         // Turret offset from robot center (inches, robot-relative frame)
@@ -128,23 +140,23 @@ public class RobotConstants {
         //   - OFFSET_X = 4" to the RIGHT of center
         //   - OFFSET_Y = 1" FORWARD of center
         // These are transformed to field coordinates using the robot heading
-        public static final double TURRET_OFFSET_X = 4.0;
-        public static final double TURRET_OFFSET_Y = 1.0;
+        public static double TURRET_OFFSET_X = 4.0;
+        public static double TURRET_OFFSET_Y = 1.0;
 
         // ==================== TURRET LIMITS ====================
         // Turret physical limits (turret degrees, not servo degrees)
         // Negative = left (CCW), Positive = right (CW)
         // Range: -45° to +60° turret degrees (×5 gear ratio = -225° to +300° servo degrees)
-        public static final double TURRET_MIN_ANGLE = -45.0;  // Max left rotation (CCW)
-        public static final double TURRET_MAX_ANGLE = 60.0;   // Max right rotation (CW)
+        public static double TURRET_MIN_ANGLE = -45.0;  // Max left rotation (CCW)
+        public static double TURRET_MAX_ANGLE = 60.0;   // Max right rotation (CW)
 
         // ==================== TURRET CONTROL ====================
         // Target angle when not tracking (turret degrees)
-        public static final double CENTER = 0.0;
+        public static double CENTER = 0.0;
 
         // PID deadband: stops motor when error < ANGLE_RANGE (servo degrees)
         // 1.5° servo = 0.3° turret (due to 5:1 gear ratio)
-        public static final double ANGLE_RANGE = 1.5;
+        public static double ANGLE_RANGE = 1.5;
 
         // Servo-to-turret gear ratio (5:1)
         // Servo rotates GEAR_RATIO degrees for every 1° of turret rotation
@@ -156,7 +168,7 @@ public class RobotConstants {
         //   3. Note new encoder reading
         //   4. GEAR_RATIO = (encoder_change) / 30
         //   Example: If encoder changes by 150° for 30° turret rotation, GEAR_RATIO = 150/30 = 5.0
-        public static double GEAR_RATIO = 5.0;
+        public static final double GEAR_RATIO = 5.0;
 
         // ==================== ENCODER CALIBRATION ====================
         // TURRET_ENCODER_OFFSET: Encoder reading (in degrees) when turret is physically centered
@@ -176,33 +188,66 @@ public class RobotConstants {
         // TURRET_TRACKING_OFFSET: Fine-tune adjustment for systematic aim error (turret degrees)
         // Use this for small adjustments AFTER encoder is calibrated
         // Positive = shift aim right, Negative = shift aim left
-        public static final double TURRET_TRACKING_OFFSET = 0;
+        public static double TURRET_TRACKING_OFFSET = 0;
 
         // Turret PID gains (operates in servo degrees)
         // P=0.0035: Low gain for smooth tracking (may need increase if slow)
         // I=0.0015: Small integral for steady-state error
         // D=0.00030: Damping to prevent overshoot
-        public static final PIDCoefficients TURRET_PID = new PIDCoefficients(0.0035, 0.0015, 0.00030);
+        public static PIDCoefficients TURRET_PID = new PIDCoefficients(0.0035, 0.0015, 0.00030);
+
+        // Target angle for turret tuning mode (turret degrees, not servo degrees)
+        // Adjust this via configurables to test turret PID at different positions
+        public static double TURRET_TUNING_TARGET = 0.0;
 
         // ==================== FLYWHEEL PIDF ====================
         // Velocity control for flywheel motors (ticks/sec)
-        public static final double SHOOTER_P = 40;
-        public static final double SHOOTER_I = 0.0;
-        public static final double SHOOTER_D = 0.0;
-        public static final double SHOOTER_F = 10.0;
+        public static double SHOOTER_P = 33;
+        public static double SHOOTER_I = 0.0;
+        public static double SHOOTER_D = 0.0;
+        public static double SHOOTER_F = 10.3;
+
+        // Target velocity for shooter tuning mode (ticks/sec)
+        // Adjust this via configurables to test shooter PIDF at different speeds
+        public static double SHOOTER_TUNING_VELOCITY = 2200.0;
+
+        // ==================== VELOCITY LOOKUP TABLE ====================
+        // Flywheel velocity by distance: [distance to goal in inches, velocity in ticks/sec]
+        // Calibrated values - interpolates between points for smooth velocity transitions
+        public static double[][] VELOCITY_LOOKUP = {
+            {45.0, 1980.0},
+            {55.0, 1950.0},
+            {70.0, 2100.0},
+            {81.0, 2100.0},
+            {97.0, 2250.0},
+            {132.0, 2500.0},
+            {134.0, 2550.0},
+            {138.0, 2550.0},
+            {156.0, 2760.0},
+            {160.0, 2780.0},
+            {200.0, 2800.0}
+        };
+    }
+
+    @Configurable
+    public static class ShootingSequence {
+        // Total number of balls in the shooting sequence
+        public static int TOTAL_BALLS = 3;
+
+        // Wait time after spindexer flipper activates before removing ball from slot (seconds)
+        public static double SHOOTER_FLIPPER_TIME = 0.02;
+
+        // Extra wait time after starting rotation before firing shooter flipper (seconds)
+        public static double EXTRA_WAIT_TIME = 0.15;
+
+        // Time spindexer must be within tolerance before declaring rotation complete (seconds)
+        public static double SPINDEXER_SETTLING_TIME = 0.1;
     }
 
     public static class ColorSensor {
         // Intake sensors (2 sensors offset to avoid ball holes at first spindexer slot)
         public static String intakeSensor1 = "intakeSensor1"; // First intake sensor
         public static String intakeSensor2 = "intakeSensor2"; // Second intake sensor (offset from first)
-
-        // Color detection thresholds
-        public static final double PURPLE_THRESHOLD = 700;
-        public static final double GREEN_THRESHOLD = 1500;
-        public static final double ALPHA_THRESHOLD = 500;
-
-        // Detection logic: Green ball detected if (green > red) AND (green > GREEN_THRESHOLD)
     }
 
     public static class Controls {
@@ -212,9 +257,9 @@ public class RobotConstants {
         // Toggle to swap Red/Blue control mapping for testing
         // When true: Red uses standard controls, Blue uses inverted controls
         // When false (default): Blue uses standard controls, Red uses inverted controls
-        public static final boolean SWAP_ALLIANCE_CONTROLS = true;
+        public static boolean SWAP_ALLIANCE_CONTROLS = true;
     }
-
+    @Configurable
     public static class Limelight {
         public static String limelight = "limelight";
         public static boolean isLimelightDisabled = false;
@@ -226,8 +271,8 @@ public class RobotConstants {
         // AprilTag scanning target position (field coordinates)
         // Top center of field where motif tags are located
         // X=72 = center, Y=143 = top edge (near goals)
-        public static final double TAG_GOAL_X = 72.0;  // inches, field center
-        public static final double TAG_GOAL_Y = 143.0; // inches, top of field
+        public static double TAG_GOAL_X = 72.0;  // inches, field center
+        public static double TAG_GOAL_Y = 143.0; // inches, top of field
 
         // AprilTag ID to ball pattern mappings
         // Each tag indicates which color ball should be in each spindexer slot
@@ -254,9 +299,9 @@ public class RobotConstants {
             }
         }
     }
-
+    @Configurable
     public static class Pinpoint{
-        public static String pinpoint = "pinpoint"; //E I2C 1
+        public static String pinpoint = "pinpoint"; //E I2C 3
 
         // Alliance-specific start positions (robot facing forward at Y=8.5, heading 90°)
         // Blue Alliance: left side of field (X=56.5)
@@ -273,7 +318,7 @@ public class RobotConstants {
         // - Drive robot in 10 full rotations (3600 degrees)
         // - If Pinpoint reports 3580 degrees, set yawScalar = 3600/3580 = 1.0056
         // - If Pinpoint reports 3620 degrees, set yawScalar = 3600/3620 = 0.9945
-        public static double yawScalar = 1.0;
+        public static double yawScalar = .998148;
     }
     public static class UpdatableConstants{
         public static double shooterVelocity;

@@ -19,22 +19,6 @@ import static utility.RobotConstants.Shooter.CENTER;
 import static utility.RobotConstants.Shooter.FLICK_TIME;
 
 public class Shooter implements Subsystem {
-    // Shooter velocity lookup table: [distance to goal in inches, flywheel velocity in ticks/sec]
-    // Calibrated values - interpolates between points for smooth velocity transitions
-    private static final double[][] VELOCITY_LOOKUP = {
-        {45.0, 1980.0},
-        {55.0, 1950.0},
-        {70.0, 2100.0},
-        {81.0, 2100.0},
-        {97.0, 2250.0},
-        {132.0, 2500.0},
-        {134.0, 2550.0},
-        {138.0, 2550.0},
-        {156.0, 2760.0},
-        {160.0, 2780.0},
-        {200.0, 2800.0}
-    };
-
     // Hardware reference
     RobotHardware robot;
 
@@ -214,21 +198,21 @@ public class Shooter implements Subsystem {
         }
 
         // Clamp to table bounds
-        if (distance <= VELOCITY_LOOKUP[0][0]) {
-            return VELOCITY_LOOKUP[0][1];
+        if (distance <= RobotConstants.Shooter.VELOCITY_LOOKUP[0][0]) {
+            return RobotConstants.Shooter.VELOCITY_LOOKUP[0][1];
         }
-        if (distance >= VELOCITY_LOOKUP[VELOCITY_LOOKUP.length - 1][0]) {
-            return VELOCITY_LOOKUP[VELOCITY_LOOKUP.length - 1][1];
+        if (distance >= RobotConstants.Shooter.VELOCITY_LOOKUP[RobotConstants.Shooter.VELOCITY_LOOKUP.length - 1][0]) {
+            return RobotConstants.Shooter.VELOCITY_LOOKUP[RobotConstants.Shooter.VELOCITY_LOOKUP.length - 1][1];
         }
 
         // Linear interpolation between adjacent table entries
-        for (int i = 0; i < VELOCITY_LOOKUP.length - 1; i++) {
-            double dist1 = VELOCITY_LOOKUP[i][0];
-            double dist2 = VELOCITY_LOOKUP[i + 1][0];
+        for (int i = 0; i < RobotConstants.Shooter.VELOCITY_LOOKUP.length - 1; i++) {
+            double dist1 = RobotConstants.Shooter.VELOCITY_LOOKUP[i][0];
+            double dist2 = RobotConstants.Shooter.VELOCITY_LOOKUP[i + 1][0];
 
             if (distance >= dist1 && distance <= dist2) {
-                double vel1 = VELOCITY_LOOKUP[i][1];
-                double vel2 = VELOCITY_LOOKUP[i + 1][1];
+                double vel1 = RobotConstants.Shooter.VELOCITY_LOOKUP[i][1];
+                double vel2 = RobotConstants.Shooter.VELOCITY_LOOKUP[i + 1][1];
                 double ratio = (distance - dist1) / (dist2 - dist1);
                 return vel1 + (vel2 - vel1) * ratio;
             }

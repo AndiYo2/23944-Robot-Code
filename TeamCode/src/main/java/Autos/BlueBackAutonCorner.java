@@ -84,8 +84,8 @@ public class BlueBackAutonCorner extends AutonTemplate {
 
         // Build the autonomous sequence using the fluent API
         executor = new AutonSequence(follower, intake, catalogManager, sequenceManager, limelight)
-                // Initial: scan and catalog preloaded balls, then shoot
-                .parallel(p -> p.limelightScan().catalog())
+                // Initial: scan and set preloaded balls (PPG), then shoot
+                .parallel(p -> p.limelightScan().preload())
                 .shoot()
 
                 // Move to first pickup with intake running

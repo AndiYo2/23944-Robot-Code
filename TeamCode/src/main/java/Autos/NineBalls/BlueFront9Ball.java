@@ -66,7 +66,7 @@ public class BlueFront9Ball extends AutonTemplate {
         super.init();
 
         executor = new AutonSequence(follower, intake, catalogManager, sequenceManager, limelight)
-                .parallel(p -> p.moveTo(startToShoot).limelightScan().catalog())
+                .parallel(p -> p.moveTo(startToShoot).limelightScan().preload())
                 .shoot()
                 .parallel(p -> p.moveTo(shootToFirst).intakeStart())
                 .intakeStop()

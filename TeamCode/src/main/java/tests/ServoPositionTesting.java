@@ -6,13 +6,14 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
+import utility.RobotConstants;
 
 @TeleOp(name = "ServoPositions", group = "Tests")
 public class ServoPositionTesting extends OpMode {
 
     public Servo spindexer, shooter;
-    double spindexerPosition = .5;
-    double shooterPosition = .5;
+    double spindexerPosition = RobotConstants.Spindexer.FLIPPER_POSITION_RETRACT;
+    double shooterPosition = RobotConstants.Shooter.FLIPPER_POSITION_RETRACT;
 
     @Override
     public void init() {
@@ -28,16 +29,16 @@ public class ServoPositionTesting extends OpMode {
 
 
         if(gamepad1.dpadRightWasPressed()){
-            spindexerPosition += .05;
+            spindexerPosition += .01;
         }
         if(gamepad1.dpadLeftWasPressed()){
-            spindexerPosition -= .05;
+            spindexerPosition -= .01;
         }
         if(gamepad1.rightBumperWasPressed()){
-            shooterPosition += .05;
+            shooterPosition += .01;
         }
         if(gamepad1.leftBumperWasPressed()){
-            shooterPosition -= .05;
+            shooterPosition -= .01;
         }
 
         spindexer.setPosition(spindexerPosition);

@@ -12,13 +12,13 @@ import static utility.SpindexerAndMotifStatus.*;
  * ShootingSequenceManager - Simple 3-ball shooting sequence
  *
  * Shoots 3 balls with this sequence for each:
- * 1. Flick spindexer out
- * 2. Wait 0.2s
- * 3. Flick shooter out
- * 4. Wait 0.1s
- * 5. Rotate spindexer (except on 3rd ball)
- * 6. Wait for rotation complete
- * 7. Repeat
+ * 1. Activate spindexer flipper
+ * 2. Wait SHOOTER_FLIPPER_TIME (0.02s)
+ * 3. Remove ball from slot in code
+ * 4. Rotate spindexer to nearest correct color in pattern
+ * 5. Wait EXTRA_WAIT_TIME (0.15s)
+ * 6. Flip shooter flipper
+ * 7. Wait for rotation complete, then repeat
  */
 public class ShootingSequenceManager {
     private final Spindexer spindexer;
@@ -27,21 +27,16 @@ public class ShootingSequenceManager {
     private enum State {
         IDLE,
         FLICK_SPINDEXER,
-        WAIT_BEFORE_SHOOTER,
+        WAIT_FLIPPER_TIME,
+        REMOVE_BALL_AND_START_ROTATION,
+        WAIT_EXTRA,
         FLICK_SHOOTER,
-        WAIT_AFTER_SHOOTER,
-        ROTATE_SPINDEXER,
-        WAIT_ROTATION,
-        CLEANUP
+        WAIT_ROTATION
     }
 
     private State state = State.IDLE;
     private int ballsShot = 0;
-    private static final int TOTAL_BALLS = 3;
     private ElapsedTime timer = new ElapsedTime();
-
-    // Timing constants
-    private static final double DELAY_BEFORE_SHOOTER = 0.08;  // 200ms between spindexer and shooter
 
     public ShootingSequenceManager(Spindexer spindexer, Shooter shooter) {
         this.spindexer = spindexer;
@@ -73,43 +68,61 @@ public class ShootingSequenceManager {
         switch (state) {
             case IDLE:
                 return;
+
             case FLICK_SPINDEXER:
-                // Wait for spindexer to extend
+                // Wait for spindexer flipper to extend
                 if (spindexer.getCurrentState() == FlickState.Extended) {
                     timer.reset();
-                    state = State.WAIT_BEFORE_SHOOTER;
+                    state = State.WAIT_FLIPPER_TIME;
                 }
                 break;
 
-            case WAIT_BEFORE_SHOOTER:
-                // Wait 0.2s
-                if (timer.seconds() >= DELAY_BEFORE_SHOOTER) {
-                    shooter.triggerShot();
-                    state = State.CLEANUP;
+            case WAIT_FLIPPER_TIME:
+                // Wait SHOOTER_FLIPPER_TIME (0.02s)
+                if (timer.seconds() >= RobotConstants.ShootingSequence.SHOOTER_FLIPPER_TIME) {
+                    state = State.REMOVE_BALL_AND_START_ROTATION;
                 }
                 break;
-            case CLEANUP:
-                // Clear ball from pattern
+
+            case REMOVE_BALL_AND_START_ROTATION:
+                // Remove ball from slot in code
                 RobotConstants.Spindexer.spindexerPattern.setBallPatternNone(1);
                 ballsShot++;
 
-                // Check if done with all 3 balls
-                if (ballsShot >= TOTAL_BALLS) {
-                    state = State.IDLE;
-                } else {
-                    // More balls to shoot - rotate spindexer
-                    state = State.ROTATE_SPINDEXER;
-                    spindexer.rotateToColor( MotifPattern.getBallColorInSlotX(ballsShot));
+                // Start rotation to nearest correct color (if not last ball)
+                if (ballsShot < RobotConstants.ShootingSequence.TOTAL_BALLS) {
+                    spindexer.rotateToColor(MotifPattern.getBallColorInSlotX(ballsShot));
+                }
+
+                timer.reset();
+                state = State.WAIT_EXTRA;
+                break;
+
+            case WAIT_EXTRA:
+                // Wait extra 0.15s
+                if (timer.seconds() >= RobotConstants.ShootingSequence.EXTRA_WAIT_TIME) {
+                    shooter.triggerShot();
+                    state = State.FLICK_SHOOTER;
                 }
                 break;
-            case ROTATE_SPINDEXER:
-                // Rotation command sent, move to waiting
-                state = State.WAIT_ROTATION;
+
+            case FLICK_SHOOTER:
+                // Wait for shooter flipper to complete, then check if we need to repeat
+                if (shooter.getCurrentState() == FlickState.Idle) {
+                    if (ballsShot >= RobotConstants.ShootingSequence.TOTAL_BALLS) {
+                        // Done with all balls
+                        state = State.IDLE;
+                    } else {
+                        // Wait for spindexer rotation to complete
+                        state = State.WAIT_ROTATION;
+                    }
+                }
                 break;
+
             case WAIT_ROTATION:
-                // Wait for spindexer to finish rotating (state = IDLE, regardless of position accuracy)
+                // Wait for spindexer to finish rotating
                 if (spindexer.isReadyToFlip()) {
-                    // Rotation attempt complete, shoot next ball
+                    // Rotation complete, start next ball
                     state = State.FLICK_SPINDEXER;
                     spindexer.triggerFlick();
                 }
@@ -132,7 +145,7 @@ public class ShootingSequenceManager {
         return String.format("%s - Ball %d/%d",
             state.toString(),
             ballsShot + 1,
-            TOTAL_BALLS
+            RobotConstants.ShootingSequence.TOTAL_BALLS
         );
     }
 

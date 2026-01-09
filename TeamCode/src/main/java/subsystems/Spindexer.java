@@ -63,7 +63,6 @@ public class Spindexer implements Subsystem {
 
     // Settling state
     private boolean isSettling = false;
-    private static final double SETTLING_TIME = 0.1; // Require 100ms stable before stopping
 
     // Debug tracking
     private double initPosition = 0;
@@ -582,7 +581,7 @@ public class Spindexer implements Subsystem {
                 }
 
                 // Check if we've been stable long enough to declare rotation complete
-                if (settlingTimer.seconds() >= SETTLING_TIME) {
+                if (settlingTimer.seconds() >= RobotConstants.ShootingSequence.SPINDEXER_SETTLING_TIME) {
                     rotationState = RotationState.IDLE;
                     isSettling = false;
                 }
@@ -641,7 +640,6 @@ public class Spindexer implements Subsystem {
                 currentState = FlickState.Retracted;
                 break;
             case Retracted:
-                spindexerPattern.setBallPatternNone(1); // Clear shooter slot after flick
                 currentState = FlickState.Idle; // Return to idle after completion
                 break;
         }
