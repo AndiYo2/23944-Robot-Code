@@ -1,23 +1,23 @@
 package tests;
 
+import com.bylazar.configurables.PanelsConfigurables;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import utility.RobotConstants;
 import utility.RobotHardware;
 
 /**
- * Turret Centering Tool
+ * Turret Centering Tool - Simplified version using Panels dashboard.
  *
  * This OpMode holds the turret at exactly 0° (center position).
  * Useful for verifying encoder calibration or testing turret control.
  *
- * The encoder has been centered - this tool can now be used to:
- * - Verify the turret holds position correctly
- * - Test PID tuning
- * - Confirm encoder reads 0° at center
+ * Adjust PID values in Panels dashboard:
+ * - RobotConstants.Shooter.TURRET_PID (PIDCoefficients object with p, i, d)
  *
- * Press A to toggle motor ON/OFF
- * Press X for emergency stop
+ * CONTROLS:
+ *   A: Toggle Motor ON/OFF
+ *   X: Emergency Stop
  */
 @TeleOp(name = "Turret Centering Tool", group = "Tests")
 public class TurretCenteringTool extends OpMode {
@@ -26,9 +26,6 @@ public class TurretCenteringTool extends OpMode {
 
     // PID variables
     private double targetPosition = 0.0;  // Always 0° (center)
-    private double kP = RobotConstants.Shooter.TURRET_PID.p;
-    private double kI = RobotConstants.Shooter.TURRET_PID.i;
-    private double kD = RobotConstants.Shooter.TURRET_PID.d;
 
     private double lastError = 0;
     private double integral = 0;
@@ -48,13 +45,8 @@ public class TurretCenteringTool extends OpMode {
         telemetry.addLine("   TURRET VERIFICATION TOOL");
         telemetry.addLine("========================================");
         telemetry.addLine();
-        telemetry.addLine("Encoder is centered! ✓");
-        telemetry.addLine();
-        telemetry.addLine("This tool holds turret at 0° (center)");
-        telemetry.addLine("Use it to:");
-        telemetry.addLine("  • Verify encoder reads 0° at center");
-        telemetry.addLine("  • Test PID holding performance");
-        telemetry.addLine("  • Confirm mechanical alignment");
+        telemetry.addLine("Holds turret at 0° (center)");
+        telemetry.addLine("Adjust PID in Panels dashboard");
         telemetry.addLine();
         telemetry.addLine("CONTROLS:");
         telemetry.addLine("  A: Toggle Motor ON/OFF");
@@ -72,11 +64,14 @@ public class TurretCenteringTool extends OpMode {
 
     @Override
     public void loop() {
+        // Refresh values from Panels dashboard
+        PanelsConfigurables.INSTANCE.refreshClass(RobotConstants.class);
+
         // EMERGENCY STOP - X button
         if (gamepad1.x) {
             robot.turretServo.setPower(0);
             telemetry.addLine("========================================");
-            telemetry.addLine("        ⚠ EMERGENCY STOP ⚠");
+            telemetry.addLine("        EMERGENCY STOP");
             telemetry.addLine("========================================");
             telemetry.addLine("Motor power set to 0");
             telemetry.addLine("Press STOP to exit");
@@ -107,23 +102,28 @@ public class TurretCenteringTool extends OpMode {
         lastTime = currentTime;
 
         // Sanity check on dt
-        if (dt > 1.0 || dt < 0.001) {
-            dt = 0.02; // Default to 50Hz
+        if (dt > RobotConstants.PID.DT_MAX || dt < RobotConstants.PID.DT_MIN) {
+            dt = RobotConstants.PID.DT_DEFAULT;
         }
+
+        // Get PID coefficients from RobotConstants
+        double kP = RobotConstants.Shooter.TURRET_PID.p;
+        double kI = RobotConstants.Shooter.TURRET_PID.i;
+        double kD = RobotConstants.Shooter.TURRET_PID.d;
 
         // PID calculations (always calculate for telemetry, but only apply if motor enabled)
         double power = 0;
 
         if (motorEnabled) {
             integral += error * dt;
-            integral = Math.max(-50, Math.min(50, integral)); // Anti-windup
+            integral = Math.max(RobotConstants.PID.INTEGRAL_CLAMP_MIN, Math.min(RobotConstants.PID.INTEGRAL_CLAMP_MAX, integral));
             double derivative = (error - lastError) / dt;
             lastError = error;
 
             power = (kP * error) + (kI * integral) + (kD * derivative);
 
             // Clamp power
-            power = Math.max(-0.5, Math.min(0.5, power));
+            power = Math.max(-RobotConstants.Shooter.TURRET_POWER_LIMIT_NORMAL, Math.min(RobotConstants.Shooter.TURRET_POWER_LIMIT_NORMAL, power));
 
             // Set motor power
             robot.turretServo.setPower(power);
@@ -150,6 +150,11 @@ public class TurretCenteringTool extends OpMode {
         telemetry.addData("Current Position", "%.2f°", currentPosition);
         telemetry.addData("Position Error", "%.2f°", error);
         telemetry.addLine();
+        telemetry.addLine("--- PID (adjust in Panels) ---");
+        telemetry.addData("P", "%.5f", kP);
+        telemetry.addData("I", "%.5f", kI);
+        telemetry.addData("D", "%.5f", kD);
+        telemetry.addLine();
         telemetry.addLine("========================================");
         telemetry.addLine("    ENCODER VERIFICATION:");
         telemetry.addLine("========================================");
@@ -158,12 +163,12 @@ public class TurretCenteringTool extends OpMode {
         telemetry.addLine();
 
         // Show calibration status
-        if (Math.abs(rawEncoderReading) < 5.0 || Math.abs(rawEncoderReading - 360.0) < 5.0) {
-            telemetry.addLine("✓ ENCODER CENTERED CORRECTLY!");
-        } else if (rawEncoderReading > 180) {
-            telemetry.addLine(String.format("⚠ Encoder off by %.1f° - needs recalibration", rawEncoderReading));
+        if (Math.abs(rawEncoderReading) < 5.0 || Math.abs(rawEncoderReading - RobotConstants.Encoder.FULL_ROTATION_DEGREES) < 5.0) {
+            telemetry.addLine("ENCODER CENTERED CORRECTLY!");
+        } else if (rawEncoderReading > RobotConstants.Encoder.ANGLE_UPPER_BOUND) {
+            telemetry.addLine(String.format("Encoder off by %.1f° - needs recalibration", rawEncoderReading));
         } else {
-            telemetry.addLine(String.format("⚠ Encoder off by %.1f° - needs recalibration", Math.abs(rawEncoderReading)));
+            telemetry.addLine(String.format("Encoder off by %.1f° - needs recalibration", Math.abs(rawEncoderReading)));
         }
         telemetry.addLine();
 
@@ -171,7 +176,7 @@ public class TurretCenteringTool extends OpMode {
         telemetry.addData("Motor Power", "%.3f", power);
         telemetry.addLine();
         telemetry.addLine("--- CONTROLS ---");
-        telemetry.addData("A Button", "Toggle Motor: %s", motorEnabled ? "ON→OFF" : "OFF→ON");
+        telemetry.addData("A Button", "Toggle Motor: %s", motorEnabled ? "ON->OFF" : "OFF->ON");
         telemetry.addLine("X Button: Emergency Stop");
         telemetry.addLine("========================================");
         telemetry.update();
@@ -182,11 +187,11 @@ public class TurretCenteringTool extends OpMode {
      */
     private double getRawEncoderReading() {
         double voltage = robot.turretEncoder.getVoltage();
-        double degrees = (voltage / 3.3) * 360.0;
+        double degrees = (voltage / RobotConstants.Encoder.MAX_VOLTAGE) * RobotConstants.Encoder.FULL_ROTATION_DEGREES;
 
         // Normalize to [0, 360] for easier reading
-        while (degrees < 0) degrees += 360;
-        while (degrees >= 360) degrees -= 360;
+        while (degrees < 0) degrees += RobotConstants.Encoder.FULL_ROTATION_DEGREES;
+        while (degrees >= RobotConstants.Encoder.FULL_ROTATION_DEGREES) degrees -= RobotConstants.Encoder.FULL_ROTATION_DEGREES;
 
         return degrees;
     }
@@ -197,11 +202,11 @@ public class TurretCenteringTool extends OpMode {
      */
     private double getCurrentPositionWithOffset() {
         double voltage = robot.turretEncoder.getVoltage();
-        double rawDegrees = (voltage / 3.3) * 360.0;
+        double rawDegrees = (voltage / RobotConstants.Encoder.MAX_VOLTAGE) * RobotConstants.Encoder.FULL_ROTATION_DEGREES;
 
         // Normalize to [-180, 180]
-        while (rawDegrees > 180) rawDegrees -= 360;
-        while (rawDegrees < -180) rawDegrees += 360;
+        while (rawDegrees > RobotConstants.Encoder.ANGLE_UPPER_BOUND) rawDegrees -= RobotConstants.Encoder.FULL_ROTATION_DEGREES;
+        while (rawDegrees < RobotConstants.Encoder.ANGLE_LOWER_BOUND) rawDegrees += RobotConstants.Encoder.FULL_ROTATION_DEGREES;
 
         // Encoder is centered - no offset needed!
         return rawDegrees;

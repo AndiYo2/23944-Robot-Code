@@ -1,5 +1,6 @@
 package pedroPathing;
 
+import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.control.PIDFCoefficients;
 import com.pedropathing.control.FilteredPIDFCoefficients;
 import com.pedropathing.follower.Follower;
@@ -17,6 +18,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
+@Configurable
 public class Constants {
 
     static double yVelocity =64.26073113388904,
@@ -48,13 +50,11 @@ public class Constants {
                 0.00001,
                 0.6,
                 0.01
-                //MAYBE SWITCH IF BROKEN
 ))
         ;
-    // PathConstraints(tValueConstraint, timeoutConstraint, brakingStrength, brakingStart)
-    // brakingStart = how many inches from end to START braking (was 1.75, now 12 for earlier decel)
-    // brakingStrength = how aggressively to brake (15 is strong)
-    public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 1.05, 1);
+    public static double brakingStrength = 1.05;
+    public static double brakingStart = 1;
+    public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, brakingStrength, brakingStart);
     //bs 15
 
     public static MecanumConstants driveConstants = new MecanumConstants()

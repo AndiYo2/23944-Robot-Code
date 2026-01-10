@@ -7,9 +7,11 @@ import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import framework.AutonSequence;
+import utility.RobotConstants;
 
 @Autonomous(name = "RedBack9Ball", group = "NineBall")
 public class RedBack9Ball extends AutonTemplate {
+    public static double maxSpeed = .8;
     private PathChain shootToFirst, firstToShoot, shootToSecond, secondToShoot, shootToStop;
 
     private final Pose startPose = new Pose(87.5, 8.5, Math.toRadians(90));
@@ -58,18 +60,19 @@ public class RedBack9Ball extends AutonTemplate {
     @Override
     public void init() {
         super.init();
+        RobotConstants.UpdatableConstants.allianceColor = RobotConstants.Enums.AllianceColor.Red;
         executor = new AutonSequence(follower, intake, catalogManager, sequenceManager, limelight)
-                .parallel(p -> p.limelightScan().preload())
+                .parallel(p -> p.limelightScan().catalog())
                 .shoot()
-                .parallel(p -> p.moveTo(shootToFirst).intakeStart())
+                .parallel(p -> p.moveTo(shootToFirst, maxSpeed).intakeStart())
                 .intakeStop()
-                .parallel(p -> p.moveTo(firstToShoot).catalog())
+                .parallel(p -> p.moveTo(firstToShoot, maxSpeed).catalog())
                 .shoot()
-                .parallel(p -> p.moveTo(shootToSecond).intakeStart())
+                .parallel(p -> p.moveTo(shootToSecond, maxSpeed).intakeStart())
                 .intakeStop()
-                .parallel(p -> p.moveTo(secondToShoot).catalog())
+                .parallel(p -> p.moveTo(secondToShoot, maxSpeed).catalog())
                 .shoot()
-                .moveTo(shootToStop)
+                .moveTo(shootToStop, maxSpeed)
                 .build();
     }
 }

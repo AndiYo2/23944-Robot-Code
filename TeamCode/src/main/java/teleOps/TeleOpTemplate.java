@@ -5,6 +5,8 @@ import com.arcrobotics.ftclib.command.button.GamepadButton;
 import com.arcrobotics.ftclib.command.button.Trigger;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
+import com.pedropathing.geometry.Pose;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 import subsystems.*;
 import utility.*;
 import utility.Shooting.ShootingSequenceManager;
@@ -31,6 +33,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     private ShootingValidator shootingValidator;
 
     private CatalogManager catalogManager;
+    private HardwareMap hw;  // Store for park feature
 
 
 
@@ -38,6 +41,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     protected void initHardware(boolean isAuto) {
         driverGamepad = new GamepadEx(gamepad1);
         robot.init(hardwareMap, driverGamepad);
+        this.hw = hardwareMap;  // Store for park feature
 
         // Set starting position for TeleOp
         // If we have an ending auton pose, use it; otherwise use standard start point
@@ -119,7 +123,9 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_DOWN)
             .whenPressed(() -> limelight.resetLimelight());
 
-
+        // Auto Park toggle (BACK button)
+        new GamepadButton(driverGamepad, GamepadKeys.Button.BACK)
+            .whenPressed(() -> toggleAutoPark());
     }
 
     @Override
@@ -128,6 +134,11 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
         // CRITICAL: Update Pinpoint odometry every loop (like in test OpMode)
         robot.pinpoint.update();
+
+        // Update follower for position hold during parking
+        if (mecanumDrive.isParking()) {
+            mecanumDrive.updateFollower();
+        }
 
         updateDrivetrain();
         updateSubsystems();
@@ -227,6 +238,23 @@ abstract public class TeleOpTemplate extends CommandOpMode {
             return; // Block manual rotation during shooting sequence (unless override held)
         }
         spindexer.rotateCCW();
+    }
+
+    /**
+     * Toggles auto park mode.
+     * Press BACK to start parking, press again to cancel and return to manual control.
+     */
+    private void toggleAutoPark() {
+        if (mecanumDrive.isParking()) {
+            mecanumDrive.cancelPark();
+        } else {
+            // Get alliance-specific park position
+            Pose parkTarget = (RobotConstants.UpdatableConstants.allianceColor ==
+                RobotConstants.Enums.AllianceColor.Red)
+                ? RobotConstants.Park.redParkZone
+                : RobotConstants.Park.blueParkZone;
+            mecanumDrive.parkAtPose(parkTarget, hw);
+        }
     }
 
     private void updateSubsystems() {

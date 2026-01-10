@@ -23,7 +23,7 @@ public class Shooter implements Subsystem {
     RobotHardware robot;
 
     // Flywheel velocity (ticks/sec) - updated each loop based on distance to goal
-    private double requiredVelocity = 2200;
+    private double requiredVelocity = RobotConstants.Shooter.DEFAULT_VELOCITY;
 
     // Ball flipper state machine
     FlickState currentState = FlickState.Idle;
@@ -34,7 +34,7 @@ public class Shooter implements Subsystem {
 
     // Manual velocity override (for tuning/testing)
     private boolean manualVelocityMode = false;
-    private double manualVelocity = 2200;
+    private double manualVelocity = RobotConstants.Shooter.DEFAULT_VELOCITY;
 
     // Turret PID state variables (all angles in SERVO degrees, not turret degrees)
     private double targetTurretAngle = 0.0;
@@ -82,20 +82,19 @@ public class Shooter implements Subsystem {
     private boolean driftDetected = false;
     private double driftAmount = 0;           // How much drift detected (degrees)
 
-
     /**
      * Initializes shooter subsystem: flywheel motors, turret encoder tracking, and ball flipper.
      */
     public Shooter() {
         this.robot = RobotHardware.getInstance();
 
-        // Configure flywheel PIDF for velocity control
+        // Configure flywheel PIDF for velocity control (use ShooterPIDF for unified tuning)
         com.qualcomm.robotcore.hardware.PIDFCoefficients pidCoefficients =
             new com.qualcomm.robotcore.hardware.PIDFCoefficients(
-                RobotConstants.Shooter.SHOOTER_P,
-                RobotConstants.Shooter.SHOOTER_I,
-                RobotConstants.Shooter.SHOOTER_D,
-                RobotConstants.Shooter.SHOOTER_F
+                RobotConstants.ShooterPIDF.P,
+                RobotConstants.ShooterPIDF.I,
+                RobotConstants.ShooterPIDF.D,
+                RobotConstants.ShooterPIDF.F
             );
 
         // Flywheel motor 1: velocity control mode
@@ -115,10 +114,10 @@ public class Shooter implements Subsystem {
         // Initialize turret encoder cumulative tracking
         // Read initial position, apply calibration offset, and normalize to [-180, 180]
         double voltage = robot.turretEncoder.getVoltage();
-        double rawDegrees = (voltage / 3.3) * 360.0;
+        double rawDegrees = (voltage / RobotConstants.Encoder.MAX_VOLTAGE) * RobotConstants.Encoder.FULL_ROTATION_DEGREES;
         rawDegrees -= RobotConstants.Shooter.TURRET_ENCODER_OFFSET;  // Apply calibration
-        while (rawDegrees > 180) rawDegrees -= 360;
-        while (rawDegrees < -180) rawDegrees += 360;
+        while (rawDegrees > RobotConstants.Encoder.ANGLE_UPPER_BOUND) rawDegrees -= RobotConstants.Encoder.FULL_ROTATION_DEGREES;
+        while (rawDegrees < RobotConstants.Encoder.ANGLE_LOWER_BOUND) rawDegrees += RobotConstants.Encoder.FULL_ROTATION_DEGREES;
         lastRawTurretPosition = rawDegrees;
         turretRotationCount = 0;
         cumulativeTurretPosition = rawDegrees;
@@ -185,40 +184,62 @@ public class Shooter implements Subsystem {
     }
 
     /**
-     * Looks up flywheel velocity for a given distance using linear interpolation.
+     * Calculates flywheel velocity using lookup tables with linear interpolation.
+     * Uses separate front/back tables for Blue and Red alliances.
+     *
      * @param distance Distance to goal in inches
      * @return Flywheel velocity in ticks per second
      */
     private double getVelocityFromDistance(double distance) {
-        //Offset from 5,5 inch distance for shooting, fix goal eveentually lol
-        distance -= Math.sqrt(4);
         // Return fixed velocity during Limelight scan mode
         if (RobotConstants.Limelight.manuallySlowedForScan) {
-            return 2200.0;
+            return RobotConstants.Shooter.FALLBACK_VELOCITY;
         }
 
+        // Select correct lookup table based on alliance and zone
+        boolean isBlue = (RobotConstants.UpdatableConstants.allianceColor == RobotConstants.Enums.AllianceColor.Blue);
+        double[][] table;
+
+        if (isBlue) {
+            table = (distance < RobotConstants.Shooter.BLUE_ZONE_BOUNDARY)
+                ? RobotConstants.Shooter.BLUE_FRONT_LOOKUP
+                : RobotConstants.Shooter.BLUE_BACK_LOOKUP;
+        } else {
+            table = (distance < RobotConstants.Shooter.RED_ZONE_BOUNDARY)
+                ? RobotConstants.Shooter.RED_FRONT_LOOKUP
+                : RobotConstants.Shooter.RED_BACK_LOOKUP;
+        }
+
+        return interpolateFromTable(table, distance);
+    }
+
+    /**
+     * Linear interpolation from a distance-velocity lookup table.
+     */
+    private double interpolateFromTable(double[][] table, double distance) {
         // Clamp to table bounds
-        if (distance <= RobotConstants.Shooter.VELOCITY_LOOKUP[0][0]) {
-            return RobotConstants.Shooter.VELOCITY_LOOKUP[0][1];
+        if (distance <= table[0][0]) {
+            return table[0][1];
         }
-        if (distance >= RobotConstants.Shooter.VELOCITY_LOOKUP[RobotConstants.Shooter.VELOCITY_LOOKUP.length - 1][0]) {
-            return RobotConstants.Shooter.VELOCITY_LOOKUP[RobotConstants.Shooter.VELOCITY_LOOKUP.length - 1][1];
+        int lastIndex = table.length - 1;
+        if (distance >= table[lastIndex][0]) {
+            return table[lastIndex][1];
         }
 
-        // Linear interpolation between adjacent table entries
-        for (int i = 0; i < RobotConstants.Shooter.VELOCITY_LOOKUP.length - 1; i++) {
-            double dist1 = RobotConstants.Shooter.VELOCITY_LOOKUP[i][0];
-            double dist2 = RobotConstants.Shooter.VELOCITY_LOOKUP[i + 1][0];
+        // Linear interpolation between table entries
+        for (int i = 0; i < table.length - 1; i++) {
+            double dist1 = table[i][0];
+            double dist2 = table[i + 1][0];
 
             if (distance >= dist1 && distance <= dist2) {
-                double vel1 = RobotConstants.Shooter.VELOCITY_LOOKUP[i][1];
-                double vel2 = RobotConstants.Shooter.VELOCITY_LOOKUP[i + 1][1];
+                double vel1 = table[i][1];
+                double vel2 = table[i + 1][1];
                 double ratio = (distance - dist1) / (dist2 - dist1);
                 return vel1 + (vel2 - vel1) * ratio;
             }
         }
 
-        return 2200.0; // Fallback
+        return RobotConstants.Shooter.FALLBACK_VELOCITY;
     }
 
     /** Updates requiredVelocity based on current distance to goal. */
@@ -354,8 +375,8 @@ public class Shooter implements Subsystem {
      * @return Normalized angle in [-180, 180]
      */
     private double normalizeAngle(double degrees) {
-        while (degrees > 180) degrees -= 360;
-        while (degrees < -180) degrees += 360;
+        while (degrees > RobotConstants.Encoder.ANGLE_UPPER_BOUND) degrees -= RobotConstants.Encoder.FULL_ROTATION_DEGREES;
+        while (degrees < RobotConstants.Encoder.ANGLE_LOWER_BOUND) degrees += RobotConstants.Encoder.FULL_ROTATION_DEGREES;
         return degrees;
     }
 
@@ -375,8 +396,8 @@ public class Shooter implements Subsystem {
         double robotHeading = currentPose.getHeading(AngleUnit.RADIANS);
         double relativeAngle = Math.toDegrees(absoluteAngle - robotHeading);
 
-        while (relativeAngle > 180) relativeAngle -= 360;
-        while (relativeAngle < -180) relativeAngle += 360;
+        while (relativeAngle > RobotConstants.Encoder.ANGLE_UPPER_BOUND) relativeAngle -= RobotConstants.Encoder.FULL_ROTATION_DEGREES;
+        while (relativeAngle < RobotConstants.Encoder.ANGLE_LOWER_BOUND) relativeAngle += RobotConstants.Encoder.FULL_ROTATION_DEGREES;
 
         relativeAngle += RobotConstants.Shooter.TURRET_TRACKING_OFFSET;
 
@@ -399,39 +420,39 @@ public class Shooter implements Subsystem {
      */
     public double getTurretPosition() {
         double voltage = robot.turretEncoder.getVoltage();
-        double rawDegrees = (voltage / 3.3) * 360.0;
+        double rawDegrees = (voltage / RobotConstants.Encoder.MAX_VOLTAGE) * RobotConstants.Encoder.FULL_ROTATION_DEGREES;
 
         // Apply encoder calibration offset so that "turret centered" = 0°
         // CRITICAL: This offset must be calibrated or all angles will be wrong!
         rawDegrees -= RobotConstants.Shooter.TURRET_ENCODER_OFFSET;
 
         // Normalize to [-180, 180] for boundary detection
-        while (rawDegrees > 180) rawDegrees -= 360;
-        while (rawDegrees < -180) rawDegrees += 360;
+        while (rawDegrees > RobotConstants.Encoder.ANGLE_UPPER_BOUND) rawDegrees -= RobotConstants.Encoder.FULL_ROTATION_DEGREES;
+        while (rawDegrees < RobotConstants.Encoder.ANGLE_LOWER_BOUND) rawDegrees += RobotConstants.Encoder.FULL_ROTATION_DEGREES;
 
         // Detect boundary crossings
         double delta = rawDegrees - lastRawTurretPosition;
-        if (delta < -180) {
+        if (delta < RobotConstants.Encoder.ANGLE_LOWER_BOUND) {
             turretRotationCount++; // Crossed +180 → -180 (CW)
-        } else if (delta > 180) {
+        } else if (delta > RobotConstants.Encoder.ANGLE_UPPER_BOUND) {
             turretRotationCount--; // Crossed -180 → +180 (CCW)
         }
 
         lastRawTurretPosition = rawDegrees;
-        cumulativeTurretPosition = rawDegrees + (turretRotationCount * 360);
+        cumulativeTurretPosition = rawDegrees + (turretRotationCount * RobotConstants.Encoder.FULL_ROTATION_DEGREES);
 
         // Drift detection: track expected cumulative based on actual deltas
         double driftDelta = rawDegrees - lastRawForDrift;
         // Handle wraparound for drift tracking too
-        if (driftDelta > 180) driftDelta -= 360;
-        if (driftDelta < -180) driftDelta += 360;
+        if (driftDelta > RobotConstants.Encoder.ANGLE_UPPER_BOUND) driftDelta -= RobotConstants.Encoder.FULL_ROTATION_DEGREES;
+        if (driftDelta < RobotConstants.Encoder.ANGLE_LOWER_BOUND) driftDelta += RobotConstants.Encoder.FULL_ROTATION_DEGREES;
         expectedCumulative += driftDelta;
         lastRawForDrift = rawDegrees;
 
         // Check for drift (difference between tracked cumulative and expected)
         driftAmount = Math.abs(cumulativeTurretPosition - expectedCumulative);
-        // Flag drift if more than 30 degrees off (indicates missed boundary crossing)
-        driftDetected = driftAmount > 30.0;
+        // Flag drift if more than threshold degrees off (indicates missed boundary crossing)
+        driftDetected = driftAmount > RobotConstants.Shooter.TURRET_DRIFT_THRESHOLD;
 
         return cumulativeTurretPosition;
     }
@@ -456,7 +477,7 @@ public class Shooter implements Subsystem {
         targetTurretAngle = newTargetServo;
 
         // Reset PID state when target changes significantly
-        if (Math.abs(newTargetServo - lastTargetTurretAngle) > 0.5) {
+        if (Math.abs(newTargetServo - lastTargetTurretAngle) > RobotConstants.Shooter.TURRET_TARGET_CHANGE_THRESHOLD) {
             lastTargetTurretAngle = newTargetServo;
             turretIntegral = 0;
             lastTurretError = 0;
@@ -484,7 +505,7 @@ public class Shooter implements Subsystem {
         // Positive = right (CW), Negative = left (CCW)
         final double CW_LIMIT = RobotConstants.Shooter.TURRET_MAX_ANGLE * RobotConstants.Shooter.GEAR_RATIO;   // +60° turret × 5 = +300°
         final double CCW_LIMIT = RobotConstants.Shooter.TURRET_MIN_ANGLE * RobotConstants.Shooter.GEAR_RATIO; // -45° turret × 5 = -225°
-        final double LIMIT_MARGIN = 30.0;
+        final double LIMIT_MARGIN = RobotConstants.Shooter.TURRET_LIMIT_MARGIN;
 
         boolean nearCWLimit = currentPosition > (CW_LIMIT - LIMIT_MARGIN);
         boolean nearCCWLimit = currentPosition < (CCW_LIMIT + LIMIT_MARGIN);
@@ -501,11 +522,11 @@ public class Shooter implements Subsystem {
         long currentTime = System.nanoTime();
         double dt = (currentTime - lastTurretTime) / 1e9;
         lastTurretTime = currentTime;
-        if (dt > 1.0 || dt < 0.001) dt = 0.02;
+        if (dt > RobotConstants.PID.DT_MAX || dt < RobotConstants.PID.DT_MIN) dt = RobotConstants.PID.DT_DEFAULT;
 
         // PID calculation with anti-windup
         turretIntegral += error * dt;
-        turretIntegral = Math.max(-50, Math.min(50, turretIntegral));
+        turretIntegral = Math.max(RobotConstants.PID.INTEGRAL_CLAMP_MIN, Math.min(RobotConstants.PID.INTEGRAL_CLAMP_MAX, turretIntegral));
         double derivative = (error - lastTurretError) / dt;
         lastTurretError = error;
 
@@ -520,7 +541,7 @@ public class Shooter implements Subsystem {
         }
 
         // Power limiting
-        double maxPower = (nearCWLimit || nearCCWLimit) ? 0.3 : 0.5;
+        double maxPower = (nearCWLimit || nearCCWLimit) ? RobotConstants.Shooter.TURRET_POWER_LIMIT_NEAR_EDGE : RobotConstants.Shooter.TURRET_POWER_LIMIT_NORMAL;
         power = Math.max(-maxPower, Math.min(maxPower, power));
 
         // Deadband - stop when close enough to target
@@ -674,7 +695,7 @@ public class Shooter implements Subsystem {
         // Encoder calibration data
         telemetry.addLine("--- Encoder Data ---");
         double rawVoltage = robot.turretEncoder.getVoltage();
-        double rawDegreesUncalibrated = (rawVoltage / 3.3) * 360.0;
+        double rawDegreesUncalibrated = (rawVoltage / RobotConstants.Encoder.MAX_VOLTAGE) * RobotConstants.Encoder.FULL_ROTATION_DEGREES;
         telemetry.addData("Raw Voltage", String.format("%.3f V", rawVoltage));
         telemetry.addData("Raw Degrees (uncal)", String.format("%.1f°", rawDegreesUncalibrated));
         telemetry.addData("Encoder Offset", String.format("%.1f°", RobotConstants.Shooter.TURRET_ENCODER_OFFSET));
@@ -787,14 +808,26 @@ public class Shooter implements Subsystem {
      * Main periodic update - called every loop cycle.
      *
      * Executes in order:
-     *   1. Update flywheel velocity (from distance or manual)
-     *   2. Run ball flipper state machine
-     *   3. Update field zone state from robot position
-     *   4. Set turret target based on mode and zone
-     *   5. Run turret PID control
+     *   1. Apply PIDF coefficients from RobotConstants (allows live Panels updates)
+     *   2. Update flywheel velocity (from distance or manual)
+     *   3. Run ball flipper state machine
+     *   4. Update field zone state from robot position
+     *   5. Set turret target based on mode and zone
+     *   6. Run turret PID control
      */
     @Override
     public void periodic() {
+        // Apply current PIDF from RobotConstants each loop
+        com.qualcomm.robotcore.hardware.PIDFCoefficients pidf =
+            new com.qualcomm.robotcore.hardware.PIDFCoefficients(
+                RobotConstants.ShooterPIDF.P,
+                RobotConstants.ShooterPIDF.I,
+                RobotConstants.ShooterPIDF.D,
+                RobotConstants.ShooterPIDF.F
+            );
+        robot.shooterMotor1.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidf);
+        robot.shooterMotor2.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidf);
+
         // Set flywheel velocity
         double targetVelocity = manualVelocityMode ? manualVelocity : requiredVelocity;
         if (!manualVelocityMode) {
@@ -809,5 +842,10 @@ public class Shooter implements Subsystem {
         updateFieldState();
         turretPeriodic();
         turretRotationUpdater();
+    }
+
+    /** Returns current flywheel velocity average (for external use). */
+    public double getCurrentVelocity() {
+        return (robot.shooterMotor1.getVelocity() + robot.shooterMotor2.getVelocity()) / 2.0;
     }
 }

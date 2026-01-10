@@ -71,6 +71,51 @@ public class MecanumDrive implements Subsystem {
         return follower;
     }
 
+    /**
+     * Drives to a park position and holds it using Pedro Pathing PIDF control.
+     * @param target The pose to park at
+     * @param hardwareMap The hardware map for creating the follower
+     */
+    public void parkAtPose(Pose target, HardwareMap hardwareMap) {
+        currentState = DriveState.Parking;
+        Follower follower = Constants.createFollower(hardwareMap);
+        follower.setStartingPose(getCurrentPose());
+        PathChain path = follower.pathBuilder()
+                .addPath(new BezierLine(getCurrentPose(), target))
+                .setLinearHeadingInterpolation(getCurrentPose().getHeading(), target.getHeading())
+                .build();
+        follower.followPath(path, true);  // holdEnd=true for position hold
+        activeFollower = follower;
+    }
+
+    /**
+     * Cancels parking and returns to manual control.
+     */
+    public void cancelPark() {
+        if (currentState == DriveState.Parking && activeFollower != null) {
+            activeFollower = null;
+        }
+        currentState = DriveState.FieldRelative;
+        stop();
+    }
+
+    /**
+     * @return true if robot is currently in parking mode
+     */
+    public boolean isParking() {
+        return currentState == DriveState.Parking;
+    }
+
+    /**
+     * Updates the follower for position hold during parking.
+     * Call this in the main loop when parking is active.
+     */
+    public void updateFollower() {
+        if (activeFollower != null) {
+            activeFollower.update();
+        }
+    }
+
     public void stop() {
         robot.frontLeft.setPower(0);
         robot.backLeft.setPower(0);
@@ -80,12 +125,12 @@ public class MecanumDrive implements Subsystem {
 
     public void drive(double ly, double lx, double rx) {
         // Auto-transition from Idle when joystick input detected
-        if (currentState == DriveState.Idle && (Math.abs(ly) > 0.01 || Math.abs(lx) > 0.01 || Math.abs(rx) > 0.01)) {
+        if (currentState == DriveState.Idle && (Math.abs(ly) > RobotConstants.Drivetrain.JOYSTICK_DEADBAND || Math.abs(lx) > RobotConstants.Drivetrain.JOYSTICK_DEADBAND || Math.abs(rx) > RobotConstants.Drivetrain.JOYSTICK_DEADBAND)) {
             currentState = DriveState.FieldRelative;
         }
 
-        // Skip driving if in AutoDriving or Locked state
-        if (currentState == DriveState.AutoDriving || currentState == DriveState.Locked) {
+        // Skip driving if in AutoDriving, Parking, or Locked state
+        if (currentState == DriveState.AutoDriving || currentState == DriveState.Parking || currentState == DriveState.Locked) {
             return;
         }
 
@@ -104,7 +149,7 @@ public class MecanumDrive implements Subsystem {
             rotY = ly;
         }
 
-        rotX = rotX * 1.1;  // Counteract imperfect strafing
+        rotX = rotX * RobotConstants.Drivetrain.STRAFE_COMPENSATION;  // Counteract imperfect strafing
 
         // Calculate and normalize motor powers
         double denominator = Math.max(Math.abs(rotY) + Math.abs(rotX) + Math.abs(rx), 1);
@@ -113,7 +158,7 @@ public class MecanumDrive implements Subsystem {
         double frontRightPower = (rotY - rotX - rx) / denominator;
         double backRightPower = (rotY + rotX - rx) / denominator;
 
-        double mult = slowmode ? 0.25 : 1;
+        double mult = slowmode ? RobotConstants.Drivetrain.SLOW_MODE_MULTIPLIER : 1;
 
         robot.frontLeft.setPower(frontLeftPower * mult);
         robot.backLeft.setPower(backLeftPower * mult);
@@ -136,6 +181,10 @@ public class MecanumDrive implements Subsystem {
                     currentState = DriveState.Idle;
                     activeFollower = null;
                 }
+                break;
+            case Parking:
+                // Keep follower active for position hold - don't transition to Idle
+                // Position hold is maintained by calling updateFollower() from TeleOp loop
                 break;
         }
     }

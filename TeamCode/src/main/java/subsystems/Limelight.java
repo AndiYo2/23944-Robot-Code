@@ -90,6 +90,9 @@ public class Limelight implements Subsystem {
             currentMode = RobotConstants.Enums.LimelightMode.GoalTracking;
         }
     }
+    public void setMode(RobotConstants.Enums.LimelightMode mode) {
+        currentMode = mode;
+    }
 
     public RobotConstants.Enums.LimelightMode getCurrentMode() {
         return currentMode;

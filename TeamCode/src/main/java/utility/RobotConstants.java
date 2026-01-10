@@ -30,11 +30,18 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
  */
 @Configurable
 public class RobotConstants {
+    @Configurable
     public static class Drivetrain {
+        // --- Hardware Names ---
         public static String frontLeftMotor = "frontLeftMotor"; //E0
         public static String backLeftMotor = "backLeftMotor"; // E1
         public static String frontRightMotor= "frontRightMotor"; // E2
         public static String backRightMotor = "backRightMotor"; // E3
+
+        // --- Drive Tuning ---
+        public static double STRAFE_COMPENSATION = 1.1;    // Counteract imperfect strafing
+        public static double JOYSTICK_DEADBAND = 0.01;     // Minimum joystick input threshold
+        public static double SLOW_MODE_MULTIPLIER = 0.25;  // Speed reduction for precision mode
     }
 
     public static class Robot {
@@ -67,7 +74,7 @@ public class RobotConstants {
         public static double FLIPPER_POSITION_EXTENDED = 0.80;
         public static double FLIPPER_POSITION_RETRACT = 0.55;
 
-        public static double FLICK_TIME = 0.085;
+        public static double FLICK_TIME = 0.02;
 
         // Spindexer PIDF coefficients - direction-specific for vertical mounting
         // CW rotation (with gravity assist)
@@ -97,6 +104,12 @@ public class RobotConstants {
         // Spindexer slot positions in degrees (3 equally-spaced slots: 120° apart)
         public static int[] SPINDEXER_POSITIONS = {52, 172, 292};
 
+        // --- Position Detection Thresholds ---
+        public static double ANGLE_WITHIN_RANGE_THRESHOLD = 60.0;  // Degrees for "within slot range" check
+        public static double ENCODER_READY_THRESHOLD = 0.01;       // Voltage change to detect encoder ready
+
+        // --- Tuning ---
+        public static double TUNING_TARGET_POSITION = 52.0;  // Target position for PIDF tuning (degrees)
     }
 
     @Configurable
@@ -131,7 +144,7 @@ public class RobotConstants {
         // Red goal: top-right corner of field
         public static double BLUE_GOAL_X = 0.0;
         public static double BLUE_GOAL_Y = 141.0;
-        public static double RED_GOAL_X = 139.0;
+        public static double RED_GOAL_X = 136.0;
         public static double RED_GOAL_Y = 141.0;
 
         // ==================== TURRET GEOMETRY ====================
@@ -202,31 +215,103 @@ public class RobotConstants {
 
         // ==================== FLYWHEEL PIDF ====================
         // Velocity control for flywheel motors (ticks/sec)
-        public static double SHOOTER_P = 33;
+        public static double SHOOTER_P = 40;
         public static double SHOOTER_I = 0.0;
         public static double SHOOTER_D = 0.0;
-        public static double SHOOTER_F = 10.3;
+        public static double SHOOTER_F = 10.2;
 
         // Target velocity for shooter tuning mode (ticks/sec)
         // Adjust this via configurables to test shooter PIDF at different speeds
         public static double SHOOTER_TUNING_VELOCITY = 2200.0;
 
-        // ==================== VELOCITY LOOKUP TABLE ====================
-        // Flywheel velocity by distance: [distance to goal in inches, velocity in ticks/sec]
-        // Calibrated values - interpolates between points for smooth velocity transitions
-        public static double[][] VELOCITY_LOOKUP = {
-            {45.0, 1980.0},
-            {55.0, 1950.0},
-            {70.0, 2100.0},
-            {81.0, 2100.0},
-            {97.0, 2250.0},
-            {132.0, 2500.0},
-            {134.0, 2550.0},
-            {138.0, 2550.0},
-            {156.0, 2760.0},
-            {160.0, 2780.0},
-            {200.0, 2800.0}
+        // ==================== VELOCITY CONSTANTS ====================
+        public static double DEFAULT_VELOCITY = 2200.0;           // Default/initial flywheel velocity
+        public static double FALLBACK_VELOCITY = 2200.0;          // Fallback when lookup fails
+
+        // ==================== VELOCITY LOOKUP TABLES ====================
+        // Zone boundary (inches) - below uses front table, above uses back table
+        public static double BLUE_ZONE_BOUNDARY = 105.0;
+        public static double RED_ZONE_BOUNDARY = 100.0;
+
+        // Blue Front Zone: distance (inches) to velocity (ticks/sec)
+        public static double[][] BLUE_FRONT_LOOKUP = {
+            {53, 1900},
+            {78, 2000},
+            {80, 1950},
+            {94, 2030},
+            {98, 2100},
+            {100, 2100}
         };
+
+        // Blue Back Zone
+        public static double[][] BLUE_BACK_LOOKUP = {
+            {140, 2600},
+            {144, 2600},
+            {148, 2650},
+            {154, 2700}
+        };
+
+        // Red Front Zone
+        public static double[][] RED_FRONT_LOOKUP = {
+            {48, 2000},
+            {52, 2000},
+            {80, 2100},
+            {85, 2100}
+        };
+
+        // Red Back Zone
+        public static double[][] RED_BACK_LOOKUP = {
+            {134, 2500},
+            {138, 2520},
+            {148, 2650}
+        };
+
+        // ==================== TURRET CONTROL THRESHOLDS ====================
+        public static double TURRET_TARGET_CHANGE_THRESHOLD = 0.5;  // Min degrees change to reset PID
+        public static double TURRET_DRIFT_THRESHOLD = 30.0;         // Degrees of drift before flagging
+        public static double TURRET_LIMIT_MARGIN = 30.0;            // Safety margin before hardware limits
+        public static double TURRET_POWER_LIMIT_NORMAL = 0.5;       // Normal max power
+        public static double TURRET_POWER_LIMIT_NEAR_EDGE = 0.3;    // Max power near hardware limits
+
+    }
+
+    /**
+     * Shooter PIDF values in a separate class for independent live tuning via Panels.
+     * Refreshing this class won't affect turret PID or other Shooter settings.
+     */
+    @Configurable
+    public static class ShooterPIDF {
+        public static double P = 16;
+        public static double I = 0.0;
+        public static double D = 0.0;
+        public static double F = 10;
+        public static double TUNING_VELOCITY = 2625.0;
+    }
+
+    @Configurable
+    public static class Encoder {
+        // --- Analog Encoder Conversion ---
+        public static double MAX_VOLTAGE = 3.3;                    // Max voltage from analog encoder
+        public static double FULL_ROTATION_DEGREES = 360.0;        // Full rotation in degrees
+
+        // --- Angle Normalization Bounds ---
+        public static double ANGLE_UPPER_BOUND = 180.0;            // Upper bound for normalization
+        public static double ANGLE_LOWER_BOUND = -180.0;           // Lower bound for normalization
+    }
+
+    @Configurable
+    public static class PID {
+        // --- Delta Time Validation ---
+        public static double DT_MAX = 1.0;                         // Max delta time (skip if exceeded)
+        public static double DT_MIN = 0.001;                       // Min delta time (skip if below)
+        public static double DT_DEFAULT = 0.02;                    // Default delta time (50Hz)
+
+        // --- Anti-Windup ---
+        public static double INTEGRAL_CLAMP_MAX = 50.0;            // Upper integral windup limit
+        public static double INTEGRAL_CLAMP_MIN = -50.0;           // Lower integral windup limit
+
+        // --- Tuning Step Sizes ---
+        public static double[] TUNING_STEP_SIZES = {0.1, 0.01, 0.001, 0.0001, 0.00001};
     }
 
     @Configurable
@@ -238,10 +323,10 @@ public class RobotConstants {
         public static double SHOOTER_FLIPPER_TIME = 0.02;
 
         // Extra wait time after starting rotation before firing shooter flipper (seconds)
-        public static double EXTRA_WAIT_TIME = 0.15;
+        public static double EXTRA_WAIT_TIME = 0.075;
 
         // Time spindexer must be within tolerance before declaring rotation complete (seconds)
-        public static double SPINDEXER_SETTLING_TIME = 0.1;
+        public static double SPINDEXER_SETTLING_TIME = 0;
     }
 
     public static class ColorSensor {
@@ -327,6 +412,14 @@ public class RobotConstants {
         public static Enums.AllianceColor allianceColor;
     }
 
+    public static class Park {
+        // Blue park zone - adjust coordinates for your field
+        public static Pose redParkZone = new Pose(38.75, 32.5, Math.toRadians(90));
+
+        // Red park zone - adjust coordinates for your field
+        public static Pose blueParkZone = new Pose(105.25, 32.5, Math.toRadians(90));
+    }
+
 
 
     public static class Enums{
@@ -384,6 +477,7 @@ public class RobotConstants {
             RobotRelative,      // Robot-centric
             SlowMode,           // Precision mode
             AutoDriving,        // Autonomous navigation
+            Parking,            // Auto park with position hold
             Locked              // Defense mode (X-pattern)
         }
         public enum LimelightMode {

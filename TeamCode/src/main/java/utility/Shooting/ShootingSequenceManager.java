@@ -57,8 +57,8 @@ public class ShootingSequenceManager {
         }
 
         ballsShot = 0;
-        state = State.FLICK_SPINDEXER;
-        spindexer.triggerFlick();
+        state = State.WAIT_ROTATION;
+        spindexer.rotateToColor(MotifPattern.getBallColorInSlotX(0));
     }
 
     /**
@@ -99,7 +99,7 @@ public class ShootingSequenceManager {
                 break;
 
             case WAIT_EXTRA:
-                // Wait extra 0.15s
+                // Wait extra 0.075s
                 if (timer.seconds() >= RobotConstants.ShootingSequence.EXTRA_WAIT_TIME) {
                     shooter.triggerShot();
                     state = State.FLICK_SHOOTER;
@@ -143,9 +143,9 @@ public class ShootingSequenceManager {
             return "IDLE";
         }
         return String.format("%s - Ball %d/%d",
-            state.toString(),
-            ballsShot + 1,
-            RobotConstants.ShootingSequence.TOTAL_BALLS
+                state.toString(),
+                ballsShot + 1,
+                RobotConstants.ShootingSequence.TOTAL_BALLS
         );
     }
 

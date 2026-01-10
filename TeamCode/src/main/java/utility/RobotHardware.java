@@ -14,6 +14,7 @@ import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
@@ -58,6 +59,9 @@ public class RobotHardware {
     public AnalogInput spindexerEncoder;
 
     public PIDFController spindexerPID;
+
+    // ******************* VOLTAGE SENSOR ******************* //
+    public VoltageSensor voltageSensor;
 
     // ******************* GAME CONTROL ******************* //
     public GamepadEx driver;
@@ -167,6 +171,7 @@ public class RobotHardware {
         limelight.pipelineSwitch(5);
         limelight.start();
 
-
+        // ******************* VOLTAGE SENSOR ******************* //
+        voltageSensor = hardwareMap.voltageSensor.iterator().next();
     }
 }

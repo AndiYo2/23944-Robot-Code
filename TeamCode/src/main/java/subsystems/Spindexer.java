@@ -152,20 +152,35 @@ public class Spindexer implements Subsystem {
         SpindexerAndMotifStatus.SpindexerPattern.rotateBallsCW();
     }
 
-    public boolean rotateToColor(RobotConstants.Enums.BallColor color){
-        if(SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(1) == color){
-            return true;
+    /**
+     * Rotates the spindexer to bring a ball of the specified color to slot 1 (shooter position).
+     *
+     * @param color The ball color to find and rotate to slot 1
+     * @return true if the color was found (either already in slot 1 or rotation started),
+     *         false if the color is not in any slot
+     */
+    public boolean rotateToColor(RobotConstants.Enums.BallColor color) {
+        if (rotationState != RotationState.IDLE) return false; // Already rotating
+
+        // Check slot 1 first (already in shooter position)
+        if (SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(1) == color) {
+            return true; // Already aligned, no rotation needed
         }
-        else if(SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(2) == color){
+
+        // Check slot 2 (one CW rotation away)
+        if (SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(2) == color) {
             rotateCW();
             return true;
-        } else if(SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(0) == color){
+        }
+
+        // Check slot 0 (one CCW rotation away)
+        if (SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(0) == color) {
             rotateCCW();
             return true;
         }
         rotateToNextClosestBall();
         return false;
-        }
+    }
 
     /**
      * Rotates the spindexer clockwise to the next slot position.
@@ -335,12 +350,12 @@ public class Spindexer implements Subsystem {
     public double getServoPosition() {
         // Convert voltage (0-3.3V) to angle (0-360°)
         double pos = robot.spindexerEncoder.getVoltage();
-        pos /= 3.3;  // Normalize to 0-1
-        pos *= 360;  // Scale to degrees
+        pos /= RobotConstants.Encoder.MAX_VOLTAGE;  // Normalize to 0-1
+        pos *= RobotConstants.Encoder.FULL_ROTATION_DEGREES;  // Scale to degrees
 
         // Ensure angle stays in [0, 360) range
-        while (pos >= 360) pos -= 360;
-        while (pos < 0) pos += 360;
+        while (pos >= RobotConstants.Encoder.FULL_ROTATION_DEGREES) pos -= RobotConstants.Encoder.FULL_ROTATION_DEGREES;
+        while (pos < 0) pos += RobotConstants.Encoder.FULL_ROTATION_DEGREES;
         return pos;
     }
 
@@ -363,8 +378,8 @@ public class Spindexer implements Subsystem {
         double difference = targetPosition - currentPosition;
 
         // Take shortest path around circle
-        if (difference > 180) difference -= 360;
-        if (difference < -180) difference += 360;
+        if (difference > RobotConstants.Encoder.ANGLE_UPPER_BOUND) difference -= RobotConstants.Encoder.FULL_ROTATION_DEGREES;
+        if (difference < RobotConstants.Encoder.ANGLE_LOWER_BOUND) difference += RobotConstants.Encoder.FULL_ROTATION_DEGREES;
 
         return Math.abs(difference) < angleRange;
     }
@@ -476,7 +491,7 @@ public class Spindexer implements Subsystem {
 
         // Check if voltage has changed from initial reading
         // Encoder is ready when it gives a different value than the initial stuck reading
-        return Math.abs(currentVoltage - initialEncoderVoltage) > 0.01;
+        return Math.abs(currentVoltage - initialEncoderVoltage) > RobotConstants.Spindexer.ENCODER_READY_THRESHOLD;
     }
 
     /**
@@ -500,10 +515,10 @@ public class Spindexer implements Subsystem {
      */
     private boolean isWithinRange(double angle, double target) {
         double diff = Math.abs(angle - target);
-        if (diff > 180) {
-            diff = 360 - diff;
+        if (diff > RobotConstants.Encoder.ANGLE_UPPER_BOUND) {
+            diff = RobotConstants.Encoder.FULL_ROTATION_DEGREES - diff;
         }
-        return diff <= 60;
+        return diff <= RobotConstants.Spindexer.ANGLE_WITHIN_RANGE_THRESHOLD;
     }
 
     /**
@@ -517,7 +532,7 @@ public class Spindexer implements Subsystem {
     private double calculateAngularDistance(double angle1, double angle2) {
         double diff = Math.abs(angle1 - angle2);
         // Take the shorter path around the circle
-        return Math.min(diff, 360 - diff);
+        return Math.min(diff, RobotConstants.Encoder.FULL_ROTATION_DEGREES - diff);
     }
 
     // ====================================================================
@@ -600,8 +615,8 @@ public class Spindexer implements Subsystem {
             error = targetPosition - currentPosition;
 
             // Normalize error to [-180, 180] range for shortest path
-            while (error > 180) error -= 360;
-            while (error < -180) error += 360;
+            while (error > RobotConstants.Encoder.ANGLE_UPPER_BOUND) error -= RobotConstants.Encoder.FULL_ROTATION_DEGREES;
+            while (error < RobotConstants.Encoder.ANGLE_LOWER_BOUND) error += RobotConstants.Encoder.FULL_ROTATION_DEGREES;
 
             // Create a "virtual" target that's on the shortest path from current position
             double wrappedTarget = currentPosition + error;

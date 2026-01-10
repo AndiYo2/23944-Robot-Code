@@ -482,6 +482,10 @@ public class AutonSequence {
             group.addAction(new LimelightScanAction(limelight));
             return this;
         }
+        public ParallelBuilder limelightScanDelayed() {
+            group.addAction(new LimelightScanAction(limelight));
+            return this;
+        }
 
         public ParallelBuilder delay(double seconds) {
             group.addAction(new DelayAction(seconds));

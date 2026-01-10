@@ -126,10 +126,10 @@ abstract public class TeleOpTemplateTuning extends CommandOpMode {
         spindexer_ccw_kF = RobotConstants.Spindexer.SPINDEXER_CCW_F;
 
         // Shooter PIDs
-        shooter_kP = RobotConstants.Shooter.SHOOTER_P;
-        shooter_kI = RobotConstants.Shooter.SHOOTER_I;
-        shooter_kD = RobotConstants.Shooter.SHOOTER_D;
-        shooter_kF = RobotConstants.Shooter.SHOOTER_F;
+        shooter_kP = RobotConstants.ShooterPIDF.P;
+        shooter_kI = RobotConstants.ShooterPIDF.I;
+        shooter_kD = RobotConstants.ShooterPIDF.D;
+        shooter_kF = RobotConstants.ShooterPIDF.F;
 
         // Turret PIDs
         turret_kP = RobotConstants.Shooter.TURRET_PID.p;
@@ -154,7 +154,7 @@ abstract public class TeleOpTemplateTuning extends CommandOpMode {
                 .whenPressed(() -> mecanumDrive.resetYaw());
         new GamepadButton(driverGamepad, GamepadKeys.Button.B)
                 .whenPressed(() -> {
-                    if (!pidTuningMode) mecanumDrive.toggleSlowMode();
+                    if (!pidTuningMode || tuningSubsystem != 1) mecanumDrive.toggleSlowMode();
                 });
         new GamepadButton(driverGamepad, GamepadKeys.Button.X)
                 .whenPressed(() -> spindexer.triggerFlick());
@@ -162,7 +162,8 @@ abstract public class TeleOpTemplateTuning extends CommandOpMode {
                 .whenPressed(() -> attemptShootingSequence());
         new GamepadButton(driverGamepad, GamepadKeys.Button.Y)
                 .whenPressed(() -> {
-                    if (!pidTuningMode) catalogManager.initiateCataloging();
+                    // Allow cataloging in shooter tuning mode (subsystem 1) for full robot functionality
+                    if (!pidTuningMode || tuningSubsystem == 1) catalogManager.initiateCataloging();
                 });
 
         // Manual spindexer controls
@@ -314,22 +315,18 @@ abstract public class TeleOpTemplateTuning extends CommandOpMode {
         } else {
             // Currently ON, cycle to next mode
             if (tuningSubsystem == 0) {
-                // Spindexer → Shooter PIDF
+                // Spindexer → Shooter Tuning (conjoined PIDF + Velocity)
                 tuningSubsystem = 1;
-                adjustingPower = false;
+                adjustingPower = false; // Start in PIDF adjust mode (d-pad adjusts PIDF)
+                // Enable manual velocity mode so tuning velocity is used (not distance-based)
                 shooter.setManualVelocityMode(true);
+                shooter.setManualVelocity(RobotConstants.ShooterPIDF.TUNING_VELOCITY);
                 gamepad1.rumble(100);
-            } else if (tuningSubsystem == 1 && !adjustingPower) {
-                // Shooter PIDF → Shooter Power
-                adjustingPower = true;
-                shooter.setManualVelocityMode(true);
-                shooter.setManualVelocity(RobotConstants.Shooter.SHOOTER_TUNING_VELOCITY);
-                gamepad1.rumble(100);
-            } else if (tuningSubsystem == 1 && adjustingPower) {
-                // Shooter Power → Turret PID
+            } else if (tuningSubsystem == 1) {
+                // Shooter Tuning → Turret PID (skip separate velocity mode, it's conjoined)
                 tuningSubsystem = 2;
                 adjustingPower = false;
-                shooter.setManualVelocityMode(false);
+                shooter.setManualVelocityMode(false); // Exit shooter tuning mode
                 gamepad1.rumble(100);
             } else if (tuningSubsystem == 2 && !adjustingPower) {
                 // Turret PID → Turret Target
@@ -352,37 +349,26 @@ abstract public class TeleOpTemplateTuning extends CommandOpMode {
     private void updatePIDTuning() {
         if (!pidTuningMode) return;
 
-        // Sync configurable values every cycle
+        // Sync configurable values from RobotConstants (Panels updates these automatically)
         if (tuningSubsystem == 1) {
-            // Keep shooter velocity synced with configurable
-            shooter.setManualVelocity(RobotConstants.Shooter.SHOOTER_TUNING_VELOCITY);
+            // Sync local tuning variables with RobotConstants (Panels pushes updates automatically)
+            shooter_kP = RobotConstants.ShooterPIDF.P;
+            shooter_kI = RobotConstants.ShooterPIDF.I;
+            shooter_kD = RobotConstants.ShooterPIDF.D;
+            shooter_kF = RobotConstants.ShooterPIDF.F;
 
-            // Keep shooter PIDF synced with configurables (live update from dashboard)
-            com.qualcomm.robotcore.hardware.PIDFCoefficients livePIDF =
-                    new com.qualcomm.robotcore.hardware.PIDFCoefficients(
-                            RobotConstants.Shooter.SHOOTER_P,
-                            RobotConstants.Shooter.SHOOTER_I,
-                            RobotConstants.Shooter.SHOOTER_D,
-                            RobotConstants.Shooter.SHOOTER_F);
-            robot.shooterMotor1.setPIDFCoefficients(
-                    com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_USING_ENCODER, livePIDF);
-            robot.shooterMotor2.setPIDFCoefficients(
-                    com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_USING_ENCODER, livePIDF);
-
-            // Sync local tuning variables with configurables for display
-            shooter_kP = RobotConstants.Shooter.SHOOTER_P;
-            shooter_kI = RobotConstants.Shooter.SHOOTER_I;
-            shooter_kD = RobotConstants.Shooter.SHOOTER_D;
-            shooter_kF = RobotConstants.Shooter.SHOOTER_F;
+            // Always apply tuning velocity (conjoined tuning - PIDF and velocity together)
+            shooter.setManualVelocity(RobotConstants.ShooterPIDF.TUNING_VELOCITY);
         } else if (tuningSubsystem == 2) {
             // Keep turret target synced with configurable
             shooter.setTurretDegree(RobotConstants.Shooter.TURRET_TUNING_TARGET);
         }
 
-        // Left thumbstick button: Toggle between PIDF tuning and Power tuning (Shooter only)
+        // Left thumbstick button: Toggle d-pad mode between PIDF adjust and Velocity adjust
         if (gamepad1.left_stick_button && !leftStickButtonPressed) {
             adjustingPower = !adjustingPower;
-            gamepad1.rumble(adjustingPower ? 200 : 100); // Longer rumble for power mode
+            // Shooter tuning: manual velocity mode stays ON, this just changes what d-pad adjusts
+            gamepad1.rumble(adjustingPower ? 200 : 100); // Longer rumble for velocity adjust mode
         }
         leftStickButtonPressed = gamepad1.left_stick_button;
 
@@ -420,8 +406,8 @@ abstract public class TeleOpTemplateTuning extends CommandOpMode {
         if (gamepad1.dpad_up && !dpadUpPressed) {
             if (adjustingPower && tuningSubsystem == 1) {
                 // Power mode: adjust shooter velocity by step size
-                RobotConstants.Shooter.SHOOTER_TUNING_VELOCITY += stepSizes[stepIndex];
-                shooter.setManualVelocity(RobotConstants.Shooter.SHOOTER_TUNING_VELOCITY);
+                RobotConstants.ShooterPIDF.TUNING_VELOCITY += stepSizes[stepIndex];
+                shooter.setManualVelocity(RobotConstants.ShooterPIDF.TUNING_VELOCITY);
                 gamepad1.rumble(50);
             } else if (adjustingPower && tuningSubsystem == 2) {
                 // Target mode: adjust turret target angle by step size
@@ -472,8 +458,8 @@ abstract public class TeleOpTemplateTuning extends CommandOpMode {
         if (gamepad1.dpad_down && !dpadDownPressed) {
             if (adjustingPower && tuningSubsystem == 1) {
                 // Power mode: adjust shooter velocity by step size
-                RobotConstants.Shooter.SHOOTER_TUNING_VELOCITY -= stepSizes[stepIndex];
-                shooter.setManualVelocity(RobotConstants.Shooter.SHOOTER_TUNING_VELOCITY);
+                RobotConstants.ShooterPIDF.TUNING_VELOCITY -= stepSizes[stepIndex];
+                shooter.setManualVelocity(RobotConstants.ShooterPIDF.TUNING_VELOCITY);
                 gamepad1.rumble(50);
             } else if (adjustingPower && tuningSubsystem == 2) {
                 // Target mode: adjust turret target angle by step size
@@ -528,15 +514,11 @@ abstract public class TeleOpTemplateTuning extends CommandOpMode {
     private void updatePIDController() {
         switch (tuningSubsystem) {
             case 1: // Shooter
-                com.qualcomm.robotcore.hardware.PIDFCoefficients pidCoefficients =
-                        new com.qualcomm.robotcore.hardware.PIDFCoefficients(
-                                shooter_kP, shooter_kI, shooter_kD, shooter_kF);
-                robot.shooterMotor1.setPIDFCoefficients(
-                        com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_USING_ENCODER,
-                        pidCoefficients);
-                robot.shooterMotor2.setPIDFCoefficients(
-                        com.qualcomm.robotcore.hardware.DcMotor.RunMode.RUN_USING_ENCODER,
-                        pidCoefficients);
+                // Update RobotConstants so Shooter.periodic() picks up the new values
+                RobotConstants.ShooterPIDF.P = shooter_kP;
+                RobotConstants.ShooterPIDF.I = shooter_kI;
+                RobotConstants.ShooterPIDF.D = shooter_kD;
+                RobotConstants.ShooterPIDF.F = shooter_kF;
                 break;
 
             case 2: // Turret
@@ -612,26 +594,33 @@ abstract public class TeleOpTemplateTuning extends CommandOpMode {
                 }
 
                 telemetry.addLine("----------------------------------------");
-                telemetry.addData("Tuning Mode", adjustingPower ? "VELOCITY" : "PIDF");
-                telemetry.addData("Step Size", "%.1f (Press B to change)", stepSizes[stepIndex]);
-                telemetry.addLine("Left Stick Button: Toggle Velocity/PIDF mode");
+                telemetry.addData("Tuning Velocity", "%.0f ticks/sec", RobotConstants.ShooterPIDF.TUNING_VELOCITY);
+                telemetry.addLine("");
                 if (adjustingPower) {
-                    telemetry.addData("Tuning Velocity", "%.0f ticks/sec", RobotConstants.Shooter.SHOOTER_TUNING_VELOCITY);
+                    telemetry.addData("D-Pad Mode", "VELOCITY ADJUST");
+                    telemetry.addData("Step Size", "%.1f (Press B to change)", stepSizes[stepIndex]);
                     telemetry.addLine("D-Pad Up/Down: Adjust velocity");
+                    telemetry.addLine("Left Stick Button: Switch to PIDF adjust");
                 } else {
+                    telemetry.addData("D-Pad Mode", "PIDF ADJUST");
+                    telemetry.addData("Step Size", "%.3f (Press B to change)", stepSizes[stepIndex]);
                     telemetry.addLine("D-Pad Left/Right: Select parameter");
                     telemetry.addLine(String.format("D-Pad Up/Down: Adjust value (±%.3f)", stepSizes[stepIndex]));
+                    telemetry.addLine("Left Stick Button: Switch to VELOCITY adjust");
                 }
+                telemetry.addLine("");
+                telemetry.addLine("*** CONJOINED TUNING - Both PIDF & Velocity active ***");
+                telemetry.addLine("Panels updates: P, I, D, F, TUNING_VELOCITY");
                 telemetry.addLine("Left/Right Bumpers: Manual spindexer rotation");
                 telemetry.addLine("X Button: Trigger spindexer flick");
-                telemetry.addLine("Back Button: Cycle tuning mode (PIDF→Velocity→Turret→OFF)");
+                telemetry.addLine("Back Button: Cycle tuning mode (→Turret→OFF)");
                 telemetry.addLine("========================================");
                 telemetry.addLine("Current Constants:");
                 telemetry.addData("", "SHOOTER_P = %.3f", shooter_kP);
                 telemetry.addData("", "SHOOTER_I = %.3f", shooter_kI);
                 telemetry.addData("", "SHOOTER_D = %.3f", shooter_kD);
                 telemetry.addData("", "SHOOTER_F = %.3f", shooter_kF);
-                telemetry.addData("", "SHOOTER_TUNING_VELOCITY = %.0f", RobotConstants.Shooter.SHOOTER_TUNING_VELOCITY);
+                telemetry.addData("", "SHOOTER_TUNING_VELOCITY = %.0f", RobotConstants.ShooterPIDF.TUNING_VELOCITY);
                     break;
 
                 case 2: // Turret
