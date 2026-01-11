@@ -3,22 +3,6 @@ package Constants;
 import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.geometry.Pose;
 
-/**
- * Robot configuration constants.
- *
- * COORDINATE SYSTEM (Pedro Pathing / Pinpoint):
- *   - Origin (0,0) at bottom-left of field
- *   - +X = RIGHT (increases toward Red alliance side)
- *   - +Y = FORWARD/UP (increases toward goals)
- *   - Heading: 0 = facing right (+X), 90 = facing forward (+Y)
- *   - Rotation: Counter-clockwise is positive
- *   - Field size: 144" x 144"
- *
- * ROBOT-RELATIVE FRAME:
- *   - Forward = +Y direction when heading = 90
- *   - Right = +X direction when heading = 90
- *   - Turret offsets use robot-relative convention
- */
 @Configurable
 public class RobotConstants {
 
