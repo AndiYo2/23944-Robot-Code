@@ -7,13 +7,16 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import framework.ActionExecutor;
 import pedroPathing.Constants;
 import subsystems.Shooter;
+import subsystems.Turret;
+import subsystems.Odometry;
 import subsystems.Intake;
 import subsystems.Spindexer;
 import utility.CatalogManager;
-import utility.RobotConstants;
-import utility.RobotHardware;
-import utility.Shooting.ShootingSequenceManager;
-import utility.Shooting.ShootingValidator;
+import Constants.RobotConstants;
+import Constants.OdometryConstants;
+import Constants.RobotHardware;
+import utility.ShootingSequenceManager;
+import utility.ShootingValidator;
 
 /**
  * Base template for all autonomous OpModes.
@@ -26,6 +29,8 @@ public abstract class AutonTemplate extends OpMode {
 
     protected RobotHardware robotHardware;
     protected Shooter shooter;
+    protected Turret turret;
+    protected Odometry odometry;
     protected Intake intake;
     protected Spindexer spindexer;
     protected subsystems.Limelight limelight;
@@ -60,12 +65,21 @@ public abstract class AutonTemplate extends OpMode {
 
         intake = new Intake();
         shooter = new Shooter();
+        turret = new Turret();
+        odometry = new Odometry();
         spindexer = new Spindexer();
         limelight = new subsystems.Limelight();
 
-        shooter.setLimelightSubsystem(limelight);
+        // Link Turret to Shooter for distance calculations
+        shooter.setTurret(turret);
+
+        // Link Odometry to Shooter for field state
+        shooter.setOdometry(odometry);
+
+        // Link Limelight subsystem to Turret for dual-mode tracking
+        turret.setLimelightSubsystem(limelight);
         sequenceManager = new ShootingSequenceManager(spindexer, shooter);
-        shootingValidator = new ShootingValidator(shooter, telemetry);
+        shootingValidator = new ShootingValidator(odometry, telemetry);
         catalogManager = new CatalogManager(spindexer, intake, telemetry, robotHardware.intakeSensorPair);
 
 
@@ -117,6 +131,8 @@ public abstract class AutonTemplate extends OpMode {
         }
 
         shooter.periodic();
+        turret.periodic();
+        odometry.periodic();
         spindexer.periodic();
         intake.periodic();
         limelight.periodic();
@@ -131,6 +147,6 @@ public abstract class AutonTemplate extends OpMode {
 
     @Override
     public void stop() {
-        RobotConstants.UpdatableConstants.endingAutonPose = follower.getPose();
+        OdometryConstants.endingAutonPose = follower.getPose();
     }
 }

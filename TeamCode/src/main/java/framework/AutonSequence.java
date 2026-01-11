@@ -9,8 +9,9 @@ import pedroPathing.Constants;
 import subsystems.Intake;
 import subsystems.Limelight;
 import utility.CatalogManager;
-import utility.RobotConstants;
-import utility.Shooting.ShootingSequenceManager;
+import Constants.EnumConstants;
+import Constants.SpindexerConstants;
+import utility.ShootingSequenceManager;
 
 import java.util.function.Consumer;
 
@@ -282,7 +283,7 @@ public class AutonSequence {
      * @param pattern array of 3 BallColors: [Intake, Shooter, TopStorage]
      * @return this builder for chaining
      */
-    public AutonSequence preload(RobotConstants.Enums.BallColor[] pattern) {
+    public AutonSequence preload(EnumConstants.BallColor[] pattern) {
         executor.addAction(new PreloadAction(pattern));
         return this;
     }
@@ -295,9 +296,9 @@ public class AutonSequence {
      * @param topStorage ball color in top storage slot (slot 2)
      * @return this builder for chaining
      */
-    public AutonSequence preload(RobotConstants.Enums.BallColor intake,
-                                  RobotConstants.Enums.BallColor shooter,
-                                  RobotConstants.Enums.BallColor topStorage) {
+    public AutonSequence preload(EnumConstants.BallColor intake,
+                                  EnumConstants.BallColor shooter,
+                                  EnumConstants.BallColor topStorage) {
         executor.addAction(new PreloadAction(intake, shooter, topStorage));
         return this;
     }
@@ -456,14 +457,14 @@ public class AutonSequence {
             return this;
         }
 
-        public ParallelBuilder preload(RobotConstants.Enums.BallColor[] pattern) {
+        public ParallelBuilder preload(EnumConstants.BallColor[] pattern) {
             group.addAction(new PreloadAction(pattern));
             return this;
         }
 
-        public ParallelBuilder preload(RobotConstants.Enums.BallColor intake,
-                                        RobotConstants.Enums.BallColor shooter,
-                                        RobotConstants.Enums.BallColor topStorage) {
+        public ParallelBuilder preload(EnumConstants.BallColor intake,
+                                        EnumConstants.BallColor shooter,
+                                        EnumConstants.BallColor topStorage) {
             group.addAction(new PreloadAction(intake, shooter, topStorage));
             return this;
         }

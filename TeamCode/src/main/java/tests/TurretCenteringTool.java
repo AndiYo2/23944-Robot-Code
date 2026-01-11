@@ -3,8 +3,9 @@ package tests;
 import com.bylazar.configurables.PanelsConfigurables;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import utility.RobotConstants;
-import utility.RobotHardware;
+import Constants.RobotConstants;
+import Constants.RobotHardware;
+import Constants.TurretConstants;
 
 /**
  * Turret Centering Tool - Simplified version using Panels dashboard.
@@ -13,7 +14,7 @@ import utility.RobotHardware;
  * Useful for verifying encoder calibration or testing turret control.
  *
  * Adjust PID values in Panels dashboard:
- * - RobotConstants.Shooter.TURRET_PID (PIDCoefficients object with p, i, d)
+ * - TurretConstants.TURRET_PID (PIDCoefficients object with p, i, d)
  *
  * CONTROLS:
  *   A: Toggle Motor ON/OFF
@@ -107,9 +108,9 @@ public class TurretCenteringTool extends OpMode {
         }
 
         // Get PID coefficients from RobotConstants
-        double kP = RobotConstants.Shooter.TURRET_PID.p;
-        double kI = RobotConstants.Shooter.TURRET_PID.i;
-        double kD = RobotConstants.Shooter.TURRET_PID.d;
+        double kP = TurretConstants.TURRET_PID.p;
+        double kI = TurretConstants.TURRET_PID.i;
+        double kD = TurretConstants.TURRET_PID.d;
 
         // PID calculations (always calculate for telemetry, but only apply if motor enabled)
         double power = 0;
@@ -123,7 +124,7 @@ public class TurretCenteringTool extends OpMode {
             power = (kP * error) + (kI * integral) + (kD * derivative);
 
             // Clamp power
-            power = Math.max(-RobotConstants.Shooter.TURRET_POWER_LIMIT_NORMAL, Math.min(RobotConstants.Shooter.TURRET_POWER_LIMIT_NORMAL, power));
+            power = Math.max(-TurretConstants.TURRET_POWER_LIMIT_NORMAL, Math.min(TurretConstants.TURRET_POWER_LIMIT_NORMAL, power));
 
             // Set motor power
             robot.turretServo.setPower(power);

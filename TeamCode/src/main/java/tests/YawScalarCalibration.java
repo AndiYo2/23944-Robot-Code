@@ -18,7 +18,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
  * 4. Manually rotate the robot EXACTLY 10 full rotations (3600 degrees) in ONE direction
  * 5. Return to exact starting orientation
  * 6. Press A to calculate the yaw scalar
- * 7. Update RobotConstants.Pinpoint.yawScalar with the calculated value
+ * 7. Update OdometryConstants.yawScalar with the calculated value
  */
 @TeleOp(name = "Yaw Scalar Calibration", group = "Calibration")
 public class YawScalarCalibration extends LinearOpMode {

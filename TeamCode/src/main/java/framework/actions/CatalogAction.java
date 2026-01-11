@@ -2,7 +2,7 @@ package framework.actions;
 
 import framework.Action;
 import utility.CatalogManager;
-import utility.RobotConstants;
+import Constants.EnumConstants;
 
 /**
  * Action that initiates ball cataloging using the CatalogManager.
@@ -27,7 +27,7 @@ public class CatalogAction implements Action {
 
     @Override
     public boolean isComplete() {
-        return catalogManager.getState() == RobotConstants.Enums.CatalogingCases.Idle;
+        return catalogManager.getState() == EnumConstants.CatalogingCases.Idle;
     }
 
     @Override

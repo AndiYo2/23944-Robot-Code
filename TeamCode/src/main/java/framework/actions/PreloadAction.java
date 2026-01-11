@@ -1,7 +1,8 @@
 package framework.actions;
 
 import framework.Action;
-import utility.RobotConstants;
+import Constants.EnumConstants;
+import Constants.SpindexerConstants;
 import utility.SpindexerAndMotifStatus;
 
 /**
@@ -10,13 +11,13 @@ import utility.SpindexerAndMotifStatus;
  * Completes immediately in one cycle.
  */
 public class PreloadAction implements Action {
-    private final RobotConstants.Enums.BallColor[] pattern;
+    private final EnumConstants.BallColor[] pattern;
 
     /**
      * Creates a preload action with the default pattern (Purple, Purple, Green).
      */
     public PreloadAction() {
-        this.pattern = RobotConstants.Spindexer.DEFAULT_PRELOAD;
+        this.pattern = SpindexerConstants.DEFAULT_PRELOAD;
     }
 
     /**
@@ -24,7 +25,7 @@ public class PreloadAction implements Action {
      *
      * @param pattern array of 3 BallColors: [Intake, Shooter, TopStorage]
      */
-    public PreloadAction(RobotConstants.Enums.BallColor[] pattern) {
+    public PreloadAction(EnumConstants.BallColor[] pattern) {
         this.pattern = pattern;
     }
 
@@ -35,10 +36,10 @@ public class PreloadAction implements Action {
      * @param shooter ball color in shooter slot (slot 1)
      * @param topStorage ball color in top storage slot (slot 2)
      */
-    public PreloadAction(RobotConstants.Enums.BallColor intake,
-                         RobotConstants.Enums.BallColor shooter,
-                         RobotConstants.Enums.BallColor topStorage) {
-        this.pattern = new RobotConstants.Enums.BallColor[]{intake, shooter, topStorage};
+    public PreloadAction(EnumConstants.BallColor intake,
+                         EnumConstants.BallColor shooter,
+                         EnumConstants.BallColor topStorage) {
+        this.pattern = new EnumConstants.BallColor[]{intake, shooter, topStorage};
     }
 
     @Override

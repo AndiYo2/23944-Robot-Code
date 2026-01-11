@@ -1,28 +1,28 @@
 package teleOps;
 
+import Constants.EnumConstants;
+import Constants.FieldMap;
+import Constants.LimelightConstants;
+import Constants.OdometryConstants;
+import Constants.RobotConstants;
+import Constants.RobotHardware;
+import Constants.TurretConstants;
 import com.arcrobotics.ftclib.command.CommandOpMode;
 import com.arcrobotics.ftclib.command.button.GamepadButton;
 import com.arcrobotics.ftclib.command.button.Trigger;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
-import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import subsystems.*;
 import utility.*;
-import utility.Shooting.ShootingSequenceManager;
-import utility.Shooting.ShootingValidator;
+import utility.ShootingSequenceManager;
+import utility.ShootingValidator;
 
-/**
- * TeleOp Template - Clean Version (No PID Tuning)
- *
- * This template provides core TeleOp functionality without PID tuning controls.
- * Use this for competition to keep the controls clean and focused.
- *
- * For PID tuning capabilities, use TeleOpTemplateTuning instead.
- */
 abstract public class TeleOpTemplate extends CommandOpMode {
     protected MecanumDrive mecanumDrive;
     protected Shooter shooter;
+    protected Turret turret;
+    protected Odometry odometry;
     protected Intake intake;
     protected Spindexer spindexer;
     protected subsystems.Limelight limelight;
@@ -33,7 +33,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     private ShootingValidator shootingValidator;
 
     private CatalogManager catalogManager;
-    private HardwareMap hw;  // Store for park feature
 
 
 
@@ -41,14 +40,13 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     protected void initHardware(boolean isAuto) {
         driverGamepad = new GamepadEx(gamepad1);
         robot.init(hardwareMap, driverGamepad);
-        this.hw = hardwareMap;  // Store for park feature
 
         // Set starting position for TeleOp
         // If we have an ending auton pose, use it; otherwise use standard start point
         org.firstinspires.ftc.robotcore.external.navigation.Pose2D startPosition;
-        if (RobotConstants.UpdatableConstants.endingAutonPose != null) {
+        if (OdometryConstants.endingAutonPose != null) {
             // Convert Pedro Pose to FTC Pose2D
-            com.pedropathing.geometry.Pose autonPose = RobotConstants.UpdatableConstants.endingAutonPose;
+            com.pedropathing.geometry.Pose autonPose = OdometryConstants.endingAutonPose;
             startPosition = new org.firstinspires.ftc.robotcore.external.navigation.Pose2D(
                     org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit.INCH,
                     autonPose.getX(),
@@ -58,7 +56,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
             telemetry.addData("TeleOp Init", "Using Auton End Position");
         } else {
             // No auton ran - use standard starting position
-            startPosition = RobotConstants.Pinpoint.standardStartPoint;
+            startPosition = OdometryConstants.standardStartPoint;
             telemetry.addData("TeleOp Init", "Using Standard Start Position");
         }
 
@@ -75,17 +73,25 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         mecanumDrive = new MecanumDrive();
         intake = new Intake();
         shooter = new Shooter();
+        turret = new Turret();
+        odometry = new Odometry();
         spindexer = new Spindexer();
         limelight = new subsystems.Limelight();
 
-        // Link Limelight subsystem to Shooter for dual-mode tracking
-        shooter.setLimelightSubsystem(limelight);
+        // Link Turret to Shooter for distance calculations
+        shooter.setTurret(turret);
+
+        // Link Odometry to Shooter for field state
+        shooter.setOdometry(odometry);
+
+        // Link Limelight subsystem to Turret for dual-mode tracking
+        turret.setLimelightSubsystem(limelight);
 
         sequenceManager = new ShootingSequenceManager(spindexer, shooter);
-        shootingValidator = new ShootingValidator(shooter, telemetry);
+        shootingValidator = new ShootingValidator(odometry, telemetry);
         catalogManager = new CatalogManager(spindexer, intake, telemetry, robot.intakeSensorPair);
 
-        register(intake, shooter, spindexer, limelight);
+        register(intake, shooter, spindexer, limelight, turret, odometry);
     }
 
     protected void configureButtonBindings() {
@@ -123,9 +129,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_DOWN)
             .whenPressed(() -> limelight.resetLimelight());
 
-        // Auto Park toggle (BACK button)
-        new GamepadButton(driverGamepad, GamepadKeys.Button.BACK)
-            .whenPressed(() -> toggleAutoPark());
     }
 
     @Override
@@ -135,10 +138,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         // CRITICAL: Update Pinpoint odometry every loop (like in test OpMode)
         robot.pinpoint.update();
 
-        // Update follower for position hold during parking
-        if (mecanumDrive.isParking()) {
-            mecanumDrive.updateFollower();
-        }
 
         updateDrivetrain();
         updateSubsystems();
@@ -168,13 +167,13 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         double rawRotation = gamepad1.right_stick_x;
 
         // Determine which alliance should have inverted controls
-        RobotConstants.Enums.AllianceColor invertedAlliance = RobotConstants.Controls.SWAP_ALLIANCE_CONTROLS
-                ? RobotConstants.Enums.AllianceColor.Blue
-                : RobotConstants.Enums.AllianceColor.Red;
+        EnumConstants.AllianceColor invertedAlliance = RobotConstants.Controls.SWAP_ALLIANCE_CONTROLS
+                ? EnumConstants.AllianceColor.Blue
+                : EnumConstants.AllianceColor.Red;
 
         // Check alliance color (defaults to Blue if not set)
-        if (RobotConstants.UpdatableConstants.allianceColor != null &&
-                RobotConstants.UpdatableConstants.allianceColor == invertedAlliance) {
+        if (RobotConstants.Robot.allianceColor != null &&
+                RobotConstants.Robot.allianceColor == invertedAlliance) {
             // Invert both translational axes (180° field rotation)
             return new double[] {-rawY, -rawX, rawRotation};
         } else {
@@ -244,18 +243,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
      * Toggles auto park mode.
      * Press BACK to start parking, press again to cancel and return to manual control.
      */
-    private void toggleAutoPark() {
-        if (mecanumDrive.isParking()) {
-            mecanumDrive.cancelPark();
-        } else {
-            // Get alliance-specific park position
-            Pose parkTarget = (RobotConstants.UpdatableConstants.allianceColor ==
-                RobotConstants.Enums.AllianceColor.Red)
-                ? RobotConstants.Park.redParkZone
-                : RobotConstants.Park.blueParkZone;
-            mecanumDrive.parkAtPose(parkTarget, hw);
-        }
-    }
+
 
     private void updateSubsystems() {
         spindexer.periodic();
@@ -279,9 +267,9 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         // Motif Pattern with fallback
         if (limelight.isMotifDetected()) {
             telemetry.addData("Motif Pattern", String.format("[%s, %s, %s]",
-                    RobotConstants.Limelight.motifPattern.getBallColorInSlotX(0),
-                    RobotConstants.Limelight.motifPattern.getBallColorInSlotX(1),
-                    RobotConstants.Limelight.motifPattern.getBallColorInSlotX(2)));
+                    LimelightConstants.motifPattern.getBallColorInSlotX(0),
+                    LimelightConstants.motifPattern.getBallColorInSlotX(1),
+                    LimelightConstants.motifPattern.getBallColorInSlotX(2)));
         } else {
             telemetry.addData("Motif Pattern", "Not Detected");
         }
@@ -289,7 +277,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         telemetry.addData("Spindexer Error", String.format("%.1f°",
                 spindexer.getTargetPosition() - spindexer.getServoPosition()));
         telemetry.addData("Turret Error", String.format("%.1f°",
-                shooter.getTargetTurretAngle() - shooter.getTurretPosition()));
+                turret.getTargetTurretAngle() - turret.getTurretPosition()));
         telemetry.addLine("----------------------------------------");
 
         // ========================================
@@ -306,7 +294,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
         // SHOOTING section
         telemetry.addLine("=== SHOOTING ===");
-        telemetry.addData("  Field Zone", shooter.getFieldState());
+        telemetry.addData("  Field Zone", odometry.getFieldState());
         telemetry.addData("  Shooting Status", shootingValidator.getStatus(overrideRequested));
         telemetry.addData("  Executing Sequence", sequenceManager.isExecuting());
         if (sequenceManager.isExecuting()) {
@@ -318,8 +306,8 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         telemetry.addLine("=== SHOOTER ===");
         telemetry.addData("  Shooter Velocity", String.format("%.0f", robot.shooterMotor2.getVelocity()));
         telemetry.addData("  Distance to Target", shooter.getDistanceToTarget());
-        telemetry.addData("  Turret Position", String.format("%.1f°", shooter.getTurretPosition()));
-        telemetry.addData("  Turret Target", String.format("%.1f°", shooter.getTargetTurretAngle()));
+        telemetry.addData("  Turret Position", String.format("%.1f°", turret.getTurretPosition()));
+        telemetry.addData("  Turret Target", String.format("%.1f°", turret.getTargetTurretAngle()));
         telemetry.addLine("");
 
         // SPINDEXER section
@@ -348,7 +336,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
         // OTHER section
         telemetry.addLine("=== OTHER ===");
-        telemetry.addData("  Alliance", RobotConstants.UpdatableConstants.allianceColor);
+        telemetry.addData("  Alliance", RobotConstants.Robot.allianceColor);
         telemetry.addData("  IMU Calibration", "Auto on init (resetPosAndIMU)");
         telemetry.addLine("");
 
@@ -395,8 +383,8 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         telemetry.addData("  Expected Turret Angle", String.format("%.1f°", expectedTurretAngle));
 
         // Actual turret values
-        double turretTarget = shooter.getTargetTurretAngle() / RobotConstants.Shooter.GEAR_RATIO;  // Convert servo deg to turret deg
-        double turretActual = shooter.getTurretPosition() / RobotConstants.Shooter.GEAR_RATIO;    // Convert servo deg to turret deg
+        double turretTarget = turret.getTargetTurretAngle() / TurretConstants.GEAR_RATIO;  // Convert servo deg to turret deg
+        double turretActual = turret.getTurretPosition() / TurretConstants.GEAR_RATIO;    // Convert servo deg to turret deg
         double turretError = turretTarget - turretActual;
 
         telemetry.addData("  Turret Target", String.format("%.1f° (turret deg)", turretTarget));

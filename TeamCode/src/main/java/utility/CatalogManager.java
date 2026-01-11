@@ -1,10 +1,11 @@
 package utility;
 
+import Constants.EnumConstants.CatalogingCases;
+import Constants.RobotConstants;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import subsystems.Intake;
 import subsystems.Spindexer;
-import utility.RobotConstants.Enums.CatalogingCases;
 
 import static utility.SpindexerAndMotifStatus.SpindexerPattern.setBallInSlotX;
 
@@ -15,7 +16,7 @@ public class CatalogManager {
     private final Spindexer spindexer;
     private int indexed = 0;
 
-    private CatalogingCases state = RobotConstants.Enums.CatalogingCases.Idle;;
+    private CatalogingCases state = CatalogingCases.Idle;;
 
     // Timeout and retry management
     private ElapsedTime stateTimer = new ElapsedTime();

@@ -4,15 +4,16 @@ import com.bylazar.configurables.PanelsConfigurables;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import utility.RobotConstants;
-import utility.RobotHardware;
+import Constants.RobotConstants;
+import Constants.RobotHardware;
+import Constants.TurretConstants;
 
 /**
  * Turret PIDF Tuning OpMode - Simplified version using Panels dashboard.
  *
  * Adjust values directly in the Panels dashboard:
- * - RobotConstants.Shooter.TURRET_PID (PIDCoefficients object with p, i, d)
- * - RobotConstants.Shooter.TURRET_TUNING_TARGET for target angle (turret degrees)
+ * - TurretConstants.TURRET_PID (PIDCoefficients object with p, i, d)
+ * - TurretConstants.TURRET_TUNING_TARGET for target angle (turret degrees)
  *
  * Values update live without needing to restart the OpMode.
  *
@@ -83,7 +84,7 @@ public class TurretPIDFTuningTeleOp extends OpMode {
         // Reset from emergency stop - A button
         if (gamepad1.aWasPressed()) {
             emergencyStop = false;
-            RobotConstants.Shooter.TURRET_TUNING_TARGET = 0;
+            TurretConstants.TURRET_TUNING_TARGET = 0;
             resetPID();
         }
 
@@ -96,14 +97,14 @@ public class TurretPIDFTuningTeleOp extends OpMode {
         }
 
         // Get target from RobotConstants (turret degrees)
-        double targetPositionTurret = RobotConstants.Shooter.TURRET_TUNING_TARGET;
+        double targetPositionTurret = TurretConstants.TURRET_TUNING_TARGET;
 
         // SAFETY: Clamp target position to hardware limits
-        targetPositionTurret = Math.max(RobotConstants.Shooter.TURRET_MIN_ANGLE,
-                                        Math.min(RobotConstants.Shooter.TURRET_MAX_ANGLE, targetPositionTurret));
+        targetPositionTurret = Math.max(TurretConstants.TURRET_MIN_ANGLE,
+                                        Math.min(TurretConstants.TURRET_MAX_ANGLE, targetPositionTurret));
 
         // Convert to servo degrees
-        double targetPositionServo = targetPositionTurret * RobotConstants.Shooter.GEAR_RATIO;
+        double targetPositionServo = targetPositionTurret * TurretConstants.GEAR_RATIO;
 
         // Get current position (in servo degrees)
         double currentServoPosition = getCurrentPosition();
@@ -131,9 +132,9 @@ public class TurretPIDFTuningTeleOp extends OpMode {
         lastTime = currentTime;
 
         // Get PID coefficients from RobotConstants
-        double P = RobotConstants.Shooter.TURRET_PID.p;
-        double I = RobotConstants.Shooter.TURRET_PID.i;
-        double D = RobotConstants.Shooter.TURRET_PID.d;
+        double P = TurretConstants.TURRET_PID.p;
+        double I = TurretConstants.TURRET_PID.i;
+        double D = TurretConstants.TURRET_PID.d;
 
         // Update integral with anti-windup
         integral += error * dt;
@@ -147,11 +148,11 @@ public class TurretPIDFTuningTeleOp extends OpMode {
         double output = P * error + I * integral + D * derivative;
 
         // Clamp output
-        double currentTurretPosition = currentServoPosition / RobotConstants.Shooter.GEAR_RATIO;
-        boolean nearCWLimit = currentServoPosition > (RobotConstants.Shooter.TURRET_MAX_ANGLE * RobotConstants.Shooter.GEAR_RATIO - RobotConstants.Shooter.TURRET_LIMIT_MARGIN);
-        boolean nearCCWLimit = currentServoPosition < (RobotConstants.Shooter.TURRET_MIN_ANGLE * RobotConstants.Shooter.GEAR_RATIO + RobotConstants.Shooter.TURRET_LIMIT_MARGIN);
+        double currentTurretPosition = currentServoPosition / TurretConstants.GEAR_RATIO;
+        boolean nearCWLimit = currentServoPosition > (TurretConstants.TURRET_MAX_ANGLE * TurretConstants.GEAR_RATIO - TurretConstants.TURRET_LIMIT_MARGIN);
+        boolean nearCCWLimit = currentServoPosition < (TurretConstants.TURRET_MIN_ANGLE * TurretConstants.GEAR_RATIO + TurretConstants.TURRET_LIMIT_MARGIN);
 
-        double maxPower = (nearCWLimit || nearCCWLimit) ? RobotConstants.Shooter.TURRET_POWER_LIMIT_NEAR_EDGE : RobotConstants.Shooter.TURRET_POWER_LIMIT_NORMAL;
+        double maxPower = (nearCWLimit || nearCCWLimit) ? TurretConstants.TURRET_POWER_LIMIT_NEAR_EDGE : TurretConstants.TURRET_POWER_LIMIT_NORMAL;
         output = Math.max(-maxPower, Math.min(maxPower, output));
 
         // Set motor power

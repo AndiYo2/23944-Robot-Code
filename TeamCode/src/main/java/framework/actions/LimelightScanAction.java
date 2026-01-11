@@ -2,8 +2,8 @@ package framework.actions;
 
 import framework.Action;
 import subsystems.Limelight;
-import utility.RobotConstants;
-import utility.RobotHardware;
+import Constants.EnumConstants;
+import Constants.RobotHardware;
 
 /**
  * Action that toggles the limelight to scanning mode and waits for motif detection.
@@ -21,7 +21,7 @@ public class LimelightScanAction implements Action {
         if(!RobotHardware.getInstance().limelight.isRunning()){
             RobotHardware.getInstance().limelight.start();
         }
-        limelight.setMode(RobotConstants.Enums.LimelightMode.TagTracking);
+        limelight.setMode(EnumConstants.LimelightMode.TagTracking);
     }
 
     @Override

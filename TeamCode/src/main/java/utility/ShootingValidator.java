@@ -1,8 +1,8 @@
-package utility.Shooting;
+package utility;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import subsystems.Shooter;
-import utility.RobotConstants.Enums.FieldState;
+import subsystems.Odometry;
+import Constants.EnumConstants.FieldState;
 
 /**
  * ShootingValidator
@@ -17,22 +17,21 @@ import utility.RobotConstants.Enums.FieldState;
  * - Returns true if shooting is allowed, false if blocked
  */
 public class ShootingValidator {
-    private final Shooter shooter;
+    private final Odometry odometry;
     private final Telemetry telemetry;
 
     private long lastOverrideTime = 0;
     private static final long OVERRIDE_WARNING_THRESHOLD = 30000; // 30 seconds in milliseconds
 
-    public ShootingValidator(Shooter shooter, Telemetry telemetry) {
-        this.shooter = shooter;
+    public ShootingValidator(Odometry odometry, Telemetry telemetry) {
+        this.odometry = odometry;
         this.telemetry = telemetry;
     }
 
 
     public boolean canShoot(boolean overrideRequested) {
-        // Get current field state from shooter subsystem
-        // (Shooter.updateFieldState() runs in shooter.periodic(), so it's always up-to-date)
-        FieldState currentFieldState = shooter.getFieldState();
+        // Get current field state from odometry subsystem
+        FieldState currentFieldState = odometry.getFieldState();
 
         // Check if in shooting zone
         boolean inShootingZone = (currentFieldState == FieldState.ShootingZone);
@@ -71,7 +70,7 @@ public class ShootingValidator {
 
 
     public String getStatus(boolean overrideRequested) {
-        FieldState currentFieldState = shooter.getFieldState();
+        FieldState currentFieldState = odometry.getFieldState();
         boolean inShootingZone = (currentFieldState == FieldState.ShootingZone);
 
         if (inShootingZone) {
@@ -85,6 +84,6 @@ public class ShootingValidator {
 
 
     public boolean isInShootingZone() {
-        return shooter.getFieldState() == FieldState.ShootingZone;
+        return odometry.getFieldState() == FieldState.ShootingZone;
     }
 }

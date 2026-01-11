@@ -7,7 +7,8 @@ import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import framework.AutonSequence;
-import utility.RobotConstants;
+import Constants.EnumConstants;
+import Constants.RobotConstants;
 
 @Autonomous(name = "RedBack9Ball", group = "NineBall")
 public class RedBack9Ball extends AutonTemplate {
@@ -60,7 +61,7 @@ public class RedBack9Ball extends AutonTemplate {
     @Override
     public void init() {
         super.init();
-        RobotConstants.UpdatableConstants.allianceColor = RobotConstants.Enums.AllianceColor.Red;
+        RobotConstants.Robot.allianceColor = EnumConstants.AllianceColor.Red;
         executor = new AutonSequence(follower, intake, catalogManager, sequenceManager, limelight)
                 .parallel(p -> p.limelightScan().catalog())
                 .shoot()

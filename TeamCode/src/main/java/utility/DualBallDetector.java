@@ -1,8 +1,7 @@
 package utility;
 
 import com.qualcomm.robotcore.hardware.ColorSensor;
-import com.qualcomm.robotcore.hardware.HardwareMap;
-import utility.RobotConstants.Enums.BallColor;
+import Constants.EnumConstants.BallColor;
 
 public class DualBallDetector {
 

@@ -1,7 +1,7 @@
 package framework.actions;
 
 import framework.Action;
-import utility.Shooting.ShootingSequenceManager;
+import utility.ShootingSequenceManager;
 
 /**
  * Action that executes the shooting sequence using the ShootingSequenceManager.

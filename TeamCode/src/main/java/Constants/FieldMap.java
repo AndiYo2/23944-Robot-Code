@@ -1,8 +1,7 @@
-package utility;
+package Constants;
 
 import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.geometry.Pose;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
 /**
  * Field zone map and goal position definitions.
@@ -29,45 +28,32 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 @Configurable
 public class FieldMap {
 
-    /**
-     * Returns the zone character at a field position.
-     *
-     * @param pX Field X coordinate (Pinpoint, 0-143, 0=left)
-     * @param pY Field Y coordinate (Pinpoint, 0-143, 0=bottom)
-     * @return Zone character: 'S'=shooting, 'N'=neutral, 'G'=goal, 'R'=red, 'B'=blue
-     */
+
     public static char getPosition(double pX, double pY) {
         int x = (int) Math.round(pX);
         // Y-flip: convert field Y (0=bottom) to bitmap row (0=top)
         int y = (int) Math.round(143 - pY);
 
         // Clamp to valid field bounds (0-143) to prevent array index errors
-        // This handles odometry drift or initialization issues
         x = Math.max(0, Math.min(143, x));
         y = Math.max(0, Math.min(143, y));
 
         return letterBitmap[y][x];
     }
 
-    /**
-     * Returns the goal position for the current alliance.
-     * Goal positions are in FIELD coordinates (same as Pinpoint).
-     * Uses configurable values from RobotConstants.Shooter.
-     *
-     * @return Pose with goal X, Y in field coordinates (heading is 0)
-     */
+
     public static Pose getGoalPosition() {
-        if (RobotConstants.UpdatableConstants.allianceColor == RobotConstants.Enums.AllianceColor.Red) {
-            return new Pose(RobotConstants.Shooter.RED_GOAL_X, RobotConstants.Shooter.RED_GOAL_Y, 0);
+        if (RobotConstants.Robot.allianceColor == EnumConstants.AllianceColor.Red) {
+            return new Pose(OdometryConstants.RED_GOAL_X, OdometryConstants.RED_GOAL_Y, 0);
         }
-        return new Pose(RobotConstants.Shooter.BLUE_GOAL_X, RobotConstants.Shooter.BLUE_GOAL_Y, 0);
+        return new Pose(OdometryConstants.BLUE_GOAL_X, OdometryConstants.BLUE_GOAL_Y, 0);
     }
 
 
     // 144x144 zone bitmap (row 0 = top of field = Y=143 in field coords)
     static char[][] letterBitmap;
 
-    // Bitmap data stored as string to avoid Java bytecode size limit
+
     private static final String BITMAP_DATA = 
         "GGGGGGGGGGGGGGGGGGGGGGGGGGGGSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSGGGGGGGGGGGGGGGGGGGGGGGGGGGG" +
         "GGGGGGGGGGGGGGGGGGGGGGGGGGGSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSGGGGGGGGGGGGGGGGGGGGGGGGGGG" +
@@ -215,7 +201,6 @@ public class FieldMap {
         "NNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN";
 
     static {
-        // Initialize the 2D array from the string data
         letterBitmap = new char[144][144];
         int idx = 0;
         for (int y = 0; y < 144; y++) {

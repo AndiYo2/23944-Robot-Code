@@ -5,12 +5,13 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
-import utility.RobotConstants;
+import Constants.NamingConstants;
+import Constants.ShooterConstants;
 
 /**
  * Shooter PIDF Tuning OpMode.
  *
- * Uses PIDF values from RobotConstants.ShooterPIDF.
+ * Uses PIDF values from ShooterConstants.ShooterPIDF.
  * Adjust values in RobotConstants and redeploy to test different settings.
  */
 @TeleOp(name = "ShooterPIDF", group = "Tests")
@@ -20,10 +21,10 @@ public class ShooterPIDFTuningTeleOp extends OpMode {
 
     @Override
     public void init() {
-        flywheelMotor1 = hardwareMap.get(DcMotorEx.class, RobotConstants.Shooter.shooter1);
+        flywheelMotor1 = hardwareMap.get(DcMotorEx.class, NamingConstants.Shooter.shooter1);
         flywheelMotor1.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
 
-        flywheelMotor2 = hardwareMap.get(DcMotorEx.class, RobotConstants.Shooter.shooter2);
+        flywheelMotor2 = hardwareMap.get(DcMotorEx.class, NamingConstants.Shooter.shooter2);
         flywheelMotor2.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
         flywheelMotor2.setDirection(DcMotorEx.Direction.REVERSE);
 
@@ -34,33 +35,33 @@ public class ShooterPIDFTuningTeleOp extends OpMode {
     public void loop() {
         // Apply current PIDF from RobotConstants
         PIDFCoefficients pidf = new PIDFCoefficients(
-            RobotConstants.ShooterPIDF.P,
-            RobotConstants.ShooterPIDF.I,
-            RobotConstants.ShooterPIDF.D,
-            RobotConstants.ShooterPIDF.F
+            ShooterConstants.ShooterPIDF.P,
+            ShooterConstants.ShooterPIDF.I,
+            ShooterConstants.ShooterPIDF.D,
+            ShooterConstants.ShooterPIDF.F
         );
         flywheelMotor1.setPIDFCoefficients(DcMotorEx.RunMode.RUN_USING_ENCODER, pidf);
         flywheelMotor2.setPIDFCoefficients(DcMotorEx.RunMode.RUN_USING_ENCODER, pidf);
 
         // Run at tuning velocity
-        flywheelMotor1.setVelocity(RobotConstants.ShooterPIDF.TUNING_VELOCITY);
-        flywheelMotor2.setVelocity(RobotConstants.ShooterPIDF.TUNING_VELOCITY);
+        flywheelMotor1.setVelocity(ShooterConstants.ShooterPIDF.TUNING_VELOCITY);
+        flywheelMotor2.setVelocity(ShooterConstants.ShooterPIDF.TUNING_VELOCITY);
 
         // Get current values for telemetry
         double currentVelocity1 = flywheelMotor1.getVelocity();
         double currentVelocity2 = flywheelMotor2.getVelocity();
-        double error = RobotConstants.ShooterPIDF.TUNING_VELOCITY - currentVelocity2;
+        double error = ShooterConstants.ShooterPIDF.TUNING_VELOCITY - currentVelocity2;
 
         // Telemetry
-        telemetry.addData("Target Velocity", RobotConstants.ShooterPIDF.TUNING_VELOCITY);
+        telemetry.addData("Target Velocity", ShooterConstants.ShooterPIDF.TUNING_VELOCITY);
         telemetry.addData("Actual Velocity 1", String.format("%.0f", currentVelocity1));
         telemetry.addData("Actual Velocity 2", String.format("%.0f", currentVelocity2));
         telemetry.addData("Error", String.format("%.1f", error));
         telemetry.addLine("-----------------------------");
-        telemetry.addData("P", RobotConstants.ShooterPIDF.P);
-        telemetry.addData("I", RobotConstants.ShooterPIDF.I);
-        telemetry.addData("D", RobotConstants.ShooterPIDF.D);
-        telemetry.addData("F", RobotConstants.ShooterPIDF.F);
+        telemetry.addData("P", ShooterConstants.ShooterPIDF.P);
+        telemetry.addData("I", ShooterConstants.ShooterPIDF.I);
+        telemetry.addData("D", ShooterConstants.ShooterPIDF.D);
+        telemetry.addData("F", ShooterConstants.ShooterPIDF.F);
         telemetry.update();
     }
 }

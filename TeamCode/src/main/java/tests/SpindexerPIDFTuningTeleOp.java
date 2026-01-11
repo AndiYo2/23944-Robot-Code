@@ -4,16 +4,17 @@ import com.bylazar.configurables.PanelsConfigurables;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import utility.RobotConstants;
-import utility.RobotHardware;
+import Constants.RobotConstants;
+import Constants.RobotHardware;
+import Constants.SpindexerConstants;
 
 /**
  * Spindexer PIDF Tuning OpMode - Simplified version using Panels dashboard.
  *
  * Adjust values directly in the Panels dashboard:
- * - RobotConstants.Spindexer.SPINDEXER_CW_P/I/D/F for CW PIDF coefficients
- * - RobotConstants.Spindexer.SPINDEXER_CCW_P/I/D/F for CCW PIDF coefficients
- * - RobotConstants.Spindexer.TUNING_TARGET_POSITION for target position (degrees)
+ * - SpindexerConstants.SPINDEXER_CW_P/I/D/F for CW PIDF coefficients
+ * - SpindexerConstants.SPINDEXER_CCW_P/I/D/F for CCW PIDF coefficients
+ * - SpindexerConstants.TUNING_TARGET_POSITION for target position (degrees)
  *
  * Values update live without needing to restart the OpMode.
  */
@@ -52,7 +53,7 @@ public class SpindexerPIDFTuningTeleOp extends OpMode {
 
         // Get current position
         double currentPosition = getCurrentPosition();
-        double targetPosition = RobotConstants.Spindexer.TUNING_TARGET_POSITION;
+        double targetPosition = SpindexerConstants.TUNING_TARGET_POSITION;
 
         // Calculate error (shortest path)
         double error = targetPosition - currentPosition;
@@ -82,15 +83,15 @@ public class SpindexerPIDFTuningTeleOp extends OpMode {
         boolean isCW = error > 0;
         double P, I, D, F;
         if (isCW) {
-            P = RobotConstants.Spindexer.SPINDEXER_CW_P;
-            I = RobotConstants.Spindexer.SPINDEXER_CW_I;
-            D = RobotConstants.Spindexer.SPINDEXER_CW_D;
-            F = RobotConstants.Spindexer.SPINDEXER_CW_F;
+            P = SpindexerConstants.SPINDEXER_CW_P;
+            I = SpindexerConstants.SPINDEXER_CW_I;
+            D = SpindexerConstants.SPINDEXER_CW_D;
+            F = SpindexerConstants.SPINDEXER_CW_F;
         } else {
-            P = RobotConstants.Spindexer.SPINDEXER_CCW_P;
-            I = RobotConstants.Spindexer.SPINDEXER_CCW_I;
-            D = RobotConstants.Spindexer.SPINDEXER_CCW_D;
-            F = RobotConstants.Spindexer.SPINDEXER_CCW_F;
+            P = SpindexerConstants.SPINDEXER_CCW_P;
+            I = SpindexerConstants.SPINDEXER_CCW_I;
+            D = SpindexerConstants.SPINDEXER_CCW_D;
+            F = SpindexerConstants.SPINDEXER_CCW_F;
         }
 
         // Update integral with anti-windup

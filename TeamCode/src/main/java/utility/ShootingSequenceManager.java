@@ -1,10 +1,12 @@
-package utility.Shooting;
+package utility;
 
 import com.qualcomm.robotcore.util.ElapsedTime;
 import subsystems.Spindexer;
 import subsystems.Shooter;
-import utility.RobotConstants;
-import utility.RobotConstants.Enums.FlickState;
+import Constants.EnumConstants;
+import Constants.EnumConstants.FlickState;
+import Constants.RobotConstants;
+import Constants.SpindexerConstants;
 
 import static utility.SpindexerAndMotifStatus.*;
 
@@ -86,7 +88,7 @@ public class ShootingSequenceManager {
 
             case REMOVE_BALL_AND_START_ROTATION:
                 // Remove ball from slot in code
-                RobotConstants.Spindexer.spindexerPattern.setBallPatternNone(1);
+                SpindexerConstants.spindexerPattern.setBallPatternNone(1);
                 ballsShot++;
 
                 // Start rotation to nearest correct color (if not last ball)

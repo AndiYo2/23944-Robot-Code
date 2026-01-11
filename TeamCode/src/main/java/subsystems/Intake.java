@@ -1,8 +1,8 @@
 package subsystems;
 
 import com.arcrobotics.ftclib.command.Subsystem;
-import utility.RobotConstants.Enums.IntakeState;
-import utility.RobotHardware;
+import Constants.EnumConstants.IntakeState;
+import Constants.RobotHardware;
 
 public class Intake implements Subsystem {
     RobotHardware robot;
@@ -44,7 +44,7 @@ public class Intake implements Subsystem {
     public void setIntakePower(double power) {
         robot.intakeMotor.setPower(power);
     }
-public void setStagingMotorPower(double power) {
+    public void setStagingMotorPower(double power) {
         robot.intakeBeltMotor.setPower(power);
     }
     public void runIntake(){

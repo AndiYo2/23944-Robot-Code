@@ -3,22 +3,23 @@ package subsystems;
 import com.arcrobotics.ftclib.command.Subsystem;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
-import utility.RobotConstants;
-import utility.RobotHardware;
+import Constants.EnumConstants;
+import Constants.LimelightConstants;
+import Constants.RobotHardware;
 
 import java.util.List;
 
 public class Limelight implements Subsystem {
     private RobotHardware robot;
     private LLResult latestResult;
-    private RobotConstants.Enums.LimelightMode currentMode;
+    private EnumConstants.LimelightMode currentMode;
     private boolean motifDetected;
     private int detectedTagId;
 
     public Limelight() {
         this.robot = RobotHardware.getInstance();
         this.latestResult = null;
-        this.currentMode = RobotConstants.Enums.LimelightMode.TagTracking;
+        this.currentMode = EnumConstants.LimelightMode.TagTracking;
         this.motifDetected = false;
         this.detectedTagId = -1;
     }
@@ -27,7 +28,7 @@ public class Limelight implements Subsystem {
      * Updates cached Limelight data from the sensor
      */
     public void updateLimelightData() {
-        if (robot.limelight != null && !RobotConstants.Limelight.isLimelightDisabled) {
+        if (robot.limelight != null && !LimelightConstants.isLimelightDisabled) {
             latestResult = robot.limelight.getLatestResult();
         }
     }
@@ -47,22 +48,22 @@ public class Limelight implements Subsystem {
             for (LLResultTypes.FiducialResult fr : fiducialResults) {
                 if (fr.getFiducialId() == tagId) {
                     // Tag found! Update motif pattern
-                    RobotConstants.Enums.BallColor[] pattern =
-                        RobotConstants.Limelight.getMotifPatternForTag(tagId);
+                    EnumConstants.BallColor[] pattern =
+                        LimelightConstants.getMotifPatternForTag(tagId);
 
                     if (pattern != null && pattern.length == 3) {
-                        RobotConstants.Limelight.motifPattern.setBallPattern(
+                        LimelightConstants.motifPattern.setBallPattern(
                             pattern[0], pattern[1], pattern[2]);
                         motifDetected = true;
                         detectedTagId = tagId;
 
                         // Turn off Limelight after detection
                         robot.limelight.stop();
-                        RobotConstants.Limelight.isLimelightDisabled = true;
-                        RobotConstants.Limelight.manuallySlowedForScan = false;
+                        LimelightConstants.isLimelightDisabled = true;
+                        LimelightConstants.manuallySlowedForScan = false;
 
                         // Auto-switch back to Goal Tracking mode
-                        currentMode = RobotConstants.Enums.LimelightMode.GoalTracking;
+                        currentMode = EnumConstants.LimelightMode.GoalTracking;
                         return tagId;
                     }
                 }
@@ -76,41 +77,41 @@ public class Limelight implements Subsystem {
      * Toggles between Goal Tracking and Tag Tracking modes
      */
     public void toggleMode() {
-        if (currentMode == RobotConstants.Enums.LimelightMode.GoalTracking) {
+        if (currentMode == EnumConstants.LimelightMode.GoalTracking) {
             // Switch to Tag Tracking mode
-            currentMode = RobotConstants.Enums.LimelightMode.TagTracking;
+            currentMode = EnumConstants.LimelightMode.TagTracking;
 
             // Re-enable Limelight if it was disabled
-            if (RobotConstants.Limelight.isLimelightDisabled) {
-                RobotConstants.Limelight.isLimelightDisabled = false;
+            if (LimelightConstants.isLimelightDisabled) {
+                LimelightConstants.isLimelightDisabled = false;
                 robot.limelight.start();
             }
         } else {
             // Switch back to Goal Tracking mode
-            currentMode = RobotConstants.Enums.LimelightMode.GoalTracking;
+            currentMode = EnumConstants.LimelightMode.GoalTracking;
         }
     }
-    public void setMode(RobotConstants.Enums.LimelightMode mode) {
+    public void setMode(EnumConstants.LimelightMode mode) {
         currentMode = mode;
     }
 
-    public RobotConstants.Enums.LimelightMode getCurrentMode() {
+    public EnumConstants.LimelightMode getCurrentMode() {
         return currentMode;
     }
 
     public void resetLimelight() {
         robot.limelight.start();
-        RobotConstants.Limelight.isLimelightDisabled = false;
-        currentMode = RobotConstants.Enums.LimelightMode.TagTracking;
+        LimelightConstants.isLimelightDisabled = false;
+        currentMode = EnumConstants.LimelightMode.TagTracking;
         motifDetected = false;
         detectedTagId = -1;
-        RobotConstants.Limelight.manuallySlowedForScan = true;
+        LimelightConstants.manuallySlowedForScan = true;
 
         // Reset motif pattern to default PGP to clear stale pattern from previous runs
-        RobotConstants.Limelight.motifPattern.setBallPattern(
-            RobotConstants.Enums.BallColor.Purple,
-            RobotConstants.Enums.BallColor.Green,
-            RobotConstants.Enums.BallColor.Purple);
+        LimelightConstants.motifPattern.setBallPattern(
+            EnumConstants.BallColor.Purple,
+            EnumConstants.BallColor.Green,
+            EnumConstants.BallColor.Purple);
     }
 
     public boolean isMotifDetected() {
@@ -124,7 +125,7 @@ public class Limelight implements Subsystem {
     @Override
     public void periodic() {
         // Update Limelight data if in Tag Tracking mode
-        if (currentMode == RobotConstants.Enums.LimelightMode.TagTracking && !motifDetected) {
+        if (currentMode == EnumConstants.LimelightMode.TagTracking && !motifDetected) {
             updateLimelightData();
             scanForMotifTag();
         }

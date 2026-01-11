@@ -2,18 +2,16 @@ package tests;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.PIDCoefficients;
-import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
-import utility.RobotConstants;
+import Constants.ShooterConstants;
+import Constants.SpindexerConstants;
 
 @TeleOp(name = "ServoPositions", group = "Tests")
 public class ServoPositionTesting extends OpMode {
 
     public Servo spindexer, shooter;
-    double spindexerPosition = RobotConstants.Spindexer.FLIPPER_POSITION_RETRACT;
-    double shooterPosition = RobotConstants.Shooter.FLIPPER_POSITION_RETRACT;
+    double spindexerPosition = SpindexerConstants.FLIPPER_POSITION_RETRACT;
+    double shooterPosition = ShooterConstants.FLIPPER_POSITION_RETRACT;
 
     @Override
     public void init() {

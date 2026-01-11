@@ -10,9 +10,10 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 import pedroPathing.Constants;
-import utility.RobotConstants;
-import utility.RobotConstants.Enums.DriveState;
-import utility.RobotHardware;
+import Constants.DriveConstants;
+import Constants.EnumConstants.DriveState;
+import Constants.RobotHardware;
+import Constants.OdometryConstants;
 
 public class MecanumDrive implements Subsystem {
     private RobotHardware robot;
@@ -25,7 +26,7 @@ public class MecanumDrive implements Subsystem {
 
     public MecanumDrive() {
         this.robot = RobotHardware.getInstance();
-        setPose(RobotConstants.UpdatableConstants.endingAutonPose);
+        setPose(OdometryConstants.endingAutonPose);
     }
 
     public Pose getCurrentPose() {
@@ -58,54 +59,6 @@ public class MecanumDrive implements Subsystem {
         return robot.pinpoint.getHeading(AngleUnit.RADIANS) - headingOffset;
     }
 
-    public Follower driveToPose(Pose target, HardwareMap hardwareMap) {
-        currentState = DriveState.AutoDriving;
-        Follower follower = Constants.createFollower(hardwareMap);
-        follower.activateAllPIDFs();
-        PathChain path = follower.pathBuilder()
-                .addPath(new BezierLine(getCurrentPose(), target))
-                .setLinearHeadingInterpolation(getCurrentPose().getHeading(), target.getHeading())
-                .build();
-        follower.followPath(path);
-        activeFollower = follower;
-        return follower;
-    }
-
-    /**
-     * Drives to a park position and holds it using Pedro Pathing PIDF control.
-     * @param target The pose to park at
-     * @param hardwareMap The hardware map for creating the follower
-     */
-    public void parkAtPose(Pose target, HardwareMap hardwareMap) {
-        currentState = DriveState.Parking;
-        Follower follower = Constants.createFollower(hardwareMap);
-        follower.setStartingPose(getCurrentPose());
-        PathChain path = follower.pathBuilder()
-                .addPath(new BezierLine(getCurrentPose(), target))
-                .setLinearHeadingInterpolation(getCurrentPose().getHeading(), target.getHeading())
-                .build();
-        follower.followPath(path, true);  // holdEnd=true for position hold
-        activeFollower = follower;
-    }
-
-    /**
-     * Cancels parking and returns to manual control.
-     */
-    public void cancelPark() {
-        if (currentState == DriveState.Parking && activeFollower != null) {
-            activeFollower = null;
-        }
-        currentState = DriveState.FieldRelative;
-        stop();
-    }
-
-    /**
-     * @return true if robot is currently in parking mode
-     */
-    public boolean isParking() {
-        return currentState == DriveState.Parking;
-    }
-
     /**
      * Updates the follower for position hold during parking.
      * Call this in the main loop when parking is active.
@@ -125,7 +78,7 @@ public class MecanumDrive implements Subsystem {
 
     public void drive(double ly, double lx, double rx) {
         // Auto-transition from Idle when joystick input detected
-        if (currentState == DriveState.Idle && (Math.abs(ly) > RobotConstants.Drivetrain.JOYSTICK_DEADBAND || Math.abs(lx) > RobotConstants.Drivetrain.JOYSTICK_DEADBAND || Math.abs(rx) > RobotConstants.Drivetrain.JOYSTICK_DEADBAND)) {
+        if (currentState == DriveState.Idle && (Math.abs(ly) > DriveConstants.JOYSTICK_DEADBAND || Math.abs(lx) > DriveConstants.JOYSTICK_DEADBAND || Math.abs(rx) > DriveConstants.JOYSTICK_DEADBAND)) {
             currentState = DriveState.FieldRelative;
         }
 
@@ -149,7 +102,7 @@ public class MecanumDrive implements Subsystem {
             rotY = ly;
         }
 
-        rotX = rotX * RobotConstants.Drivetrain.STRAFE_COMPENSATION;  // Counteract imperfect strafing
+        rotX = rotX * DriveConstants.STRAFE_COMPENSATION;  // Counteract imperfect strafing
 
         // Calculate and normalize motor powers
         double denominator = Math.max(Math.abs(rotY) + Math.abs(rotX) + Math.abs(rx), 1);
@@ -158,7 +111,7 @@ public class MecanumDrive implements Subsystem {
         double frontRightPower = (rotY - rotX - rx) / denominator;
         double backRightPower = (rotY + rotX - rx) / denominator;
 
-        double mult = slowmode ? RobotConstants.Drivetrain.SLOW_MODE_MULTIPLIER : 1;
+        double mult = slowmode ? DriveConstants.SLOW_MODE_MULTIPLIER : 1;
 
         robot.frontLeft.setPower(frontLeftPower * mult);
         robot.backLeft.setPower(backLeftPower * mult);
