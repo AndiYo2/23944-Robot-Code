@@ -28,6 +28,10 @@ public class SpindexerAndMotifStatus {
             spindexerPattern = new EnumConstants.BallColor[]{zero, one, two};
         }
 
+        public static void clearAll() {
+            setBallPattern(EnumConstants.BallColor.None, EnumConstants.BallColor.None, EnumConstants.BallColor.None);
+        }
+
         public static void rotateBallsCCW(){
             EnumConstants.BallColor temp0 = spindexerPattern[0];
             spindexerPattern[0] = spindexerPattern[2];

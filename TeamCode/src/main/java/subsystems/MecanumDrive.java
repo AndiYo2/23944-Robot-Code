@@ -2,14 +2,10 @@ package subsystems;
 
 import com.arcrobotics.ftclib.command.Subsystem;
 import com.pedropathing.follower.Follower;
-import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
-import com.pedropathing.paths.PathChain;
-import com.qualcomm.robotcore.hardware.HardwareMap;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
-import pedroPathing.Constants;
 import Constants.DriveConstants;
 import Constants.EnumConstants.DriveState;
 import Constants.RobotHardware;

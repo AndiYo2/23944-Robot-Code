@@ -1,7 +1,6 @@
 package Constants;
 
 import com.bylazar.configurables.annotations.Configurable;
-import com.qualcomm.robotcore.hardware.PIDCoefficients;
 import utility.SpindexerAndMotifStatus;
 
 /**
@@ -25,35 +24,36 @@ public class SpindexerConstants {
     public static double FLIPPER_POSITION_RETRACT = 0.55;
     public static double FLICK_TIME = 0.02;
 
-    // --- Spindexer PIDF coefficients - direction-specific for vertical mounting ---
-    // CW rotation (with gravity assist)
-    public static double SPINDEXER_CW_P = 0.0066;
-    public static double SPINDEXER_CW_I = 0.0;
-    public static double SPINDEXER_CW_D = 0.0003;
-    public static double SPINDEXER_CW_F = 0.0001;
+    // --- Servo Position Constants (Axon servo in position mode) ---
+    // 6 positions for 3 slots (2 positions per slot due to 2:1 gear ratio)
+    public static final double POSITION_INCREMENT = 0.2;
+    public static final double[] SERVO_POSITIONS = {0.0, 0.2, 0.4, 0.6, 0.8, 1.0};
+    public static final int SLOTS_COUNT = 3;
 
-    // CCW rotation (against gravity)
-    public static double SPINDEXER_CCW_P = 0.0087;
-    public static double SPINDEXER_CCW_I = 0.0001;
-    public static double SPINDEXER_CCW_D = 0.0004;
-    public static double SPINDEXER_CCW_F = 0.0001;
+    // Boundary wrapping (safety net - should rarely be used in normal operation)
+    public static final double CW_WRAP_TO = 0.6;   // At 1.0, CW wraps to 0.6
+    public static final double CCW_WRAP_TO = 0.4;  // At 0.0, CCW wraps to 0.4
 
-    // Legacy default values (backwards compatibility)
-    public static final double SPINDEXER_P = SPINDEXER_CCW_P;
-    public static final double SPINDEXER_I = SPINDEXER_CCW_I;
-    public static final double SPINDEXER_D = SPINDEXER_CCW_D;
-    public static final double SPINDEXER_F = SPINDEXER_CCW_F;
+    // Empty/reset position
+    public static final double EMPTY_RESET_POSITION = 0.0;
 
-    // Acceptable position error (degrees) - stops rotation when within this range
-    public static double ANGLE_RANGE = 7;
+    // --- Timing Constants ---
+    public static final double ROTATION_TIME_MS = 150;       // Normal 0.2 position change
+    public static final double WRAP_ROTATION_TIME_MS = 300;  // Wrap 0.4 position change
+    public static final double VERIFICATION_TIMEOUT_MS = 50; // Time to verify encoder position
 
-    // Spindexer slot positions in degrees (3 equally-spaced slots: 120 apart)
-    public static int[] SPINDEXER_POSITIONS = {52, 172, 292};
+    // --- Encoder Verification ---
+    public static final double ENCODER_TOLERANCE_DEG = 15.0;  // Acceptable error in degrees
+    public static final int MAX_RETRY_ATTEMPTS = 2;           // Auto-retry on verification failure
 
     // --- Position Detection Thresholds ---
     public static double ANGLE_WITHIN_RANGE_THRESHOLD = 60.0;  // Degrees for "within slot range" check
     public static double ENCODER_READY_THRESHOLD = 0.01;       // Voltage change to detect encoder ready
 
-    // --- Tuning ---
-    public static double TUNING_TARGET_POSITION = 52.0;  // Target position for PIDF tuning (degrees)
+    // Spindexer slot positions in degrees (for encoder verification)
+    // With 2:1 ratio: servo 0-300° = spindexer 0-600°
+    // Slot 0: 0°, 360° (servo 0.0, 0.6)
+    // Slot 1: 120°, 480° (servo 0.2, 0.8)
+    // Slot 2: 240°, 600° (servo 0.4, 1.0)
+    public static final double[] SLOT_ENCODER_POSITIONS_DEG = {0, 120, 240};
 }

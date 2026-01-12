@@ -7,7 +7,6 @@ import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import framework.AutonSequence;
-import utility.RobotConstants;
 
 @Configurable
 @Autonomous(name = "ShootDipRed")
@@ -35,7 +34,7 @@ public class ShootDipRed extends AutonTemplate {
     @Override
     public void init() {
         super.init();
-        RobotConstants.UpdatableConstants.allianceColor = RobotConstants.Enums.AllianceColor.Blue;
+        Constants.RobotConstants.Robot.allianceColor = Constants.EnumConstants.AllianceColor.Blue;
         executor = new AutonSequence(follower, intake, catalogManager, sequenceManager, limelight)
                 .moveTo(shootToFirst, maxSpeed)
                 .build();

@@ -1,6 +1,5 @@
 package Constants;
 
-import com.arcrobotics.ftclib.controller.PIDFController;
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
@@ -56,11 +55,9 @@ public class RobotHardware {
 
 
     // ******************* SPINDEXER ******************* //
-    public CRServo spindexerServo;
+    public Servo spindexerServo;  // Changed from CRServo to Servo (position mode)
     public Servo spindexerFlipperServo;
-    public AnalogInput spindexerEncoder;
-
-    public PIDFController spindexerPID;
+    public AnalogInput spindexerEncoder;  // Kept for position verification
 
     // ******************* VOLTAGE SENSOR ******************* //
     public VoltageSensor voltageSensor;
@@ -150,11 +147,9 @@ public class RobotHardware {
 
         // ******************* SPINDEXER ******************* //
         spindexerFlipperServo = hardwareMap.get(Servo.class, NamingConstants.Spindexer.spindexerFlipperServo);
-
         spindexerEncoder = hardwareMap.get(AnalogInput.class, NamingConstants.Spindexer.spindexerEncoder);
-        spindexerServo = hardwareMap.get(CRServo.class, NamingConstants.Spindexer.spindexerServo);
-        spindexerServo.setDirection(DcMotorSimple.Direction.REVERSE);
-        spindexerPID = new PIDFController(SpindexerConstants.SPINDEXER_P, SpindexerConstants.SPINDEXER_I, SpindexerConstants.SPINDEXER_D, SpindexerConstants.SPINDEXER_F);
+        spindexerServo = hardwareMap.get(Servo.class, NamingConstants.Spindexer.spindexerServo);
+        // Note: Servo direction is handled via position mapping, not setDirection()
 
         // ******************* OUTTAKE ******************* //
         shooterMotor1 = hardwareMap.get(DcMotorEx.class, NamingConstants.Shooter.shooter1);

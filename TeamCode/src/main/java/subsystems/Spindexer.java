@@ -4,7 +4,6 @@ import com.arcrobotics.ftclib.command.Subsystem;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import Constants.EnumConstants;
 import Constants.EnumConstants.FlickState;
-import Constants.EnumConstants.RotationState;
 import Constants.RobotConstants;
 import Constants.RobotHardware;
 import Constants.SpindexerConstants;
@@ -12,6 +11,19 @@ import utility.SpindexerAndMotifStatus;
 
 import static Constants.SpindexerConstants.*;
 
+/**
+ * Spindexer subsystem - Position-controlled servo mode with encoder verification.
+ *
+ * Uses 6 servo positions (0.0, 0.2, 0.4, 0.6, 0.8, 1.0) mapped to 3 physical slots.
+ * Each slot has two equivalent positions due to 2:1 gear ratio:
+ *   - Slot 0: positions 0.0 and 0.6
+ *   - Slot 1: positions 0.2 and 0.8
+ *   - Slot 2: positions 0.4 and 1.0
+ *
+ * Boundary wrapping (safety net only - should not occur in normal operation):
+ *   - At 1.0, CW wraps to 0.6
+ *   - At 0.0, CCW wraps to 0.4
+ */
 public class Spindexer implements Subsystem {
 
     // Hardware reference
@@ -21,163 +33,196 @@ public class Spindexer implements Subsystem {
     private RotationState rotationState = RotationState.IDLE;
     private FlickState currentState = FlickState.Idle;
 
+    // Extended rotation states for verification and retry
+    public enum RotationState {
+        IDLE,
+        ROTATING,
+        VERIFYING,
+        RETRYING,
+        ERROR
+    }
+
     // Position tracking
-    private int targetPosition;
-    private int spindPosTracker;
+    private double currentServoPosition = EMPTY_RESET_POSITION;
+    private double lastCommandedPosition = EMPTY_RESET_POSITION;
+    private boolean isWrapRotation = false;
 
-    // PID state
-    private double lastError = 0;
-    private double integral = 0;
-
-    // Tunable PID coefficients (can be updated via setSpindexerPIDF)
-    private double cw_kP, cw_kI, cw_kD, cw_kF;
-    private double ccw_kP, ccw_kI, ccw_kD, ccw_kF;
-
-    // Configuration
-    private final double angleRange = SpindexerConstants.ANGLE_RANGE;
+    // Retry tracking
+    private int retryCount = 0;
 
     // Timers
     private final ElapsedTime flickerTimer = new ElapsedTime();
-    private final ElapsedTime settlingTimer = new ElapsedTime();
-
-    // Settling state
-    private boolean isSettling = false;
-
-    // Debug tracking
-    private double initPosition = 0;
-    private int initIndex = 0;
-
-    // Debug mode - bypass PID for raw servo testing
-    private boolean debugBypassPID = false;
-    private double debugManualPower = 0.0;
-    private double lastPIDOutput = 0.0;
+    private final ElapsedTime rotationTimer = new ElapsedTime();
+    private final ElapsedTime verificationTimer = new ElapsedTime();
 
     // Initialization state
     private boolean needsInitialization = true;
-    private double initialEncoderVoltage = -1; // Track first voltage reading
+    private double initialEncoderVoltage = -1;
 
     public Spindexer() {
         this.robot = RobotHardware.getInstance();
 
-        // Set safe default position until encoder is ready
-        spindPosTracker = 0;
-        targetPosition = SPINDEXER_POSITIONS[0];
-        // needsInitialization is already true by default
-        // Actual position will be read in periodic() when encoder voltage is valid
-
-        // Initialize PID coefficients from constants (can be tuned later)
-        cw_kP = SpindexerConstants.SPINDEXER_CW_P;
-        cw_kI = SpindexerConstants.SPINDEXER_CW_I;
-        cw_kD = SpindexerConstants.SPINDEXER_CW_D;
-        cw_kF = SpindexerConstants.SPINDEXER_CW_F;
-
-        ccw_kP = SpindexerConstants.SPINDEXER_CCW_P;
-        ccw_kI = SpindexerConstants.SPINDEXER_CCW_I;
-        ccw_kD = SpindexerConstants.SPINDEXER_CCW_D;
-        ccw_kF = SpindexerConstants.SPINDEXER_CCW_F;
-
         // Initialize flipper to retracted position
         robot.spindexerFlipperServo.setPosition(SpindexerConstants.FLIPPER_POSITION_RETRACT);
+
+        // Initialize spindexer to position 0
+        currentServoPosition = EMPTY_RESET_POSITION;
+        robot.spindexerServo.setPosition(currentServoPosition);
     }
 
-    public void rotateCCW() {
-        if (rotationState != RotationState.IDLE) return; // Prevent conflicts
-
-        robot.spindexerPID.reset();
-        // Set CCW-specific PID gains (against gravity) - uses tunable values
-        robot.spindexerPID.setPIDF(ccw_kP, ccw_kI, ccw_kD, ccw_kF);
-
-        spindPosTracker = (spindPosTracker + 1) % SPINDEXER_POSITIONS.length;
-        targetPosition = SPINDEXER_POSITIONS[spindPosTracker];
-        rotationState = RotationState.ROTATING;
-        SpindexerAndMotifStatus.SpindexerPattern.rotateBallsCCW();
-    }
+    // ==================== ROTATION METHODS ====================
 
     public void rotateCW() {
-        if (rotationState != RotationState.IDLE) return; // Prevent conflicts
+        if (rotationState != RotationState.IDLE) return;
 
-        robot.spindexerPID.reset();
-       // Set CW-specific PID gains (with gravity assist) - uses tunable values
-        robot.spindexerPID.setPIDF(cw_kP, cw_kI, cw_kD, cw_kF);
+        double newPosition = currentServoPosition + POSITION_INCREMENT;
+        isWrapRotation = false;
 
-        spindPosTracker = (spindPosTracker - 1 + SPINDEXER_POSITIONS.length) % SPINDEXER_POSITIONS.length;
-        targetPosition = SPINDEXER_POSITIONS[spindPosTracker];
-        rotationState = RotationState.ROTATING;
+        // Boundary wrapping (safety net - should rarely happen)
+        if (newPosition > 1.0) {
+            newPosition = CW_WRAP_TO;  // 0.6
+            isWrapRotation = true;
+            logWrapWarning("CW", currentServoPosition, newPosition);
+        }
+
+        setServoPosition(newPosition);
         SpindexerAndMotifStatus.SpindexerPattern.rotateBallsCW();
     }
 
+    public void rotateCCW() {
+        if (rotationState != RotationState.IDLE) return;
+
+        double newPosition = currentServoPosition - POSITION_INCREMENT;
+        isWrapRotation = false;
+
+        // Boundary wrapping (safety net - should rarely happen)
+        if (newPosition < 0.0) {
+            newPosition = CCW_WRAP_TO;  // 0.4
+            isWrapRotation = true;
+            logWrapWarning("CCW", currentServoPosition, newPosition);
+        }
+
+        setServoPosition(newPosition);
+        SpindexerAndMotifStatus.SpindexerPattern.rotateBallsCCW();
+    }
+
+    /**
+     * Rotate to a specific ball color, choosing direction to avoid boundary wrapping.
+     */
     public boolean rotateToColor(EnumConstants.BallColor color) {
-        if (rotationState != RotationState.IDLE) return false; // Already rotating
+        if (rotationState != RotationState.IDLE) return false;
 
         // Check slot 1 first (already in shooter position)
         if (SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(1) == color) {
-            return true; // Already aligned, no rotation needed
+            return true; // Already aligned - NO movement
         }
 
-        // Check slot 2 (one CW rotation away)
-        if (SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(2) == color) {
-            rotateCW();
+        boolean slot0Has = SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(0) == color;
+        boolean slot2Has = SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(2) == color;
+
+        if (slot0Has && slot2Has) {
+            // BOTH slots have target color - choose direction AWAY from boundary
+            rotateAwayFromBoundary();
             return true;
         }
 
-        // Check slot 0 (one CCW rotation away)
-        if (SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(0) == color) {
-            rotateCCW();
+        // Only one slot has target - must go that direction
+        if (slot2Has) {
+            rotateCW();  // 0.2 position increase
             return true;
         }
+        if (slot0Has) {
+            rotateCCW(); // 0.2 position decrease
+            return true;
+        }
+
+        // Color not found - rotate to any ball
         rotateToNextClosestBall();
         return false;
     }
 
-    public void rotateToNextClosestBall() {
-        if(SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(0) != EnumConstants.BallColor.None){
-            rotateCCW();
+    /**
+     * Smart direction choice to minimize wrapping.
+     */
+    private void rotateAwayFromBoundary() {
+        if (currentServoPosition <= 0.2) {
+            rotateCW();   // Near 0.0 boundary → go CW (toward higher positions)
+        } else if (currentServoPosition >= 0.8) {
+            rotateCCW();  // Near 1.0 boundary → go CCW (toward lower positions)
+        } else {
+            // Safe zone (0.4-0.6) - prefer toward 0.4 for next load cycle
+            if (currentServoPosition > 0.4) {
+                rotateCCW();
+            } else {
+                rotateCW();
+            }
         }
-        else if (SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(2) != EnumConstants.BallColor.None){
+    }
+
+    public void rotateToNextClosestBall() {
+        boolean slot0Has = SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(0) != EnumConstants.BallColor.None;
+        boolean slot2Has = SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(2) != EnumConstants.BallColor.None;
+
+        if (slot0Has && slot2Has) {
+            rotateAwayFromBoundary();  // Smart choice
+        } else if (slot0Has) {
+            rotateCCW();
+        } else if (slot2Has) {
             rotateCW();
         }
     }
 
     public void rotateToNearestEmptySlot() {
-        if (rotationState != RotationState.IDLE) return; // Prevent conflicts
+        if (rotationState != RotationState.IDLE) return;
         if (SpindexerAndMotifStatus.SpindexerPattern.isFull()) return;
 
-        double currentPos = getServoPosition();
-        double minDistance = Double.MAX_VALUE;
-        int nearestSlotIndex = -1;
+        // Check each slot for empty
+        boolean slot0Empty = SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(0) == EnumConstants.BallColor.None;
+        boolean slot1Empty = SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(1) == EnumConstants.BallColor.None;
+        boolean slot2Empty = SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(2) == EnumConstants.BallColor.None;
 
-        // Find nearest empty slot
-        for (int i = 0; i < SPINDEXER_POSITIONS.length; i++) {
-            if (spindexerPattern.getBallInSlotX(i) == EnumConstants.BallColor.None) {
-                double distance = calculateAngularDistance(currentPos, SPINDEXER_POSITIONS[i]);
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    nearestSlotIndex = i;
-                }
-            }
-        }
+        if (slot1Empty) return; // Already at empty slot
 
-        if (nearestSlotIndex == -1) return; // No empty slots found
-        if (nearestSlotIndex == spindPosTracker) return; // Already at empty slot
-
-        // Calculate which direction is shorter
-        int stepsToTarget = nearestSlotIndex - spindPosTracker;
-        int stepsCW = (stepsToTarget + SPINDEXER_POSITIONS.length) % SPINDEXER_POSITIONS.length;
-        int stepsCCW = (SPINDEXER_POSITIONS.length - stepsCW) % SPINDEXER_POSITIONS.length;
-
-        // Rotate once in the shorter direction
-        if (stepsCW <= stepsCCW) {
-            rotateCW();
-        } else {
+        if (slot0Empty && slot2Empty) {
+            rotateAwayFromBoundary();
+        } else if (slot0Empty) {
             rotateCCW();
+        } else if (slot2Empty) {
+            rotateCW();
         }
     }
+
+    /**
+     * Reset to empty position (0.0) and clear ball tracking.
+     */
+    public void resetToEmptyPosition() {
+        if (rotationState != RotationState.IDLE) return;
+
+        currentServoPosition = EMPTY_RESET_POSITION;
+        robot.spindexerServo.setPosition(currentServoPosition);
+        SpindexerAndMotifStatus.SpindexerPattern.clearAll();
+    }
+
+    // ==================== SERVO CONTROL ====================
+
+    private void setServoPosition(double position) {
+        currentServoPosition = position;
+        lastCommandedPosition = position;
+        robot.spindexerServo.setPosition(position);
+        rotationState = RotationState.ROTATING;
+        rotationTimer.reset();
+        retryCount = 0;
+    }
+
+    // ==================== FLIPPER METHODS ====================
 
     public void triggerFlick() {
         if (currentState == FlickState.Idle) {
             currentState = FlickState.Start;
         }
     }
+
+    // ==================== STATE QUERIES ====================
 
     public boolean isRotationIdle() {
         return rotationState == RotationState.IDLE;
@@ -191,74 +236,132 @@ public class Spindexer implements Subsystem {
         return rotationState == RotationState.IDLE && currentState == FlickState.Idle;
     }
 
+    public boolean isInError() {
+        return rotationState == RotationState.ERROR;
+    }
 
     public FlickState getCurrentState() {
         return currentState;
     }
 
-
-    public int getSpindPosTracker() {
-        return spindPosTracker;
+    public double getServoPosition() {
+        return currentServoPosition;
     }
 
-    public double getServoPosition() {
-        // Convert voltage (0-3.3V) to angle (0-360°)
+    /**
+     * Get current slot index (0, 1, or 2) based on servo position.
+     * For backwards compatibility with telemetry.
+     */
+    public int getSpindPosTracker() {
+        // Each 0.2 increment = 1 slot, wrapping at 3
+        int positionIndex = (int) Math.round(currentServoPosition / POSITION_INCREMENT);
+        return positionIndex % SLOTS_COUNT;
+    }
+
+    /**
+     * Get target position in degrees (for telemetry compatibility).
+     * Converts servo position (0-1) to approximate encoder degrees.
+     */
+    public int getTargetPosition() {
+        return (int) servoPositionToExpectedDegrees(currentServoPosition);
+    }
+
+    /**
+     * Check if rotation is complete (for backwards compatibility).
+     */
+    public boolean isDoneRotating() {
+        return rotationState == RotationState.IDLE;
+    }
+
+    /**
+     * Get current encoder position in degrees (for verification/telemetry).
+     */
+    public double getEncoderPositionDegrees() {
         double pos = robot.spindexerEncoder.getVoltage();
         pos /= RobotConstants.Encoder.MAX_VOLTAGE;  // Normalize to 0-1
         pos *= RobotConstants.Encoder.FULL_ROTATION_DEGREES;  // Scale to degrees
-
-        // Ensure angle stays in [0, 360) range
-        while (pos >= RobotConstants.Encoder.FULL_ROTATION_DEGREES) pos -= RobotConstants.Encoder.FULL_ROTATION_DEGREES;
-        while (pos < 0) pos += RobotConstants.Encoder.FULL_ROTATION_DEGREES;
         return pos;
     }
 
-    public int getTargetPosition() {
-        return targetPosition;
+    /**
+     * Convert servo position to expected encoder degrees.
+     * With 2:1 gear ratio: servo position 0-1 = spindexer 0-600°
+     */
+    private double servoPositionToExpectedDegrees(double servoPos) {
+        // servo 0-1 maps to 0-300° on servo, which is 0-600° on spindexer
+        // But encoder reads spindexer directly (0-360° wrapping)
+        double spindexerDegrees = servoPos * 600.0;  // 2:1 ratio
+        return spindexerDegrees % 360.0;  // Wrap to encoder range
     }
 
-    public boolean isDoneRotating() {
-        double currentPosition = getServoPosition();
-        double difference = targetPosition - currentPosition;
-
-        // Take shortest path around circle
-        if (difference > RobotConstants.Encoder.ANGLE_UPPER_BOUND) difference -= RobotConstants.Encoder.FULL_ROTATION_DEGREES;
-        if (difference < RobotConstants.Encoder.ANGLE_LOWER_BOUND) difference += RobotConstants.Encoder.FULL_ROTATION_DEGREES;
-
-        return Math.abs(difference) < angleRange;
+    /**
+     * Normalize angle difference to [-180, 180] range.
+     */
+    private double normalizeAngle(double angle) {
+        while (angle > 180) angle -= 360;
+        while (angle < -180) angle += 360;
+        return angle;
     }
 
+    // ==================== PERIODIC UPDATES ====================
 
+    @Override
+    public void periodic() {
+        // Lazy initialization - wait for encoder to be ready
+        if (needsInitialization && isEncoderReady()) {
+            initializeFromEncoder();
+            needsInitialization = false;
+        }
 
-    public void setCWPIDF(double kP, double kI, double kD, double kF) {
-        cw_kP = kP;
-        cw_kI = kI;
-        cw_kD = kD;
-        cw_kF = kF;
-        // Immediately apply to active PID controller for real-time tuning
-        robot.spindexerPID.setP(kP);
-        robot.spindexerPID.setI(kI);
-        robot.spindexerPID.setD(kD);
-        robot.spindexerPID.setF(kF);
+        flipperStateMachinePeriodic();
+        rotationStateMachinePeriodic();
+
+        // Auto-reset to position 0 when spindexer is empty
+        checkAndResetIfEmpty();
     }
 
-    public void setCCWPIDF(double kP, double kI, double kD, double kF) {
-        ccw_kP = kP;
-        ccw_kI = kI;
-        ccw_kD = kD;
-        ccw_kF = kF;
-        // Immediately apply to active PID controller for real-time tuning
-        robot.spindexerPID.setP(kP);
-        robot.spindexerPID.setI(kI);
-        robot.spindexerPID.setD(kD);
-        robot.spindexerPID.setF(kF);
+    /**
+     * Automatically reset to position 0 when no balls are in the spindexer.
+     * This ensures we start loading from position 0 for optimal sequencing.
+     * Waits for both rotation and flipper to be idle before resetting.
+     */
+    private void checkAndResetIfEmpty() {
+        // Don't reset while rotating or while flipper is active
+        if (rotationState != RotationState.IDLE) return;
+        if (currentState != FlickState.Idle) return;
+
+        boolean isEmpty =
+            SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(0) == EnumConstants.BallColor.None &&
+            SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(1) == EnumConstants.BallColor.None &&
+            SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(2) == EnumConstants.BallColor.None;
+
+        if (isEmpty && currentServoPosition != EMPTY_RESET_POSITION) {
+            currentServoPosition = EMPTY_RESET_POSITION;
+            robot.spindexerServo.setPosition(currentServoPosition);
+        }
     }
 
+    private void initializeFromEncoder() {
+        double encoderDeg = getEncoderPositionDegrees();
+        int nearestSlot = findNearestSlot(encoderDeg);
+        // Snap to the lower equivalent position for the slot
+        currentServoPosition = nearestSlot * POSITION_INCREMENT;
+        robot.spindexerServo.setPosition(currentServoPosition);
+    }
 
-    @Deprecated
-    public void setSpindexerPIDF(double kP, double kI, double kD, double kF) {
-        setCWPIDF(kP, kI, kD, kF);
-        setCCWPIDF(kP, kI, kD, kF);
+    private int findNearestSlot(double encoderDeg) {
+        double minDistance = Double.MAX_VALUE;
+        int nearestSlot = 0;
+
+        for (int i = 0; i < SLOTS_COUNT; i++) {
+            double slotDeg = SLOT_ENCODER_POSITIONS_DEG[i];
+            double distance = Math.abs(normalizeAngle(encoderDeg - slotDeg));
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearestSlot = i;
+            }
+        }
+        return nearestSlot;
     }
 
     private boolean isEncoderReady() {
@@ -267,110 +370,79 @@ public class Spindexer implements Subsystem {
         // First call - record initial voltage
         if (initialEncoderVoltage == -1) {
             initialEncoderVoltage = currentVoltage;
-            return false; // Not ready yet, just recorded baseline
+            return false;
         }
 
         // Check if voltage has changed from initial reading
-        // Encoder is ready when it gives a different value than the initial stuck reading
-        return Math.abs(currentVoltage - initialEncoderVoltage) > SpindexerConstants.ENCODER_READY_THRESHOLD;
+        return Math.abs(currentVoltage - initialEncoderVoltage) > ENCODER_READY_THRESHOLD;
     }
 
-    private int getNearestStartIndex() {
-        double currentPos = getServoPosition();
-        if (isWithinRange(currentPos, SPINDEXER_POSITIONS[0])) return 0;
-        if (isWithinRange(currentPos, SPINDEXER_POSITIONS[1])) return 1;
-        return 2;
-    }
+    private void rotationStateMachinePeriodic() {
+        switch (rotationState) {
+            case IDLE:
+                // Nothing to do
+                break;
 
-
-    private boolean isWithinRange(double angle, double target) {
-        double diff = Math.abs(angle - target);
-        if (diff > RobotConstants.Encoder.ANGLE_UPPER_BOUND) {
-            diff = RobotConstants.Encoder.FULL_ROTATION_DEGREES - diff;
-        }
-        return diff <= SpindexerConstants.ANGLE_WITHIN_RANGE_THRESHOLD;
-    }
-
-    private double calculateAngularDistance(double angle1, double angle2) {
-        double diff = Math.abs(angle1 - angle2);
-        // Take the shorter path around the circle
-        return Math.min(diff, RobotConstants.Encoder.FULL_ROTATION_DEGREES - diff);
-    }
-
-    @Override
-    public void periodic() {
-        // Lazy initialization - wait for encoder to be ready (avoids 0V reading at init)
-        if (needsInitialization && isEncoderReady()) {
-            initPosition = getServoPosition();
-            initIndex = getNearestStartIndex();
-            spindPosTracker = initIndex;
-            targetPosition = SPINDEXER_POSITIONS[spindPosTracker];
-            needsInitialization = false;
-        }
-
-        flipperStateMachinePeriodic();
-        rotationUpdater();
-
-    }
-
-    private void rotationUpdater() {
-        // Always run PID controller to actively maintain position
-        performPIDRotation();
-    }
-
-    private void performPIDRotation() {
-        double currentPosition = getServoPosition();
-        boolean withinTolerance = isDoneRotating();
-
-        // Update state based on settling (for external code to know when rotation is "done")
-        if (rotationState == RotationState.ROTATING) {
-            if (withinTolerance) {
-                // Start settling timer if we just entered tolerance zone
-                if (!isSettling) {
-                    isSettling = true;
-                    settlingTimer.reset();
+            case ROTATING:
+                double timeout = isWrapRotation ? WRAP_ROTATION_TIME_MS : ROTATION_TIME_MS;
+                if (rotationTimer.milliseconds() >= timeout) {
+                    rotationState = RotationState.VERIFYING;
+                    verificationTimer.reset();
                 }
+                break;
 
-                // Check if we've been stable long enough to declare rotation complete
-                if (settlingTimer.seconds() >= RobotConstants.ShootingSequence.SPINDEXER_SETTLING_TIME) {
+            case VERIFYING:
+                double encoderDeg = getEncoderPositionDegrees();
+                double expectedDeg = servoPositionToExpectedDegrees(currentServoPosition);
+                double error = Math.abs(normalizeAngle(encoderDeg - expectedDeg));
+
+                if (error < ENCODER_TOLERANCE_DEG) {
+                    // Position verified successfully
                     rotationState = RotationState.IDLE;
-                    isSettling = false;
+                    retryCount = 0;
+                } else if (verificationTimer.milliseconds() >= VERIFICATION_TIMEOUT_MS) {
+                    // Verification failed - retry or error
+                    if (retryCount < MAX_RETRY_ATTEMPTS) {
+                        retryCount++;
+                        robot.spindexerServo.setPosition(lastCommandedPosition);
+                        rotationState = RotationState.RETRYING;
+                        rotationTimer.reset();
+                    } else {
+                        rotationState = RotationState.ERROR;
+                        logError("Position verification failed after " + MAX_RETRY_ATTEMPTS + " retries. " +
+                                "Expected: " + expectedDeg + "°, Actual: " + encoderDeg + "°");
+                    }
                 }
-            } else {
-                // Outside tolerance - reset settling
-                isSettling = false;
-            }
+                break;
+
+            case RETRYING:
+                // Same as ROTATING - wait for timer then verify again
+                double retryTimeout = isWrapRotation ? WRAP_ROTATION_TIME_MS : ROTATION_TIME_MS;
+                if (rotationTimer.milliseconds() >= retryTimeout) {
+                    rotationState = RotationState.VERIFYING;
+                    verificationTimer.reset();
+                }
+                break;
+
+            case ERROR:
+                // Stay in error state until manually cleared
+                // Could add auto-recovery logic here if needed
+                break;
         }
+    }
 
-        // ALWAYS calculate and apply PIDF correction (active position holding)
-        double correction = 0.0;
-        double error = 0.0;
-
-        if (!Double.isNaN(currentPosition)) {
-            // Calculate the shortest angular path (handle wraparound)
-            error = targetPosition - currentPosition;
-
-            // Normalize error to [-180, 180] range for shortest path
-            while (error > RobotConstants.Encoder.ANGLE_UPPER_BOUND) error -= RobotConstants.Encoder.FULL_ROTATION_DEGREES;
-            while (error < RobotConstants.Encoder.ANGLE_LOWER_BOUND) error += RobotConstants.Encoder.FULL_ROTATION_DEGREES;
-
-            // Create a "virtual" target that's on the shortest path from current position
-            double wrappedTarget = currentPosition + error;
-
-            // Calculate PIDF correction (feedforward is handled internally by PIDFController)
-            correction = robot.spindexerPID.calculate(currentPosition, wrappedTarget);
+    /**
+     * Clear error state (call from TeleOp if manual recovery is needed).
+     */
+    public void clearError() {
+        if (rotationState == RotationState.ERROR) {
+            rotationState = RotationState.IDLE;
+            retryCount = 0;
         }
-
-        // Store for debug telemetry
-        lastPIDOutput = correction;
-        lastError = error;
-
-        // Always apply correction - never let the servo coast
-        robot.spindexerServo.setPower(correction);
     }
 
     private void flipperStateMachinePeriodic() {
-        if (currentState == FlickState.Idle) return; // Don't run unless activated
+        if (currentState == FlickState.Idle) return;
 
         switch (currentState) {
             case Idle:
@@ -387,8 +459,20 @@ public class Spindexer implements Subsystem {
                 currentState = FlickState.Retracted;
                 break;
             case Retracted:
-                currentState = FlickState.Idle; // Return to idle after completion
+                currentState = FlickState.Idle;
                 break;
         }
+    }
+
+    // ==================== LOGGING ====================
+
+    private void logWrapWarning(String direction, double fromPos, double toPos) {
+        // This should rarely happen in normal operation
+        System.out.println("[SPINDEXER WARNING] Boundary wrap triggered: " +
+                direction + " from " + fromPos + " to " + toPos);
+    }
+
+    private void logError(String message) {
+        System.out.println("[SPINDEXER ERROR] " + message);
     }
 }
