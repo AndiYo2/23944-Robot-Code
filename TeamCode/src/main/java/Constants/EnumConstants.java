@@ -47,8 +47,10 @@ public class EnumConstants {
         Idle,
         Scanning,
         WaitingForRotation,
-        RetryRotation,
-        RotateToEndLocation
+        RotateToEndLocation,
+        RotationWait,
+        Rotate,
+        MovingBall
     }
 
     public enum IntakeState {

@@ -219,10 +219,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
      * OVERRIDE: Hold left stick button to force rotation during sequence
      */
     private void manualRotateCW() {
-        boolean forceOverride = gamepad1.left_stick_button;
-        if (sequenceManager.isExecuting() && !forceOverride) {
-            return; // Block manual rotation during shooting sequence (unless override held)
-        }
         spindexer.rotateCW();
     }
 
@@ -232,10 +228,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
      * OVERRIDE: Hold left stick button to force rotation during sequence
      */
     private void manualRotateCCW() {
-        boolean forceOverride = gamepad1.left_stick_button;
-        if (sequenceManager.isExecuting() && !forceOverride) {
-            return; // Block manual rotation during shooting sequence (unless override held)
-        }
         spindexer.rotateCCW();
     }
 
@@ -274,8 +266,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
             telemetry.addData("Motif Pattern", "Not Detected");
         }
 
-        telemetry.addData("Spindexer Error", String.format("%.1f°",
-                spindexer.getTargetPosition() - spindexer.getServoPosition()));
+        telemetry.addData("Spindexer Position", String.format("%d°", spindexer.getTargetPosition()));
         telemetry.addData("Turret Error", String.format("%.1f°",
                 turret.getTargetTurretAngle() - turret.getTurretPosition()));
         telemetry.addLine("----------------------------------------");
@@ -312,10 +303,13 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
         // SPINDEXER section
         telemetry.addLine("=== SPINDEXER ===");
-        telemetry.addData("  Current Position", String.format("%.1f°", spindexer.getServoPosition()));
-        telemetry.addData("  Target Position", String.format("%d°", spindexer.getTargetPosition()));
-        telemetry.addData("  Slot Index", spindexer.getSpindPosTracker());
-        telemetry.addData("  Rotation State", spindexer.getRotationState());
+        telemetry.addData("  Position (deg)", String.format("%d°", spindexer.getTargetPosition()));
+        telemetry.addData("  Servo Value", String.format("%.3f", spindexer.getServoPosition()));
+        telemetry.addData("  Balls [Intake|Shooter|Storage]", String.format("[%s|%s|%s]",
+                SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(0),
+                SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(1),
+                SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(2)));
+        telemetry.addData("  Rotation Idle", spindexer.isRotationIdle());
         telemetry.addLine("");
 
         // CATALOGING section

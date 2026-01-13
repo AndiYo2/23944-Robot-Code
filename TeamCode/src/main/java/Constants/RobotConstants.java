@@ -21,9 +21,6 @@ public class RobotConstants {
 
         // Timeout for rotation state (spindexer stuck)
         public static double ROTATION_TIMEOUT_SECONDS = 3.0;
-
-        // Number of retry attempts for stuck rotation
-        public static int MAX_ROTATION_RETRIES = 1;
     }
 
     public static class Encoder {

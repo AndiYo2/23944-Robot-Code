@@ -22,38 +22,32 @@ public class SpindexerConstants {
     // --- Flipper Positions ---
     public static double FLIPPER_POSITION_EXTENDED = 0.80;
     public static double FLIPPER_POSITION_RETRACT = 0.55;
-    public static double FLICK_TIME = 0.02;
+    public static double FLICK_TIME = 0.075;
 
-    // --- Servo Position Constants (Axon servo in position mode) ---
-    // 6 positions for 3 slots (2 positions per slot due to 2:1 gear ratio)
-    public static final double POSITION_INCREMENT = 0.2;
-    public static final double[] SERVO_POSITIONS = {0.0, 0.2, 0.4, 0.6, 0.8, 1.0};
+    // --- Degree-Based Position Constants ---
+    // All positions in SERVO degrees (0-300° effective range)
+    // Conversion to servo position: degrees / 355.0
+    //
+    // 6 positions for 3 slots (2 positions per slot due to 2:1 gear ratio):
+    //   Slot 0: 0°, 180°
+    //   Slot 1: 60°, 240°
+    //   Slot 2: 120°, 300°
+    public static final int DEGREE_INCREMENT = 60;          // One slot = 60°
+    public static final int MAX_SERVO_DEGREES = 300;        // Max usable range
+    public static final int[] SLOT_POSITIONS_DEG = {0, 60, 120, 180, 240, 300};
     public static final int SLOTS_COUNT = 3;
 
-    // Boundary wrapping (safety net - should rarely be used in normal operation)
-    public static final double CW_WRAP_TO = 0.6;   // At 1.0, CW wraps to 0.6
-    public static final double CCW_WRAP_TO = 0.4;  // At 0.0, CCW wraps to 0.4
+    // Boundary wrapping (in degrees) - safety net, should rarely be used
+    public static final int CW_WRAP_TO_DEG = 180;           // At 300°, CW wraps to 180°
+    public static final int CCW_WRAP_TO_DEG = 120;          // At 0°, CCW wraps to 120°
 
     // Empty/reset position
-    public static final double EMPTY_RESET_POSITION = 0.0;
+    public static final int EMPTY_RESET_DEGREES = 300;
 
-    // --- Timing Constants ---
-    public static final double ROTATION_TIME_MS = 150;       // Normal 0.2 position change
-    public static final double WRAP_ROTATION_TIME_MS = 300;  // Wrap 0.4 position change
-    public static final double VERIFICATION_TIMEOUT_MS = 50; // Time to verify encoder position
+    // Servo conversion constant
+    public static final double SERVO_DEGREES_PER_UNIT = 355.0;  // Axon servo full range
 
-    // --- Encoder Verification ---
-    public static final double ENCODER_TOLERANCE_DEG = 15.0;  // Acceptable error in degrees
-    public static final int MAX_RETRY_ATTEMPTS = 2;           // Auto-retry on verification failure
-
-    // --- Position Detection Thresholds ---
-    public static double ANGLE_WITHIN_RANGE_THRESHOLD = 60.0;  // Degrees for "within slot range" check
-    public static double ENCODER_READY_THRESHOLD = 0.01;       // Voltage change to detect encoder ready
-
-    // Spindexer slot positions in degrees (for encoder verification)
-    // With 2:1 ratio: servo 0-300° = spindexer 0-600°
-    // Slot 0: 0°, 360° (servo 0.0, 0.6)
-    // Slot 1: 120°, 480° (servo 0.2, 0.8)
-    // Slot 2: 240°, 600° (servo 0.4, 1.0)
-    public static final double[] SLOT_ENCODER_POSITIONS_DEG = {0, 120, 240};
+    //Catalogging
+    public static double ROTATION_TIME = 0.1;
+    public static double INTAKE_TIME = 0.1;
 }
