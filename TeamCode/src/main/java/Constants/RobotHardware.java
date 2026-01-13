@@ -7,7 +7,6 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.ColorSensor;
-import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -40,8 +39,7 @@ public class RobotHardware {
     public DcMotorEx shooterMotor2;
     public Servo shooterFlipper;
     public AnalogInput shooterEncoder;
-    public CRServo turretServo;
-    public AnalogInput turretEncoder;
+    public Servo turretServo;
 
 
     // ******************* LIMELIGHT ******************* //
@@ -155,9 +153,7 @@ public class RobotHardware {
         shooterMotor1 = hardwareMap.get(DcMotorEx.class, NamingConstants.Shooter.shooter1);
         shooterMotor2 = hardwareMap.get(DcMotorEx.class, NamingConstants.Shooter.shooter2);
         shooterMotor2.setDirection(DcMotorEx.Direction.REVERSE);
-        turretServo = hardwareMap.get(CRServo.class, NamingConstants.Turret.turret);
-        turretEncoder = hardwareMap.get(AnalogInput.class, NamingConstants.Turret.turretEncoder);
-        turretServo.setDirection(DcMotorSimple.Direction.REVERSE);
+        turretServo = hardwareMap.get(Servo.class, NamingConstants.Turret.turret);
         shooterEncoder = hardwareMap.get(AnalogInput.class, NamingConstants.Shooter.shooterEncoder);
         shooterFlipper = hardwareMap.get(Servo.class, NamingConstants.Shooter.shooterFlipperServo);
 

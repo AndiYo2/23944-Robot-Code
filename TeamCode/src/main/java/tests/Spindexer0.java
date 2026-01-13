@@ -1,24 +1,11 @@
 package tests;
 
-import com.bylazar.configurables.PanelsConfigurables;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import Constants.RobotConstants;
 import Constants.RobotHardware;
-import Constants.TurretConstants;
 
 /**
- * Turret Centering Tool - Simplified version using Panels dashboard.
- *
- * This OpMode holds the turret at exactly 0° (center position).
- * Useful for verifying encoder calibration or testing turret control.
- *
- * Adjust PID values in Panels dashboard:
- * - TurretConstants.TURRET_PID (PIDCoefficients object with p, i, d)
- *
- * CONTROLS:
- *   A: Toggle Motor ON/OFF
- *   X: Emergency Stop
+ * Spindexer Test - Simple test for spindexer servo.
  */
 @TeleOp(name = "Spindexer0", group = "Tests")
 public class Spindexer0 extends OpMode {

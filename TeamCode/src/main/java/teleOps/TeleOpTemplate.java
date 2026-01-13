@@ -267,8 +267,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         }
 
         telemetry.addData("Spindexer Position", String.format("%d°", spindexer.getTargetPosition()));
-        telemetry.addData("Turret Error", String.format("%.1f°",
-                turret.getTargetTurretAngle() - turret.getTurretPosition()));
+        telemetry.addData("Turret Target", String.format("%.1f°", turret.getTargetTurretAngle()));
         telemetry.addLine("----------------------------------------");
 
         // ========================================
@@ -297,8 +296,8 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         telemetry.addLine("=== SHOOTER ===");
         telemetry.addData("  Shooter Velocity", String.format("%.0f", robot.shooterMotor2.getVelocity()));
         telemetry.addData("  Distance to Target", shooter.getDistanceToTarget());
-        telemetry.addData("  Turret Position", String.format("%.1f°", turret.getTurretPosition()));
-        telemetry.addData("  Turret Target", String.format("%.1f°", turret.getTargetTurretAngle()));
+        telemetry.addData("  Turret Target", String.format("%.1f° turret", turret.getTargetTurretAngle()));
+        telemetry.addData("  Turret Servo", String.format("%.4f", turret.getServoPosition()));
         telemetry.addLine("");
 
         // SPINDEXER section
@@ -376,14 +375,12 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         while (expectedTurretAngle < -180) expectedTurretAngle += 360;
         telemetry.addData("  Expected Turret Angle", String.format("%.1f°", expectedTurretAngle));
 
-        // Actual turret values
-        double turretTarget = turret.getTargetTurretAngle() / TurretConstants.GEAR_RATIO;  // Convert servo deg to turret deg
-        double turretActual = turret.getTurretPosition() / TurretConstants.GEAR_RATIO;    // Convert servo deg to turret deg
-        double turretError = turretTarget - turretActual;
+        // Actual turret values (servo is position-controlled, no encoder feedback)
+        double turretTarget = turret.getTargetTurretAngle();  // Already in turret degrees
+        double servoPosition = turret.getServoPosition();
 
         telemetry.addData("  Turret Target", String.format("%.1f° (turret deg)", turretTarget));
-        telemetry.addData("  Turret Actual", String.format("%.1f° (turret deg)", turretActual));
-        telemetry.addData("  Turret Error", String.format("%.1f°", turretError));
+        telemetry.addData("  Servo Position", String.format("%.4f", servoPosition));
 
         // Comparison: Expected vs What code calculated
         telemetry.addData("  Calc vs Expected Diff", String.format("%.1f°", turretTarget - expectedTurretAngle));

@@ -1,10 +1,13 @@
 package Constants;
 
 import com.bylazar.configurables.annotations.Configurable;
-import com.qualcomm.robotcore.hardware.PIDCoefficients;
 
 /**
  * Turret subsystem constants.
+ *
+ * The turret uses a position-controlled servo (not continuous rotation).
+ * Servo position 0.5 = turret center (0 degrees)
+ * Gear ratio is 2.5:1 (servo rotates 2.5x per turret degree)
  */
 @Configurable
 public class TurretConstants {
@@ -17,67 +20,37 @@ public class TurretConstants {
     public static double TURRET_OFFSET_X = 4.0;
     public static double TURRET_OFFSET_Y = 1.0;
 
+    // ==================== SERVO CONFIGURATION ====================
+    // Servo range: 0-355 degrees (position 0 = 0°, position 1 = 355°)
+    // Center position (0° turret) is at servo position 0.5 (~177.5° servo)
+    public static final double SERVO_CENTER_POSITION = 0.5;
+    public static final double SERVO_DEGREES_PER_UNIT = 355.0;
+    public static final double MIN_SERVO_POSITION = 0.0001;  // Never set to exactly 0
+
+    // Servo-to-turret gear ratio (2.5:1)
+    // Servo rotates GEAR_RATIO degrees for every 1 degree of turret rotation
+    public static final double GEAR_RATIO = 2.5;
+
     // ==================== TURRET LIMITS ====================
-    // Turret physical limits (turret degrees, not servo degrees)
+    // Hard stop limits (turret degrees) - prevents hardware damage
     // Negative = left (CCW), Positive = right (CW)
-    // Range: -45 to +60 turret degrees (x5 gear ratio = -225 to +300 servo degrees)
-    public static double TURRET_MIN_ANGLE = -45.0;  // Max left rotation (CCW)
-    public static double TURRET_MAX_ANGLE = 60.0;   // Max right rotation (CW)
+    public static double HARD_STOP_CW = 60.0;    // Max right rotation (clockwise)
+    public static double HARD_STOP_CCW = -45.0;  // Max left rotation (counter-clockwise)
 
     // ==================== TURRET CONTROL ====================
     // Target angle when not tracking (turret degrees)
     public static double CENTER = 0.0;
 
-    // PID deadband: stops motor when error < ANGLE_RANGE (servo degrees)
-    // 1.5 servo = 0.3 turret (due to 5:1 gear ratio)
-    public static double ANGLE_RANGE = 1.5;
-
-    // Servo-to-turret gear ratio (5:1)
-    // Servo rotates GEAR_RATIO degrees for every 1 of turret rotation
-    // All PID math uses SERVO degrees; divide by GEAR_RATIO for turret degrees
-    //
-    // HOW TO VERIFY/TUNE:
-    //   1. Center turret (0), note encoder reading
-    //   2. Manually rotate turret exactly 30 (use protractor)
-    //   3. Note new encoder reading
-    //   4. GEAR_RATIO = (encoder_change) / 30
-    //   Example: If encoder changes by 150 for 30 turret rotation, GEAR_RATIO = 150/30 = 5.0
-    public static final double GEAR_RATIO = 5.0;
-
-    // ==================== ENCODER CALIBRATION ====================
-    // TURRET_ENCODER_OFFSET: Encoder reading (in degrees) when turret is physically centered
-    //
-    // HOW TO CALIBRATE:
-    //   1. Manually center the turret so it points straight forward
-    //   2. Run the TurretCenteringTool or read encoder voltage
-    //   3. Calculate: offset = (voltage / 3.3) * 360.0
-    //   4. Set TURRET_ENCODER_OFFSET to that value
-    //
-    // This offset is SUBTRACTED from raw encoder reading so that
-    // "turret centered" = "0 encoder position"
-    //
-    // CRITICAL: If this is wrong, ALL turret angles will be off by a constant amount!
-    public static double TURRET_ENCODER_OFFSET = 0.0;
+    // Minimum change threshold (turret degrees)
+    // Only update servo if the change exceeds this value (prevents noise/jitter)
+    public static double MIN_CHANGE_THRESHOLD = 0.5;
 
     // TURRET_TRACKING_OFFSET: Fine-tune adjustment for systematic aim error (turret degrees)
-    // Use this for small adjustments AFTER encoder is calibrated
+    // Use this for small adjustments to correct aim
     // Positive = shift aim right, Negative = shift aim left
     public static double TURRET_TRACKING_OFFSET = 0;
 
-    // Turret PID gains (operates in servo degrees)
-    // P=0.0035: Low gain for smooth tracking (may need increase if slow)
-    // I=0.0015: Small integral for steady-state error
-    // D=0.00030: Damping to prevent overshoot
-    public static PIDCoefficients TURRET_PID = new PIDCoefficients(0.0035, 0.0015, 0.00030);
-
-    // Target angle for turret tuning mode (turret degrees, not servo degrees)
-    // Adjust this via configurables to test turret PID at different positions
+    // Target angle for turret tuning mode (turret degrees)
+    // Adjust this via configurables to test turret at different positions
     public static double TURRET_TUNING_TARGET = 0.0;
-
-    // ==================== TURRET CONTROL THRESHOLDS ====================
-    public static double TURRET_TARGET_CHANGE_THRESHOLD = 0.5;  // Min degrees change to reset PID
-    public static double TURRET_DRIFT_THRESHOLD = 30.0;         // Degrees of drift before flagging
-    public static double TURRET_LIMIT_MARGIN = 30.0;            // Safety margin before hardware limits
-    public static double TURRET_POWER_LIMIT_NORMAL = 0.5;       // Normal max power
-    public static double TURRET_POWER_LIMIT_NEAR_EDGE = 0.3;    // Max power near hardware limits
 }

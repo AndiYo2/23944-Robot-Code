@@ -36,8 +36,7 @@ public class NamingConstants {
     }
 
     public static class Turret {
-        public static String turret = "turretServo";               // Continuous rotation servo, E3
-        public static String turretEncoder = "turretServoEncoder"; // E Analog 0/1?
+        public static String turret = "turretServo";  // Position servo, E3
     }
 
     public static class ColorSensor {
