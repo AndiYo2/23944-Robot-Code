@@ -5,14 +5,12 @@ import Constants.FieldMap;
 import Constants.LimelightConstants;
 import Constants.OdometryConstants;
 import Constants.RobotConstants;
-import Constants.RobotHardware;
-import Constants.TurretConstants;
+import utility.RobotHardware;
 import com.arcrobotics.ftclib.command.CommandOpMode;
 import com.arcrobotics.ftclib.command.button.GamepadButton;
 import com.arcrobotics.ftclib.command.button.Trigger;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
-import com.qualcomm.robotcore.hardware.HardwareMap;
 import subsystems.*;
 import utility.*;
 import utility.ShootingSequenceManager;
@@ -89,16 +87,31 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
         sequenceManager = new ShootingSequenceManager(spindexer, shooter);
         shootingValidator = new ShootingValidator(odometry, telemetry);
-        catalogManager = new CatalogManager(spindexer, intake, telemetry, robot.intakeSensorPair);
+        catalogManager = new CatalogManager(
+                spindexer,
+                intake,
+                telemetry,
+                robot.intakeSensorPair1,
+                robot.intakeSensorPair2,
+                robot.intakeSensorPair3
+        );
 
         register(intake, shooter, spindexer, limelight, turret, odometry);
     }
 
     protected void configureButtonBindings() {
-        // Intake controls
+        // Intake controls - blocked during active catalogging
         new Trigger(() -> gamepad1.left_trigger > RobotConstants.Controls.TRIGGER_THRESHOLD)
-                .whenActive(() -> intake.runIntake())
-                .whenInactive(() -> intake.stopIntake());
+                .whenActive(() -> {
+                    if (!catalogManager.isActive()) {
+                        intake.runIntake();
+                    }
+                })
+                .whenInactive(() -> {
+                    if (!catalogManager.isActive()) {
+                        intake.stopIntake();
+                    }
+                });
 
         // Shooting controls (with zone validation)
         new Trigger(() -> gamepad1.right_trigger > RobotConstants.Controls.TRIGGER_THRESHOLD)
@@ -313,11 +326,17 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
         // CATALOGING section
         telemetry.addLine("=== CATALOGING ===");
-        telemetry.addData("  Catalog State", this.catalogManager.getState());
-        DualBallDetector.Result result = robot.intakeSensorPair.detectBall();
-        telemetry.addData("  Ball Present", result.ballPresent);
-        telemetry.addData("  Ball Color", result.color);
-        telemetry.addData("  Confidence", String.format("%.1f%%", result.confidence * 100));
+        telemetry.addData("  State", catalogManager.getState());
+        telemetry.addData("  Status", catalogManager.getStatus());
+        DualBallDetector.Result r1 = robot.intakeSensorPair1.detectBall();
+        DualBallDetector.Result r2 = robot.intakeSensorPair2.detectBall();
+        DualBallDetector.Result r3 = robot.intakeSensorPair3.detectBall();
+        telemetry.addData("  Sensor1 (Spindexer)", String.format("%s %s %.0f%%",
+                r1.ballPresent ? "BALL" : "----", r1.color, r1.confidence * 100));
+        telemetry.addData("  Sensor2 (Middle)", String.format("%s %s %.0f%%",
+                r2.ballPresent ? "BALL" : "----", r2.color, r2.confidence * 100));
+        telemetry.addData("  Sensor3 (Outer)", String.format("%s %s %.0f%%",
+                r3.ballPresent ? "BALL" : "----", r3.color, r3.confidence * 100));
         telemetry.addLine("");
 
         // ODOMETRY section

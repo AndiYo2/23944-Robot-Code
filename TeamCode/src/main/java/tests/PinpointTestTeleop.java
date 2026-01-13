@@ -9,7 +9,7 @@ import subsystems.MecanumDrive;
 import Constants.FieldMap;
 import Constants.OdometryConstants;
 import Constants.RobotConstants;
-import Constants.RobotHardware;
+import utility.RobotHardware;
 
 @TeleOp (name = "FieldPositionTesting", group = "Tests")
 public class PinpointTestTeleop extends CommandOpMode {

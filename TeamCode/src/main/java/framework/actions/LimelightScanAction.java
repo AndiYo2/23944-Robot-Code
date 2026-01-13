@@ -3,7 +3,7 @@ package framework.actions;
 import framework.Action;
 import subsystems.Limelight;
 import Constants.EnumConstants;
-import Constants.RobotHardware;
+import utility.RobotHardware;
 
 /**
  * Action that toggles the limelight to scanning mode and waits for motif detection.

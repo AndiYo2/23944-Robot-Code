@@ -3,7 +3,7 @@ package teleOps;
 import Constants.EnumConstants;
 import Constants.OdometryConstants;
 import Constants.RobotConstants;
-import Constants.RobotHardware;
+import utility.RobotHardware;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 @TeleOp

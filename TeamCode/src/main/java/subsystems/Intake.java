@@ -2,7 +2,7 @@ package subsystems;
 
 import com.arcrobotics.ftclib.command.Subsystem;
 import Constants.EnumConstants.IntakeState;
-import Constants.RobotHardware;
+import utility.RobotHardware;
 
 public class Intake implements Subsystem {
     RobotHardware robot;

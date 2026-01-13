@@ -5,7 +5,7 @@ import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import Constants.EnumConstants;
 import Constants.LimelightConstants;
-import Constants.RobotHardware;
+import utility.RobotHardware;
 
 import java.util.List;
 

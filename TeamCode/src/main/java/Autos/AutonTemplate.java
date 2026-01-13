@@ -12,9 +12,8 @@ import subsystems.Odometry;
 import subsystems.Intake;
 import subsystems.Spindexer;
 import utility.CatalogManager;
-import Constants.RobotConstants;
 import Constants.OdometryConstants;
-import Constants.RobotHardware;
+import utility.RobotHardware;
 import utility.ShootingSequenceManager;
 import utility.ShootingValidator;
 
@@ -80,7 +79,14 @@ public abstract class AutonTemplate extends OpMode {
         turret.setLimelightSubsystem(limelight);
         sequenceManager = new ShootingSequenceManager(spindexer, shooter);
         shootingValidator = new ShootingValidator(odometry, telemetry);
-        catalogManager = new CatalogManager(spindexer, intake, telemetry, robotHardware.intakeSensorPair);
+        catalogManager = new CatalogManager(
+                spindexer,
+                intake,
+                telemetry,
+                robotHardware.intakeSensorPair1,
+                robotHardware.intakeSensorPair2,
+                robotHardware.intakeSensorPair3
+        );
 
 
 

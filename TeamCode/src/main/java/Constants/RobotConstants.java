@@ -21,6 +21,12 @@ public class RobotConstants {
 
         // Timeout for rotation state (spindexer stuck)
         public static double ROTATION_TIMEOUT_SECONDS = 3.0;
+
+        // Time to run intake per ball during catalogging
+        public static double BALL_INTAKE_TIME = 0.5;
+
+        // Time to wait for spindexer to reach position
+        public static double POSITION_TIMEOUT_SECONDS = 1.0;
     }
 
     public static class Encoder {

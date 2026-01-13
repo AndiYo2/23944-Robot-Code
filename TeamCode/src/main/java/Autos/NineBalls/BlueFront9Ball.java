@@ -9,7 +9,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import framework.AutonSequence;
 import Constants.EnumConstants;
 import Constants.RobotConstants;
-import Constants.RobotHardware;
+import utility.RobotHardware;
 
 @Autonomous(name = "BlueFront9Ball", group = "NineBall")
 public class BlueFront9Ball extends AutonTemplate {

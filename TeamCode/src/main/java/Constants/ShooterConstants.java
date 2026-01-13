@@ -77,4 +77,65 @@ public class ShooterConstants {
         public static double F = 10;
         public static double TUNING_VELOCITY = 2625.0;
     }
+
+    // ==================== FEEDFORWARD VELOCITY CONTROL ====================
+    // Custom feedforward + PID for fast velocity recovery after shots.
+    // All values tunable via panels.
+
+    /**
+     * Static friction compensation (kS).
+     * Minimum power to overcome friction and start flywheel moving.
+     * Find by slowly increasing power from 0 until flywheel starts spinning.
+     */
+    public static double kS = 0.05;
+
+    /**
+     * Velocity gain (kV).
+     * Maps target velocity to motor power. Units: power per (tick/sec).
+     * Find by running motor at power=1.0, measure max velocity, kV = 1.0/maxVelocity.
+     * Example: max velocity 2800 ticks/sec -> kV = 0.000357
+     */
+    public static double kV = 0.00035;
+
+    /**
+     * Acceleration gain (kA).
+     * Compensates for flywheel inertia during recovery. Critical for fast recovery.
+     * Start small (0.00001), increase until recovery is fast without overshoot.
+     */
+    public static double kA = 0.00001;
+
+    /**
+     * Proportional gain for velocity error correction.
+     * Reacts to current error. Tune after feedforward is working.
+     */
+    public static double VELOCITY_kP = 0.0001;
+
+    /**
+     * Integral gain for steady-state error elimination.
+     * Accumulates error over time. Start very small (0.0001).
+     */
+    public static double VELOCITY_kI = 0.0002;
+
+    /**
+     * Derivative gain for damping.
+     * Reacts to rate of change. Usually not needed for velocity control.
+     */
+    public static double VELOCITY_kD = 0.0;
+
+    /**
+     * Maximum integral accumulation to prevent windup.
+     */
+    public static double INTEGRAL_MAX = 0.3;
+
+    /**
+     * Maximum acceleration demand (ticks/sec^2).
+     * Physical limit based on motor torque and flywheel inertia.
+     */
+    public static double MAX_ACCELERATION = 15000.0;
+
+    /**
+     * Velocity tolerance for "at target" check (ticks/sec).
+     * Shooter is ready when within this tolerance.
+     */
+    public static double VELOCITY_TOLERANCE = 50.0;
 }

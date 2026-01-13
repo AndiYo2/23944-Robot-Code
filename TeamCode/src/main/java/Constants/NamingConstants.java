@@ -40,8 +40,12 @@ public class NamingConstants {
     }
 
     public static class ColorSensor {
-        public static String intakeSensor1 = "intakeSensor1"; // First intake sensor
-        public static String intakeSensor2 = "intakeSensor2"; // Second intake sensor (offset from first)
+        public static String intakeSensor1 = "intakeSensor1"; // E1
+        public static String intakeSensor2 = "intakeSensor2";  // E2
+        public static String intakeSensor3 = "intakeSensor3"; // E?
+        public static String intakeSensor4 = "intakeSensor4";  // E?
+        public static String intakeSensor5 = "intakeSensor5"; // E?
+        public static String intakeSensor6 = "intakeSensor6";  // E?
     }
 
     public static class Limelight {

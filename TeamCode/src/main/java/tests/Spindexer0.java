@@ -2,7 +2,7 @@ package tests;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import Constants.RobotHardware;
+import utility.RobotHardware;
 
 /**
  * Spindexer Test - Simple test for spindexer servo.

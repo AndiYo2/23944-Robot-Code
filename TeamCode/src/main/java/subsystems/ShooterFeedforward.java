@@ -12,7 +12,7 @@ import Constants.EnumConstants.FlickState;
 import Constants.FieldMap;
 import Constants.LimelightConstants;
 import Constants.RobotConstants;
-import Constants.RobotHardware;
+import utility.RobotHardware;
 import Constants.ShooterConstants;
 import Constants.ShooterFeedforwardConstants;
 

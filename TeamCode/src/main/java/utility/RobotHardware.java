@@ -1,4 +1,4 @@
-package Constants;
+package utility;
 
 import com.bylazar.telemetry.PanelsTelemetry;
 import com.bylazar.telemetry.TelemetryManager;
@@ -11,14 +11,11 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import utility.DualBallDetector;
 import Constants.NamingConstants;
 import Constants.OdometryConstants;
-import Constants.SpindexerConstants;
 
 public class RobotHardware {
 
@@ -49,7 +46,15 @@ public class RobotHardware {
     // Intake sensors (2 sensors offset at first spindexer slot to avoid ball holes)
     public ColorSensor intakeSensor1;
     public ColorSensor intakeSensor2;
-    public DualBallDetector intakeSensorPair;
+    public DualBallDetector intakeSensorPair1;
+
+    public ColorSensor intakeSensor3;
+    public ColorSensor intakeSensor4;
+    public DualBallDetector intakeSensorPair2;
+
+    public ColorSensor intakeSensor5;
+    public ColorSensor intakeSensor6;
+    public DualBallDetector intakeSensorPair3;
 
 
     // ******************* SPINDEXER ******************* //
@@ -140,7 +145,15 @@ public class RobotHardware {
         // Intake sensors (2 offset sensors at first spindexer slot to avoid ball holes)
         intakeSensor1 = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.intakeSensor1);
         intakeSensor2 = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.intakeSensor2);
-        intakeSensorPair = new DualBallDetector(intakeSensor1, intakeSensor2);
+        intakeSensorPair1 = new DualBallDetector(intakeSensor1, intakeSensor2);
+
+        intakeSensor3 = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.intakeSensor3);
+        intakeSensor4 = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.intakeSensor4);
+        intakeSensorPair2 = new DualBallDetector(intakeSensor3, intakeSensor4);
+
+        intakeSensor5 = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.intakeSensor5);
+        intakeSensor6 = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.intakeSensor6);
+        intakeSensorPair3 = new DualBallDetector(intakeSensor5, intakeSensor6);
 
 
         // ******************* SPINDEXER ******************* //

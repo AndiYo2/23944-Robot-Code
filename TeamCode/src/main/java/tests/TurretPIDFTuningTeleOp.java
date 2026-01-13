@@ -4,7 +4,7 @@ import com.bylazar.configurables.PanelsConfigurables;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import Constants.RobotHardware;
+import utility.RobotHardware;
 import Constants.TurretConstants;
 
 /**

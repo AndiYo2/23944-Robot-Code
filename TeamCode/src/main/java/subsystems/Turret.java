@@ -11,7 +11,7 @@ import Constants.EnumConstants;
 import Constants.EnumConstants.FieldState;
 import Constants.FieldMap;
 import Constants.LimelightConstants;
-import Constants.RobotHardware;
+import utility.RobotHardware;
 import Constants.TurretConstants;
 
 import static Constants.TurretConstants.CENTER;

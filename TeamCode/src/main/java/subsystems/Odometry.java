@@ -9,7 +9,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import Constants.EnumConstants.FieldState;
 import Constants.FieldMap;
 import Constants.RobotConstants;
-import Constants.RobotHardware;
+import utility.RobotHardware;
 
 public class Odometry implements Subsystem {
     // Hardware reference

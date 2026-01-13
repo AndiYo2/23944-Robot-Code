@@ -4,7 +4,7 @@ import com.arcrobotics.ftclib.command.Subsystem;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import Constants.EnumConstants;
 import Constants.EnumConstants.FlickState;
-import Constants.RobotHardware;
+import utility.RobotHardware;
 import Constants.SpindexerConstants;
 import utility.SpindexerAndMotifStatus;
 

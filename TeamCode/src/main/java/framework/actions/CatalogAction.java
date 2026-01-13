@@ -27,7 +27,7 @@ public class CatalogAction implements Action {
 
     @Override
     public boolean isComplete() {
-        return catalogManager.getState() == EnumConstants.CatalogingCases.Idle;
+        return catalogManager.getState() == EnumConstants.CatalogingCases.IDLE;
     }
 
     @Override
