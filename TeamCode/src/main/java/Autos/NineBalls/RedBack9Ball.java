@@ -31,26 +31,31 @@ public class RedBack9Ball extends AutonTemplate {
         shootToFirst = follower.pathBuilder()
                 .addPath(new BezierCurve(startPose, firstPickupControlPoint, firstPickupPose))
                 .setLinearHeadingInterpolation(startPose.getHeading(), firstPickupPose.getHeading())
+                .setGlobalDeceleration()
                 .build();
 
         firstToShoot = follower.pathBuilder()
                 .addPath(new BezierLine(firstPickupPose, firstShootPose))
                 .setLinearHeadingInterpolation(firstPickupPose.getHeading(), firstShootPose.getHeading())
+                .setGlobalDeceleration()
                 .build();
 
         shootToSecond = follower.pathBuilder()
                 .addPath(new BezierCurve(firstShootPose, secondPickupControlPoint, secondPickupPose))
                 .setLinearHeadingInterpolation(firstShootPose.getHeading(), secondPickupPose.getHeading())
+                .setGlobalDeceleration()
                 .build();
 
         secondToShoot = follower.pathBuilder()
                 .addPath(new BezierLine(secondPickupPose, secondShootPose))
                 .setLinearHeadingInterpolation(secondPickupPose.getHeading(), secondShootPose.getHeading())
+                .setGlobalDeceleration()
                 .build();
 
         shootToStop = follower.pathBuilder()
                 .addPath(new BezierLine(secondShootPose, stopPose))
                 .setLinearHeadingInterpolation(secondShootPose.getHeading(), stopPose.getHeading())
+                .setGlobalDeceleration()
                 .build();
     }
 

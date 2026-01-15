@@ -42,6 +42,9 @@ public class Shooter implements Subsystem {
     private double lastVelocityError = 0;
     private double lastVelocity = 0;
 
+    // Default loop time when dt calculation fails (seconds)
+    private static final double DEFAULT_LOOP_TIME = 0.02;
+
     // Telemetry data for tuning
     private double lastFfOutput = 0;
     private double lastPidOutput = 0;
@@ -80,6 +83,9 @@ public class Shooter implements Subsystem {
     }
 
     public double getDistanceToTarget() {
+        if (turret == null) {
+            return ShooterConstants.DEFAULT_DISTANCE;
+        }
         double[] turretPos = turret.getTurretFieldPosition();
         Pose goalPosition = FieldMap.getGoalPosition();
 
@@ -129,6 +135,10 @@ public class Shooter implements Subsystem {
             if (distance >= dist1 && distance <= dist2) {
                 double vel1 = table[i][1];
                 double vel2 = table[i + 1][1];
+                // Avoid division by zero if table entries have same distance
+                if (dist2 == dist1) {
+                    return vel1;
+                }
                 double ratio = (distance - dist1) / (dist2 - dist1);
                 return vel1 + (vel2 - vel1) * ratio;
             }
@@ -241,7 +251,7 @@ public class Shooter implements Subsystem {
         loopTimer.reset();
 
         // Prevent division by zero on first loop
-        if (dt <= 0) dt = 0.02;
+        if (dt <= 0) dt = DEFAULT_LOOP_TIME;
 
         // Update target velocity from distance if not in manual mode
         if (!manualVelocityMode) {

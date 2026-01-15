@@ -35,6 +35,29 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
 
 
+    /**
+     * Consolidated initialization for alliance-specific TeleOp.
+     * Call this from subclasses with the alliance color and fallback start position.
+     *
+     * @param allianceColor the alliance color (Blue or Red)
+     * @param fallbackStartPosition the start position to use if no auton ran
+     */
+    protected void initForAlliance(EnumConstants.AllianceColor allianceColor,
+                                   org.firstinspires.ftc.robotcore.external.navigation.Pose2D fallbackStartPosition) {
+        // Set alliance color BEFORE initHardware so it can use the correct settings
+        RobotConstants.Robot.allianceColor = allianceColor;
+        initHardware(false);
+
+        // Only set position if no auton ran (endingAutonPose is null)
+        // If auton ran, initHardware already set the position from endingAutonPose
+        if (OdometryConstants.endingAutonPose == null) {
+            robot.pinpoint.setPosition(fallbackStartPosition);
+            robot.pinpoint.update();
+        }
+
+        configureButtonBindings();
+    }
+
     protected void initHardware(boolean isAuto) {
         driverGamepad = new GamepadEx(gamepad1);
         robot.init(hardwareMap, driverGamepad);
@@ -91,10 +114,12 @@ abstract public class TeleOpTemplate extends CommandOpMode {
                 spindexer,
                 intake,
                 telemetry,
-                robot.intakeSensorPair1,
-                robot.intakeSensorPair2,
-                robot.intakeSensorPair3
+                robot.intakeSensorPair,
+                robot.transferSensorPair,
+                robot.rampSensorPair
         );
+        // Link sequence manager so catalogManager can check shooting mode
+        catalogManager.setSequenceManager(sequenceManager);
 
         register(intake, shooter, spindexer, limelight, turret, odometry);
     }
@@ -114,18 +139,19 @@ abstract public class TeleOpTemplate extends CommandOpMode {
                 });
 
         // Shooting controls (with zone validation)
+        // Right trigger: starts sequence or triggers shot in Fast mode
         new Trigger(() -> gamepad1.right_trigger > RobotConstants.Controls.TRIGGER_THRESHOLD)
-                .whenActive(() -> attemptShoot());
+                .whenActive(() -> attemptShootingAction());
 
         // Drive controls
         new GamepadButton(driverGamepad, GamepadKeys.Button.START)
                 .whenPressed(() -> mecanumDrive.resetYaw());
         new GamepadButton(driverGamepad, GamepadKeys.Button.B)
                 .whenPressed(() -> mecanumDrive.toggleSlowMode());
+        new GamepadButton(driverGamepad, GamepadKeys.Button.A)
+                .whenPressed(() -> sequenceManager.toggleMode());
         new GamepadButton(driverGamepad, GamepadKeys.Button.X)
                 .whenPressed(() -> spindexer.triggerFlick());
-        new GamepadButton(driverGamepad, GamepadKeys.Button.A)
-                .whenPressed(() -> attemptShootingSequence());
         new GamepadButton(driverGamepad, GamepadKeys.Button.Y)
                 .whenPressed(() -> catalogManager.initiateCataloging());
 
@@ -196,34 +222,28 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     }
 
     /**
-     * Attempts to shoot with zone validation
-     * Checks if robot is in shooting zone or override is active
+     * Handles shooting action based on current mode and state.
+     * - If sequence idle: starts new sequence
+     * - If Fast mode and ready to shoot: triggers the shot
      */
-    private void attemptShoot() {
+    private void attemptShootingAction() {
         // Override: Click right joystick (right_stick_button) to shoot outside zone
         boolean overrideRequested = gamepad1.right_stick_button;
 
-        if (shootingValidator.canShoot(overrideRequested)) {
-            shooter.triggerShot();
-        } else {
+        if (!shootingValidator.canShoot(overrideRequested)) {
             // Shooting blocked - provide haptic feedback
             gamepad1.rumble(200);
+            return;
         }
-    }
 
-    /**
-     * Attempts to start shooting sequence with zone validation
-     */
-    private void attemptShootingSequence() {
-        // Override: Click right joystick (right_stick_button) to shoot outside zone
-        boolean overrideRequested = gamepad1.right_stick_button;
-
-        if (shootingValidator.canShoot(overrideRequested)) {
-            sequenceManager.startShootingSequence();
-        } else {
-            // Shooting blocked - provide haptic feedback
-            gamepad1.rumble(200);
+        if (sequenceManager.isIdle()) {
+            // Start new sequence
+            sequenceManager.startSequence();
+        } else if (sequenceManager.isReadyToShoot()) {
+            // Fast mode: trigger shot when ready
+            sequenceManager.triggerShot();
         }
+        // If executing but not ready (rotating, etc.), ignore trigger
     }
 
     /**
@@ -251,6 +271,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
 
     private void updateSubsystems() {
+        // Manually call periodic() to ensure state machines run
         spindexer.periodic();
         shooter.periodic();
         sequenceManager.update();
@@ -297,11 +318,12 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
         // SHOOTING section
         telemetry.addLine("=== SHOOTING ===");
+        telemetry.addData("  Shooting Mode", sequenceManager.getMode());
         telemetry.addData("  Field Zone", odometry.getFieldState());
         telemetry.addData("  Shooting Status", shootingValidator.getStatus(overrideRequested));
-        telemetry.addData("  Executing Sequence", sequenceManager.isExecuting());
-        if (sequenceManager.isExecuting()) {
-            telemetry.addData("  Sequence Status", sequenceManager.getStatus());
+        telemetry.addData("  Sequence State", sequenceManager.getStatus());
+        if (sequenceManager.isReadyToShoot()) {
+            telemetry.addData("  >> READY TO SHOOT <<", "Press RT to fire!");
         }
         telemetry.addLine("");
 
@@ -328,9 +350,9 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         telemetry.addLine("=== CATALOGING ===");
         telemetry.addData("  State", catalogManager.getState());
         telemetry.addData("  Status", catalogManager.getStatus());
-        DualBallDetector.Result r1 = robot.intakeSensorPair1.detectBall();
-        DualBallDetector.Result r2 = robot.intakeSensorPair2.detectBall();
-        DualBallDetector.Result r3 = robot.intakeSensorPair3.detectBall();
+        DualBallDetector.Result r1 = robot.intakeSensorPair.detectBall();
+        DualBallDetector.Result r3 = robot.transferSensorPair.detectBall();
+        DualBallDetector.Result r2 = robot.rampSensorPair.detectBall();
         telemetry.addData("  Sensor1 (Spindexer)", String.format("%s %s %.0f%%",
                 r1.ballPresent ? "BALL" : "----", r1.color, r1.confidence * 100));
         telemetry.addData("  Sensor2 (Middle)", String.format("%s %s %.0f%%",
@@ -355,8 +377,10 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         // SEQUENCE DEBUG section (only when sequence executing)
         if (sequenceManager.isExecuting()) {
             telemetry.addLine("=== SEQUENCE DEBUG ===");
+            telemetry.addData("  State", sequenceManager.getState());
             telemetry.addData("  Done Rotating", spindexer.isDoneRotating());
             telemetry.addData("  Ready to Flip", spindexer.isReadyToFlip());
+            telemetry.addData("  Balls Remaining", SpindexerAndMotifStatus.SpindexerPattern.getBallCount());
             telemetry.addLine("");
         }
 

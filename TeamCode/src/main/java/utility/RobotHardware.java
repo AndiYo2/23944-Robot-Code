@@ -46,15 +46,15 @@ public class RobotHardware {
     // Intake sensors (2 sensors offset at first spindexer slot to avoid ball holes)
     public ColorSensor intakeSensor1;
     public ColorSensor intakeSensor2;
-    public DualBallDetector intakeSensorPair1;
+    public DualBallDetector intakeSensorPair;
 
-    public ColorSensor intakeSensor3;
-    public ColorSensor intakeSensor4;
-    public DualBallDetector intakeSensorPair2;
+    public ColorSensor rampSensor1;
+    public ColorSensor rampSensor2;
+    public DualBallDetector rampSensorPair;
 
-    public ColorSensor intakeSensor5;
-    public ColorSensor intakeSensor6;
-    public DualBallDetector intakeSensorPair3;
+    public ColorSensor transferSensor1;
+    public ColorSensor transferSensor2;
+    public DualBallDetector transferSensorPair;
 
 
     // ******************* SPINDEXER ******************* //
@@ -69,14 +69,25 @@ public class RobotHardware {
     public GamepadEx driver;
     public TelemetryManager telemetryManager;
     private HardwareMap hardwareMap;
-    private static RobotHardware instance = null;
-    public boolean enabled = false;
 
+    // Thread-safe singleton pattern
+    private static volatile RobotHardware instance = null;
+    private static final Object lock = new Object();
 
+    // Volatile to ensure visibility across threads
+    public volatile boolean enabled = false;
 
+    /**
+     * Returns the singleton instance of RobotHardware.
+     * Thread-safe implementation using double-checked locking.
+     */
     public static RobotHardware getInstance() {
         if (instance == null) {
-            instance = new RobotHardware();
+            synchronized (lock) {
+                if (instance == null) {
+                    instance = new RobotHardware();
+                }
+            }
         }
         instance.enabled = true;
         return instance;
@@ -145,15 +156,15 @@ public class RobotHardware {
         // Intake sensors (2 offset sensors at first spindexer slot to avoid ball holes)
         intakeSensor1 = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.intakeSensor1);
         intakeSensor2 = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.intakeSensor2);
-        intakeSensorPair1 = new DualBallDetector(intakeSensor1, intakeSensor2);
+        intakeSensorPair = new DualBallDetector(intakeSensor1, intakeSensor2);
 
-        intakeSensor3 = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.intakeSensor3);
-        intakeSensor4 = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.intakeSensor4);
-        intakeSensorPair2 = new DualBallDetector(intakeSensor3, intakeSensor4);
+        rampSensor1 = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.rampSensor1);
+        rampSensor2 = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.rampSensor2);
+        rampSensorPair = new DualBallDetector(rampSensor1, rampSensor2);
 
-        intakeSensor5 = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.intakeSensor5);
-        intakeSensor6 = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.intakeSensor6);
-        intakeSensorPair3 = new DualBallDetector(intakeSensor5, intakeSensor6);
+        transferSensor1 = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.transferSensor1);
+        transferSensor2 = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.transferSensor2);
+        transferSensorPair = new DualBallDetector(transferSensor1,transferSensor2);
 
 
         // ******************* SPINDEXER ******************* //
@@ -178,6 +189,10 @@ public class RobotHardware {
         limelight.start();
 
         // ******************* VOLTAGE SENSOR ******************* //
-        voltageSensor = hardwareMap.voltageSensor.iterator().next();
+        if (hardwareMap.voltageSensor.iterator().hasNext()) {
+            voltageSensor = hardwareMap.voltageSensor.iterator().next();
+        } else {
+            voltageSensor = null; // Will need null check when used
+        }
     }
 }

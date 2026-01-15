@@ -32,6 +32,7 @@ public class Constants {
         .mass(robotMass)
         .forwardZeroPowerAcceleration(-24.35247829)
         .lateralZeroPowerAcceleration(-58.772098)
+            .useSecondaryDrivePIDF(true)
     .translationalPIDFCoefficients(new PIDFCoefficients(
             0.1,
             0,
@@ -47,12 +48,20 @@ public class Constants {
         .drivePIDFCoefficients(new FilteredPIDFCoefficients(
                 0.01,
                 0,
-                0.00001,
+                0.0067,
                 0.6,
                 0.01
 ))
+
+            .secondaryDrivePIDFCoefficients(new FilteredPIDFCoefficients(
+                    0.003,
+                    0,
+                    0.0005,
+                    0.6,
+                    0
+            ))
         ;
-    public static double brakingStrength = 1.05;
+    public static double brakingStrength = 1.25;
     public static double brakingStart = 1;
     public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, brakingStrength, brakingStart);
     //bs 15
@@ -67,7 +76,9 @@ public class Constants {
             .rightFrontMotorDirection(DcMotorEx.Direction.FORWARD)
             .rightRearMotorDirection(DcMotorEx.Direction.FORWARD)
             .xVelocity(xVelocity)
+
             .yVelocity(yVelocity);
+
 
     public static PinpointConstants localizerConstants = new PinpointConstants()
             .forwardPodY(0)  // Centered by design in CAD
@@ -83,6 +94,7 @@ public class Constants {
                 .pinpointLocalizer(localizerConstants)
                 .pathConstraints(pathConstraints)
                 .mecanumDrivetrain(driveConstants)
+
 
                 .build();
     }

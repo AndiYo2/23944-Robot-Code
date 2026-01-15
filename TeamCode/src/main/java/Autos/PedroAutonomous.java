@@ -66,7 +66,7 @@ public class PedroAutonomous extends OpMode {
                                     new Pose(22.500, 38.000)
                             )
                     ).setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(180))
-
+                    .setGlobalDeceleration()
                     .build();
 
             firstToShoot = follower.pathBuilder().addPath(
@@ -76,7 +76,7 @@ public class PedroAutonomous extends OpMode {
                                     new Pose(56.500, 10.500)
                             )
                     ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(90))
-
+                    .setGlobalDeceleration()
                     .build();
 
             shootToSecond = follower.pathBuilder().addPath(
@@ -86,7 +86,7 @@ public class PedroAutonomous extends OpMode {
                                     new Pose(22.500, 62.000)
                             )
                     ).setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(180))
-
+                    .setGlobalDeceleration()
                     .build();
 
             secondToGate1 = follower.pathBuilder().addPath(
@@ -96,7 +96,7 @@ public class PedroAutonomous extends OpMode {
                                     new Pose(22.500, 70.500)
                             )
                     ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(90))
-
+                    .setGlobalDeceleration()
                     .build();
 
             secondToGate2 = follower.pathBuilder().addPath(
@@ -106,7 +106,7 @@ public class PedroAutonomous extends OpMode {
                                     new Pose(16.500, 70.500)
                             )
                     ).setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(90))
-
+                    .setGlobalDeceleration()
                     .build();
 
             gateToShoot = follower.pathBuilder().addPath(
@@ -116,7 +116,7 @@ public class PedroAutonomous extends OpMode {
                                     new Pose(57.500, 85.000)
                             )
                     ).setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(180))
-
+                    .setGlobalDeceleration()
                     .build();
 
             Path7 = follower.pathBuilder().addPath(
@@ -126,7 +126,7 @@ public class PedroAutonomous extends OpMode {
                                     new Pose(22.500, 85.000)
                             )
                     ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
-
+                    .setGlobalDeceleration()
                     .build();
 
             Path8 = follower.pathBuilder().addPath(
@@ -136,7 +136,7 @@ public class PedroAutonomous extends OpMode {
                                     new Pose(57.500, 85.000)
                             )
                     ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(135))
-
+                    .setGlobalDeceleration()
                     .build();
         }
     }

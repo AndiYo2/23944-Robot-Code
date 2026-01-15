@@ -45,31 +45,37 @@ public class BlueBackAutonCorner extends AutonTemplate {
         firstToShoot = follower.pathBuilder()
                 .addPath(new BezierLine(firstPickupPose, firstShootPose))
                 .setLinearHeadingInterpolation(firstPickupPose.getHeading(), firstShootPose.getHeading())
+                .setGlobalDeceleration()
                 .build();
 
         shootToSecondOne = follower.pathBuilder()
                 .addPath(new BezierLine(firstShootPose, secondPickupPose1))
                 .setLinearHeadingInterpolation(firstShootPose.getHeading(), secondPickupPose1.getHeading())
+                .setGlobalDeceleration()
                 .build();
 
         shootToSecondTwo = follower.pathBuilder()
                 .addPath(new BezierLine(secondPickupPose1, secondPickupPose2))
                 .setLinearHeadingInterpolation(secondPickupPose1.getHeading(), secondPickupPose2.getHeading())
+                .setGlobalDeceleration()
                 .build();
 
         shootToSecondThree = follower.pathBuilder()
                 .addPath(new BezierLine(secondPickupPose2, secondPickupPose3))
                 .setLinearHeadingInterpolation(secondPickupPose2.getHeading(), secondPickupPose3.getHeading())
+                .setGlobalDeceleration()
                 .build();
 
         secondToShoot = follower.pathBuilder()
                 .addPath(new BezierCurve(secondPickupPose3, secondShootPoseControlPoint, secondShootPose))
                 .setLinearHeadingInterpolation(secondPickupPose3.getHeading(), secondShootPose.getHeading())
+                .setGlobalDeceleration()
                 .build();
 
         secondShootToStop = follower.pathBuilder()
                 .addPath(new BezierLine(secondShootPose, endPose))
                 .setLinearHeadingInterpolation(secondShootPose.getHeading(), endPose.getHeading())
+                .setGlobalDeceleration()
                 .build();
     }
 

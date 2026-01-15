@@ -23,6 +23,7 @@ public class Test extends AutonTemplate {
         startToEnd = follower.pathBuilder()
                 .addPath(new BezierLine(startPose, stopPose))
                 .setLinearHeadingInterpolation(startPose.getHeading(), stopPose.getHeading())
+                .setGlobalDeceleration()
                 .build();
 
     }

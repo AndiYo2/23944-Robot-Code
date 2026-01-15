@@ -29,4 +29,7 @@ public class OdometryConstants {
     public static double RED_GOAL_Y = 141.0;
 
     public static Pose endingAutonPose;
+
+    public static double brakingStart = 1;
+    public static double brakingStrength = 1;
 }

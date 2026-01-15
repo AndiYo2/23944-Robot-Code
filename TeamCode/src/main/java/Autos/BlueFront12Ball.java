@@ -36,47 +36,56 @@ public class BlueFront12Ball extends AutonTemplate {
         startToShoot = follower.pathBuilder()
                 .addPath(new BezierLine(startPose, shootPose))
                 .setLinearHeadingInterpolation(startPose.getHeading(), shootPose.getHeading())
+                .setGlobalDeceleration()
                 .build();
 
         shootToFirst = follower.pathBuilder()
                 .addPath(new BezierCurve(shootPose, secondPickupControlPoint, secondPickupPose))
                 .setLinearHeadingInterpolation(shootPose.getHeading(), secondPickupPose.getHeading())
+                .setGlobalDeceleration()
                 .build();
 
         gateUnload = follower.pathBuilder()
                 .addPath(new BezierCurve(secondPickupPose, gateControlPose, gatePose))
                 .setLinearHeadingInterpolation(secondPickupPose.getHeading(), gatePose.getHeading())
+                .setGlobalDeceleration()
                 .build();
 
         firstToShoot = follower.pathBuilder()
                 .addPath(new BezierCurve(gatePose, secondShootControlPoint, shootPose))
                 .setLinearHeadingInterpolation(gatePose.getHeading(), shootPose.getHeading())
+                .setGlobalDeceleration()
                 .build();
 
 
         shootToSecond = follower.pathBuilder()
                 .addPath(new BezierCurve(shootPose, firstPickupControlPoint, firstPickupPose))
                 .setLinearHeadingInterpolation(shootPose.getHeading(), firstPickupPose.getHeading())
+                .setGlobalDeceleration()
                 .build();
 
         secondToShoot = follower.pathBuilder()
                 .addPath(new BezierLine(firstPickupPose, shootPose))
                 .setLinearHeadingInterpolation(firstPickupPose.getHeading(), shootPose.getHeading())
+                .setGlobalDeceleration()
                 .build();
 
         shootToThird = follower.pathBuilder()
                 .addPath(new BezierCurve(shootPose, thirdPickupControlPoint, thirdPickupPose))
                 .setLinearHeadingInterpolation(shootPose.getHeading(), thirdPickupPose.getHeading())
+                .setGlobalDeceleration()
                 .build();
 
         thirdToShoot = follower.pathBuilder()
                 .addPath(new BezierLine(thirdPickupPose, shootPose))
                 .setLinearHeadingInterpolation(thirdPickupPose.getHeading(), shootPose.getHeading())
+                .setGlobalDeceleration()
                 .build();
 
         shootToStop = follower.pathBuilder()
                 .addPath(new BezierLine(shootPose, stopPose))
                 .setLinearHeadingInterpolation(shootPose.getHeading(), stopPose.getHeading())
+                .setGlobalDeceleration()
                 .build();
     }
 

@@ -24,7 +24,8 @@ public class TurretConstants {
     // Servo range: 0-355 degrees (position 0 = 0°, position 1 = 355°)
     // Center position (0° turret) is at servo position 0.5 (~177.5° servo)
     public static final double SERVO_CENTER_POSITION = 0.5;
-    public static final double SERVO_DEGREES_PER_UNIT = 355.0;
+    // Reference SpindexerConstants for Axon servo full range (single source of truth)
+    public static final double SERVO_DEGREES_PER_UNIT = SpindexerConstants.SERVO_DEGREES_PER_UNIT;
     public static final double MIN_SERVO_POSITION = 0.0001;  // Never set to exactly 0
 
     // Servo-to-turret gear ratio (2.5:1)

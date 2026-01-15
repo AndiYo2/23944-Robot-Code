@@ -158,9 +158,13 @@ public class Turret implements Subsystem {
         return turretAngleDeg;
     }
 
+    /**
+     * Normalizes angle to [-180, 180] range using modulo arithmetic (O(1)).
+     */
     private double normalizeAngle(double degrees) {
-        while (degrees > 180) degrees -= 360;
-        while (degrees < -180) degrees += 360;
+        degrees = degrees % 360;
+        if (degrees > 180) degrees -= 360;
+        else if (degrees < -180) degrees += 360;
         return degrees;
     }
 

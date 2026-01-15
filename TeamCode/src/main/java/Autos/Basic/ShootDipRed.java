@@ -24,6 +24,7 @@ public class ShootDipRed extends AutonTemplate {
         shootToFirst = follower.pathBuilder()
                 .addPath(new BezierCurve(startPose, stopPose))
                 .setLinearHeadingInterpolation(startPose.getHeading(), stopPose.getHeading())
+                .setGlobalDeceleration()
                 .build();
     }
 

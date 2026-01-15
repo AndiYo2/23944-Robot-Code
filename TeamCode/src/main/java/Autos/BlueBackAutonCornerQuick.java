@@ -94,6 +94,7 @@ public class BlueBackAutonCornerQuick extends AutonTemplate {
                             new Pose(23, 37.5)
                     ))
                     .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(180))
+                    .setGlobalDeceleration()
                     .build();
 
             // Second path: straight line from first pickup to shoot position
@@ -103,6 +104,7 @@ public class BlueBackAutonCornerQuick extends AutonTemplate {
                             new Pose(56.5, 15.5)
                     ))
                     .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(135))
+                    .setGlobalDeceleration()
                     .build();
 
             // Third path: curved path from third pickup back to shoot
@@ -113,6 +115,7 @@ public class BlueBackAutonCornerQuick extends AutonTemplate {
                             new Pose(54.5, 13)
                     ))
                     .setLinearHeadingInterpolation(Math.toRadians(270), Math.toRadians(90))
+                    .setGlobalDeceleration()
                     .build();
         }
     }

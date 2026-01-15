@@ -258,24 +258,7 @@ public class Spindexer implements Subsystem {
     @Override
     public void periodic() {
         flipperStateMachinePeriodic();
-        //checkAndResetIfEmpty();
         robot.spindexerServo.setPosition(degreesToServoPosition(currentDegrees));
-    }
-
-    /**
-     * Automatically reset to 0° when no balls are in the spindexer.
-     */
-    private void checkAndResetIfEmpty() {
-        if (currentState != FlickState.Idle) return;
-
-        boolean isEmpty =
-            SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(0) == EnumConstants.BallColor.None &&
-            SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(1) == EnumConstants.BallColor.None &&
-            SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(2) == EnumConstants.BallColor.None;
-
-        if (isEmpty && currentDegrees != EMPTY_RESET_DEGREES) {
-            currentDegrees = EMPTY_RESET_DEGREES;
-        }
     }
 
     private void flipperStateMachinePeriodic() {

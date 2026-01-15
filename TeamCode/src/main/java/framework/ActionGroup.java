@@ -16,6 +16,7 @@ public class ActionGroup implements Action {
     private final ExecutionMode mode;
     private int currentActionIndex;
     private boolean started;
+    private final List<Boolean> actionEnded;  // Track which actions have had end() called
 
     /**
      * Creates an action group with the specified execution mode.
@@ -27,6 +28,7 @@ public class ActionGroup implements Action {
         this.mode = mode;
         this.currentActionIndex = 0;
         this.started = false;
+        this.actionEnded = new ArrayList<>();
     }
 
     /**
@@ -36,6 +38,7 @@ public class ActionGroup implements Action {
      */
     public void addAction(Action action) {
         actions.add(action);
+        actionEnded.add(false);
     }
 
     @Override
@@ -68,6 +71,7 @@ public class ActionGroup implements Action {
 
                 if (currentAction.isComplete()) {
                     currentAction.end();
+                    actionEnded.set(currentActionIndex, true);
                     currentActionIndex++;
 
                     // Start the next action if there is one
@@ -77,10 +81,16 @@ public class ActionGroup implements Action {
                 }
             }
         } else {
-            // PARALLEL: Update all actions
-            for (Action action : actions) {
+            // PARALLEL: Update all actions, call end() when each completes
+            for (int i = 0; i < actions.size(); i++) {
+                Action action = actions.get(i);
                 if (!action.isComplete()) {
                     action.update();
+                    // Check if action just completed and call end()
+                    if (action.isComplete() && !actionEnded.get(i)) {
+                        action.end();
+                        actionEnded.set(i, true);
+                    }
                 }
             }
         }
@@ -108,15 +118,13 @@ public class ActionGroup implements Action {
 
     @Override
     public void end() {
-        if (mode == ExecutionMode.PARALLEL) {
-            // End all actions that haven't been ended yet
-            for (Action action : actions) {
-                if (action.isComplete()) {
-                    action.end();
-                }
+        // End all actions that haven't had end() called yet (handles interruption/cleanup)
+        for (int i = 0; i < actions.size(); i++) {
+            if (!actionEnded.get(i)) {
+                actions.get(i).end();
+                actionEnded.set(i, true);
             }
         }
-        // For sequential mode, the last action's end() is already called in update()
     }
 
     @Override

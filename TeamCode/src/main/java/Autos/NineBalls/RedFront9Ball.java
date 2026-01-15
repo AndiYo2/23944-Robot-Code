@@ -30,31 +30,37 @@ public class RedFront9Ball extends AutonTemplate {
         startToShoot = follower.pathBuilder()
                 .addPath(new BezierLine(startPose, shootPose))
                 .setLinearHeadingInterpolation(startPose.getHeading(), shootPose.getHeading())
+                .setGlobalDeceleration()
                 .build();
 
         shootToFirst = follower.pathBuilder()
                 .addPath(new BezierCurve(shootPose, firstPickupControlPoint, firstPickupPose))
                 .setLinearHeadingInterpolation(shootPose.getHeading(), firstPickupPose.getHeading())
+                .setGlobalDeceleration()
                 .build();
 
         firstToShoot = follower.pathBuilder()
                 .addPath(new BezierLine(firstPickupPose, shootPose))
                 .setLinearHeadingInterpolation(firstPickupPose.getHeading(), shootPose.getHeading())
+                .setGlobalDeceleration()
                 .build();
 
         shootToSecond = follower.pathBuilder()
                 .addPath(new BezierCurve(shootPose, secondPickupControlPoint, secondPickupPose))
                 .setLinearHeadingInterpolation(shootPose.getHeading(), secondPickupPose.getHeading())
+                .setGlobalDeceleration()
                 .build();
 
         secondToShoot = follower.pathBuilder()
                 .addPath(new BezierLine(secondPickupPose, shootPose))
                 .setLinearHeadingInterpolation(secondPickupPose.getHeading(), shootPose.getHeading())
+                .setGlobalDeceleration()
                 .build();
 
         shootToStop = follower.pathBuilder()
                 .addPath(new BezierLine(shootPose, stopPose))
                 .setLinearHeadingInterpolation(shootPose.getHeading(), stopPose.getHeading())
+                .setGlobalDeceleration()
                 .build();
     }
 

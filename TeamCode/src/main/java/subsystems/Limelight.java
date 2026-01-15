@@ -9,6 +9,18 @@ import utility.RobotHardware;
 
 import java.util.List;
 
+/**
+ * Limelight subsystem for AprilTag detection and goal tracking.
+ *
+ * STATIC STATE MUTATIONS:
+ * This class modifies the following static fields in LimelightConstants:
+ * - motifPattern: Updated when a motif AprilTag (21-23) is detected
+ * - isLimelightDisabled: Set true after detection, false on reset/toggle
+ * - manuallySlowedForScan: Controls shooter speed during scanning
+ *
+ * These mutations allow state to persist across OpModes for Auto->TeleOp transitions.
+ * The scanForMotifTag() method is the primary source of these side effects.
+ */
 public class Limelight implements Subsystem {
     private RobotHardware robot;
     private LLResult latestResult;
@@ -34,7 +46,15 @@ public class Limelight implements Subsystem {
     }
 
     /**
-     * Scans for motif AprilTags (21, 22, 23) and updates pattern if found
+     * Scans for motif AprilTags (21, 22, 23) and updates pattern if found.
+     *
+     * SIDE EFFECTS (on detection):
+     * - LimelightConstants.motifPattern: Updated with detected pattern
+     * - LimelightConstants.isLimelightDisabled: Set to true
+     * - LimelightConstants.manuallySlowedForScan: Set to false
+     * - Limelight hardware: Stopped to conserve power
+     * - currentMode: Switched to GoalTracking
+     *
      * @return tag ID if detected (21-23), -1 if not detected
      */
     public int scanForMotifTag() {

@@ -28,33 +28,19 @@ public class RobotConstants {
         // Time to wait for spindexer to reach position
         public static double POSITION_TIMEOUT_SECONDS = 1.0;
     }
-
-    public static class Encoder {
-        public static double MAX_VOLTAGE = 3.3;
-        public static double FULL_ROTATION_DEGREES = 360.0;
-
-        public static double ANGLE_UPPER_BOUND = 180.0;
-        public static double ANGLE_LOWER_BOUND = -180.0;
-    }
-
     @Configurable
-    public static class PID {
-        // --- Delta Time Validation ---
-        public static double DT_MAX = 1.0;                         // Max delta time (skip if exceeded)
-        public static double DT_MIN = 0.001;                       // Min delta time (skip if below)
-        public static double DT_DEFAULT = 0.02;                    // Default delta time (50Hz)
+    public static class ShootingSequenceV2 {
+        // Time to wait after spindexer flipper extends before considering it done
+        public static double SPINDEXER_FLICK_TIME = 0.075;
 
-        // --- Anti-Windup ---
-        public static double INTEGRAL_CLAMP_MAX = 50.0;            // Upper integral windup limit
-        public static double INTEGRAL_CLAMP_MIN = -50.0;           // Lower integral windup limit
-    }
+        // Time to wait after spindexer flipper retracts before rotating
+        public static double POST_FLICK_SETTLE_TIME = 0.02;
 
-    @Configurable
-    public static class ShootingSequence {
-        public static int TOTAL_BALLS = 3;
-        public static double SHOOTER_FLIPPER_TIME = 0.02;
-        public static double EXTRA_WAIT_TIME = 0.075;
-        public static double SPINDEXER_SETTLING_TIME = 0;
+        // Time to wait after rotation before ready
+        public static double POST_ROTATION_SETTLE_TIME = 0.05;
+
+        // Time to wait after shooter flipper fires
+        public static double POST_SHOT_SETTLE_TIME = 0.02;
     }
 
     public static class Controls {

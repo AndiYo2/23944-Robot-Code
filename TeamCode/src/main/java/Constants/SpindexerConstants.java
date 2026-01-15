@@ -47,7 +47,7 @@ public class SpindexerConstants {
     // Servo conversion constant
     public static final double SERVO_DEGREES_PER_UNIT = 355.0;  // Axon servo full range
 
-    //Catalogging
+    // Cataloging timing
     public static double ROTATION_TIME = 0.1;
     public static double INTAKE_TIME = 0.1;
 }

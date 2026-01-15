@@ -42,10 +42,10 @@ public class NamingConstants {
     public static class ColorSensor {
         public static String intakeSensor1 = "intakeSensor1"; // E1
         public static String intakeSensor2 = "intakeSensor2";  // E2
-        public static String intakeSensor3 = "intakeSensor3"; // E?
-        public static String intakeSensor4 = "intakeSensor4";  // E?
-        public static String intakeSensor5 = "intakeSensor5"; // E?
-        public static String intakeSensor6 = "intakeSensor6";  // E?
+        public static String rampSensor1 = "rampSensor1"; // CH 0
+        public static String rampSensor2 = "rampSensor2";  // CH 1 ( V3 )
+        public static String transferSensor1 = "transferSensor1"; // CH 2
+        public static String transferSensor2 = "transferSensor2";  // CH 3
     }
 
     public static class Limelight {

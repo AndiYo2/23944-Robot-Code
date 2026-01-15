@@ -83,9 +83,9 @@ public abstract class AutonTemplate extends OpMode {
                 spindexer,
                 intake,
                 telemetry,
-                robotHardware.intakeSensorPair1,
-                robotHardware.intakeSensorPair2,
-                robotHardware.intakeSensorPair3
+                robotHardware.intakeSensorPair,
+                robotHardware.transferSensorPair,
+                robotHardware.rampSensorPair
         );
 
 
