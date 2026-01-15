@@ -99,7 +99,7 @@ public class BlueFront12Ball extends AutonTemplate {
         super.init();
         Constants.RobotConstants.Robot.allianceColor = Constants.EnumConstants.AllianceColor.Blue;
 
-        executor = new AutonSequence(follower, intake, catalogManager, sequenceManager, limelight)
+        executor = new AutonSequence(follower, intake, spindexerManager, limelight)
                 .parallel(p -> p.moveTo(startToShoot, maxSpeed).limelightScan().catalog())
                 .shoot()
                 .parallel(p -> p.moveTo(shootToFirst, maxSpeed).intakeStart())

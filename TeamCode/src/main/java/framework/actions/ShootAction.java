@@ -3,14 +3,14 @@ package framework.actions;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import framework.Action;
-import utility.ShootingSequenceManager;
+import utility.managers.SpindexerManager;
 
 /**
- * Action that executes the shooting sequence using the ShootingSequenceManager.
+ * Action that executes the shooting sequence using the SpindexerManager.
  * Completes when the shooting sequence finishes executing OR timeout is reached.
  */
 public class ShootAction implements Action {
-    private final ShootingSequenceManager sequenceManager;
+    private final SpindexerManager spindexerManager;
     private final double timeoutSeconds;
     private ElapsedTime timer;
     private boolean hasStarted;
@@ -19,12 +19,12 @@ public class ShootAction implements Action {
     /** Default timeout for shooting sequence (seconds) */
     public static final double DEFAULT_TIMEOUT = 15.0;
 
-    public ShootAction(ShootingSequenceManager sequenceManager) {
-        this(sequenceManager, DEFAULT_TIMEOUT);
+    public ShootAction(SpindexerManager spindexerManager) {
+        this(spindexerManager, DEFAULT_TIMEOUT);
     }
 
-    public ShootAction(ShootingSequenceManager sequenceManager, double timeoutSeconds) {
-        this.sequenceManager = sequenceManager;
+    public ShootAction(SpindexerManager spindexerManager, double timeoutSeconds) {
+        this.spindexerManager = spindexerManager;
         this.timeoutSeconds = timeoutSeconds;
         this.timer = new ElapsedTime();
         this.hasStarted = false;
@@ -36,23 +36,23 @@ public class ShootAction implements Action {
         timer.reset();
         hasStarted = false;
         timedOut = false;
-        sequenceManager.startSequence();
+        spindexerManager.triggerShooting();
     }
 
     @Override
     public void update() {
         // Keep trying to start the sequence if it hasn't started yet
-        if (!hasStarted && !sequenceManager.isExecuting()) {
-            sequenceManager.startSequence();
+        if (!hasStarted && !spindexerManager.isExecuting()) {
+            spindexerManager.triggerShooting();
         }
 
         // Track when it actually starts
-        if (!hasStarted && sequenceManager.isExecuting()) {
+        if (!hasStarted && spindexerManager.isExecuting()) {
             hasStarted = true;
         }
 
         // Check for timeout
-        if (timer.seconds() >= timeoutSeconds && sequenceManager.isExecuting()) {
+        if (timer.seconds() >= timeoutSeconds && spindexerManager.isExecuting()) {
             timedOut = true;
         }
     }
@@ -60,7 +60,7 @@ public class ShootAction implements Action {
     @Override
     public boolean isComplete() {
         // Complete if sequence started and finished, or if timed out
-        return (hasStarted && !sequenceManager.isExecuting()) || timedOut;
+        return (hasStarted && !spindexerManager.isExecuting()) || timedOut;
     }
 
     @Override

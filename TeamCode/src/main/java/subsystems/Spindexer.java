@@ -201,6 +201,9 @@ public class Spindexer implements Subsystem {
     public void triggerFlick() {
         if (currentState == FlickState.Idle) {
             currentState = FlickState.Start;
+            // Automatically remove ball from slot 1 (shooter slot) when flicking
+            // Safe even if slot is empty (sets None to None)
+            SpindexerAndMotifStatus.SpindexerPattern.setBallInSlotX(1, EnumConstants.BallColor.None);
         }
     }
 

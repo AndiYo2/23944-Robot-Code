@@ -67,7 +67,7 @@ public class RedBack9Ball extends AutonTemplate {
     public void init() {
         super.init();
         RobotConstants.Robot.allianceColor = EnumConstants.AllianceColor.Red;
-        executor = new AutonSequence(follower, intake, catalogManager, sequenceManager, limelight)
+        executor = new AutonSequence(follower, intake, spindexerManager, limelight)
                 .parallel(p -> p.limelightScan().catalog())
                 .shoot()
                 .parallel(p -> p.moveTo(shootToFirst, maxSpeed).intakeStart())

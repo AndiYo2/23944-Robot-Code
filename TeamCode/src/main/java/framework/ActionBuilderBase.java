@@ -8,9 +8,8 @@ import framework.actions.*;
 import pedroPathing.Constants;
 import subsystems.Intake;
 import subsystems.Limelight;
-import utility.CatalogManager;
+import utility.managers.SpindexerManager;
 import Constants.EnumConstants;
-import utility.ShootingSequenceManager;
 
 /**
  * Abstract base class for action builders.
@@ -21,16 +20,14 @@ import utility.ShootingSequenceManager;
 public abstract class ActionBuilderBase<T extends ActionBuilderBase<T>> {
     protected final Follower follower;
     protected final Intake intake;
-    protected final CatalogManager catalogManager;
-    protected final ShootingSequenceManager sequenceManager;
+    protected final SpindexerManager spindexerManager;
     protected final Limelight limelight;
 
-    protected ActionBuilderBase(Follower follower, Intake intake, CatalogManager catalogManager,
-                                ShootingSequenceManager sequenceManager, Limelight limelight) {
+    protected ActionBuilderBase(Follower follower, Intake intake, SpindexerManager spindexerManager,
+                                Limelight limelight) {
         this.follower = follower;
         this.intake = intake;
-        this.catalogManager = catalogManager;
-        this.sequenceManager = sequenceManager;
+        this.spindexerManager = spindexerManager;
         this.limelight = limelight;
     }
 
@@ -244,7 +241,7 @@ public abstract class ActionBuilderBase<T extends ActionBuilderBase<T>> {
      * @return this builder for chaining
      */
     public T shoot() {
-        addActionInternal(new ShootAction(sequenceManager));
+        addActionInternal(new ShootAction(spindexerManager));
         return self();
     }
 
@@ -254,7 +251,7 @@ public abstract class ActionBuilderBase<T extends ActionBuilderBase<T>> {
      * @return this builder for chaining
      */
     public T catalog() {
-        addActionInternal(new CatalogAction(catalogManager));
+        addActionInternal(new CatalogAction(spindexerManager));
         return self();
     }
 

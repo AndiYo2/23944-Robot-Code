@@ -35,7 +35,7 @@ public class Test extends AutonTemplate {
     @Override
     public void init() {
         super.init();
-        executor = new AutonSequence(follower, intake, catalogManager, sequenceManager, limelight)
+        executor = new AutonSequence(follower, intake, spindexerManager, limelight)
                 .moveTo(startToEnd)
                 .build();
     }

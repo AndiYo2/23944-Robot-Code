@@ -38,7 +38,7 @@ public class ShootDipBlue extends AutonTemplate {
     public void init() {
         super.init();
         Constants.RobotConstants.Robot.allianceColor = Constants.EnumConstants.AllianceColor.Blue;
-        executor = new AutonSequence(follower, intake, catalogManager, sequenceManager, limelight)
+        executor = new AutonSequence(follower, intake, spindexerManager, limelight)
                 .moveTo(shootToFirst, maxSpeed)
                 .build();
     }

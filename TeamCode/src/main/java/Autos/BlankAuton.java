@@ -73,7 +73,7 @@ public class BlankAuton extends AutonTemplate {
         // ============================================================
         // BUILD YOUR AUTONOMOUS SEQUENCE HERE
         // ============================================================
-        executor = new AutonSequence(follower, intake, catalogManager, sequenceManager, limelight)
+        executor = new AutonSequence(follower, intake, spindexerManager, limelight)
 
                 // Example: Initial actions
                 // .parallel(p -> p.limelightScan().catalog())

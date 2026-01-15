@@ -39,7 +39,7 @@ public class BlueBackAutonCornerQuick extends AutonTemplate {
         super.init();
 
         // Build the autonomous sequence using hybrid approach
-        executor = new AutonSequence(follower, intake, catalogManager, sequenceManager, limelight)
+        executor = new AutonSequence(follower, intake, spindexerManager, limelight)
                 // Initial: scan and set preloaded balls (PPG), then shoot
                 .parallel(p -> p.limelightScan().preload())
                 .shoot()

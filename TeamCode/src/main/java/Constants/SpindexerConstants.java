@@ -50,4 +50,9 @@ public class SpindexerConstants {
     // Cataloging timing
     public static double ROTATION_TIME = 0.1;
     public static double INTAKE_TIME = 0.1;
+
+    // SpindexerManager timing constants
+    public static double SHOOTER_FLIPPER_TIME = 0.15;        // Wait after shooter flipper fires
+    public static double SPINDEXER_FLIPPER_OUT_TIME = 0.075; // Wait after spindexer flipper (same as FLICK_TIME)
+    public static double INTAKE_TIMING = 0.5;                // Wait during intake operation
 }

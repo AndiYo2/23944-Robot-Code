@@ -11,10 +11,9 @@ import subsystems.Turret;
 import subsystems.Odometry;
 import subsystems.Intake;
 import subsystems.Spindexer;
-import utility.CatalogManager;
+import utility.managers.SpindexerManager;
 import Constants.OdometryConstants;
 import utility.RobotHardware;
-import utility.ShootingSequenceManager;
 import utility.ShootingValidator;
 
 /**
@@ -33,10 +32,8 @@ public abstract class AutonTemplate extends OpMode {
     protected Intake intake;
     protected Spindexer spindexer;
     protected subsystems.Limelight limelight;
-    protected ShootingSequenceManager sequenceManager;
+    protected SpindexerManager spindexerManager;
     protected ShootingValidator shootingValidator;
-
-    protected CatalogManager catalogManager;
 
     protected ActionExecutor executor;
 
@@ -77,18 +74,16 @@ public abstract class AutonTemplate extends OpMode {
 
         // Link Limelight subsystem to Turret for dual-mode tracking
         turret.setLimelightSubsystem(limelight);
-        sequenceManager = new ShootingSequenceManager(spindexer, shooter);
         shootingValidator = new ShootingValidator(odometry, telemetry);
-        catalogManager = new CatalogManager(
+        spindexerManager = new SpindexerManager(
                 spindexer,
+                shooter,
                 intake,
                 telemetry,
                 robotHardware.intakeSensorPair,
                 robotHardware.transferSensorPair,
                 robotHardware.rampSensorPair
         );
-
-
 
         buildPaths();
     }
@@ -128,8 +123,7 @@ public abstract class AutonTemplate extends OpMode {
                 follower.getPose().getX(), follower.getPose().getY(),
                 Math.toDegrees(follower.getPose().getHeading()));
 
-            telemetry.addData("Shooting State", sequenceManager.getStatus());
-            telemetry.addData("Catalog State", catalogManager.getState());
+            telemetry.addData("Manager State", spindexerManager.getStatus());
             telemetry.addData("Limelight Mode", limelight.getCurrentMode());
             telemetry.addData("Motif Detected", limelight.isMotifDetected());
         } else {
@@ -143,9 +137,7 @@ public abstract class AutonTemplate extends OpMode {
         intake.periodic();
         limelight.periodic();
 
-
-        sequenceManager.update();
-        catalogManager.update();
+        spindexerManager.update();
 
         telemetry.update();
     }

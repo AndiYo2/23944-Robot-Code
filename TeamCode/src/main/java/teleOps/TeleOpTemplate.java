@@ -13,8 +13,8 @@ import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import subsystems.*;
 import utility.*;
-import utility.ShootingSequenceManager;
 import utility.ShootingValidator;
+import utility.managers.SpindexerManager;
 
 abstract public class TeleOpTemplate extends CommandOpMode {
     protected MecanumDrive mecanumDrive;
@@ -27,10 +27,8 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     protected GamepadEx driverGamepad;
     private final RobotHardware robot = RobotHardware.getInstance();
 
-    private ShootingSequenceManager sequenceManager;
+    private SpindexerManager spindexerManager;
     private ShootingValidator shootingValidator;
-
-    private CatalogManager catalogManager;
 
 
 
@@ -108,32 +106,30 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         // Link Limelight subsystem to Turret for dual-mode tracking
         turret.setLimelightSubsystem(limelight);
 
-        sequenceManager = new ShootingSequenceManager(spindexer, shooter);
         shootingValidator = new ShootingValidator(odometry, telemetry);
-        catalogManager = new CatalogManager(
+        spindexerManager = new SpindexerManager(
                 spindexer,
+                shooter,
                 intake,
                 telemetry,
                 robot.intakeSensorPair,
                 robot.transferSensorPair,
                 robot.rampSensorPair
         );
-        // Link sequence manager so catalogManager can check shooting mode
-        catalogManager.setSequenceManager(sequenceManager);
 
         register(intake, shooter, spindexer, limelight, turret, odometry);
     }
 
     protected void configureButtonBindings() {
-        // Intake controls - blocked during active catalogging
+        // Intake controls - blocked during active spindexer operations
         new Trigger(() -> gamepad1.left_trigger > RobotConstants.Controls.TRIGGER_THRESHOLD)
                 .whenActive(() -> {
-                    if (!catalogManager.isActive()) {
+                    if (!spindexerManager.isActive()) {
                         intake.runIntake();
                     }
                 })
                 .whenInactive(() -> {
-                    if (!catalogManager.isActive()) {
+                    if (!spindexerManager.isActive()) {
                         intake.stopIntake();
                     }
                 });
@@ -149,11 +145,11 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         new GamepadButton(driverGamepad, GamepadKeys.Button.B)
                 .whenPressed(() -> mecanumDrive.toggleSlowMode());
         new GamepadButton(driverGamepad, GamepadKeys.Button.A)
-                .whenPressed(() -> sequenceManager.toggleMode());
+                .whenPressed(() -> spindexerManager.toggleMode());
         new GamepadButton(driverGamepad, GamepadKeys.Button.X)
                 .whenPressed(() -> spindexer.triggerFlick());
         new GamepadButton(driverGamepad, GamepadKeys.Button.Y)
-                .whenPressed(() -> catalogManager.initiateCataloging());
+                .whenPressed(() -> spindexerManager.triggerCataloging());
 
         // Manual spindexer controls
         new GamepadButton(driverGamepad, GamepadKeys.Button.LEFT_BUMPER)
@@ -222,9 +218,8 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     }
 
     /**
-     * Handles shooting action based on current mode and state.
-     * - If sequence idle: starts new sequence
-     * - If Fast mode and ready to shoot: triggers the shot
+     * Handles shooting action.
+     * Triggers shooting sequence which fires all balls until empty.
      */
     private void attemptShootingAction() {
         // Override: Click right joystick (right_stick_button) to shoot outside zone
@@ -236,14 +231,11 @@ abstract public class TeleOpTemplate extends CommandOpMode {
             return;
         }
 
-        if (sequenceManager.isIdle()) {
-            // Start new sequence
-            sequenceManager.startSequence();
-        } else if (sequenceManager.isReadyToShoot()) {
-            // Fast mode: trigger shot when ready
-            sequenceManager.triggerShot();
+        if (spindexerManager.isIdle()) {
+            // Start shooting sequence - fires all balls
+            spindexerManager.triggerShooting();
         }
-        // If executing but not ready (rotating, etc.), ignore trigger
+        // If already executing, ignore trigger
     }
 
     /**
@@ -274,11 +266,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         // Manually call periodic() to ensure state machines run
         spindexer.periodic();
         shooter.periodic();
-        sequenceManager.update();
-        catalogManager.update();
-
-
-
+        spindexerManager.update();
     }
 
     private void updateTelemetry() {
@@ -318,13 +306,10 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
         // SHOOTING section
         telemetry.addLine("=== SHOOTING ===");
-        telemetry.addData("  Shooting Mode", sequenceManager.getMode());
+        telemetry.addData("  Shooting Mode", spindexerManager.getMode());
         telemetry.addData("  Field Zone", odometry.getFieldState());
         telemetry.addData("  Shooting Status", shootingValidator.getStatus(overrideRequested));
-        telemetry.addData("  Sequence State", sequenceManager.getStatus());
-        if (sequenceManager.isReadyToShoot()) {
-            telemetry.addData("  >> READY TO SHOOT <<", "Press RT to fire!");
-        }
+        telemetry.addData("  Manager State", spindexerManager.getStatus());
         telemetry.addLine("");
 
         // SHOOTER section
@@ -346,10 +331,8 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         telemetry.addData("  Rotation Idle", spindexer.isRotationIdle());
         telemetry.addLine("");
 
-        // CATALOGING section
-        telemetry.addLine("=== CATALOGING ===");
-        telemetry.addData("  State", catalogManager.getState());
-        telemetry.addData("  Status", catalogManager.getStatus());
+        // SENSORS section
+        telemetry.addLine("=== BALL SENSORS ===");
         DualBallDetector.Result r1 = robot.intakeSensorPair.detectBall();
         DualBallDetector.Result r3 = robot.transferSensorPair.detectBall();
         DualBallDetector.Result r2 = robot.rampSensorPair.detectBall();
@@ -374,10 +357,10 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         telemetry.addData("  IMU Calibration", "Auto on init (resetPosAndIMU)");
         telemetry.addLine("");
 
-        // SEQUENCE DEBUG section (only when sequence executing)
-        if (sequenceManager.isExecuting()) {
-            telemetry.addLine("=== SEQUENCE DEBUG ===");
-            telemetry.addData("  State", sequenceManager.getState());
+        // MANAGER DEBUG section (only when executing)
+        if (spindexerManager.isExecuting()) {
+            telemetry.addLine("=== MANAGER DEBUG ===");
+            telemetry.addData("  State", spindexerManager.getState());
             telemetry.addData("  Done Rotating", spindexer.isDoneRotating());
             telemetry.addData("  Ready to Flip", spindexer.isReadyToFlip());
             telemetry.addData("  Balls Remaining", SpindexerAndMotifStatus.SpindexerPattern.getBallCount());

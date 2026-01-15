@@ -1,16 +1,10 @@
 package framework;
 
 import com.pedropathing.follower.Follower;
-import com.pedropathing.paths.Path;
-import com.pedropathing.paths.PathChain;
 
-import framework.actions.*;
-import pedroPathing.Constants;
 import subsystems.Intake;
 import subsystems.Limelight;
-import utility.CatalogManager;
-import Constants.EnumConstants;
-import utility.ShootingSequenceManager;
+import utility.managers.SpindexerManager;
 
 import java.util.function.Consumer;
 
@@ -20,7 +14,7 @@ import java.util.function.Consumer;
  *
  * Example usage:
  * <pre>
- * executor = new AutonSequence(follower, intake, catalogManager, sequenceManager, limelight)
+ * executor = new AutonSequence(follower, intake, spindexerManager, limelight)
  *     .parallel(p -> p.limelightScan().catalog())
  *     .shoot()
  *     .parallel(p -> p.moveTo(path).intakeStart())
@@ -36,13 +30,12 @@ public class AutonSequence extends ActionBuilderBase<AutonSequence> {
      *
      * @param follower the path follower
      * @param intake the intake subsystem
-     * @param catalogManager the catalog manager
-     * @param sequenceManager the shooting sequence manager
+     * @param spindexerManager the spindexer manager
      * @param limelight the limelight subsystem
      */
-    public AutonSequence(Follower follower, Intake intake, CatalogManager catalogManager,
-                         ShootingSequenceManager sequenceManager, Limelight limelight) {
-        super(follower, intake, catalogManager, sequenceManager, limelight);
+    public AutonSequence(Follower follower, Intake intake, SpindexerManager spindexerManager,
+                         Limelight limelight) {
+        super(follower, intake, spindexerManager, limelight);
         this.executor = new ActionExecutor();
     }
 
@@ -71,7 +64,7 @@ public class AutonSequence extends ActionBuilderBase<AutonSequence> {
     public AutonSequence parallel(Consumer<ParallelBuilder> builder) {
         ActionGroup group = new ActionGroup(ActionGroup.ExecutionMode.PARALLEL);
         ParallelBuilder parallelBuilder = new ParallelBuilder(group, follower, intake,
-                catalogManager, sequenceManager, limelight);
+                spindexerManager, limelight);
         builder.accept(parallelBuilder);
         executor.addAction(group);
         return this;
@@ -95,9 +88,8 @@ public class AutonSequence extends ActionBuilderBase<AutonSequence> {
         private final ActionGroup group;
 
         private ParallelBuilder(ActionGroup group, Follower follower, Intake intake,
-                               CatalogManager catalogManager, ShootingSequenceManager sequenceManager,
-                               Limelight limelight) {
-            super(follower, intake, catalogManager, sequenceManager, limelight);
+                               SpindexerManager spindexerManager, Limelight limelight) {
+            super(follower, intake, spindexerManager, limelight);
             this.group = group;
         }
 
