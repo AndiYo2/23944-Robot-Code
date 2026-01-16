@@ -33,6 +33,7 @@ public class Constants {
         .forwardZeroPowerAcceleration(-24.35247829)
         .lateralZeroPowerAcceleration(-58.772098)
             .useSecondaryDrivePIDF(true)
+            .useSecondaryHeadingPIDF(true)
     .translationalPIDFCoefficients(new PIDFCoefficients(
             0.1,
             0,
@@ -42,13 +43,13 @@ public class Constants {
         .headingPIDFCoefficients(new PIDFCoefficients(
                 1,
                 0,
-                0.06,
+                0.001,
                 0.02
 ))
         .drivePIDFCoefficients(new FilteredPIDFCoefficients(
-                0.01,
+                0.1,
                 0,
-                0.0067,
+                0.045,
                 0.6,
                 0.01
 ))
@@ -60,10 +61,14 @@ public class Constants {
                     0.6,
                     0
             ))
+            .secondaryHeadingPIDFCoefficients(new PIDFCoefficients(
+                    1,
+                    0,
+                    0.06,
+                    0.02
+            ))
         ;
-    public static double brakingStrength = 1.25;
-    public static double brakingStart = 1;
-    public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, brakingStrength, brakingStart);
+    public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, .5, .16);
     //bs 15
 
     public static MecanumConstants driveConstants = new MecanumConstants()
