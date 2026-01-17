@@ -97,6 +97,7 @@ public class SpindexerManager {
         if (totalBallsInRobot == 0) {
             // No balls - just reset position
             executor = new SpindexerSequence(spindexer, shooter, intake)
+                    .fire()
                 .resetPosition()
                 .build();
             executor.start();
@@ -174,13 +175,15 @@ public class SpindexerManager {
             // Rotate ball 1 to shooter position (slot 0 -> slot 1)
                 .rotateCCW()
 
-                .parallel(p -> p.flick().intake() .run("Track ball 2", () -> SpindexerPattern.setBallInSlotX(0, ball2Color)))
+                .parallel(p -> p.flick().intake())
+                .run("Track ball 2", () -> SpindexerPattern.setBallInSlotX(0, ball2Color))
             // Rotate ball 2 to slot 1
             .rotateCCW()
 
             // Intake ball 3 into slot 0
             .intake()
             .run("Track ball 3", () -> SpindexerPattern.setBallInSlotX(0, ball3Color))
+                .run("Handle 0 balls", () -> handle0Balls())
             .build();
     }
 
@@ -246,12 +249,14 @@ public class SpindexerManager {
 
     /**
      * Scans all sensors and counts total balls in robot.
+     * Uses averaged detectBall() when buffer is ready, falls back to quickCheck()
+     * for immediate detection when buffer hasn't filled yet.
      * Sensors: sensorPair1 = spindexer slot 0, sensorPair2 = transfer, sensorPair3 = ramp
      */
     private void scanAndAssignSlots() {
-        DualBallDetector.Result r1 = sensorPair1.detectBall();
-        DualBallDetector.Result r2 = sensorPair2.detectBall();
-        DualBallDetector.Result r3 = sensorPair3.detectBall();
+        DualBallDetector.Result r1 = detectWithFallback(sensorPair1);
+        DualBallDetector.Result r2 = detectWithFallback(sensorPair2);
+        DualBallDetector.Result r3 = detectWithFallback(sensorPair3);
 
         ball1Color = r1.ballPresent ? r1.color : BallColor.None;
         ball2Color = r2.ballPresent ? r2.color : BallColor.None;
@@ -262,6 +267,18 @@ public class SpindexerManager {
         if (r1.ballPresent) totalBallsInRobot++;
         if (r2.ballPresent) totalBallsInRobot++;
         if (r3.ballPresent) totalBallsInRobot++;
+    }
+
+    /**
+     * Tries averaged detection first; if buffer not ready, falls back to single-read.
+     */
+    private DualBallDetector.Result detectWithFallback(DualBallDetector sensor) {
+        DualBallDetector.Result result = sensor.detectBall();
+        if (!result.ballPresent) {
+            // Buffer may not be full - try instant read
+            result = sensor.quickCheck();
+        }
+        return result;
     }
 
     // ==================== UPDATE & STATUS ====================
@@ -307,5 +324,43 @@ public class SpindexerManager {
 
     public String getState() {
         return (executor != null && executor.isRunning()) ? currentSequence : "IDLE";
+    }
+
+    // ==================== RESET ====================
+
+    /**
+     * Reset all ball tracking state to zero.
+     * Use when balls have been manually removed or state is out of sync.
+     * Will not reset during an active sequence.
+     */
+    public void resetBallTracking() {
+        if (executor != null && executor.isRunning()) return;
+
+        totalBallsInRobot = 0;
+        ballsShot = 0;
+        motifIndex = 0;
+        ball1Color = BallColor.None;
+        ball2Color = BallColor.None;
+        ball3Color = BallColor.None;
+        flippedToShooter = false;
+        SpindexerPattern.clearAll();
+        currentSequence = "Idle";
+    }
+
+    /**
+     * Force stop any running sequence and reset all state.
+     * Use for emergency reset when things are out of sync.
+     */
+    public void forceReset() {
+        if (executor != null) {
+            executor.stop();
+        }
+        executor = null;
+        resetBallTracking();
+        spindexer.resetToEmptyPosition();
+    }
+    public void handle0Balls(){
+        if(totalBallsInRobot == 0)
+            spindexer.resetToEmptyPosition();
     }
 }

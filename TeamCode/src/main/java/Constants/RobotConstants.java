@@ -13,7 +13,6 @@ public class RobotConstants {
 
         public static EnumConstants.AllianceColor allianceColor;
     }
-
     @Configurable
     public static class Cataloging {
         // Timeout for scanning state (no ball detected)

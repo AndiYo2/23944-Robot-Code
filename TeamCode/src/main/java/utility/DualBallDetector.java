@@ -72,6 +72,22 @@ public class DualBallDetector {
         Result nearResult = nearState.evaluate();
         Result farResult  = farState.evaluate();
 
+        return resolveResults(nearResult, farResult);
+    }
+
+    /**
+     * Single-read fallback for immediate detection.
+     * Lower confidence than averaged detectBall(), but no buffer latency.
+     * Use when you need instant detection and can't wait for buffer to fill.
+     */
+    public Result quickCheck() {
+        Result nearResult = nearState.instantRead(near);
+        Result farResult  = farState.instantRead(far);
+
+        return resolveResults(nearResult, farResult);
+    }
+
+    private Result resolveResults(Result nearResult, Result farResult) {
         // If neither sees a ball
         if (!nearResult.ballPresent && !farResult.ballPresent) {
             return new Result(false, BallColor.None, 0.0);
@@ -159,6 +175,43 @@ public class DualBallDetector {
             r /= present;
             g /= present;
             b /= present;
+
+            double gC = confidence(r, g, b, GREEN_N, GREEN_TOL);
+            double pC = confidence(r, g, b, PURPLE_N, PURPLE_TOL);
+
+            double bestC = Math.max(gC, pC);
+            if (bestC < MIN_CONFIDENCE) {
+                return new Result(false, BallColor.None, bestC);
+            }
+
+            return (gC > pC)
+                    ? new Result(true, BallColor.Green, gC)
+                    : new Result(true, BallColor.Purple, pC);
+        }
+
+        /**
+         * Single instantaneous read - bypasses buffer entirely.
+         * Reads directly from hardware, applies same color matching logic.
+         */
+        Result instantRead(ColorSensor s) {
+            double a = s.alpha();
+
+            if (a < minAlpha) {
+                return new Result(false, BallColor.None, 0.0);
+            }
+
+            double red = s.red();
+            double grn = s.green();
+            double blu = s.blue();
+
+            double sum = red + grn + blu;
+            if (sum <= 0) {
+                return new Result(false, BallColor.None, 0.0);
+            }
+
+            double r = red / sum;
+            double g = grn / sum;
+            double b = blu / sum;
 
             double gC = confidence(r, g, b, GREEN_N, GREEN_TOL);
             double pC = confidence(r, g, b, PURPLE_N, PURPLE_TOL);
