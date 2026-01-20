@@ -54,10 +54,11 @@ public class Spindexer implements Subsystem {
     /**
      * Convert degrees to servo position (0-1 range).
      * Axon servo has 355° range, so position = degrees / 355.
+     * Applies SPINDEXER_OFFSET to all rotations.
      * Avoids exact 0.0 which can cause servo issues.
      */
     private double degreesToServoPosition(int degrees) {
-        double position = degrees / SERVO_DEGREES_PER_UNIT;
+        double position = (degrees + SpindexerConstants.SPINDEXER_OFFSET) / SERVO_DEGREES_PER_UNIT;
         if (position < 0.01) position = 0.01;
         return position;
     }

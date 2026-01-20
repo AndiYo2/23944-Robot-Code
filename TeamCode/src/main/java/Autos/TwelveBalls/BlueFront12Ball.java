@@ -1,4 +1,4 @@
-package Autos;
+package Autos.TwelveBalls;
 
 import Autos.AutonTemplate;
 import com.pedropathing.geometry.BezierCurve;

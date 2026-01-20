@@ -42,7 +42,7 @@ public class FireAction implements SpindexerAction {
             return timer.seconds() >= 0.5;
         }
         // Wait for shot to complete
-        return timer.seconds() >= SpindexerConstants.SHOOTER_FLIPPER_TIME;
+        return timer.seconds() >= SpindexerConstants.SHOOTER_FLIPPER_OUT_TIME;
     }
 
     @Override

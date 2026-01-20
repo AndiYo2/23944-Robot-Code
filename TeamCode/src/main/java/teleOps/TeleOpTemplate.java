@@ -5,6 +5,7 @@ import Constants.FieldMap;
 import Constants.LimelightConstants;
 import Constants.OdometryConstants;
 import Constants.RobotConstants;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import utility.RobotHardware;
 import com.arcrobotics.ftclib.command.CommandOpMode;
 import com.arcrobotics.ftclib.command.button.GamepadButton;
@@ -88,6 +89,11 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
         telemetry.addData("Position After Set", robot.pinpoint.getPosition());
         telemetry.update();
+
+        robot.frontLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        robot.backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        robot.frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        robot.backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         mecanumDrive = new MecanumDrive();
         intake = new Intake();
@@ -334,8 +340,8 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         // SENSORS section
         telemetry.addLine("=== BALL SENSORS ===");
         DualBallDetector.Result r1 = robot.intakeSensorPair.detectBall();
-        DualBallDetector.Result r3 = robot.transferSensorPair.detectBall();
-        DualBallDetector.Result r2 = robot.rampSensorPair.detectBall();
+        DualBallDetector.Result r2 = robot.transferSensorPair.detectBall();
+        DualBallDetector.Result r3 = robot.rampSensorPair.detectBall();
         telemetry.addData("  Sensor1 (Spindexer)", String.format("%s %s %.0f%%",
                 r1.ballPresent ? "BALL" : "----", r1.color, r1.confidence * 100));
         telemetry.addData("  Sensor2 (Middle)", String.format("%s %s %.0f%%",

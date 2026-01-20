@@ -114,11 +114,14 @@ public class SpindexerManager {
             .fire()
             .run("Shot 1", this::incrementBallsShot)
 
-            // Loop: flick, fire, rotate until all balls shot
+            // Loop: flick, then fire+rotate in parallel
             .repeatWhile(() -> ballsShot < totalBallsInRobot)
                 .flick()
-                .parallel(p -> p.fire().run("Rotate to next", this::rotateToNextBall).run("Shot", this::incrementBallsShot))
-                .waitFor(SpindexerConstants.ROTATION_TIME)
+                .parallel(p -> p
+                    .fire()
+                    .run("Rotate", this::rotateToNextBall)
+                )
+                .run("Shot", this::incrementBallsShot)
             .endRepeat()
 
             // Reset position
@@ -262,10 +265,16 @@ public class SpindexerManager {
         ball2Color = r2.ballPresent ? r2.color : BallColor.None;
         ball3Color = r3.ballPresent ? r3.color : BallColor.None;
 
+        // If ramp has a ball but transfer doesn't, assume transfer has purple
+        // (ball can't be in ramp without passing through transfer)
+        if (r3.ballPresent && !r2.ballPresent) {
+            ball2Color = BallColor.Purple;
+        }
+
         // Count total balls from all sensors
         totalBallsInRobot = 0;
         if (r1.ballPresent) totalBallsInRobot++;
-        if (r2.ballPresent) totalBallsInRobot++;
+        if (r2.ballPresent || (r3.ballPresent && !r2.ballPresent)) totalBallsInRobot++;
         if (r3.ballPresent) totalBallsInRobot++;
     }
 

@@ -1,5 +1,6 @@
-package Autos;
+package Autos.TwelveBalls;
 
+import Autos.AutonTemplate;
 import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;

@@ -48,12 +48,39 @@ public class DualBallDetector {
     private final SensorState nearState;
     private final SensorState farState;
 
+    // =============================
+    // Instance color config (allows per-detector tuning)
+    // =============================
+    private final double[] greenProfile;
+    private final double[] purpleProfile;
+    private final double greenTolerance;
+    private final double purpleTolerance;
+
     public DualBallDetector(ColorSensor sensor1, ColorSensor sensor2) {
+        this(sensor1, sensor2, GREEN_N, PURPLE_N, GREEN_TOL, PURPLE_TOL);
+    }
+
+    public DualBallDetector(ColorSensor sensor1, ColorSensor sensor2,
+                            double[] greenProfile, double[] purpleProfile,
+                            double greenTol, double purpleTol) {
+        this(sensor1, sensor2, greenProfile, purpleProfile, greenTol, purpleTol,
+             MIN_ALPHA_NEAR, MIN_ALPHA_FAR);
+    }
+
+    public DualBallDetector(ColorSensor sensor1, ColorSensor sensor2,
+                            double[] greenProfile, double[] purpleProfile,
+                            double greenTol, double purpleTol,
+                            double minAlphaNear, double minAlphaFar) {
         this.near = sensor1;
         this.far = sensor2;
 
-        nearState = new SensorState(MIN_ALPHA_NEAR);
-        farState  = new SensorState(MIN_ALPHA_FAR);
+        this.greenProfile = greenProfile;
+        this.purpleProfile = purpleProfile;
+        this.greenTolerance = greenTol;
+        this.purpleTolerance = purpleTol;
+
+        nearState = new SensorState(minAlphaNear);
+        farState  = new SensorState(minAlphaFar);
     }
 
     // =============================
@@ -176,8 +203,8 @@ public class DualBallDetector {
             g /= present;
             b /= present;
 
-            double gC = confidence(r, g, b, GREEN_N, GREEN_TOL);
-            double pC = confidence(r, g, b, PURPLE_N, PURPLE_TOL);
+            double gC = confidence(r, g, b, greenProfile, greenTolerance);
+            double pC = confidence(r, g, b, purpleProfile, purpleTolerance);
 
             double bestC = Math.max(gC, pC);
             if (bestC < MIN_CONFIDENCE) {
@@ -213,8 +240,8 @@ public class DualBallDetector {
             double g = grn / sum;
             double b = blu / sum;
 
-            double gC = confidence(r, g, b, GREEN_N, GREEN_TOL);
-            double pC = confidence(r, g, b, PURPLE_N, PURPLE_TOL);
+            double gC = confidence(r, g, b, greenProfile, greenTolerance);
+            double pC = confidence(r, g, b, purpleProfile, purpleTolerance);
 
             double bestC = Math.max(gC, pC);
             if (bestC < MIN_CONFIDENCE) {

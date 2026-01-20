@@ -47,12 +47,17 @@ public class SpindexerConstants {
     // Servo conversion constant
     public static final double SERVO_DEGREES_PER_UNIT = 355.0;  // Axon servo full range
 
+    // Offset applied to ALL spindexer rotations (in degrees)
+    public static double SPINDEXER_OFFSET = 55;
+
     // Cataloging timing
-    public static double ROTATION_TIME = 0.1;
+    public static double ROTATION_TIME = 0.05;
     public static double INTAKE_TIME = 0.1;
 
     // SpindexerManager timing constants
-    public static double SHOOTER_FLIPPER_TIME = 0.15;        // Wait after shooter flipper fires
+
+    public static double SHOOTER_FLIPPER_OUT_TIME = 0.075;
+
     public static double SPINDEXER_FLIPPER_OUT_TIME = 0.075; // Wait after spindexer flipper (same as FLICK_TIME)
     public static double INTAKE_TIMING = 0.5;                // Wait during intake operation
 }

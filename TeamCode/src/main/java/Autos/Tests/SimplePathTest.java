@@ -1,6 +1,6 @@
-package Autos;
+package Autos.Tests;
 
-import com.pedropathing.geometry.BezierCurve;
+import Autos.AutonTemplate;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
@@ -8,17 +8,15 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import framework.AutonSequence;
 
-@Autonomous(name = "SimpleTurnTest", group = "Autonomous")
-public class SimpleTurnTest extends AutonTemplate {
+@Autonomous(name = "SimplePathTest", group = "Autonomous")
+public class SimplePathTest extends AutonTemplate {
     private PathChain path1, path2, path3, path4;
 
     private final Pose startPose = new Pose(72.000, 8.500, Math.toRadians(90));
-    private final Pose pose1 = new Pose(72.000, 72.000, Math.toRadians(180));
-    private final Pose pose2 = new Pose(96.000, 96.000, Math.toRadians(0));
-    private final Pose pose3 = new Pose(48, 120, Math.toRadians(270));
+    private final Pose pose1 = new Pose(72.000, 72.000, Math.toRadians(90));
+    private final Pose pose2 = new Pose(64.000, 80.000, Math.toRadians(135));
+    private final Pose pose3 = new Pose(29.500, 114.000, Math.toRadians(135));
     private final Pose pose4 = new Pose(105.500, 33.500, Math.toRadians(90));
-
-    private final Pose controlPoint = new Pose(2,23,Math.toRadians(0));
 
     @Override
     protected void buildPaths() {
@@ -43,7 +41,7 @@ public class SimpleTurnTest extends AutonTemplate {
                 .build();
 
         path4 = follower.pathBuilder()
-                .addPath(new BezierCurve(pose3,controlPoint, pose4))
+                .addPath(new BezierLine(pose3, pose4))
                 .setLinearHeadingInterpolation(pose3.getHeading(), pose4.getHeading())
                 .setGlobalDeceleration()
                 .build();

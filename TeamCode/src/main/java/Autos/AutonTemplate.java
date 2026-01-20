@@ -109,6 +109,9 @@ public abstract class AutonTemplate extends OpMode {
     public void loop() {
         follower.update();
 
+        // Update sensors BEFORE actions execute to avoid race condition
+        spindexerManager.update();
+
         if (executor != null) {
             executor.update();
 
@@ -136,8 +139,6 @@ public abstract class AutonTemplate extends OpMode {
         spindexer.periodic();
         intake.periodic();
         limelight.periodic();
-
-        spindexerManager.update();
 
         telemetry.update();
     }
