@@ -31,7 +31,7 @@ public class Limelight implements Subsystem {
     public Limelight() {
         this.robot = RobotHardware.getInstance();
         this.latestResult = null;
-        this.currentMode = EnumConstants.LimelightMode.TagTracking;
+        this.currentMode = EnumConstants.LimelightMode.GoalTracking;
         this.motifDetected = false;
         this.detectedTagId = -1;
     }

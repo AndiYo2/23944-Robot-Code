@@ -68,7 +68,6 @@ public class RedFifteenBall extends AutonTemplate {
                 .setGlobalDeceleration()
                 .build();
 
-
         firstToShoot = follower.pathBuilder()
                 .addPath(new BezierCurve(firstPickupPose3, firstToShootControlPoint, shootPose1))
                 .setLinearHeadingInterpolation(firstPickupPose3.getHeading(), shootPose1.getHeading())

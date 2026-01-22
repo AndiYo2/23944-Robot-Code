@@ -11,7 +11,9 @@ import Constants.EnumConstants;
 import Constants.EnumConstants.FieldState;
 import Constants.FieldMap;
 import Constants.LimelightConstants;
+import Constants.ShooterConstants;
 import utility.RobotHardware;
+import utility.ShootingCalculator;
 import Constants.TurretConstants;
 
 import static Constants.TurretConstants.CENTER;
@@ -38,6 +40,9 @@ public class Turret implements Subsystem {
 
     // Limelight reference for switching between goal tracking and tag scanning modes
     private subsystems.Limelight limelightSubsystem;
+
+    // Shooting calculator for velocity compensation lead angle
+    private ShootingCalculator shootingCalculator;
 
     public Turret() {
         this.robot = RobotHardware.getInstance();
@@ -119,26 +124,41 @@ public class Turret implements Subsystem {
     }
 
     public double getDegreesToGoal() {
-        Pose2D currentPose = robot.pinpoint.getPosition();
-        Pose goalPosition = FieldMap.getGoalPosition();
+        double turretAngleDeg;
 
-        // Get turret field position (accounts for offset from robot center)
-        double[] turretPos = getTurretFieldPosition();
+        // Use calculator when available (already has base angle + lead angle calculated)
+        if (shootingCalculator != null) {
+            // Calculator provides base angle (includes position prediction when moving)
+            // plus lead angle for velocity compensation
+            turretAngleDeg = shootingCalculator.getBaseTurretAngleDegrees();
 
-        // Vector from turret to goal
-        double deltaX = goalPosition.getX() - turretPos[0];
-        double deltaY = goalPosition.getY() - turretPos[1];
+            // Apply velocity compensation lead angle if enabled
+            if (ShooterConstants.VELOCITY_COMPENSATION_ENABLED) {
+                turretAngleDeg += shootingCalculator.getLeadAngleDegrees();
+            }
+        } else {
+            // Fallback: calculate directly (for when calculator not initialized)
+            Pose2D currentPose = robot.pinpoint.getPosition();
+            Pose goalPosition = FieldMap.getGoalPosition();
 
-        // Field angle to goal (standard math: 0 = +X, CCW positive)
-        double fieldAngleRad = Math.atan2(deltaY, deltaX);
+            // Get turret field position (accounts for offset from robot center)
+            double[] turretPos = getTurretFieldPosition();
 
-        // Convert to robot-relative by subtracting robot heading
-        double robotHeadingRad = currentPose.getHeading(AngleUnit.RADIANS);
-        double turretAngleRad = fieldAngleRad - robotHeadingRad;
+            // Vector from turret to goal
+            double deltaX = goalPosition.getX() - turretPos[0];
+            double deltaY = goalPosition.getY() - turretPos[1];
 
-        // Convert to degrees and normalize to [-180, 180]
-        double turretAngleDeg = Math.toDegrees(turretAngleRad);
-        turretAngleDeg = normalizeAngle(turretAngleDeg);
+            // Field angle to goal (standard math: 0 = +X, CCW positive)
+            double fieldAngleRad = Math.atan2(deltaY, deltaX);
+
+            // Convert to robot-relative by subtracting robot heading
+            double robotHeadingRad = currentPose.getHeading(AngleUnit.RADIANS);
+            double turretAngleRad = fieldAngleRad - robotHeadingRad;
+
+            // Convert to degrees and normalize to [-180, 180]
+            turretAngleDeg = Math.toDegrees(turretAngleRad);
+            turretAngleDeg = normalizeAngle(turretAngleDeg);
+        }
 
         // Apply fine-tune calibration offset
         turretAngleDeg += TurretConstants.TURRET_TRACKING_OFFSET;
@@ -235,6 +255,10 @@ public class Turret implements Subsystem {
 
     public void setLimelightSubsystem(subsystems.Limelight limelight) {
         this.limelightSubsystem = limelight;
+    }
+
+    public void setShootingCalculator(ShootingCalculator calculator) {
+        this.shootingCalculator = calculator;
     }
 
     @Override

@@ -5,15 +5,19 @@ import Constants.FieldMap;
 import Constants.LimelightConstants;
 import Constants.OdometryConstants;
 import Constants.RobotConstants;
+import Constants.ShooterConstants;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import utility.RobotHardware;
 import com.arcrobotics.ftclib.command.CommandOpMode;
+import com.arcrobotics.ftclib.command.InstantCommand;
+import com.arcrobotics.ftclib.command.RunCommand;
 import com.arcrobotics.ftclib.command.button.GamepadButton;
 import com.arcrobotics.ftclib.command.button.Trigger;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import subsystems.*;
 import utility.*;
+import utility.ShootingCalculator;
 import utility.ShootingValidator;
 import utility.managers.SpindexerManager;
 
@@ -30,6 +34,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
     private SpindexerManager spindexerManager;
     private ShootingValidator shootingValidator;
+    private ShootingCalculator shootingCalculator;
 
 
 
@@ -112,6 +117,11 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         // Link Limelight subsystem to Turret for dual-mode tracking
         turret.setLimelightSubsystem(limelight);
 
+        // Create shooting calculator for velocity compensation and wire to subsystems
+        shootingCalculator = new ShootingCalculator();
+        shooter.setShootingCalculator(shootingCalculator);
+        turret.setShootingCalculator(shootingCalculator);
+
         shootingValidator = new ShootingValidator(odometry, telemetry);
         spindexerManager = new SpindexerManager(
                 spindexer,
@@ -123,10 +133,18 @@ abstract public class TeleOpTemplate extends CommandOpMode {
                 robot.rampSensorPair
         );
 
-        register(intake, shooter, spindexer, limelight, turret, odometry);
+        register(mecanumDrive, intake, shooter, spindexer, limelight, turret, odometry);
     }
 
     protected void configureButtonBindings() {
+        // Default command for drivetrain - runs every loop when no other command requires it
+        mecanumDrive.setDefaultCommand(
+                new RunCommand(() -> {
+                    double[] controls = getTransformedControls();
+                    mecanumDrive.drive(controls[0], controls[1], controls[2]);
+                }, mecanumDrive)
+        );
+
         // Intake controls - blocked during active spindexer operations
         new Trigger(() -> gamepad1.left_trigger > RobotConstants.Controls.TRIGGER_THRESHOLD)
                 .whenActive(() -> {
@@ -143,33 +161,34 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         // Shooting controls (with zone validation)
         // Right trigger: starts sequence or triggers shot in Fast mode
         new Trigger(() -> gamepad1.right_trigger > RobotConstants.Controls.TRIGGER_THRESHOLD)
-                .whenActive(() -> attemptShootingAction());
+                .whenActive(new InstantCommand(this::attemptShootingAction));
 
         // Drive controls
         new GamepadButton(driverGamepad, GamepadKeys.Button.START)
-                .whenPressed(() -> mecanumDrive.resetYaw());
+                .whenPressed(new InstantCommand(mecanumDrive::resetYaw));
         new GamepadButton(driverGamepad, GamepadKeys.Button.B)
-                .whenPressed(() -> mecanumDrive.toggleSlowMode());
+                .whenPressed(new InstantCommand(mecanumDrive::toggleSlowMode));
         new GamepadButton(driverGamepad, GamepadKeys.Button.A)
-                .whenPressed(() -> spindexerManager.toggleMode());
+                .whenPressed(new InstantCommand(spindexerManager::toggleMode));
         new GamepadButton(driverGamepad, GamepadKeys.Button.X)
-                .whenPressed(() -> spindexer.triggerFlick());
+                .whenPressed(new InstantCommand(spindexer::triggerFlick));
         new GamepadButton(driverGamepad, GamepadKeys.Button.Y)
-                .whenPressed(() -> spindexerManager.triggerCataloging());
+                .whenPressed(new InstantCommand(spindexerManager::triggerCataloging));
 
         // Manual spindexer controls
         new GamepadButton(driverGamepad, GamepadKeys.Button.LEFT_BUMPER)
-                .whenPressed(() -> manualRotateCCW());
+                .whenPressed(new InstantCommand(this::manualRotateCCW));
 
         new GamepadButton(driverGamepad, GamepadKeys.Button.RIGHT_BUMPER)
-                .whenPressed(() -> manualRotateCW());
+                .whenPressed(new InstantCommand(this::manualRotateCW));
 
         // Mode toggles
         new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_UP)
-                .whenPressed(() -> limelight.toggleMode());
+                .whenPressed(new InstantCommand(limelight::toggleMode));
         new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_DOWN)
-            .whenPressed(() -> limelight.resetLimelight());
-
+                .whenPressed(new InstantCommand(limelight::resetLimelight));
+        new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_RIGHT)
+                .whenPressed(new InstantCommand(intake::reverse));
     }
 
     @Override
@@ -179,19 +198,15 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         // CRITICAL: Update Pinpoint odometry every loop (like in test OpMode)
         robot.pinpoint.update();
 
+        // Update shooting calculator with current robot state for velocity compensation
+        if (shootingCalculator != null && turret != null) {
+            double[] turretPos = turret.getTurretFieldPosition();
+            com.pedropathing.geometry.Pose goalPos = FieldMap.getGoalPosition();
+            shootingCalculator.update(turretPos, goalPos);
+        }
 
-        updateDrivetrain();
         updateSubsystems();
         updateTelemetry();
-    }
-
-    private void updateDrivetrain() {
-        double[] controls = getTransformedControls();
-        mecanumDrive.drive(
-                controls[0],  // fieldY (forward/backward)
-                controls[1],  // fieldX (strafe left/right)
-                controls[2]   // rotation
-        );
     }
 
     /**
@@ -234,6 +249,13 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         if (!shootingValidator.canShoot(overrideRequested)) {
             // Shooting blocked - provide haptic feedback
             gamepad1.rumble(200);
+            return;
+        }
+
+        // Check velocity compensation safety bounds
+        if (!shooter.isSafeToShoot() && !overrideRequested) {
+            // Velocity compensation values out of safe range
+            gamepad1.rumble(300);
             return;
         }
 
@@ -320,11 +342,38 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
         // SHOOTER section
         telemetry.addLine("=== SHOOTER ===");
-        telemetry.addData("  Shooter Velocity", String.format("%.0f", robot.shooterMotor2.getVelocity()));
-        telemetry.addData("  Distance to Target", shooter.getDistanceToTarget());
+        telemetry.addData("  Distance to Target", String.format("%.1f in", shooter.getDistanceToTarget()));
+        telemetry.addData("  Target Velocity", String.format("%.0f ticks/sec", shooter.getTargetVelocity()));
+        telemetry.addData("  Actual Velocity", String.format("%.0f ticks/sec", robot.shooterMotor2.getVelocity()));
+        telemetry.addData("  Target Hood Angle", String.format("%.1f deg", shooter.getTargetHoodAngle()));
         telemetry.addData("  Turret Target", String.format("%.1f° turret", turret.getTargetTurretAngle()));
         telemetry.addData("  Turret Servo", String.format("%.4f", turret.getServoPosition()));
         telemetry.addLine("");
+
+        // VELOCITY COMPENSATION section
+        if (shootingCalculator != null && ShooterConstants.VELOCITY_COMPENSATION_ENABLED) {
+            telemetry.addLine("=== VELOCITY COMPENSATION ===");
+            telemetry.addData("  Robot Vel X", String.format("%.1f in/s", shootingCalculator.getSmoothedVelX()));
+            telemetry.addData("  Robot Vel Y", String.format("%.1f in/s", shootingCalculator.getSmoothedVelY()));
+            telemetry.addData("  Robot Speed", String.format("%.1f in/s", shootingCalculator.getRobotSpeed()));
+            telemetry.addData("  Base Velocity", String.format("%.0f ticks/s", shootingCalculator.getBaseVelocity()));
+            telemetry.addData("  Adjusted Velocity", String.format("%.0f ticks/s", shootingCalculator.getAdjustedVelocity()));
+            telemetry.addData("  Velocity Adjustment", String.format("%.0f ticks/s", shootingCalculator.getVelocityAdjustment()));
+            telemetry.addData("  Lead Angle", String.format("%.1f°", shootingCalculator.getLeadAngleDegrees()));
+            telemetry.addData("  Adjusted Hood", String.format("%.1f°", shootingCalculator.getAdjustedHoodAngle()));
+            telemetry.addData("  Safe to Shoot", shootingCalculator.isSafeToShoot());
+            telemetry.addLine("");
+        }
+
+        // SHOOTER TUNING section (only when tuning mode is active)
+        if (shooter.isTuningMode()) {
+            telemetry.addLine("=== SHOOTER TUNING (ACTIVE) ===");
+            telemetry.addData("  Distance", String.format("%.1f in", shooter.getTuningDistance()));
+            telemetry.addData("  Set Velocity", String.format("%.0f ticks/sec", shooter.getTuningSetVelocity()));
+            telemetry.addData("  Set Hood Angle", String.format("%.1f deg", shooter.getTuningSetHoodAngle()));
+            telemetry.addData("  Actual Velocity", String.format("%.0f ticks/sec", shooter.getCurrentVelocity()));
+            telemetry.addLine("");
+        }
 
         // SPINDEXER section
         telemetry.addLine("=== SPINDEXER ===");

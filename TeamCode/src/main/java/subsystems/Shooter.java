@@ -1,6 +1,7 @@
 package subsystems;
 
 import com.arcrobotics.ftclib.command.Subsystem;
+import com.arcrobotics.ftclib.util.InterpLUT;
 import com.pedropathing.geometry.Pose;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -11,6 +12,7 @@ import Constants.FieldMap;
 import Constants.LimelightConstants;
 import Constants.RobotConstants;
 import utility.RobotHardware;
+import utility.ShootingCalculator;
 import Constants.ShooterConstants;
 
 import static Constants.ShooterConstants.FLICK_TIME;
@@ -24,6 +26,9 @@ public class Shooter implements Subsystem {
 
     // Odometry subsystem reference
     private Odometry odometry;
+
+    // Shooting calculator for velocity compensation
+    private ShootingCalculator shootingCalculator;
 
     // Flywheel velocity (ticks/sec) - updated each loop based on distance to goal
     private double requiredVelocity = ShooterConstants.DEFAULT_VELOCITY;
@@ -52,6 +57,13 @@ public class Shooter implements Subsystem {
     private double lastError = 0;
     private double lastAcceleration = 0;
 
+    // InterpLUT instances for velocity and hood angle lookup
+    private InterpLUT velocityLUT;
+    private InterpLUT hoodLUT;
+
+    // Current required hood angle
+    private double requiredHoodAngle = ShooterConstants.HOOD_DEFAULT_ANGLE;
+
 
     public Shooter() {
         this.robot = RobotHardware.getInstance();
@@ -71,7 +83,32 @@ public class Shooter implements Subsystem {
         // Start with ball flipper retracted
         robot.shooterFlipper.setPosition(ShooterConstants.FLIPPER_POSITION_RETRACT);
 
+        // Initialize InterpLUT instances
+        initializeLUTs();
+
+        // Initialize hood to default angle
+        setHoodAngle(ShooterConstants.HOOD_DEFAULT_ANGLE);
+
         loopTimer.reset();
+    }
+
+    /**
+     * Initialize InterpLUT instances from ShooterConstants data.
+     */
+    private void initializeLUTs() {
+        // Velocity LUT
+        velocityLUT = new InterpLUT();
+        for (double[] entry : ShooterConstants.VELOCITY_DATA) {
+            velocityLUT.add(entry[0], entry[1]);
+        }
+        velocityLUT.createLUT();
+
+        // Hood LUT
+        hoodLUT = new InterpLUT();
+        for (double[] entry : ShooterConstants.HOOD_DATA) {
+            hoodLUT.add(entry[0], entry[1]);
+        }
+        hoodLUT.createLUT();
     }
 
     public void setTurret(Turret turret) {
@@ -82,7 +119,17 @@ public class Shooter implements Subsystem {
         this.odometry = odometry;
     }
 
+    public void setShootingCalculator(ShootingCalculator calculator) {
+        this.shootingCalculator = calculator;
+    }
+
     public double getDistanceToTarget() {
+        // Use calculator's distance when available (already accounts for position prediction)
+        if (shootingCalculator != null) {
+            return shootingCalculator.getDistance();
+        }
+
+        // Fallback: calculate directly
         if (turret == null) {
             return ShooterConstants.DEFAULT_DISTANCE;
         }
@@ -95,61 +142,72 @@ public class Shooter implements Subsystem {
     }
 
     private double getVelocityFromDistance(double distance) {
-        // Return fixed velocity during Limelight scan mode
-        if (LimelightConstants.manuallySlowedForScan) {
-            return ShooterConstants.FALLBACK_VELOCITY;
-        }
-
-        // Select correct lookup table based on alliance and zone
-        boolean isBlue = (RobotConstants.Robot.allianceColor == EnumConstants.AllianceColor.Blue);
-        double[][] table;
-
-        if (isBlue) {
-            table = (distance < ShooterConstants.BLUE_ZONE_BOUNDARY)
-                ? ShooterConstants.BLUE_FRONT_LOOKUP
-                : ShooterConstants.BLUE_BACK_LOOKUP;
-        } else {
-            table = (distance < ShooterConstants.RED_ZONE_BOUNDARY)
-                ? ShooterConstants.RED_FRONT_LOOKUP
-                : ShooterConstants.RED_BACK_LOOKUP;
-        }
-
-        return interpolateFromTable(table, distance);
+        return velocityLUT.get(distance);
     }
 
-    private double interpolateFromTable(double[][] table, double distance) {
-        // Clamp to table bounds
-        if (distance <= table[0][0]) {
-            return table[0][1];
-        }
-        int lastIndex = table.length - 1;
-        if (distance >= table[lastIndex][0]) {
-            return table[lastIndex][1];
-        }
+    /**
+     * Get required hood angle from distance using InterpLUT.
+     * @param distance Distance to goal in inches
+     * @return Hood angle in degrees (0=vertical, 90=horizontal)
+     */
+    private double getHoodAngleFromDistance(double distance) {
+        double angle = hoodLUT.get(distance);
 
-        // Linear interpolation between table entries
-        for (int i = 0; i < table.length - 1; i++) {
-            double dist1 = table[i][0];
-            double dist2 = table[i + 1][0];
+        // Clamp to valid range
+        return Math.max(ShooterConstants.HOOD_MIN_ANGLE,
+                       Math.min(ShooterConstants.HOOD_MAX_ANGLE, angle));
+    }
 
-            if (distance >= dist1 && distance <= dist2) {
-                double vel1 = table[i][1];
-                double vel2 = table[i + 1][1];
-                // Avoid division by zero if table entries have same distance
-                if (dist2 == dist1) {
-                    return vel1;
-                }
-                double ratio = (distance - dist1) / (dist2 - dist1);
-                return vel1 + (vel2 - vel1) * ratio;
-            }
-        }
+    /**
+     * Convert hood angle to servo position.
+     * Servo 0 = 63 degrees (HOOD_MAX_ANGLE)
+     * Servo 1 = 30 degrees (HOOD_MIN_ANGLE)
+     *
+     * @param hoodAngleDegrees Target hood angle in degrees
+     * @return Servo position (0 to 1)
+     */
+    private double hoodAngleToServoPosition(double hoodAngleDegrees) {
+        // Linear mapping: 30° → 1.0, 63° → 0.0
+        double position = (ShooterConstants.HOOD_MAX_ANGLE - hoodAngleDegrees) /
+                          (ShooterConstants.HOOD_MAX_ANGLE - ShooterConstants.HOOD_MIN_ANGLE);
 
-        return ShooterConstants.FALLBACK_VELOCITY;
+        // Clamp to valid servo range
+        position = Math.max(0.0, Math.min(1.0, position));
+        return position;
+    }
+
+    /**
+     * Set the hood to a specific angle.
+     * @param angleDegrees Target angle (0=vertical, 90=horizontal)
+     */
+    public void setHoodAngle(double angleDegrees) {
+        // Clamp to valid range
+        angleDegrees = Math.max(ShooterConstants.HOOD_MIN_ANGLE,
+                               Math.min(ShooterConstants.HOOD_MAX_ANGLE, angleDegrees));
+
+        double servoPosition = hoodAngleToServoPosition(angleDegrees);
+        robot.shooterHood.setPosition(servoPosition);
+        requiredHoodAngle = angleDegrees;
+    }
+
+    /**
+     * Get current target hood angle.
+     */
+    public double getTargetHoodAngle() {
+        return requiredHoodAngle;
     }
 
     private void updateVelocityFromDistance() {
-        double distance = getDistanceToTarget();
-        requiredVelocity = getVelocityFromDistance(distance);
+        if (ShooterConstants.VELOCITY_COMPENSATION_ENABLED && shootingCalculator != null) {
+            // Use calculator's adjusted values (accounts for robot velocity)
+            requiredVelocity = shootingCalculator.getAdjustedVelocity();
+            requiredHoodAngle = shootingCalculator.getAdjustedHoodAngle();
+        } else {
+            // Original static behavior
+            double distance = getDistanceToTarget();
+            requiredVelocity = getVelocityFromDistance(distance);
+            requiredHoodAngle = getHoodAngleFromDistance(distance);
+        }
     }
 
     private void flipperStateMachinePeriodic() {
@@ -196,8 +254,25 @@ public class Shooter implements Subsystem {
      */
     public boolean isAtTargetVelocity() {
         double currentVelocity = robot.shooterMotor1.getVelocity();
-        double targetVelocity = manualVelocityMode ? manualVelocity : requiredVelocity;
-        return Math.abs(targetVelocity - currentVelocity) < ShooterConstants.VELOCITY_TOLERANCE;
+        return Math.abs(requiredVelocity - currentVelocity) < ShooterConstants.VELOCITY_TOLERANCE;
+    }
+
+    /**
+     * Check if safe to shoot based on velocity compensation bounds.
+     * Returns true if compensation is disabled or values are within safe limits.
+     */
+    public boolean isSafeToShoot() {
+        if (!ShooterConstants.VELOCITY_COMPENSATION_ENABLED || shootingCalculator == null) {
+            return true;  // Always safe when compensation disabled
+        }
+        return shootingCalculator.isSafeToShoot();
+    }
+
+    /**
+     * Get the shooting calculator for telemetry access.
+     */
+    public ShootingCalculator getShootingCalculator() {
+        return shootingCalculator;
     }
 
     /**
@@ -218,7 +293,7 @@ public class Shooter implements Subsystem {
      * Get target velocity for telemetry.
      */
     public double getTargetVelocity() {
-        return manualVelocityMode ? manualVelocity : requiredVelocity;
+        return requiredVelocity;
     }
 
     /**
@@ -227,6 +302,34 @@ public class Shooter implements Subsystem {
      */
     public double[] getControllerOutputs() {
         return new double[] { lastFfOutput, lastPidOutput, lastTotalPower, lastAcceleration };
+    }
+
+    /**
+     * Check if tuning mode is active.
+     */
+    public boolean isTuningMode() {
+        return ShooterConstants.ShooterTuning.TUNING_MODE;
+    }
+
+    /**
+     * Get current distance to target for tuning telemetry.
+     */
+    public double getTuningDistance() {
+        return getDistanceToTarget();
+    }
+
+    /**
+     * Get current set velocity for tuning telemetry.
+     */
+    public double getTuningSetVelocity() {
+        return requiredVelocity;
+    }
+
+    /**
+     * Get current set hood angle for tuning telemetry.
+     */
+    public double getTuningSetHoodAngle() {
+        return requiredHoodAngle;
     }
 
     /**
@@ -253,11 +356,10 @@ public class Shooter implements Subsystem {
         // Prevent division by zero on first loop
         if (dt <= 0) dt = DEFAULT_LOOP_TIME;
 
-        // Update target velocity from distance if not in manual mode
-        if (!manualVelocityMode) {
-            updateVelocityFromDistance();
-        }
-        double targetVelocity = manualVelocityMode ? manualVelocity : requiredVelocity;
+        // Always use LUT for velocity and hood angle based on distance
+        updateVelocityFromDistance();
+        setHoodAngle(requiredHoodAngle);
+        double targetVelocity = requiredVelocity;
 
         // Get current velocity (average of both motors for accuracy)
         double currentVelocity = (robot.shooterMotor1.getVelocity() + robot.shooterMotor2.getVelocity()) / 2.0;

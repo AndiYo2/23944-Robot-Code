@@ -5,6 +5,8 @@ import com.bylazar.telemetry.TelemetryManager;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.ServoImplEx;
+import com.qualcomm.robotcore.hardware.PwmControl;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -35,6 +37,7 @@ public class RobotHardware {
     public DcMotorEx shooterMotor1;
     public DcMotorEx shooterMotor2;
     public Servo shooterFlipper;
+    public Servo shooterHood;
     public AnalogInput shooterEncoder;
     public Servo turretServo;
 
@@ -58,7 +61,7 @@ public class RobotHardware {
 
 
     // ******************* SPINDEXER ******************* //
-    public Servo spindexerServo;  // Changed from CRServo to Servo (position mode)
+    public ServoImplEx spindexerServo;  // Using ServoImplEx for PWM range control
     public Servo spindexerFlipperServo;
     public AnalogInput spindexerEncoder;  // Kept for position verification
 
@@ -173,8 +176,8 @@ public class RobotHardware {
         // ******************* SPINDEXER ******************* //
         spindexerFlipperServo = hardwareMap.get(Servo.class, NamingConstants.Spindexer.spindexerFlipperServo);
         spindexerEncoder = hardwareMap.get(AnalogInput.class, NamingConstants.Spindexer.spindexerEncoder);
-        spindexerServo = hardwareMap.get(Servo.class, NamingConstants.Spindexer.spindexerServo);
-        // Note: Servo direction is handled via position mapping, not setDirection()
+        spindexerServo = hardwareMap.get(ServoImplEx.class, NamingConstants.Spindexer.spindexerServo);
+        spindexerServo.setPwmRange(new PwmControl.PwmRange(500, 2500));  // Full range for Axon at 6V
 
         // ******************* OUTTAKE ******************* //
         shooterMotor1 = hardwareMap.get(DcMotorEx.class, NamingConstants.Shooter.shooter1);
@@ -183,6 +186,7 @@ public class RobotHardware {
         turretServo = hardwareMap.get(Servo.class, NamingConstants.Turret.turret);
         shooterEncoder = hardwareMap.get(AnalogInput.class, NamingConstants.Shooter.shooterEncoder);
         shooterFlipper = hardwareMap.get(Servo.class, NamingConstants.Shooter.shooterFlipperServo);
+        shooterHood = hardwareMap.get(Servo.class, NamingConstants.Shooter.shooterHood);
 
 
         // ******************* LIMELIGHT ******************* //

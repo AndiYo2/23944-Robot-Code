@@ -17,55 +17,67 @@ public class ShooterConstants {
     public static double FALLBACK_VELOCITY = 2200.0;          // Fallback when lookup fails
     public static double DEFAULT_DISTANCE = 100.0;            // Default distance when turret unavailable
 
-    // ==================== VELOCITY LOOKUP TABLES ====================
-    // Zone boundary (inches) - below uses front table, above uses back table
-    public static double BLUE_ZONE_BOUNDARY = 105.0;
-    public static double RED_ZONE_BOUNDARY = 100.0;
+    // ==================== HOOD SERVO CONFIGURATION ====================
+    // Hood servo: 0-355 deg physical range (Axon servo)
+    // Hood angle: 0 = vertical, 90 = horizontal
+    // Usable range: 30-63 degrees
+    public static double HOOD_SERVO_CENTER_POSITION = 0.0;    // Servo position at 0 deg hood
+    public static double HOOD_SERVO_DEGREES_PER_UNIT = 355.0; // Axon servo full range
+    public static double HOOD_GEAR_RATIO = 1.0;               // Tune this if geared
+    public static double HOOD_MIN_ANGLE = 30.0;               // Minimum hood angle (degrees)
+    public static double HOOD_MAX_ANGLE = 63.0;               // Maximum hood angle (degrees)
+    public static double HOOD_DEFAULT_ANGLE = 45.0;           // Default hood angle when no lookup
+    public static double MIN_HOOD_SERVO_POSITION = 0.0001;    // Never set exactly 0
 
-    // Blue Front Zone: distance (inches) to velocity (ticks/sec)
-    public static double[][] BLUE_FRONT_LOOKUP = {
-        {53, 1900},
-        {78, 2000},
-        {80, 1950},
-        {94, 2030},
-        {98, 2100},
-        {100, 2100}
+    // ==================== INTERPLUT DATA ====================
+    // Format: {distance_inches, value} - MUST be sorted by distance ascending
+    // Single LUT used by both alliances
+
+    // Velocity LUT - Distance (inches) -> Velocity (ticks/sec)
+    public static double[][] VELOCITY_DATA = {
+        {0, 1750},
+        {44, 1750},
+        {65, 2000},
+        {69, 2000},
+        {78, 2150},
+        {99, 2300},
+        {135, 2600},
+        {139, 2650},
+        {147, 2700},
+        {159, 2800},
+        {200, 2800}
     };
 
-    // Blue Back Zone
-    public static double[][] BLUE_BACK_LOOKUP = {
-        {140, 2600},
-        {144, 2600},
-        {148, 2650},
-        {154, 2700}
-    };
-
-    // Red Front Zone
-    public static double[][] RED_FRONT_LOOKUP = {
-        {48, 2000},
-        {52, 2000},
-        {80, 2100},
-        {85, 2100}
-    };
-
-    // Red Back Zone
-    public static double[][] RED_BACK_LOOKUP = {
-        {134, 2500},
-        {138, 2520},
-        {148, 2650}
+    // Hood Angle LUT - Distance (inches) -> Hood Angle (degrees, 0=vertical, 90=horizontal)
+    public static double[][] HOOD_DATA = {
+        {0, 30},
+        {44, 30},
+        {65, 40},
+        {69, 40},
+        {78, 43},
+        {99, 45},
+        {135, 63},
+        {139, 63},
+        {147, 63},
+        {159, 63},
+        {200, 63}
     };
 
     /**
-     * Shooter PIDF values in a separate class for independent live tuning via Panels.
-     * Refreshing this class won't affect turret PID or other Shooter settings.
+     * Shooter tuning mode for manual control of velocity and hood angle.
+     * Enable TUNING_MODE to override automatic distance-based calculations.
+     * Use Panels to adjust values in real-time and record them for the LUT.
      */
     @Configurable
-    public static class ShooterPIDF {
-        public static double P = 16;
-        public static double I = 0.0;
-        public static double D = 0.0;
-        public static double F = 10;
-        public static double TUNING_VELOCITY = 2625.0;
+    public static class ShooterTuning {
+        /** Enable to override automatic velocity/hood angle with manual values */
+        public static boolean TUNING_MODE = false;
+
+        /** Manual velocity setting (ticks/sec) - only used when TUNING_MODE is true */
+        public static double TUNING_VELOCITY = 2200.0;
+
+        /** Manual hood angle setting (degrees) - only used when TUNING_MODE is true */
+        public static double TUNING_HOOD_ANGLE = 45.0;
     }
 
     // ==================== FEEDFORWARD VELOCITY CONTROL ====================
@@ -101,4 +113,37 @@ public class ShooterConstants {
 
     /** Velocity tolerance - references canonical source */
     public static double VELOCITY_TOLERANCE = ShooterFeedforwardConstants.VELOCITY_TOLERANCE;
+
+    // ==================== VELOCITY COMPENSATION (Shoot-While-Moving) ====================
+    // See ShooterTurretTuning.md for tuning guide
+
+    /** Enable shoot-while-moving velocity compensation */
+    public static boolean VELOCITY_COMPENSATION_ENABLED = true;
+
+    /** Ball exit delay - time from trigger to ball leaving shooter (seconds) */
+    public static double BALL_EXIT_DELAY = 0.080;
+
+    /** Radial velocity compensation coefficient (tune if over/under compensating) */
+    public static double RADIAL_VELOCITY_COEFFICIENT = 1.0;
+
+    /** Tangential velocity compensation coefficient (tune lead angle) */
+    public static double TANGENTIAL_VELOCITY_COEFFICIENT = 1.0;
+
+    /** Conversion factor: flywheel ticks/sec to ball inches/sec (tune experimentally) */
+    public static double TICKS_TO_INCHES_PER_SEC = 0.05;  // ~2200 ticks/sec = ~110 in/sec
+
+    /** Max safe velocity adjustment (ticks/sec) - reject shot if exceeded */
+    public static double MAX_VELOCITY_ADJUSTMENT = 400;
+
+    /** Min safe flywheel velocity (ticks/sec) */
+    public static double MIN_SAFE_VELOCITY = 1500;
+
+    /** Max safe flywheel velocity (ticks/sec) */
+    public static double MAX_SAFE_VELOCITY = 3200;
+
+    /** Max safe lead angle (degrees) - reject shot if exceeded */
+    public static double MAX_LEAD_ANGLE = 15.0;
+
+    /** Velocity smoothing filter alpha (0-1, higher = less smoothing) */
+    public static double VELOCITY_FILTER_ALPHA = 0.3;
 }

@@ -33,6 +33,7 @@ public class NamingConstants {
         public static String shooter2 = "shooterMotor2";           // Right flywheel (from back), C1
         public static String shooterFlipperServo = "shooterFlipperServo"; // Ball flipper servo, C0
         public static String shooterEncoder = "shooterEncoder";
+        public static String shooterHood = "shooterHoodServo";     // Hood angle servo, E?
     }
 
     public static class Turret {

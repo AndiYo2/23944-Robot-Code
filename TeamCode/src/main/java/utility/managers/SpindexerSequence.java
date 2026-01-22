@@ -139,6 +139,23 @@ public class SpindexerSequence {
     }
 
     /**
+     * Start intake in background (non-blocking).
+     * Sequence continues immediately while intake runs for default duration.
+     */
+    public SpindexerSequence backgroundIntake() {
+        addAction(new BackgroundIntakeAction(intake));
+        return this;
+    }
+
+    /**
+     * Start intake in background for a specific duration (non-blocking).
+     */
+    public SpindexerSequence backgroundIntake(double seconds) {
+        addAction(new BackgroundIntakeAction(intake, seconds));
+        return this;
+    }
+
+    /**
      * Wait for a duration.
      */
     public SpindexerSequence waitFor(double seconds) {

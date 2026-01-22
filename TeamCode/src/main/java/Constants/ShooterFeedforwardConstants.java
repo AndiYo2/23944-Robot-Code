@@ -39,7 +39,7 @@ public class ShooterFeedforwardConstants {
      * HOW TO FIND: Run motor at power=1.0, measure max velocity, kV = 1.0 / maxVelocity
      * Example: If max velocity = 2800 ticks/sec, kV = 1.0/2800 = 0.000357
      */
-    public static double kV = 0.00035;
+    public static double kV = 0.00030;
 
     /**
      * Acceleration gain (kA)
@@ -56,7 +56,7 @@ public class ShooterFeedforwardConstants {
      * Reacts to current error. Helps with faster recovery after shooting a ball.
      * TUNE LAST - after feedforward is working well.
      */
-    public static double kP = 0.0001;
+    public static double kP = 0.004;
 
     /**
      * Integral gain (kI)
@@ -64,7 +64,7 @@ public class ShooterFeedforwardConstants {
      * TUNE SECOND - after kS and kV are set.
      * Start very small (0.0001) and increase slowly.
      */
-    public static double kI = 0.0002;
+    public static double kI = 0.000001;
 
     /**
      * Derivative gain (kD)

@@ -23,7 +23,7 @@ public class LimelightConstants {
         EnumConstants.BallColor.Purple, EnumConstants.BallColor.Purple, EnumConstants.BallColor.Green
     };
 
-    public static boolean manuallySlowedForScan = true;
+    public static boolean manuallySlowedForScan = false;
 
     public static EnumConstants.BallColor[] getMotifPatternForTag(int tagId) {
         switch (tagId) {

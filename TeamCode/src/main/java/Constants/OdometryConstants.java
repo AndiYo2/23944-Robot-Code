@@ -23,10 +23,10 @@ public class OdometryConstants {
     public static Pose blueParkZone = new Pose(105.25, 32.5, Math.toRadians(90));
 
 
-    public static double BLUE_GOAL_X = 0.0;
-    public static double BLUE_GOAL_Y = 141.0;
-    public static double RED_GOAL_X = 136.0;
-    public static double RED_GOAL_Y = 141.0;
+    public static double BLUE_GOAL_X = 3.0;
+    public static double BLUE_GOAL_Y = 140.0;
+    public static double RED_GOAL_X = 140.0;
+    public static double RED_GOAL_Y = 140.0;
 
     public static Pose endingAutonPose;
 

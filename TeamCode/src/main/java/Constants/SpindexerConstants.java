@@ -20,7 +20,7 @@ public class SpindexerConstants {
     };
 
     // --- Flipper Positions ---
-    public static double FLIPPER_POSITION_EXTENDED = 0.80;
+    public static double FLIPPER_POSITION_EXTENDED = 0.85;
     public static double FLIPPER_POSITION_RETRACT = 0.55;
     public static double FLICK_TIME = 0.075;
 
@@ -59,5 +59,5 @@ public class SpindexerConstants {
     public static double SHOOTER_FLIPPER_OUT_TIME = 0.075;
 
     public static double SPINDEXER_FLIPPER_OUT_TIME = 0.075; // Wait after spindexer flipper (same as FLICK_TIME)
-    public static double INTAKE_TIMING = 0.5;                // Wait during intake operation
+    public static double INTAKE_TIMING = 0.35;                // Wait during intake operation
 }

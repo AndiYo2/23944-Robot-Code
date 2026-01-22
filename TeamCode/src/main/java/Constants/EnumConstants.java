@@ -76,7 +76,8 @@ public class EnumConstants {
         Intaking,
         Reversing,
         StagingOnly,
-        IntakeOnly
+        IntakeOnly,
+        ReversedInBeltGo
     }
 
     public enum DriveState {

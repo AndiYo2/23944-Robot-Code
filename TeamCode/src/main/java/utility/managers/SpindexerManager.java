@@ -110,23 +110,20 @@ public class SpindexerManager {
 
     private SpindexerExecutor buildShootingSequence() {
         return new SpindexerSequence(spindexer, shooter, intake)
-            // Fire preloaded ball (already in shooter from cataloging)
-            .fire()
-            .run("Shot 1", this::incrementBallsShot)
-
-            // Loop: flick, then fire+rotate in parallel
-            .repeatWhile(() -> ballsShot < totalBallsInRobot)
+                 // Fire preloaded ball (already in shooter from cataloging)
+                .fire()
+                .run("Shot 1", this::incrementBallsShot)
                 .flick()
                 .parallel(p -> p
                     .fire()
                     .run("Rotate", this::rotateToNextBall)
                 )
                 .run("Shot", this::incrementBallsShot)
-            .endRepeat()
-
-            // Reset position
-            .resetPosition()
-            .build();
+                .flick()
+                .fire()
+                .run("Shot", this::incrementBallsShot)
+                .resetPosition()
+                .build();
     }
 
     private void incrementBallsShot() {
@@ -140,7 +137,7 @@ public class SpindexerManager {
             spindexer.rotateToColor(targetColor);
             motifIndex++;
         } else {
-            spindexer.rotateToNextClosestBall();
+            spindexer.rotateCCW();
         }
     }
 
@@ -183,8 +180,8 @@ public class SpindexerManager {
             // Rotate ball 2 to slot 1
             .rotateCCW()
 
-            // Intake ball 3 into slot 0
-            .intake()
+            // Intake ball 3 into slot 0 (non-blocking - sequence completes immediately)
+            .backgroundIntake()
             .run("Track ball 3", () -> SpindexerPattern.setBallInSlotX(0, ball3Color))
                 .run("Handle 0 balls", () -> handle0Balls())
             .build();
