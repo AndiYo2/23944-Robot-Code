@@ -6,6 +6,7 @@ import com.arcrobotics.ftclib.command.ParallelCommandGroup;
 import com.arcrobotics.ftclib.command.SequentialCommandGroup;
 import com.arcrobotics.ftclib.command.WaitCommand;
 import com.pedropathing.follower.Follower;
+import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 
@@ -402,6 +403,47 @@ public class CommandSequenceBuilder {
         return this;
     }
 
+    // ==================== Turret Pre-Aim Methods ====================
+
+    /**
+     * Sets the turret to a specific angle in degrees.
+     * Useful for manually positioning the turret.
+     *
+     * @param degrees the target angle in turret degrees
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder setTurretAngle(double degrees) {
+        commands.add(new SetTurretAngleCommand(turret, degrees));
+        return this;
+    }
+
+    /**
+     * Pre-aims the turret to the goal as if the robot were at the specified position.
+     * Useful for aiming the turret before arriving at a shooting position.
+     *
+     * @param robotX hypothetical robot X position (inches)
+     * @param robotY hypothetical robot Y position (inches)
+     * @param robotHeadingDeg hypothetical robot heading (degrees)
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder preAimTurret(double robotX, double robotY, double robotHeadingDeg) {
+        commands.add(new SetTurretAngleCommand(turret, robotX, robotY, robotHeadingDeg));
+        return this;
+    }
+
+    /**
+     * Pre-aims the turret to the goal based on the end position of a path chain.
+     * Calculates where the robot will be at the end of the path and aims accordingly.
+     *
+     * @param pathChain the path chain to get the end position from
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder preAimToPathEnd(PathChain pathChain) {
+        Pose endPose = pathChain.getPath(pathChain.size() - 1).getLastControlPoint();
+        commands.add(new SetTurretAngleCommand(turret, endPose.getX(), endPose.getY(), Math.toDegrees(endPose.getHeading())));
+        return this;
+    }
+
     /**
      * Adds a custom command directly.
      *
@@ -553,6 +595,23 @@ public class CommandSequenceBuilder {
 
         public ParallelBuilder waitForTurretAligned(double timeout) {
             parallelCommands.add(new WaitForTurretAlignedCommand(turret, timeout));
+            return this;
+        }
+
+        // Turret pre-aim methods
+        public ParallelBuilder setTurretAngle(double degrees) {
+            parallelCommands.add(new SetTurretAngleCommand(turret, degrees));
+            return this;
+        }
+
+        public ParallelBuilder preAimTurret(double robotX, double robotY, double robotHeadingDeg) {
+            parallelCommands.add(new SetTurretAngleCommand(turret, robotX, robotY, robotHeadingDeg));
+            return this;
+        }
+
+        public ParallelBuilder preAimToPathEnd(PathChain pathChain) {
+            Pose endPose = pathChain.getPath(pathChain.size() - 1).getLastControlPoint();
+            parallelCommands.add(new SetTurretAngleCommand(turret, endPose.getX(), endPose.getY(), Math.toDegrees(endPose.getHeading())));
             return this;
         }
 

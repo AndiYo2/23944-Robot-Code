@@ -94,14 +94,8 @@ public class Turret extends SubsystemBase {
     }
 
     public void turretPeriodic(FieldState fieldState) {
-        switch (fieldState) {
-            case IdleZone:
-                setTurretDegree(CENTER);
-                break;
-            case ShootingZone:
-                setTurretDegree(getDegreesToGoal());
-                break;
-        }
+        // Always track to goal regardless of field state
+        setTurretDegree(getDegreesToGoal());
     }
 
     public void setTurretDegree(double degree) {
@@ -144,6 +138,46 @@ public class Turret extends SubsystemBase {
             targetOutOfRange = false;
             degreesOutOfRange = 0;
         }
+
+        return turretAngleDeg;
+    }
+
+    /**
+     * Calculate the turret angle needed to aim at the goal from a hypothetical robot position.
+     * Useful for pre-aiming the turret before arriving at a position.
+     *
+     * @param robotX hypothetical robot X position (inches)
+     * @param robotY hypothetical robot Y position (inches)
+     * @param robotHeadingRad hypothetical robot heading (radians)
+     * @return turret angle in degrees
+     */
+    public double getDegreesToGoalFromPosition(double robotX, double robotY, double robotHeadingRad) {
+        Pose goalPosition = FieldMap.getGoalPosition();
+
+        // Calculate turret field position from hypothetical robot position
+        double turretX = robotX +
+                (TurretConstants.TURRET_OFFSET_X * Math.sin(robotHeadingRad) +
+                 TurretConstants.TURRET_OFFSET_Y * Math.cos(robotHeadingRad));
+        double turretY = robotY +
+                (-TurretConstants.TURRET_OFFSET_X * Math.cos(robotHeadingRad) +
+                 TurretConstants.TURRET_OFFSET_Y * Math.sin(robotHeadingRad));
+
+        // Vector from turret to goal
+        double deltaX = goalPosition.getX() - turretX;
+        double deltaY = goalPosition.getY() - turretY;
+
+        // Field angle to goal
+        double fieldAngleRad = Math.atan2(deltaY, deltaX);
+
+        // Convert to robot-relative
+        double turretAngleRad = fieldAngleRad - robotHeadingRad;
+
+        // Convert to degrees and normalize
+        double turretAngleDeg = Math.toDegrees(turretAngleRad);
+        turretAngleDeg = normalizeAngle(turretAngleDeg);
+
+        // Apply calibration offset
+        turretAngleDeg += TurretConstants.TURRET_TRACKING_OFFSET;
 
         return turretAngleDeg;
     }
