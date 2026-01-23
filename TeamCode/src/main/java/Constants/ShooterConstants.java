@@ -113,37 +113,4 @@ public class ShooterConstants {
 
     /** Velocity tolerance - references canonical source */
     public static double VELOCITY_TOLERANCE = ShooterFeedforwardConstants.VELOCITY_TOLERANCE;
-
-    // ==================== VELOCITY COMPENSATION (Shoot-While-Moving) ====================
-    // See ShooterTurretTuning.md for tuning guide
-
-    /** Enable shoot-while-moving velocity compensation */
-    public static boolean VELOCITY_COMPENSATION_ENABLED = true;
-
-    /** Ball exit delay - time from trigger to ball leaving shooter (seconds) */
-    public static double BALL_EXIT_DELAY = 0.080;
-
-    /** Radial velocity compensation coefficient (tune if over/under compensating) */
-    public static double RADIAL_VELOCITY_COEFFICIENT = 1.0;
-
-    /** Tangential velocity compensation coefficient (tune lead angle) */
-    public static double TANGENTIAL_VELOCITY_COEFFICIENT = 1.0;
-
-    /** Conversion factor: flywheel ticks/sec to ball inches/sec (tune experimentally) */
-    public static double TICKS_TO_INCHES_PER_SEC = 0.05;  // ~2200 ticks/sec = ~110 in/sec
-
-    /** Max safe velocity adjustment (ticks/sec) - reject shot if exceeded */
-    public static double MAX_VELOCITY_ADJUSTMENT = 400;
-
-    /** Min safe flywheel velocity (ticks/sec) */
-    public static double MIN_SAFE_VELOCITY = 1500;
-
-    /** Max safe flywheel velocity (ticks/sec) */
-    public static double MAX_SAFE_VELOCITY = 3200;
-
-    /** Max safe lead angle (degrees) - reject shot if exceeded */
-    public static double MAX_LEAD_ANGLE = 15.0;
-
-    /** Velocity smoothing filter alpha (0-1, higher = less smoothing) */
-    public static double VELOCITY_FILTER_ALPHA = 0.3;
 }

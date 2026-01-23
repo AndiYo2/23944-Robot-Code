@@ -10,6 +10,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import framework.AutonSequence;
 import Constants.EnumConstants;
 import Constants.RobotConstants;
+import subsystems.Limelight;
 
 @Configurable
 @Autonomous(name = "BlueBack9Ball", group = "NineBall")
@@ -71,16 +72,21 @@ public class BlueBack9Ball extends AutonTemplate {
     public void init() {
         super.init();
         RobotConstants.Robot.allianceColor = EnumConstants.AllianceColor.Blue;
+        limelight.setMode(EnumConstants.LimelightMode.GoalTracking);
+        spindexerManager.setMode(EnumConstants.ShootingMode.Fast);
         executor = new AutonSequence(follower, intake, spindexerManager, limelight)
-                .parallel(p -> p.limelightScan().catalog())
+                .catalog()
+                .delay(.5)
                 .shoot()
                 .parallel(p -> p.moveTo(shootToFirst, maxSpeed).intakeStart())
                 .intakeStop()
                 .parallel(p -> p.moveTo(firstToShoot, maxSpeed).catalog())
+                .delay(.5)
                 .shoot()
                 .parallel(p -> p.moveTo(shootToSecond, maxSpeed).intakeStart())
                 .intakeStop()
                 .parallel(p -> p.moveTo(secondToShoot, maxSpeed).catalog())
+                .delay(.5)
                 .shoot()
                 .moveTo(shootToStop, maxSpeed)
                 .build();

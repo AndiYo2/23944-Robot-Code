@@ -114,10 +114,8 @@ public class SpindexerManager {
                 .fire()
                 .run("Shot 1", this::incrementBallsShot)
                 .flick()
-                .parallel(p -> p
-                    .fire()
-                    .run("Rotate", this::rotateToNextBall)
-                )
+                .fire()
+                .run("Rotate", this::rotateToNextBall)
                 .run("Shot", this::incrementBallsShot)
                 .flick()
                 .fire()

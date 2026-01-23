@@ -12,7 +12,6 @@ import Constants.FieldMap;
 import Constants.LimelightConstants;
 import Constants.RobotConstants;
 import utility.RobotHardware;
-import utility.ShootingCalculator;
 import Constants.ShooterConstants;
 
 import static Constants.ShooterConstants.FLICK_TIME;
@@ -26,9 +25,6 @@ public class Shooter implements Subsystem {
 
     // Odometry subsystem reference
     private Odometry odometry;
-
-    // Shooting calculator for velocity compensation
-    private ShootingCalculator shootingCalculator;
 
     // Flywheel velocity (ticks/sec) - updated each loop based on distance to goal
     private double requiredVelocity = ShooterConstants.DEFAULT_VELOCITY;
@@ -119,17 +115,7 @@ public class Shooter implements Subsystem {
         this.odometry = odometry;
     }
 
-    public void setShootingCalculator(ShootingCalculator calculator) {
-        this.shootingCalculator = calculator;
-    }
-
     public double getDistanceToTarget() {
-        // Use calculator's distance when available (already accounts for position prediction)
-        if (shootingCalculator != null) {
-            return shootingCalculator.getDistance();
-        }
-
-        // Fallback: calculate directly
         if (turret == null) {
             return ShooterConstants.DEFAULT_DISTANCE;
         }
@@ -198,16 +184,9 @@ public class Shooter implements Subsystem {
     }
 
     private void updateVelocityFromDistance() {
-        if (ShooterConstants.VELOCITY_COMPENSATION_ENABLED && shootingCalculator != null) {
-            // Use calculator's adjusted values (accounts for robot velocity)
-            requiredVelocity = shootingCalculator.getAdjustedVelocity();
-            requiredHoodAngle = shootingCalculator.getAdjustedHoodAngle();
-        } else {
-            // Original static behavior
-            double distance = getDistanceToTarget();
-            requiredVelocity = getVelocityFromDistance(distance);
-            requiredHoodAngle = getHoodAngleFromDistance(distance);
-        }
+        double distance = getDistanceToTarget();
+        requiredVelocity = getVelocityFromDistance(distance);
+        requiredHoodAngle = getHoodAngleFromDistance(distance);
     }
 
     private void flipperStateMachinePeriodic() {
@@ -255,24 +234,6 @@ public class Shooter implements Subsystem {
     public boolean isAtTargetVelocity() {
         double currentVelocity = robot.shooterMotor1.getVelocity();
         return Math.abs(requiredVelocity - currentVelocity) < ShooterConstants.VELOCITY_TOLERANCE;
-    }
-
-    /**
-     * Check if safe to shoot based on velocity compensation bounds.
-     * Returns true if compensation is disabled or values are within safe limits.
-     */
-    public boolean isSafeToShoot() {
-        if (!ShooterConstants.VELOCITY_COMPENSATION_ENABLED || shootingCalculator == null) {
-            return true;  // Always safe when compensation disabled
-        }
-        return shootingCalculator.isSafeToShoot();
-    }
-
-    /**
-     * Get the shooting calculator for telemetry access.
-     */
-    public ShootingCalculator getShootingCalculator() {
-        return shootingCalculator;
     }
 
     /**

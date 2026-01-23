@@ -17,7 +17,6 @@ import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import subsystems.*;
 import utility.*;
-import utility.ShootingCalculator;
 import utility.ShootingValidator;
 import utility.managers.SpindexerManager;
 
@@ -34,7 +33,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
     private SpindexerManager spindexerManager;
     private ShootingValidator shootingValidator;
-    private ShootingCalculator shootingCalculator;
 
 
 
@@ -117,11 +115,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         // Link Limelight subsystem to Turret for dual-mode tracking
         turret.setLimelightSubsystem(limelight);
 
-        // Create shooting calculator for velocity compensation and wire to subsystems
-        shootingCalculator = new ShootingCalculator();
-        shooter.setShootingCalculator(shootingCalculator);
-        turret.setShootingCalculator(shootingCalculator);
-
         shootingValidator = new ShootingValidator(odometry, telemetry);
         spindexerManager = new SpindexerManager(
                 spindexer,
@@ -198,13 +191,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         // CRITICAL: Update Pinpoint odometry every loop (like in test OpMode)
         robot.pinpoint.update();
 
-        // Update shooting calculator with current robot state for velocity compensation
-        if (shootingCalculator != null && turret != null) {
-            double[] turretPos = turret.getTurretFieldPosition();
-            com.pedropathing.geometry.Pose goalPos = FieldMap.getGoalPosition();
-            shootingCalculator.update(turretPos, goalPos);
-        }
-
         updateSubsystems();
         updateTelemetry();
     }
@@ -249,13 +235,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         if (!shootingValidator.canShoot(overrideRequested)) {
             // Shooting blocked - provide haptic feedback
             gamepad1.rumble(200);
-            return;
-        }
-
-        // Check velocity compensation safety bounds
-        if (!shooter.isSafeToShoot() && !overrideRequested) {
-            // Velocity compensation values out of safe range
-            gamepad1.rumble(300);
             return;
         }
 
@@ -349,21 +328,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         telemetry.addData("  Turret Target", String.format("%.1f° turret", turret.getTargetTurretAngle()));
         telemetry.addData("  Turret Servo", String.format("%.4f", turret.getServoPosition()));
         telemetry.addLine("");
-
-        // VELOCITY COMPENSATION section
-        if (shootingCalculator != null && ShooterConstants.VELOCITY_COMPENSATION_ENABLED) {
-            telemetry.addLine("=== VELOCITY COMPENSATION ===");
-            telemetry.addData("  Robot Vel X", String.format("%.1f in/s", shootingCalculator.getSmoothedVelX()));
-            telemetry.addData("  Robot Vel Y", String.format("%.1f in/s", shootingCalculator.getSmoothedVelY()));
-            telemetry.addData("  Robot Speed", String.format("%.1f in/s", shootingCalculator.getRobotSpeed()));
-            telemetry.addData("  Base Velocity", String.format("%.0f ticks/s", shootingCalculator.getBaseVelocity()));
-            telemetry.addData("  Adjusted Velocity", String.format("%.0f ticks/s", shootingCalculator.getAdjustedVelocity()));
-            telemetry.addData("  Velocity Adjustment", String.format("%.0f ticks/s", shootingCalculator.getVelocityAdjustment()));
-            telemetry.addData("  Lead Angle", String.format("%.1f°", shootingCalculator.getLeadAngleDegrees()));
-            telemetry.addData("  Adjusted Hood", String.format("%.1f°", shootingCalculator.getAdjustedHoodAngle()));
-            telemetry.addData("  Safe to Shoot", shootingCalculator.isSafeToShoot());
-            telemetry.addLine("");
-        }
 
         // SHOOTER TUNING section (only when tuning mode is active)
         if (shooter.isTuningMode()) {

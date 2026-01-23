@@ -1,5 +1,6 @@
 package Autos;
 
+import Constants.EnumConstants;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
@@ -103,6 +104,7 @@ public abstract class AutonTemplate extends OpMode {
             executor.start();
         }
         limelight.resetLimelight();
+        limelight.setMode(EnumConstants.LimelightMode.GoalTracking);
     }
 
     @Override
