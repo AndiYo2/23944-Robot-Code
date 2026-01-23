@@ -1,0 +1,571 @@
+package commands;
+
+import com.arcrobotics.ftclib.command.Command;
+import com.arcrobotics.ftclib.command.InstantCommand;
+import com.arcrobotics.ftclib.command.ParallelCommandGroup;
+import com.arcrobotics.ftclib.command.SequentialCommandGroup;
+import com.arcrobotics.ftclib.command.WaitCommand;
+import com.pedropathing.follower.Follower;
+import com.pedropathing.paths.Path;
+import com.pedropathing.paths.PathChain;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
+
+import commands.*;
+import Constants.EnumConstants.BallColor;
+import Constants.SpindexerConstants;
+import pedroPathing.Constants;
+import subsystems.Intake;
+import subsystems.Limelight;
+import subsystems.Shooter;
+import subsystems.Spindexer;
+import subsystems.Turret;
+import utility.RobotHardware;
+
+/**
+ * Fluent builder API for constructing autonomous command sequences using FTCLib.
+ * Provides a declarative way to sequence commands without manual state machine management.
+ *
+ * Example usage:
+ * <pre>
+ * autonomousCommand = new CommandSequenceBuilder(follower, intake, spindexer, limelight, shooter, turret)
+ *     .parallel(p -> p.limelightScan().catalog())
+ *     .waitForShooterReady(2.0)
+ *     .waitForTurretAligned(1.0)
+ *     .shoot()
+ *     .parallel(p -> p.moveTo(path).intakeStart())
+ *     .intakeStop()
+ *     .build();
+ * </pre>
+ */
+public class CommandSequenceBuilder {
+    protected final Follower follower;
+    protected final Intake intake;
+    protected final Spindexer spindexer;
+    protected final Limelight limelight;
+    protected final Shooter shooter;
+    protected final Turret turret;
+
+    private final List<Command> commands = new ArrayList<>();
+
+    /**
+     * Creates a new command sequence builder.
+     *
+     * @param follower the path follower
+     * @param intake the intake subsystem
+     * @param spindexer the spindexer subsystem
+     * @param limelight the limelight subsystem
+     * @param shooter the shooter subsystem
+     * @param turret the turret subsystem
+     */
+    public CommandSequenceBuilder(Follower follower, Intake intake, Spindexer spindexer,
+                                   Limelight limelight, Shooter shooter, Turret turret) {
+        this.follower = follower;
+        this.intake = intake;
+        this.spindexer = spindexer;
+        this.limelight = limelight;
+        this.shooter = shooter;
+        this.turret = turret;
+    }
+
+    // ==================== Move-To Path Methods ====================
+
+    /**
+     * Adds a move-to-path command.
+     *
+     * @param path the path to follow
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder moveTo(Path path) {
+        commands.add(new FollowPathCommand(follower, path, true));
+        return this;
+    }
+
+    /**
+     * Adds a move-to-path command with custom hold end setting.
+     *
+     * @param path the path to follow
+     * @param holdEnd whether to hold position at the end
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder moveTo(Path path, boolean holdEnd) {
+        commands.add(new FollowPathCommand(follower, path, holdEnd));
+        return this;
+    }
+
+    /**
+     * Adds a move-to-path-chain command.
+     *
+     * @param pathChain the path chain to follow
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder moveTo(PathChain pathChain) {
+        commands.add(new FollowPathCommand(follower, pathChain, true));
+        return this;
+    }
+
+    /**
+     * Adds a move-to-path-chain command with custom hold end setting.
+     *
+     * @param pathChain the path chain to follow
+     * @param holdEnd whether to hold position at the end
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder moveTo(PathChain pathChain, boolean holdEnd) {
+        commands.add(new FollowPathCommand(follower, pathChain, holdEnd));
+        return this;
+    }
+
+    /**
+     * Adds a move-to-path command with custom speed.
+     *
+     * @param path the path to follow
+     * @param maxPower the maximum power/speed (0.0-1.0)
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder moveTo(Path path, double maxPower) {
+        commands.add(new FollowPathCommand(follower, path, maxPower, true));
+        return this;
+    }
+
+    /**
+     * Adds a move-to-path command with custom speed and hold end setting.
+     *
+     * @param path the path to follow
+     * @param maxPower the maximum power/speed (0.0-1.0)
+     * @param holdEnd whether to hold position at the end
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder moveTo(Path path, double maxPower, boolean holdEnd) {
+        commands.add(new FollowPathCommand(follower, path, maxPower, holdEnd));
+        return this;
+    }
+
+    /**
+     * Adds a move-to-path-chain command with custom speed.
+     *
+     * @param pathChain the path chain to follow
+     * @param maxPower the maximum power/speed (0.0-1.0)
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder moveTo(PathChain pathChain, double maxPower) {
+        commands.add(new FollowPathCommand(follower, pathChain, maxPower, true));
+        return this;
+    }
+
+    /**
+     * Adds a move-to-path-chain command with custom speed and hold end setting.
+     *
+     * @param pathChain the path chain to follow
+     * @param maxPower the maximum power/speed (0.0-1.0)
+     * @param holdEnd whether to hold position at the end
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder moveTo(PathChain pathChain, double maxPower, boolean holdEnd) {
+        commands.add(new FollowPathCommand(follower, pathChain, maxPower, holdEnd));
+        return this;
+    }
+
+    // ==================== Inline Coordinate Path Methods ====================
+
+    /**
+     * Creates and follows a straight-line path using inline coordinates with linear heading interpolation.
+     *
+     * @param x1 starting x coordinate (inches)
+     * @param y1 starting y coordinate (inches)
+     * @param h1 starting heading (degrees)
+     * @param x2 ending x coordinate (inches)
+     * @param y2 ending y coordinate (inches)
+     * @param h2 ending heading (degrees)
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder moveTo(double x1, double y1, double h1, double x2, double y2, double h2) {
+        PathChain path = Constants.pathBuilder(follower)
+                .addPath(new com.pedropathing.geometry.BezierLine(
+                        new com.pedropathing.geometry.Pose(x1, y1),
+                        new com.pedropathing.geometry.Pose(x2, y2)))
+                .setLinearHeadingInterpolation(Math.toRadians(h1), Math.toRadians(h2))
+                .build();
+        commands.add(new FollowPathCommand(follower, path, true));
+        return this;
+    }
+
+    /**
+     * Creates and follows a straight-line path using inline coordinates with tangent heading.
+     *
+     * @param x1 starting x coordinate (inches)
+     * @param y1 starting y coordinate (inches)
+     * @param x2 ending x coordinate (inches)
+     * @param y2 ending y coordinate (inches)
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder moveToTangent(double x1, double y1, double x2, double y2) {
+        PathChain path = Constants.pathBuilder(follower)
+                .addPath(new com.pedropathing.geometry.BezierLine(
+                        new com.pedropathing.geometry.Pose(x1, y1),
+                        new com.pedropathing.geometry.Pose(x2, y2)))
+                .setTangentHeadingInterpolation()
+                .build();
+        commands.add(new FollowPathCommand(follower, path, true));
+        return this;
+    }
+
+    /**
+     * Creates and follows a straight-line path using inline coordinates with constant heading.
+     *
+     * @param x1 starting x coordinate (inches)
+     * @param y1 starting y coordinate (inches)
+     * @param x2 ending x coordinate (inches)
+     * @param y2 ending y coordinate (inches)
+     * @param heading constant heading to maintain (degrees)
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder moveTo(double x1, double y1, double x2, double y2, double heading) {
+        PathChain path = Constants.pathBuilder(follower)
+                .addPath(new com.pedropathing.geometry.BezierLine(
+                        new com.pedropathing.geometry.Pose(x1, y1),
+                        new com.pedropathing.geometry.Pose(x2, y2)))
+                .setConstantHeadingInterpolation(Math.toRadians(heading))
+                .build();
+        commands.add(new FollowPathCommand(follower, path, true));
+        return this;
+    }
+
+    /**
+     * Creates and follows a curved Bezier path using inline coordinates with linear heading interpolation.
+     *
+     * @param x1 starting x coordinate (inches)
+     * @param y1 starting y coordinate (inches)
+     * @param h1 starting heading (degrees)
+     * @param cx control point x coordinate (inches)
+     * @param cy control point y coordinate (inches)
+     * @param x2 ending x coordinate (inches)
+     * @param y2 ending y coordinate (inches)
+     * @param h2 ending heading (degrees)
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder moveToViaCurve(double x1, double y1, double h1, double cx, double cy,
+                                                  double x2, double y2, double h2) {
+        PathChain path = Constants.pathBuilder(follower)
+                .addPath(new com.pedropathing.geometry.BezierCurve(
+                        new com.pedropathing.geometry.Pose(x1, y1),
+                        new com.pedropathing.geometry.Pose(cx, cy),
+                        new com.pedropathing.geometry.Pose(x2, y2)))
+                .setLinearHeadingInterpolation(Math.toRadians(h1), Math.toRadians(h2))
+                .build();
+        commands.add(new FollowPathCommand(follower, path, true));
+        return this;
+    }
+
+    // ==================== Action Methods ====================
+
+    /**
+     * Adds a shooting command that shoots all 3 balls.
+     *
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder shoot() {
+        commands.add(ShootingCommands.shootAllBalls(shooter, spindexer, 3));
+        return this;
+    }
+
+    /**
+     * Adds a shooting command with specified ball count.
+     *
+     * @param ballCount number of balls to shoot
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder shoot(int ballCount) {
+        commands.add(ShootingCommands.shootAllBalls(shooter, spindexer, ballCount));
+        return this;
+    }
+
+    /**
+     * Adds a cataloging command.
+     *
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder catalog() {
+        RobotHardware robot = RobotHardware.getInstance();
+        commands.add(CatalogCommands.catalogFastSimple(spindexer, shooter, intake,
+                robot.intakeSensorPair, robot.transferSensorPair, robot.rampSensorPair));
+        return this;
+    }
+
+    /**
+     * Sets the initial spindexer ball pattern using the default preload.
+     *
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder preload() {
+        commands.add(new PreloadCommand());
+        return this;
+    }
+
+    /**
+     * Sets the initial spindexer ball pattern with a custom configuration.
+     *
+     * @param pattern array of 3 BallColors: [Intake, Shooter, TopStorage]
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder preload(BallColor[] pattern) {
+        commands.add(new PreloadCommand(pattern));
+        return this;
+    }
+
+    /**
+     * Sets the initial spindexer ball pattern with explicit ball colors.
+     *
+     * @param intake ball color in intake slot (slot 0)
+     * @param shooter ball color in shooter slot (slot 1)
+     * @param topStorage ball color in top storage slot (slot 2)
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder preload(BallColor intake, BallColor shooter, BallColor topStorage) {
+        commands.add(new PreloadCommand(intake, shooter, topStorage));
+        return this;
+    }
+
+    /**
+     * Adds an intake start command.
+     *
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder intakeStart() {
+        commands.add(new IntakeStartCommand(intake));
+        return this;
+    }
+
+    /**
+     * Adds an intake stop command.
+     *
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder intakeStop() {
+        commands.add(new IntakeStopCommand(intake));
+        return this;
+    }
+
+    /**
+     * Adds a limelight scan command.
+     *
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder limelightScan() {
+        commands.add(new LimelightScanCommand(limelight));
+        return this;
+    }
+
+    /**
+     * Adds a limelight scan command with custom timeout.
+     *
+     * @param timeout timeout in seconds
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder limelightScan(double timeout) {
+        commands.add(new LimelightScanCommand(limelight, timeout));
+        return this;
+    }
+
+    /**
+     * Adds a delay command.
+     *
+     * @param seconds the delay duration in seconds
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder delay(double seconds) {
+        commands.add(new WaitCommand((long)(seconds * 1000)));
+        return this;
+    }
+
+    /**
+     * Waits for shooter to reach target velocity.
+     *
+     * @param timeout max seconds to wait
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder waitForShooterReady(double timeout) {
+        commands.add(new WaitForShooterReadyCommand(shooter, timeout));
+        return this;
+    }
+
+    /**
+     * Waits for turret to be aligned (not out of range).
+     *
+     * @param timeout max seconds to wait
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder waitForTurretAligned(double timeout) {
+        commands.add(new WaitForTurretAlignedCommand(turret, timeout));
+        return this;
+    }
+
+    /**
+     * Adds a custom command directly.
+     *
+     * @param command the command to add
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder addCommand(Command command) {
+        commands.add(command);
+        return this;
+    }
+
+    // ==================== Parallel Groups ====================
+
+    /**
+     * Adds a parallel command group.
+     * All commands in the group will run simultaneously until all complete.
+     *
+     * Example:
+     * <pre>
+     * .parallel(p -> p.moveTo(path).catalog())
+     * </pre>
+     *
+     * @param builder a consumer that adds commands to the parallel group
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder parallel(Consumer<ParallelBuilder> builder) {
+        ParallelBuilder parallelBuilder = new ParallelBuilder(follower, intake,
+                spindexer, limelight, shooter, turret);
+        builder.accept(parallelBuilder);
+        commands.add(parallelBuilder.build());
+        return this;
+    }
+
+    // ==================== Build ====================
+
+    /**
+     * Builds and returns the configured command sequence.
+     * Call this at the end of your sequence definition.
+     *
+     * @return the configured SequentialCommandGroup
+     */
+    public Command build() {
+        return new SequentialCommandGroup(commands.toArray(new Command[0]));
+    }
+
+    // ==================== Parallel Builder Inner Class ====================
+
+    /**
+     * Builder for parallel command groups.
+     * Provides the same fluent methods but adds to a parallel group instead.
+     */
+    public static class ParallelBuilder {
+        private final Follower follower;
+        private final Intake intake;
+        private final Spindexer spindexer;
+        private final Limelight limelight;
+        private final Shooter shooter;
+        private final Turret turret;
+        private final List<Command> parallelCommands = new ArrayList<>();
+
+        private ParallelBuilder(Follower follower, Intake intake, Spindexer spindexer,
+                                Limelight limelight, Shooter shooter, Turret turret) {
+            this.follower = follower;
+            this.intake = intake;
+            this.spindexer = spindexer;
+            this.limelight = limelight;
+            this.shooter = shooter;
+            this.turret = turret;
+        }
+
+        // Path methods
+        public ParallelBuilder moveTo(Path path) {
+            parallelCommands.add(new FollowPathCommand(follower, path, true));
+            return this;
+        }
+
+        public ParallelBuilder moveTo(Path path, double maxPower) {
+            parallelCommands.add(new FollowPathCommand(follower, path, maxPower, true));
+            return this;
+        }
+
+        public ParallelBuilder moveTo(Path path, double maxPower, boolean holdEnd) {
+            parallelCommands.add(new FollowPathCommand(follower, path, maxPower, holdEnd));
+            return this;
+        }
+
+        public ParallelBuilder moveTo(PathChain pathChain) {
+            parallelCommands.add(new FollowPathCommand(follower, pathChain, true));
+            return this;
+        }
+
+        public ParallelBuilder moveTo(PathChain pathChain, double maxPower) {
+            parallelCommands.add(new FollowPathCommand(follower, pathChain, maxPower, true));
+            return this;
+        }
+
+        public ParallelBuilder moveTo(PathChain pathChain, double maxPower, boolean holdEnd) {
+            parallelCommands.add(new FollowPathCommand(follower, pathChain, maxPower, holdEnd));
+            return this;
+        }
+
+        // Action methods
+        public ParallelBuilder shoot() {
+            parallelCommands.add(ShootingCommands.shootAllBalls(shooter, spindexer, 3));
+            return this;
+        }
+
+        public ParallelBuilder shoot(int ballCount) {
+            parallelCommands.add(ShootingCommands.shootAllBalls(shooter, spindexer, ballCount));
+            return this;
+        }
+
+        public ParallelBuilder catalog() {
+            RobotHardware robot = RobotHardware.getInstance();
+            parallelCommands.add(CatalogCommands.catalogFastSimple(spindexer, shooter, intake,
+                    robot.intakeSensorPair, robot.transferSensorPair, robot.rampSensorPair));
+            return this;
+        }
+
+        public ParallelBuilder preload() {
+            parallelCommands.add(new PreloadCommand());
+            return this;
+        }
+
+        public ParallelBuilder intakeStart() {
+            parallelCommands.add(new IntakeStartCommand(intake));
+            return this;
+        }
+
+        public ParallelBuilder intakeStop() {
+            parallelCommands.add(new IntakeStopCommand(intake));
+            return this;
+        }
+
+        public ParallelBuilder limelightScan() {
+            parallelCommands.add(new LimelightScanCommand(limelight));
+            return this;
+        }
+
+        public ParallelBuilder delay(double seconds) {
+            parallelCommands.add(new WaitCommand((long)(seconds * 1000)));
+            return this;
+        }
+
+        public ParallelBuilder waitForShooterReady(double timeout) {
+            parallelCommands.add(new WaitForShooterReadyCommand(shooter, timeout));
+            return this;
+        }
+
+        public ParallelBuilder waitForTurretAligned(double timeout) {
+            parallelCommands.add(new WaitForTurretAlignedCommand(turret, timeout));
+            return this;
+        }
+
+        public ParallelBuilder addCommand(Command command) {
+            parallelCommands.add(command);
+            return this;
+        }
+
+        /**
+         * Builds the parallel command group.
+         */
+        ParallelCommandGroup build() {
+            return new ParallelCommandGroup(parallelCommands.toArray(new Command[0]));
+        }
+    }
+}

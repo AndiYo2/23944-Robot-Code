@@ -1,6 +1,6 @@
 package subsystems;
 
-import com.arcrobotics.ftclib.command.Subsystem;
+import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.arcrobotics.ftclib.util.InterpLUT;
 import com.pedropathing.geometry.Pose;
 
@@ -16,7 +16,7 @@ import Constants.ShooterConstants;
 
 import static Constants.ShooterConstants.FLICK_TIME;
 
-public class Shooter implements Subsystem {
+public class Shooter extends SubsystemBase {
     // Hardware reference
     RobotHardware robot;
 
@@ -382,10 +382,5 @@ public class Shooter implements Subsystem {
 
         // Run flipper state machine
         flipperStateMachinePeriodic();
-
-        // Update turret with current field state from odometry
-        if (turret != null && odometry != null) {
-            turret.turretPeriodic(odometry.getFieldState());
-        }
     }
 }

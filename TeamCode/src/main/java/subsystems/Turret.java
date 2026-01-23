@@ -1,16 +1,14 @@
 package subsystems;
 
-import com.arcrobotics.ftclib.command.Subsystem;
+import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.pedropathing.geometry.Pose;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
-import Constants.EnumConstants;
 import Constants.EnumConstants.FieldState;
 import Constants.FieldMap;
-import Constants.LimelightConstants;
 import utility.RobotHardware;
 import Constants.TurretConstants;
 
@@ -22,7 +20,7 @@ import static Constants.TurretConstants.CENTER;
  * Servo position 0.5 = turret center (0 degrees)
  * Conversion: servoPosition = 0.5 + (turretDegrees * GEAR_RATIO / SERVO_DEGREES_PER_UNIT)
  */
-public class Turret implements Subsystem {
+public class Turret extends SubsystemBase {
     // Hardware reference
     RobotHardware robot;
 
@@ -35,9 +33,6 @@ public class Turret implements Subsystem {
     // Out-of-range tracking - set when target angle exceeds hardware limits
     private boolean targetOutOfRange = false;
     private double degreesOutOfRange = 0;
-
-    // Limelight reference for switching between goal tracking and tag scanning modes
-    private subsystems.Limelight limelightSubsystem;
 
     public Turret() {
         this.robot = RobotHardware.getInstance();
@@ -99,18 +94,13 @@ public class Turret implements Subsystem {
     }
 
     public void turretPeriodic(FieldState fieldState) {
-        if (limelightSubsystem != null &&
-            limelightSubsystem.getCurrentMode() == EnumConstants.LimelightMode.TagTracking) {
-            setTurretDegree(getDegreesToTagGoal());
-        } else {
-            switch (fieldState) {
-                case IdleZone:
-                    setTurretDegree(CENTER);
-                    break;
-                case ShootingZone:
-                    setTurretDegree(getDegreesToGoal());
-                    break;
-            }
+        switch (fieldState) {
+            case IdleZone:
+                setTurretDegree(CENTER);
+                break;
+            case ShootingZone:
+                setTurretDegree(getDegreesToGoal());
+                break;
         }
     }
 
@@ -168,23 +158,6 @@ public class Turret implements Subsystem {
         return degrees;
     }
 
-    public double getDegreesToTagGoal() {
-        Pose2D currentPose = robot.pinpoint.getPosition();
-        double[] turretPos = getTurretFieldPosition();
-
-        double deltaX = LimelightConstants.TAG_GOAL_X - turretPos[0];
-        double deltaY = LimelightConstants.TAG_GOAL_Y - turretPos[1];
-
-        double absoluteAngle = Math.atan2(deltaY, deltaX);
-        double robotHeading = currentPose.getHeading(AngleUnit.RADIANS);
-        double relativeAngle = Math.toDegrees(absoluteAngle - robotHeading);
-
-        relativeAngle = normalizeAngle(relativeAngle);
-        relativeAngle += TurretConstants.TURRET_TRACKING_OFFSET;
-
-        return relativeAngle;
-    }
-
     /**
      * Set the turret to a target angle.
      * Only updates if the change exceeds MIN_CHANGE_THRESHOLD to prevent noise.
@@ -231,10 +204,6 @@ public class Turret implements Subsystem {
      */
     public double getDegreesOutOfRange() {
         return degreesOutOfRange;
-    }
-
-    public void setLimelightSubsystem(subsystems.Limelight limelight) {
-        this.limelightSubsystem = limelight;
     }
 
     @Override

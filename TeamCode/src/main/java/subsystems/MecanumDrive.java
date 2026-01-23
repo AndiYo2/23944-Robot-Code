@@ -1,6 +1,6 @@
 package subsystems;
 
-import com.arcrobotics.ftclib.command.Subsystem;
+import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
 
@@ -11,7 +11,7 @@ import Constants.EnumConstants.DriveState;
 import utility.RobotHardware;
 import Constants.OdometryConstants;
 
-public class MecanumDrive implements Subsystem {
+public class MecanumDrive extends SubsystemBase {
     private RobotHardware robot;
     private boolean slowmode;
     private DriveState currentState = DriveState.FieldRelative;

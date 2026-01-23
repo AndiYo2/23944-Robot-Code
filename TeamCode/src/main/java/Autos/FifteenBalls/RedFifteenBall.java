@@ -6,7 +6,7 @@ import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import framework.AutonSequence;
+import commands.CommandSequenceBuilder;
 import Constants.EnumConstants;
 import Constants.RobotConstants;
 
@@ -124,16 +124,11 @@ public class RedFifteenBall extends AutonTemplate {
     }
 
     @Override
-    protected void autonomousPathUpdate() {
-    }
-
-    @Override
     public void init() {
         super.init();
         RobotConstants.Robot.allianceColor = EnumConstants.AllianceColor.Red;
-        spindexerManager.setMode(EnumConstants.ShootingMode.Fast);
         // TODO: Complete the sequence with all paths
-        executor = new AutonSequence(follower, intake, spindexerManager, limelight)
+        autonomousCommand = new CommandSequenceBuilder(follower, intake, spindexer, limelight, shooter, turret)
                 .parallel(p -> p.limelightScan().catalog())
                 .shoot()
                 .parallel(p -> p.moveTo(shootToFirstOne, .8).intakeStart())

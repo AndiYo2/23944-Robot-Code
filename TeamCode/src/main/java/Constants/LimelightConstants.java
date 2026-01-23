@@ -10,9 +10,6 @@ public class LimelightConstants {
     public static SpindexerAndMotifStatus.MotifPattern motifPattern =
         new SpindexerAndMotifStatus.MotifPattern(EnumConstants.BallColor.Purple, EnumConstants.BallColor.Green, EnumConstants.BallColor.Purple);
 
-    public static double TAG_GOAL_X = 72.0;
-    public static double TAG_GOAL_Y = 143.0;
-
     public static final EnumConstants.BallColor[] APRILTAG_21_PATTERN = {
         EnumConstants.BallColor.Green, EnumConstants.BallColor.Purple, EnumConstants.BallColor.Purple
     };

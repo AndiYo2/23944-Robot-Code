@@ -1,11 +1,11 @@
 package subsystems;
 
-import com.arcrobotics.ftclib.command.Subsystem;
+import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import Constants.EnumConstants.IntakeState;
 import utility.RobotHardware;
 
-public class Intake implements Subsystem {
+public class Intake extends SubsystemBase {
     RobotHardware robot;
     private IntakeState currentState = IntakeState.Idle;
 

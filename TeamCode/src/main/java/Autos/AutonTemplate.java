@@ -1,18 +1,18 @@
 package Autos;
 
 import Constants.EnumConstants;
+import com.arcrobotics.ftclib.command.Command;
+import com.arcrobotics.ftclib.command.CommandScheduler;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
-import framework.ActionExecutor;
 import pedroPathing.Constants;
 import subsystems.Shooter;
 import subsystems.Turret;
 import subsystems.Odometry;
 import subsystems.Intake;
 import subsystems.Spindexer;
-import utility.managers.SpindexerManager;
 import Constants.OdometryConstants;
 import utility.RobotHardware;
 import utility.ShootingValidator;
@@ -33,10 +33,10 @@ public abstract class AutonTemplate extends OpMode {
     protected Intake intake;
     protected Spindexer spindexer;
     protected subsystems.Limelight limelight;
-    protected SpindexerManager spindexerManager;
     protected ShootingValidator shootingValidator;
 
-    protected ActionExecutor executor;
+    /** The autonomous command sequence built by subclasses */
+    protected Command autonomousCommand;
 
     /**
      * Set the current path state and reset the path timer
@@ -45,8 +45,11 @@ public abstract class AutonTemplate extends OpMode {
         pathState = state;
         pathTimer.resetTimer();
     }
+
+    /**
+     * Subclasses must implement this to build paths and create the autonomousCommand.
+     */
     protected abstract void buildPaths();
-    protected abstract void autonomousPathUpdate();
 
     @Override
     public void init() {
@@ -73,18 +76,10 @@ public abstract class AutonTemplate extends OpMode {
         // Link Odometry to Shooter for field state
         shooter.setOdometry(odometry);
 
-        // Link Limelight subsystem to Turret for dual-mode tracking
-        turret.setLimelightSubsystem(limelight);
         shootingValidator = new ShootingValidator(odometry, telemetry);
-        spindexerManager = new SpindexerManager(
-                spindexer,
-                shooter,
-                intake,
-                telemetry,
-                robotHardware.intakeSensorPair,
-                robotHardware.transferSensorPair,
-                robotHardware.rampSensorPair
-        );
+
+        // Register subsystems with the command scheduler
+        CommandScheduler.getInstance().registerSubsystem(intake, shooter, turret, odometry, spindexer, limelight);
 
         buildPaths();
     }
@@ -100,41 +95,44 @@ public abstract class AutonTemplate extends OpMode {
         // Activate all PIDF controllers for proper path following
         follower.activateAllPIDFs();
 
-        if (executor != null) {
-            executor.start();
+        // Schedule the autonomous command
+        if (autonomousCommand != null) {
+            CommandScheduler.getInstance().schedule(autonomousCommand);
         }
+
         limelight.resetLimelight();
         limelight.setMode(EnumConstants.LimelightMode.GoalTracking);
     }
 
     @Override
     public void loop() {
+        // Update follower FIRST (before commands run)
         follower.update();
 
-        // Update sensors BEFORE actions execute to avoid race condition
-        spindexerManager.update();
+        // Update sensors BEFORE commands execute to avoid race condition
+        robotHardware.intakeSensorPair.update();
+        robotHardware.transferSensorPair.update();
+        robotHardware.rampSensorPair.update();
 
-        if (executor != null) {
-            executor.update();
+        // Run the command scheduler
+        CommandScheduler.getInstance().run();
 
-            // Display autonomous sequence telemetry
-            telemetry.addData("Auto Status", executor.getStatusString());
-            telemetry.addData("Sequence Executing", executor.isExecuting());
+        // Display autonomous telemetry
+        if (autonomousCommand != null) {
+            telemetry.addData("Auto Status", autonomousCommand.isFinished() ? "Finished" : "Running");
             telemetry.addData("Follower Busy", follower.isBusy());
 
             // DEBUG: Show follower position for debugging
-            telemetry.addLine("--- DECEL DEBUG ---");
+            telemetry.addLine("--- POSITION DEBUG ---");
             telemetry.addData("Position", "X:%.1f Y:%.1f H:%.1f",
                 follower.getPose().getX(), follower.getPose().getY(),
                 Math.toDegrees(follower.getPose().getHeading()));
 
-            telemetry.addData("Manager State", spindexerManager.getStatus());
             telemetry.addData("Limelight Mode", limelight.getCurrentMode());
             telemetry.addData("Motif Detected", limelight.isMotifDetected());
-        } else {
-            autonomousPathUpdate();
         }
 
+        // Run subsystem periodic methods
         shooter.periodic();
         turret.periodic();
         odometry.periodic();
@@ -149,5 +147,7 @@ public abstract class AutonTemplate extends OpMode {
     @Override
     public void stop() {
         OdometryConstants.endingAutonPose = follower.getPose();
+        // Clean up the command scheduler
+        CommandScheduler.getInstance().reset();
     }
 }

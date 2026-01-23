@@ -6,7 +6,7 @@ import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import framework.AutonSequence;
+import commands.CommandSequenceBuilder;
 
 
 @Autonomous(name = "BlueFront12Ball")
@@ -90,16 +90,11 @@ public class BlueFront12Ball extends AutonTemplate {
     }
 
     @Override
-    protected void autonomousPathUpdate() {
-        // Not used - framework handles execution
-    }
-
-    @Override
     public void init() {
         super.init();
         Constants.RobotConstants.Robot.allianceColor = Constants.EnumConstants.AllianceColor.Blue;
 
-        executor = new AutonSequence(follower, intake, spindexerManager, limelight)
+        autonomousCommand = new CommandSequenceBuilder(follower, intake, spindexer, limelight, shooter, turret)
                 .parallel(p -> p.moveTo(startToShoot, maxSpeed).limelightScan().catalog())
                 .shoot()
                 .parallel(p -> p.moveTo(shootToFirst, maxSpeed).intakeStart())

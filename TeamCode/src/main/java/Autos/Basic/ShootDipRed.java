@@ -6,7 +6,7 @@ import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import framework.AutonSequence;
+import commands.CommandSequenceBuilder;
 
 @Configurable
 @Autonomous(name = "ShootDipRed")
@@ -29,14 +29,10 @@ public class ShootDipRed extends AutonTemplate {
     }
 
     @Override
-    protected void autonomousPathUpdate() {
-    }
-
-    @Override
     public void init() {
         super.init();
-        Constants.RobotConstants.Robot.allianceColor = Constants.EnumConstants.AllianceColor.Blue;
-        executor = new AutonSequence(follower, intake, spindexerManager, limelight)
+        Constants.RobotConstants.Robot.allianceColor = Constants.EnumConstants.AllianceColor.Red;
+        autonomousCommand = new CommandSequenceBuilder(follower, intake, spindexer, limelight, shooter, turret)
                 .moveTo(shootToFirst, maxSpeed)
                 .build();
     }

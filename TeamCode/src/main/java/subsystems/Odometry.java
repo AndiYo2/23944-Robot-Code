@@ -1,6 +1,6 @@
 package subsystems;
 
-import com.arcrobotics.ftclib.command.Subsystem;
+import com.arcrobotics.ftclib.command.SubsystemBase;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
@@ -11,7 +11,7 @@ import Constants.FieldMap;
 import Constants.RobotConstants;
 import utility.RobotHardware;
 
-public class Odometry implements Subsystem {
+public class Odometry extends SubsystemBase {
     // Hardware reference
     RobotHardware robot;
 

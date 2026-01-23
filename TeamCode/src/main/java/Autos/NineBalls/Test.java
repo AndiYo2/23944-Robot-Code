@@ -5,7 +5,7 @@ import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import framework.AutonSequence;
+import commands.CommandSequenceBuilder;
 
 @Autonomous(name = "Test", group = "NineBall")
 public class Test extends AutonTemplate {
@@ -28,13 +28,9 @@ public class Test extends AutonTemplate {
     }
 
     @Override
-    protected void autonomousPathUpdate() {
-    }
-
-    @Override
     public void init() {
         super.init();
-        executor = new AutonSequence(follower, intake, spindexerManager, limelight)
+        autonomousCommand = new CommandSequenceBuilder(follower, intake, spindexer, limelight, shooter, turret)
                 .moveTo(startToEnd)
                 .build();
     }

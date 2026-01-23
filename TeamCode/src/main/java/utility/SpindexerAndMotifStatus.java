@@ -40,32 +40,32 @@ public class SpindexerAndMotifStatus {
         }
 
         /** Gets the ball color in the specified slot (0-2) */
-        public static EnumConstants.BallColor getBallInSlotX(int x) {
+        public static synchronized EnumConstants.BallColor getBallInSlotX(int x) {
             return spindexerPattern[x];
         }
 
         /** Sets the specified slot to None (empty) */
-        public static void setBallPatternNone(int x) {
+        public static synchronized void setBallPatternNone(int x) {
             spindexerPattern[x] = EnumConstants.BallColor.None;
         }
 
         /** Sets the ball color in the specified slot */
-        public static void setBallInSlotX(int x, EnumConstants.BallColor ballType) {
+        public static synchronized void setBallInSlotX(int x, EnumConstants.BallColor ballType) {
             spindexerPattern[x] = ballType;
         }
 
         /** Sets all three slot colors at once */
-        public static void setBallPattern(EnumConstants.BallColor zero, EnumConstants.BallColor one, EnumConstants.BallColor two) {
+        public static synchronized void setBallPattern(EnumConstants.BallColor zero, EnumConstants.BallColor one, EnumConstants.BallColor two) {
             spindexerPattern = new EnumConstants.BallColor[]{zero, one, two};
         }
 
         /** Clears all slots (sets all to None) */
-        public static void clearAll() {
+        public static synchronized void clearAll() {
             setBallPattern(EnumConstants.BallColor.None, EnumConstants.BallColor.None, EnumConstants.BallColor.None);
         }
 
         /** Rotates ball pattern counter-clockwise: 0->1->2->0 */
-        public static void rotateBallsCCW() {
+        public static synchronized void rotateBallsCCW() {
             EnumConstants.BallColor temp0 = spindexerPattern[0];
             spindexerPattern[0] = spindexerPattern[2];
             spindexerPattern[2] = spindexerPattern[1];
@@ -73,7 +73,7 @@ public class SpindexerAndMotifStatus {
         }
 
         /** Rotates ball pattern clockwise: 0<-1<-2<-0 */
-        public static void rotateBallsCW() {
+        public static synchronized void rotateBallsCW() {
             EnumConstants.BallColor temp0 = spindexerPattern[0];
             spindexerPattern[0] = spindexerPattern[1];
             spindexerPattern[1] = spindexerPattern[2];
@@ -128,17 +128,17 @@ public class SpindexerAndMotifStatus {
         }
 
         /** Gets the ball color in the specified slot (0-2) */
-        public static EnumConstants.BallColor getBallColorInSlotX(int x) {
+        public static synchronized EnumConstants.BallColor getBallColorInSlotX(int x) {
             return ballPattern[x];
         }
 
         /** Sets the ball pattern from an array */
-        public static void setBallPattern(EnumConstants.BallColor[] pattern) {
+        public static synchronized void setBallPattern(EnumConstants.BallColor[] pattern) {
             ballPattern = pattern;
         }
 
         /** Sets all three slot colors at once */
-        public static void setBallPattern(EnumConstants.BallColor zero, EnumConstants.BallColor one, EnumConstants.BallColor two) {
+        public static synchronized void setBallPattern(EnumConstants.BallColor zero, EnumConstants.BallColor one, EnumConstants.BallColor two) {
             ballPattern = new EnumConstants.BallColor[]{zero, one, two};
         }
     }

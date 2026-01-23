@@ -8,7 +8,7 @@ import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-import framework.AutonSequence;
+import commands.CommandSequenceBuilder;
 
 @Autonomous(name = "BlueBackAutonCorner (New Framework)", group = "Autonomous")
 public class BlueBackAutonCorner extends AutonTemplate {
@@ -81,16 +81,11 @@ public class BlueBackAutonCorner extends AutonTemplate {
     }
 
     @Override
-    protected void autonomousPathUpdate() {
-        // Not used - framework handles execution
-    }
-
-    @Override
     public void init() {
         super.init();
 
         // Build the autonomous sequence using the fluent API
-        executor = new AutonSequence(follower, intake, spindexerManager, limelight)
+        autonomousCommand = new CommandSequenceBuilder(follower, intake, spindexer, limelight, shooter, turret)
                 // Initial: scan and set preloaded balls (PPG), then shoot
                 .parallel(p -> p.limelightScan().preload())
                 .shoot()

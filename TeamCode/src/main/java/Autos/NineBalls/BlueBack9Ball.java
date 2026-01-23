@@ -7,10 +7,9 @@ import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import framework.AutonSequence;
+import commands.CommandSequenceBuilder;
 import Constants.EnumConstants;
 import Constants.RobotConstants;
-import subsystems.Limelight;
 
 @Configurable
 @Autonomous(name = "BlueBack9Ball", group = "NineBall")
@@ -65,16 +64,11 @@ public class BlueBack9Ball extends AutonTemplate {
     }
 
     @Override
-    protected void autonomousPathUpdate() {
-    }
-
-    @Override
     public void init() {
         super.init();
         RobotConstants.Robot.allianceColor = EnumConstants.AllianceColor.Blue;
         limelight.setMode(EnumConstants.LimelightMode.GoalTracking);
-        spindexerManager.setMode(EnumConstants.ShootingMode.Fast);
-        executor = new AutonSequence(follower, intake, spindexerManager, limelight)
+        autonomousCommand = new CommandSequenceBuilder(follower, intake, spindexer, limelight, shooter, turret)
                 .catalog()
                 .delay(.5)
                 .shoot()

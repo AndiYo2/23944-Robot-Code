@@ -1,6 +1,6 @@
 package subsystems;
 
-import com.arcrobotics.ftclib.command.Subsystem;
+import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import Constants.EnumConstants;
 import Constants.EnumConstants.FlickState;
@@ -23,7 +23,7 @@ import static Constants.SpindexerConstants.*;
  *   - At 300°, CW wraps to 180°
  *   - At 0°, CCW wraps to 120°
  */
-public class Spindexer implements Subsystem {
+public class Spindexer extends SubsystemBase {
 
     // Hardware reference
     private final RobotHardware robot;

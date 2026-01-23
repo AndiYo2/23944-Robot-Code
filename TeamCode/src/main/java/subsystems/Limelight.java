@@ -1,6 +1,6 @@
 package subsystems;
 
-import com.arcrobotics.ftclib.command.Subsystem;
+import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import Constants.EnumConstants;
@@ -10,7 +10,8 @@ import utility.RobotHardware;
 import java.util.List;
 
 /**
- * Limelight subsystem for AprilTag detection and goal tracking.
+ * Limelight subsystem for AprilTag detection.
+ * Used to scan for motif AprilTags (21-23) to determine the ball pattern.
  *
  * STATIC STATE MUTATIONS:
  * This class modifies the following static fields in LimelightConstants:
@@ -21,7 +22,7 @@ import java.util.List;
  * These mutations allow state to persist across OpModes for Auto->TeleOp transitions.
  * The scanForMotifTag() method is the primary source of these side effects.
  */
-public class Limelight implements Subsystem {
+public class Limelight extends SubsystemBase {
     private RobotHardware robot;
     private LLResult latestResult;
     private EnumConstants.LimelightMode currentMode;
@@ -94,7 +95,8 @@ public class Limelight implements Subsystem {
     }
 
     /**
-     * Toggles between Goal Tracking and Tag Tracking modes
+     * Toggles between Goal Tracking and Tag Tracking modes.
+     * Tag Tracking mode enables AprilTag scanning for motif pattern detection.
      */
     public void toggleMode() {
         if (currentMode == EnumConstants.LimelightMode.GoalTracking) {

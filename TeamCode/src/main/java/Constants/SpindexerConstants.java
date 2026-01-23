@@ -51,10 +51,10 @@ public class SpindexerConstants {
     public static double SPINDEXER_OFFSET = 55;
 
     // Cataloging timing
-    public static double ROTATION_TIME = 0.05;
+    public static double ROTATION_TIME = 0.15;
     public static double INTAKE_TIME = 0.1;
 
-    // SpindexerManager timing constants
+    // Shooting and cataloging timing constants
 
     public static double SHOOTER_FLIPPER_OUT_TIME = 0.075;
 

@@ -18,7 +18,9 @@ import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import subsystems.*;
 import utility.*;
 import utility.ShootingValidator;
-import utility.managers.SpindexerManager;
+import commands.ShootingCommands;
+import commands.CatalogCommands;
+import commands.ScanSensorsCommand;
 
 abstract public class TeleOpTemplate extends CommandOpMode {
     protected MecanumDrive mecanumDrive;
@@ -31,8 +33,14 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     protected GamepadEx driverGamepad;
     private final RobotHardware robot = RobotHardware.getInstance();
 
-    private SpindexerManager spindexerManager;
     private ShootingValidator shootingValidator;
+
+    // Ball tracking (replaces SpindexerManager state)
+    private int totalBallsInRobot = 0;
+    private EnumConstants.BallColor ball1Color = EnumConstants.BallColor.None;
+    private EnumConstants.BallColor ball2Color = EnumConstants.BallColor.None;
+    private EnumConstants.BallColor ball3Color = EnumConstants.BallColor.None;
+    private EnumConstants.ShootingMode currentMode = EnumConstants.ShootingMode.Fast;
 
 
 
@@ -112,19 +120,12 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         // Link Odometry to Shooter for field state
         shooter.setOdometry(odometry);
 
-        // Link Limelight subsystem to Turret for dual-mode tracking
-        turret.setLimelightSubsystem(limelight);
+        // Set turret default command to track goal based on field state
+        turret.setDefaultCommand(new RunCommand(() -> {
+            turret.turretPeriodic(odometry.getFieldState());
+        }, turret));
 
         shootingValidator = new ShootingValidator(odometry, telemetry);
-        spindexerManager = new SpindexerManager(
-                spindexer,
-                shooter,
-                intake,
-                telemetry,
-                robot.intakeSensorPair,
-                robot.transferSensorPair,
-                robot.rampSensorPair
-        );
 
         register(mecanumDrive, intake, shooter, spindexer, limelight, turret, odometry);
     }
@@ -138,35 +139,49 @@ abstract public class TeleOpTemplate extends CommandOpMode {
                 }, mecanumDrive)
         );
 
-        // Intake controls - blocked during active spindexer operations
+        // Intake controls
         new Trigger(() -> gamepad1.left_trigger > RobotConstants.Controls.TRIGGER_THRESHOLD)
-                .whenActive(() -> {
-                    if (!spindexerManager.isActive()) {
-                        intake.runIntake();
-                    }
-                })
-                .whenInactive(() -> {
-                    if (!spindexerManager.isActive()) {
-                        intake.stopIntake();
-                    }
-                });
+                .whenActive(() -> intake.runIntake())
+                .whenInactive(() -> intake.stopIntake());
 
         // Shooting controls (with zone validation)
-        // Right trigger: starts sequence or triggers shot in Fast mode
+        // Right trigger: shoots all balls with validation
         new Trigger(() -> gamepad1.right_trigger > RobotConstants.Controls.TRIGGER_THRESHOLD)
-                .whenActive(new InstantCommand(this::attemptShootingAction));
+                .whenActive(() -> {
+                    boolean override = gamepad1.right_stick_button;
+                    if (!shootingValidator.canShoot(override)) {
+                        gamepad1.rumble(200);
+                        return;
+                    }
+                    schedule(ShootingCommands.shootAllBalls(shooter, spindexer, totalBallsInRobot));
+                });
 
         // Drive controls
         new GamepadButton(driverGamepad, GamepadKeys.Button.START)
                 .whenPressed(new InstantCommand(mecanumDrive::resetYaw));
         new GamepadButton(driverGamepad, GamepadKeys.Button.B)
                 .whenPressed(new InstantCommand(mecanumDrive::toggleSlowMode));
+
+        // A button: Toggle shooting mode
         new GamepadButton(driverGamepad, GamepadKeys.Button.A)
-                .whenPressed(new InstantCommand(spindexerManager::toggleMode));
+                .whenPressed(() -> {
+                    currentMode = (currentMode == EnumConstants.ShootingMode.Fast)
+                            ? EnumConstants.ShootingMode.Sorted
+                            : EnumConstants.ShootingMode.Fast;
+                });
+
+        // X button: Manual flick
         new GamepadButton(driverGamepad, GamepadKeys.Button.X)
                 .whenPressed(new InstantCommand(spindexer::triggerFlick));
+
+        // Y button: Catalog balls
         new GamepadButton(driverGamepad, GamepadKeys.Button.Y)
-                .whenPressed(new InstantCommand(spindexerManager::triggerCataloging));
+                .whenPressed(() -> {
+                    scanAndCountBalls();
+                    schedule(CatalogCommands.catalogFast(spindexer, shooter, intake,
+                            robot.intakeSensorPair, robot.transferSensorPair, robot.rampSensorPair,
+                            this::updateBallTracking));
+                });
 
         // Manual spindexer controls
         new GamepadButton(driverGamepad, GamepadKeys.Button.LEFT_BUMPER)
@@ -225,24 +240,43 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     }
 
     /**
-     * Handles shooting action.
-     * Triggers shooting sequence which fires all balls until empty.
+     * Scans all three sensors and counts total balls in robot.
+     * Updates ball colors and totalBallsInRobot count.
      */
-    private void attemptShootingAction() {
-        // Override: Click right joystick (right_stick_button) to shoot outside zone
-        boolean overrideRequested = gamepad1.right_stick_button;
+    private void scanAndCountBalls() {
+        DualBallDetector.Result r1 = robot.intakeSensorPair.detectBall();
+        DualBallDetector.Result r2 = robot.transferSensorPair.detectBall();
+        DualBallDetector.Result r3 = robot.rampSensorPair.detectBall();
 
-        if (!shootingValidator.canShoot(overrideRequested)) {
-            // Shooting blocked - provide haptic feedback
-            gamepad1.rumble(200);
-            return;
+        ball1Color = r1.ballPresent ? r1.color : EnumConstants.BallColor.None;
+        ball2Color = r2.ballPresent ? r2.color : EnumConstants.BallColor.None;
+        ball3Color = r3.ballPresent ? r3.color : EnumConstants.BallColor.None;
+
+        // If ramp has a ball but transfer doesn't, assume transfer has purple
+        if (r3.ballPresent && !r2.ballPresent) {
+            ball2Color = EnumConstants.BallColor.Purple;
         }
 
-        if (spindexerManager.isIdle()) {
-            // Start shooting sequence - fires all balls
-            spindexerManager.triggerShooting();
-        }
-        // If already executing, ignore trigger
+        // Count total balls from all sensors
+        totalBallsInRobot = 0;
+        if (r1.ballPresent) totalBallsInRobot++;
+        if (r2.ballPresent || (r3.ballPresent && !r2.ballPresent)) totalBallsInRobot++;
+        if (r3.ballPresent) totalBallsInRobot++;
+    }
+
+    /**
+     * Callback for CatalogCommands to update ball tracking after scan.
+     */
+    private void updateBallTracking(ScanSensorsCommand.ScanResults results) {
+        ball1Color = results.sensor0.ballPresent ? results.sensor0.color : EnumConstants.BallColor.None;
+        ball2Color = results.sensor1.ballPresent ? results.sensor1.color : EnumConstants.BallColor.None;
+        ball3Color = results.sensor2.ballPresent ? results.sensor2.color : EnumConstants.BallColor.None;
+
+        // Count balls
+        totalBallsInRobot = 0;
+        if (results.sensor0.ballPresent) totalBallsInRobot++;
+        if (results.sensor1.ballPresent) totalBallsInRobot++;
+        if (results.sensor2.ballPresent) totalBallsInRobot++;
     }
 
     /**
@@ -273,7 +307,11 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         // Manually call periodic() to ensure state machines run
         spindexer.periodic();
         shooter.periodic();
-        spindexerManager.update();
+
+        // Update ball sensors
+        robot.intakeSensorPair.update();
+        robot.transferSensorPair.update();
+        robot.rampSensorPair.update();
     }
 
     private void updateTelemetry() {
@@ -313,10 +351,11 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
         // SHOOTING section
         telemetry.addLine("=== SHOOTING ===");
-        telemetry.addData("  Shooting Mode", spindexerManager.getMode());
+        telemetry.addData("  Shooting Mode", currentMode);
         telemetry.addData("  Field Zone", odometry.getFieldState());
         telemetry.addData("  Shooting Status", shootingValidator.getStatus(overrideRequested));
-        telemetry.addData("  Manager State", spindexerManager.getStatus());
+        telemetry.addData("  Balls Tracked", String.format("%d [%s, %s, %s]",
+                totalBallsInRobot, ball1Color, ball2Color, ball3Color));
         telemetry.addLine("");
 
         // SHOOTER section
@@ -376,15 +415,12 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         telemetry.addData("  IMU Calibration", "Auto on init (resetPosAndIMU)");
         telemetry.addLine("");
 
-        // MANAGER DEBUG section (only when executing)
-        if (spindexerManager.isExecuting()) {
-            telemetry.addLine("=== MANAGER DEBUG ===");
-            telemetry.addData("  State", spindexerManager.getState());
-            telemetry.addData("  Done Rotating", spindexer.isDoneRotating());
-            telemetry.addData("  Ready to Flip", spindexer.isReadyToFlip());
-            telemetry.addData("  Balls Remaining", SpindexerAndMotifStatus.SpindexerPattern.getBallCount());
-            telemetry.addLine("");
-        }
+        // COMMAND DEBUG section
+        telemetry.addLine("=== COMMAND DEBUG ===");
+        telemetry.addData("  Done Rotating", spindexer.isDoneRotating());
+        telemetry.addData("  Ready to Flip", spindexer.isReadyToFlip());
+        telemetry.addData("  Balls In Robot", totalBallsInRobot);
+        telemetry.addLine("");
 
         // ========================================
         // TURRET TRACKING DEBUG (for visualizer comparison)

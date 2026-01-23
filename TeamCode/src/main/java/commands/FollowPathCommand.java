@@ -1,86 +1,76 @@
-package framework.actions;
+package commands;
 
+import com.arcrobotics.ftclib.command.CommandBase;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 
-import framework.Action;
-
 /**
- * Action that commands the robot to follow a path using the PedroPathing follower.
+ * Command that follows a path using the PedroPathing follower.
  * Completes when the follower reaches the end of the path.
  */
-public class MoveToAction implements Action {
+public class FollowPathCommand extends CommandBase {
     private final Follower follower;
     private final Object path; // Can be Path or PathChain
     private final boolean holdEnd;
     private final double maxPower;
-    private final String name;
 
     /**
-     * Creates a MoveToAction with a Path.
+     * Creates a FollowPathCommand with a Path.
      *
      * @param follower the follower to control
      * @param path the path to follow
      * @param holdEnd whether to hold position at the end of the path
      */
-    public MoveToAction(Follower follower, Path path, boolean holdEnd) {
-        this.follower = follower;
-        this.path = path;
-        this.maxPower = 1.0;
-        this.holdEnd = holdEnd;
-        this.name = "MoveTo[" + path.getClass().getSimpleName() + "]";
+    public FollowPathCommand(Follower follower, Path path, boolean holdEnd) {
+        this(follower, path, 1.0, holdEnd);
     }
 
     /**
-     * Creates a MoveToAction with a PathChain.
+     * Creates a FollowPathCommand with a PathChain.
      *
      * @param follower the follower to control
      * @param pathChain the path chain to follow
      * @param holdEnd whether to hold position at the end of the path
      */
-    public MoveToAction(Follower follower, PathChain pathChain, boolean holdEnd) {
-        this.follower = follower;
-        this.path = pathChain;
-        this.maxPower = 1.0;
-        this.holdEnd = holdEnd;
-        this.name = "MoveTo[PathChain]";
+    public FollowPathCommand(Follower follower, PathChain pathChain, boolean holdEnd) {
+        this(follower, pathChain, 1.0, holdEnd);
     }
 
     /**
-     * Creates a MoveToAction with a Path and custom speed.
+     * Creates a FollowPathCommand with a Path and custom speed.
      *
      * @param follower the follower to control
      * @param path the path to follow
-     * @param maxPower the maximum power/speed (0.0-1.0, where 0.5 = 50% speed)
+     * @param maxPower the maximum power/speed (0.0-1.0)
      * @param holdEnd whether to hold position at the end of the path
      */
-    public MoveToAction(Follower follower, Path path, double maxPower, boolean holdEnd) {
+    public FollowPathCommand(Follower follower, Path path, double maxPower, boolean holdEnd) {
         this.follower = follower;
         this.path = path;
         this.maxPower = maxPower;
         this.holdEnd = holdEnd;
-        this.name = "MoveTo[" + path.getClass().getSimpleName() + "]";
+        // No subsystem requirements - Follower operates independently
     }
 
     /**
-     * Creates a MoveToAction with a PathChain and custom speed.
+     * Creates a FollowPathCommand with a PathChain and custom speed.
      *
      * @param follower the follower to control
      * @param pathChain the path chain to follow
      * @param maxPower the maximum power/speed (0.0-1.0)
      * @param holdEnd whether to hold position at the end of the path
      */
-    public MoveToAction(Follower follower, PathChain pathChain, double maxPower, boolean holdEnd) {
+    public FollowPathCommand(Follower follower, PathChain pathChain, double maxPower, boolean holdEnd) {
         this.follower = follower;
         this.path = pathChain;
         this.maxPower = maxPower;
         this.holdEnd = holdEnd;
-        this.name = "MoveTo[PathChain]";
+        // No subsystem requirements - Follower operates independently
     }
 
     @Override
-    public void start() {
+    public void initialize() {
         follower.setMaxPower(maxPower);
         if (path instanceof Path) {
             follower.followPath((Path) path, holdEnd);
@@ -90,22 +80,17 @@ public class MoveToAction implements Action {
     }
 
     @Override
-    public void update() {
-        // Follower.update() is called in the main loop, no need to do anything here
+    public void execute() {
+        // Follower.update() is called in the main loop, nothing to do here
     }
 
     @Override
-    public boolean isComplete() {
+    public boolean isFinished() {
         return !follower.isBusy();
     }
 
     @Override
-    public void end() {
+    public void end(boolean interrupted) {
         // Nothing to clean up
-    }
-
-    @Override
-    public String getName() {
-        return name;
     }
 }

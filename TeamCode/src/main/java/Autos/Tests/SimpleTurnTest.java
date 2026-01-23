@@ -7,7 +7,7 @@ import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-import framework.AutonSequence;
+import commands.CommandSequenceBuilder;
 
 @Autonomous(name = "SimpleTurnTest", group = "Autonomous")
 public class SimpleTurnTest extends AutonTemplate {
@@ -51,14 +51,10 @@ public class SimpleTurnTest extends AutonTemplate {
     }
 
     @Override
-    protected void autonomousPathUpdate() {
-    }
-
-    @Override
     public void init() {
         super.init();
 
-        executor = new AutonSequence(follower, intake, spindexerManager, limelight)
+        autonomousCommand = new CommandSequenceBuilder(follower, intake, spindexer, limelight, shooter, turret)
                 .moveTo(path1)
                 .delay(3)
                 .moveTo(path2)
