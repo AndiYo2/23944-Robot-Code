@@ -48,7 +48,7 @@ public class SpindexerConstants {
     public static final double SERVO_DEGREES_PER_UNIT = 355.0;  // Axon servo full range
 
     // Offset applied to ALL spindexer rotations (in degrees)
-    public static double SPINDEXER_OFFSET = 55;
+    public static double SPINDEXER_OFFSET = 0;
 
     // Cataloging timing
     public static double ROTATION_TIME = 0.15;

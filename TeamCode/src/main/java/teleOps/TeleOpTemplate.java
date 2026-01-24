@@ -153,7 +153,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
                         gamepad1.rumble(200);
                         return;
                     }
-                    schedule(ShootingCommands.shootAllBalls(shooter, spindexer, totalBallsInRobot));
+                    schedule(ShootingCommands.shootThreeBalls(shooter, spindexer));
                 });
 
         // Drive controls
@@ -196,7 +196,8 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_DOWN)
                 .whenPressed(new InstantCommand(limelight::resetLimelight));
         new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_RIGHT)
-                .whenPressed(new InstantCommand(intake::reverse));
+                .whenPressed(new InstantCommand(intake::reverse))
+                .whenReleased(new InstantCommand(intake::stopIntake));
     }
 
     @Override
@@ -304,9 +305,10 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
 
     private void updateSubsystems() {
-        // Manually call periodic() to ensure state machines run
+        // Manually call periodic() to ensure subsystem state machines and servos update
         spindexer.periodic();
         shooter.periodic();
+        turret.periodic();
 
         // Update ball sensors
         robot.intakeSensorPair.update();

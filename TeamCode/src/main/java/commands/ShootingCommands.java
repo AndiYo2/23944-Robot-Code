@@ -21,6 +21,18 @@ public class ShootingCommands {
      * @param ballCount number of balls to shoot
      * @return a command that shoots all balls
      */
+    /**
+     * Shoots 3 balls - use this when ball detection hardware is unavailable.
+     * Sequence for each ball: Fire -> Flick -> RotateToNext (except last ball)
+     *
+     * @param shooter the shooter subsystem
+     * @param spindexer the spindexer subsystem
+     * @return a command that shoots 3 balls
+     */
+    public static Command shootThreeBalls(Shooter shooter, Spindexer spindexer) {
+        return shootAllBalls(shooter, spindexer, 3);
+    }
+
     public static Command shootAllBalls(Shooter shooter, Spindexer spindexer, int ballCount) {
         SequentialCommandGroup sequence = new SequentialCommandGroup();
 
@@ -28,7 +40,7 @@ public class ShootingCommands {
             return sequence; // Return empty sequence for invalid ball count
         }
 
-        for (int i = 0; i < ballCount; i++) {
+        for (int i = 0; i < ballCount - 1; i++) {
             // Fire the current ball
             sequence.addCommands(new FireCommand(shooter));
 
@@ -37,12 +49,17 @@ public class ShootingCommands {
 
             // If not the last ball, rotate to the next one
             if (i < ballCount - 1) {
-                sequence.addCommands(new RotateToNextCommand(spindexer));
+                sequence.addCommands(new RotateCCWCommand(spindexer));
             }
         }
+        sequence.addCommands(new FireCommand(shooter));
+
+        // Reset spindexer to 300 degrees after shooting
+        sequence.addCommands(new SpindexerResetCommand(spindexer));
 
         return sequence;
     }
+
 
     /**
      * Shoots all balls with shooter spinup and turret alignment wait.
@@ -95,7 +112,8 @@ public class ShootingCommands {
     public static Command shootSingleBall(Shooter shooter, Spindexer spindexer) {
         return new SequentialCommandGroup(
             new FireCommand(shooter),
-            new FlickCommand(spindexer)
+            new FlickCommand(spindexer),
+            new SpindexerResetCommand(spindexer)
         );
     }
 
@@ -111,7 +129,8 @@ public class ShootingCommands {
         return new SequentialCommandGroup(
             new FireCommand(shooter),
             new FlickCommand(spindexer),
-            new RotateToNextCommand(spindexer)
+            new RotateToNextCommand(spindexer),
+            new SpindexerResetCommand(spindexer)
         );
     }
 }

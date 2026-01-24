@@ -242,6 +242,8 @@ public class Turret extends SubsystemBase {
 
     @Override
     public void periodic() {
+        // Always track to goal
+        setTurretDegree(getDegreesToGoal());
         // Apply current target position to servo
         applyServoPosition(currentTargetDegrees);
     }

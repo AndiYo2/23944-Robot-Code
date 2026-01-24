@@ -268,7 +268,7 @@ public class CommandSequenceBuilder {
      * @return this builder for chaining
      */
     public CommandSequenceBuilder shoot() {
-        commands.add(ShootingCommands.shootAllBalls(shooter, spindexer, 3));
+        commands.add(ShootingCommands.shootThreeBalls(shooter, spindexer));
         return this;
     }
 
@@ -547,7 +547,7 @@ public class CommandSequenceBuilder {
 
         // Action methods
         public ParallelBuilder shoot() {
-            parallelCommands.add(ShootingCommands.shootAllBalls(shooter, spindexer, 3));
+            parallelCommands.add(ShootingCommands.shootThreeBalls(shooter, spindexer));
             return this;
         }
 

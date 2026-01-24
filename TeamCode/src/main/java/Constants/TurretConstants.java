@@ -36,7 +36,7 @@ public class TurretConstants {
     // Hard stop limits (turret degrees) - prevents hardware damage
     // Negative = left (CCW), Positive = right (CW)
     public static double HARD_STOP_CW = 60.0;    // Max right rotation (clockwise)
-    public static double HARD_STOP_CCW = -45.0;  // Max left rotation (counter-clockwise)
+    public static double HARD_STOP_CCW = -70.0;  // Max left rotation (counter-clockwise)
 
     // ==================== TURRET CONTROL ====================
     // Target angle when not tracking (turret degrees)

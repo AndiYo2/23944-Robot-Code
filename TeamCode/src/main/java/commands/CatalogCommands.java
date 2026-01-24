@@ -49,14 +49,14 @@ public class CatalogCommands {
             // Step 3: In parallel - flick ball 1 to shooter while intaking ball 2
             new ParallelCommandGroup(
                 new FlickCommand(spindexer),
-                new IntakeCommand(intake, SpindexerConstants.INTAKE_TIMING)
+                new IntakeCommand(intake, .35)
             ),
 
             // Step 4: Rotate ball 2 to slot 1
             new RotateCCWCommand(spindexer),
 
             // Step 5: Intake ball 3 into slot 0
-            new IntakeCommand(intake, SpindexerConstants.INTAKE_TIMING)
+            new IntakeCommand(intake, .5)
         );
     }
 
@@ -95,7 +95,7 @@ public class CatalogCommands {
             new ScanSensorsCommand(sensor1, sensor2, sensor3, onScanComplete),
 
             // Step 2: Rotate ball 1 from slot 0 to shooter position (slot 1)
-            new RotateCCWCommand(spindexer),
+            new RotateCWCommand(spindexer),
 
             // Step 3: In parallel - maybe flip ball 1 (if matches motif[0]) + intake ball 2
             new ParallelCommandGroup(
@@ -104,7 +104,7 @@ public class CatalogCommands {
             ),
 
             // Step 4: Rotate ball 2 to slot 1
-            new RotateCCWCommand(spindexer),
+            new RotateCWCommand(spindexer),
 
             // Step 5: In parallel - maybe flip ball 2 + intake ball 3
             new ParallelCommandGroup(
@@ -113,7 +113,7 @@ public class CatalogCommands {
             ),
 
             // Step 6: Rotate ball 3 to slot 1
-            new RotateCCWCommand(spindexer),
+            new RotateCWCommand(spindexer),
 
             // Step 7: Maybe flip ball 3 (no more balls to intake)
             new PossibleFlickCommand(spindexer, shouldFlipBall3, onFlip)
