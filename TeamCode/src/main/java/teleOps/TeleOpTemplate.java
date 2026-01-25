@@ -6,6 +6,7 @@ import Constants.LimelightConstants;
 import Constants.OdometryConstants;
 import Constants.RobotConstants;
 import Constants.ShooterConstants;
+import Constants.SpindexerConstants;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import utility.RobotHardware;
 import com.arcrobotics.ftclib.command.CommandOpMode;
@@ -35,13 +36,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
     private ShootingValidator shootingValidator;
 
-    // Ball tracking (replaces SpindexerManager state)
-    private int totalBallsInRobot = 0;
-    private EnumConstants.BallColor ball1Color = EnumConstants.BallColor.None;
-    private EnumConstants.BallColor ball2Color = EnumConstants.BallColor.None;
-    private EnumConstants.BallColor ball3Color = EnumConstants.BallColor.None;
-    private EnumConstants.ShootingMode currentMode = EnumConstants.ShootingMode.Fast;
-
 
 
 
@@ -57,6 +51,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         // Set alliance color BEFORE initHardware so it can use the correct settings
         RobotConstants.Robot.allianceColor = allianceColor;
         initHardware(false);
+        SpindexerConstants.currentMode = EnumConstants.ShootingMode.Fast;
 
         // Only set position if no auton ran (endingAutonPose is null)
         // If auton ran, initHardware already set the position from endingAutonPose
@@ -165,7 +160,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         // A button: Toggle shooting mode
         new GamepadButton(driverGamepad, GamepadKeys.Button.A)
                 .whenPressed(() -> {
-                    currentMode = (currentMode == EnumConstants.ShootingMode.Fast)
+                    SpindexerConstants.currentMode = (SpindexerConstants.currentMode == EnumConstants.ShootingMode.Fast)
                             ? EnumConstants.ShootingMode.Sorted
                             : EnumConstants.ShootingMode.Fast;
                 });
@@ -174,13 +169,16 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         new GamepadButton(driverGamepad, GamepadKeys.Button.X)
                 .whenPressed(new InstantCommand(spindexer::triggerFlick));
 
-        // Y button: Catalog balls
+        // Y button: Catalog balls (mode-dependent)
         new GamepadButton(driverGamepad, GamepadKeys.Button.Y)
                 .whenPressed(() -> {
-                    scanAndCountBalls();
-                    schedule(CatalogCommands.catalogFast(spindexer, shooter, intake,
-                            robot.intakeSensorPair, robot.transferSensorPair, robot.rampSensorPair,
-                            this::updateBallTracking));
+                    if (SpindexerConstants.currentMode == EnumConstants.ShootingMode.Sorted) {
+                        EnumConstants.BallColor[] motifPattern = {SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(0), SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(1),SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(2)};
+                        EnumConstants.BallColor[] intakeColors = {robot.intakeSensorPair.detectBall().color,robot.transferSensorPair.detectBall().color,robot.rampSensorPair.detectBall().color};
+                        schedule(CatalogCommands.catalogSorted(spindexer, intake, motifPattern, intakeColors));
+                    } else {
+                        schedule(CatalogCommands.catalogFast(spindexer, intake));
+                    }
                 });
 
         // Manual spindexer controls
@@ -241,46 +239,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     }
 
     /**
-     * Scans all three sensors and counts total balls in robot.
-     * Updates ball colors and totalBallsInRobot count.
-     */
-    private void scanAndCountBalls() {
-        DualBallDetector.Result r1 = robot.intakeSensorPair.detectBall();
-        DualBallDetector.Result r2 = robot.transferSensorPair.detectBall();
-        DualBallDetector.Result r3 = robot.rampSensorPair.detectBall();
-
-        ball1Color = r1.ballPresent ? r1.color : EnumConstants.BallColor.None;
-        ball2Color = r2.ballPresent ? r2.color : EnumConstants.BallColor.None;
-        ball3Color = r3.ballPresent ? r3.color : EnumConstants.BallColor.None;
-
-        // If ramp has a ball but transfer doesn't, assume transfer has purple
-        if (r3.ballPresent && !r2.ballPresent) {
-            ball2Color = EnumConstants.BallColor.Purple;
-        }
-
-        // Count total balls from all sensors
-        totalBallsInRobot = 0;
-        if (r1.ballPresent) totalBallsInRobot++;
-        if (r2.ballPresent || (r3.ballPresent && !r2.ballPresent)) totalBallsInRobot++;
-        if (r3.ballPresent) totalBallsInRobot++;
-    }
-
-    /**
-     * Callback for CatalogCommands to update ball tracking after scan.
-     */
-    private void updateBallTracking(ScanSensorsCommand.ScanResults results) {
-        ball1Color = results.sensor0.ballPresent ? results.sensor0.color : EnumConstants.BallColor.None;
-        ball2Color = results.sensor1.ballPresent ? results.sensor1.color : EnumConstants.BallColor.None;
-        ball3Color = results.sensor2.ballPresent ? results.sensor2.color : EnumConstants.BallColor.None;
-
-        // Count balls
-        totalBallsInRobot = 0;
-        if (results.sensor0.ballPresent) totalBallsInRobot++;
-        if (results.sensor1.ballPresent) totalBallsInRobot++;
-        if (results.sensor2.ballPresent) totalBallsInRobot++;
-    }
-
-    /**
      * Manual rotation forward with ball pattern update
      * Blocked during shooting sequence to prevent conflicts
      * OVERRIDE: Hold left stick button to force rotation during sequence
@@ -297,6 +255,10 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     private void manualRotateCCW() {
         spindexer.rotateCCW();
     }
+
+    // ==================== SORTED MODE HELPERS ====================
+
+
 
     /**
      * Toggles auto park mode.
@@ -353,11 +315,14 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
         // SHOOTING section
         telemetry.addLine("=== SHOOTING ===");
-        telemetry.addData("  Shooting Mode", currentMode);
+        telemetry.addData("  Shooting Mode", SpindexerConstants.currentMode);
         telemetry.addData("  Field Zone", odometry.getFieldState());
         telemetry.addData("  Shooting Status", shootingValidator.getStatus(overrideRequested));
         telemetry.addData("  Balls Tracked", String.format("%d [%s, %s, %s]",
-                totalBallsInRobot, ball1Color, ball2Color, ball3Color));
+                SpindexerAndMotifStatus.SpindexerPattern.getBallCount(),
+                SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(0),
+                SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(1),
+                SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(2)));
         telemetry.addLine("");
 
         // SHOOTER section
@@ -421,7 +386,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         telemetry.addLine("=== COMMAND DEBUG ===");
         telemetry.addData("  Done Rotating", spindexer.isDoneRotating());
         telemetry.addData("  Ready to Flip", spindexer.isReadyToFlip());
-        telemetry.addData("  Balls In Robot", totalBallsInRobot);
+        telemetry.addData("  Balls In Robot", SpindexerAndMotifStatus.SpindexerPattern.getBallCount());
         telemetry.addLine("");
 
         // ========================================

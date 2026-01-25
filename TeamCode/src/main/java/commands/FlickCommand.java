@@ -20,11 +20,16 @@ public class FlickCommand extends CommandBase {
     @Override
     public void initialize() {
         triggered = false;
+        // Trigger immediately if flipper is ready (enables true parallel execution)
+        if (spindexer.isReadyToFlip()) {
+            spindexer.triggerFlick();
+            triggered = true;
+        }
     }
 
     @Override
     public void execute() {
-        // Wait for flipper to be ready, then trigger
+        // Fallback: wait for flipper to be ready if not triggered in initialize
         if (!triggered && spindexer.isReadyToFlip()) {
             spindexer.triggerFlick();
             triggered = true;

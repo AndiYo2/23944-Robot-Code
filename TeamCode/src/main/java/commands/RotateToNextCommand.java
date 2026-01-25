@@ -17,7 +17,7 @@ public class RotateToNextCommand extends CommandBase {
 
     @Override
     public void initialize() {
-        spindexer.rotateToNextClosestBall();
+        spindexer.rotateToNextBall();
     }
 
     @Override

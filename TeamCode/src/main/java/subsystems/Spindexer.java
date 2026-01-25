@@ -34,7 +34,6 @@ public class Spindexer extends SubsystemBase {
 
     // Rotation cooldown - prevents rapid repeated rotations
     private final ElapsedTime rotationCooldown = new ElapsedTime();
-    private static final double ROTATION_COOLDOWN_SECONDS = 0.3;
 
     // Position tracking (in degrees)
     private int currentDegrees = EMPTY_RESET_DEGREES;
@@ -177,12 +176,35 @@ public class Spindexer extends SubsystemBase {
         }
     }
 
+    public void rotateToNextBall(){
+        if(SpindexerConstants.currentMode == EnumConstants.ShootingMode.Fast){
+            rotateCCW();
+        }else{
+            if(SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(0) != EnumConstants.BallColor.None){
+                rotateCCW();
+            }else if(SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(2) != EnumConstants.BallColor.None){
+                rotateCW();
+            }
+        }
+    }
+
+
     /**
      * Reset to empty position (0°) and clear ball tracking.
      */
     public void resetToEmptyPosition() {
         currentDegrees = EMPTY_RESET_DEGREES;
         SpindexerAndMotifStatus.SpindexerPattern.clearAll();
+    }
+
+    /**
+     * Assign a ball color to a specific slot (0-2).
+     * Convenience wrapper for SpindexerAndMotifStatus.SpindexerPattern.setBallInSlotX()
+     * @param slot Slot index (0=Intake, 1=Shooter, 2=Top Storage)
+     * @param color The ball color to assign
+     */
+    public void assignSlot(int slot, EnumConstants.BallColor color) {
+        SpindexerAndMotifStatus.SpindexerPattern.setBallInSlotX(slot, color);
     }
 
     // ==================== SERVO CONTROL ====================
@@ -211,7 +233,7 @@ public class Spindexer extends SubsystemBase {
     // ==================== STATE QUERIES ====================
 
     public boolean isRotationIdle() {
-        return rotationCooldown.seconds() > ROTATION_COOLDOWN_SECONDS;
+        return rotationCooldown.seconds() > ROTATION_TIME;
     }
 
     public boolean isReadyToFlip() {
@@ -254,7 +276,7 @@ public class Spindexer extends SubsystemBase {
      * Check if rotation is complete.
      */
     public boolean isDoneRotating() {
-        return rotationCooldown.seconds() > ROTATION_COOLDOWN_SECONDS;
+        return rotationCooldown.seconds() > ROTATION_TIME;
     }
 
     // ==================== PERIODIC UPDATES ====================

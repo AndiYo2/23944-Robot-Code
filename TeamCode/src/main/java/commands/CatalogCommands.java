@@ -1,15 +1,14 @@
 package commands;
 
 import com.arcrobotics.ftclib.command.Command;
-import com.arcrobotics.ftclib.command.ParallelCommandGroup;
+import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.SequentialCommandGroup;
-import Constants.SpindexerConstants;
+import Constants.EnumConstants;
 import subsystems.Intake;
-import subsystems.Shooter;
 import subsystems.Spindexer;
 import utility.DualBallDetector;
+import utility.SpindexerAndMotifStatus;
 
-import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
 /**
@@ -21,103 +20,137 @@ public class CatalogCommands {
 
     /**
      * Fast catalog - doesn't care about color order.
-     * Sequence: scan → rotate → parallel(flick, intake) → rotate → intake
+     * Sequence: rotate → parallel(flick, intake) → rotate → intake
      *
      * This is the simpler cataloging mode that just moves balls into position
      * without sorting by color.
      *
      * @param spindexer the spindexer subsystem
-     * @param shooter the shooter subsystem (for flicking)
      * @param intake the intake subsystem
-     * @param sensor1 first ball detector (spindexer slot 0)
-     * @param sensor2 second ball detector (transfer)
-     * @param sensor3 third ball detector (ramp)
-     * @param onScanComplete callback invoked after sensor scan with results
      * @return a command that catalogs balls in fast mode
      */
-    public static Command catalogFast(Spindexer spindexer, Shooter shooter,
-                                       Intake intake, DualBallDetector sensor1,
-                                       DualBallDetector sensor2, DualBallDetector sensor3,
-                                       Consumer<ScanSensorsCommand.ScanResults> onScanComplete) {
+    public static Command catalogFast(Spindexer spindexer, Intake intake) {
         return new SequentialCommandGroup(
-            // Step 1: Scan sensors to detect ball positions and colors
-            new ScanSensorsCommand(sensor1, sensor2, sensor3, onScanComplete),
-
-            // Step 2: Rotate ball 1 from slot 0 to shooter position (slot 1)
             new RotateCCWCommand(spindexer),
-
-            // Step 3: In parallel - flick ball 1 to shooter while intaking ball 2
-            new ParallelCommandGroup(
-                new FlickCommand(spindexer),
-                new IntakeCommand(intake, .35)
-            ),
-
-            // Step 4: Rotate ball 2 to slot 1
+            new FlickCommand(spindexer).alongWith(new IntakeCommand(intake, .35)),
             new RotateCCWCommand(spindexer),
-
-            // Step 5: Intake ball 3 into slot 0
             new IntakeCommand(intake, .5)
         );
     }
 
     /**
-     * Sorted catalog - shoots in motif pattern order.
-     * More complex with conditional flicks based on ball color matching the motif.
+     * Sorted catalog - handles all 9 motif×intake combinations plus edge cases.
+     * Includes ball tracking updates via InstantCommands.
      *
-     * This mode ensures balls are positioned to be shot in the correct order
-     * based on the alliance's motif pattern.
+     * After this command completes:
+     * - motifPattern[0] has been flicked into the shooter
+     * - motifPattern[1] is in slot 1 (ready to flick next)
+     * - motifPattern[2] is in slot 0 or 2 (can rotate to slot 1)
      *
      * @param spindexer the spindexer subsystem
-     * @param shooter the shooter subsystem
      * @param intake the intake subsystem
-     * @param sensor1 first ball detector (spindexer slot 0)
-     * @param sensor2 second ball detector (transfer)
-     * @param sensor3 third ball detector (ramp)
-     * @param onScanComplete callback invoked after sensor scan with results
-     * @param shouldFlipBall1 condition supplier for whether ball 1 matches motif[0]
-     * @param shouldFlipBall2 condition supplier for whether ball 2 should be flipped
-     * @param shouldFlipBall3 condition supplier for whether ball 3 should be flipped
-     * @param onFlip callback invoked each time a flip occurs (to track state)
+     * @param motifPattern the desired shooting order [first, second, third]
+     * @param intakeColors the order balls come in from intake [first, second, third]
      * @return a command that catalogs balls in sorted mode
      */
-    public static Command catalogSorted(Spindexer spindexer, Shooter shooter,
-                                         Intake intake,
-                                         DualBallDetector sensor1,
-                                         DualBallDetector sensor2,
-                                         DualBallDetector sensor3,
-                                         Consumer<ScanSensorsCommand.ScanResults> onScanComplete,
-                                         BooleanSupplier shouldFlipBall1,
-                                         BooleanSupplier shouldFlipBall2,
-                                         BooleanSupplier shouldFlipBall3,
-                                         Runnable onFlip) {
-        return new SequentialCommandGroup(
-            // Step 1: Scan sensors to detect ball positions and colors
-            new ScanSensorsCommand(sensor1, sensor2, sensor3, onScanComplete),
+    public static Command catalogSorted(Spindexer spindexer, Intake intake, EnumConstants.BallColor[] motifPattern,
+                                         EnumConstants.BallColor[] intakeColors) {
+        SequentialCommandGroup sequence = new SequentialCommandGroup();
 
-            // Step 2: Rotate ball 1 from slot 0 to shooter position (slot 1)
-            new RotateCWCommand(spindexer),
+        // Find which intake position has the first ball to shoot
+        int firstBallPos = 0;
+        for (int i = 0; i < 3; i++) {
+            if (intakeColors[i] == motifPattern[0]) {
+                firstBallPos = i;
+                break;
+            }
+        }
 
-            // Step 3: In parallel - maybe flip ball 1 (if matches motif[0]) + intake ball 2
-            new ParallelCommandGroup(
-                new PossibleFlickCommand(spindexer, shouldFlipBall1, onFlip),
-                new IntakeCommand(intake, SpindexerConstants.INTAKE_TIMING)
-            ),
+        // Track ball 0 entering slot 0
+        sequence.addCommands(new InstantCommand(() ->
+            SpindexerAndMotifStatus.SpindexerPattern.setBallInSlotX(0, intakeColors[0])));
 
-            // Step 4: Rotate ball 2 to slot 1
-            new RotateCWCommand(spindexer),
+        // Rotation 1: ball 0 → slot 1
+        sequence.addCommands(new RotateCCWCommand(spindexer));
 
-            // Step 5: In parallel - maybe flip ball 2 + intake ball 3
-            new ParallelCommandGroup(
-                new PossibleFlickCommand(spindexer, shouldFlipBall2, onFlip),
-                new IntakeCommand(intake, SpindexerConstants.INTAKE_TIMING)
-            ),
+        if (firstBallPos == 0) {
+            // BEST CASE: First intake ball is first to shoot - flick early (parallel with intake)
+            // 2 rotations if intakeColors[1] == motifPattern[1], else 3
+            sequence.addCommands(new FlickCommand(spindexer).alongWith(new IntakeCommand(intake, .35)));
+            sequence.addCommands(new InstantCommand(() ->
+                SpindexerAndMotifStatus.SpindexerPattern.setBallInSlotX(0, intakeColors[1])));
 
-            // Step 6: Rotate ball 3 to slot 1
-            new RotateCWCommand(spindexer),
+            // Rotation 2: ball 1 → slot 1
+            sequence.addCommands(new RotateCCWCommand(spindexer));
+            sequence.addCommands(new IntakeCommand(intake, .5));
+            sequence.addCommands(new InstantCommand(() ->
+                SpindexerAndMotifStatus.SpindexerPattern.setBallInSlotX(0, intakeColors[2])));
 
-            // Step 7: Maybe flip ball 3 (no more balls to intake)
-            new PossibleFlickCommand(spindexer, shouldFlipBall3, onFlip)
-        );
+            // After: slot 0 = intake[2], slot 1 = intake[1], slot 2 = empty
+            if (intakeColors[1] != motifPattern[1]) {
+                // intake[2] is motifPattern[1], need to rotate CCW
+                // Rotation 3
+                sequence.addCommands(new RotateCCWCommand(spindexer));
+            }
+            // Done: 2 or 3 rotations
+
+        } else if (firstBallPos == 1) {
+            // Second intake ball is first to shoot - flick after 2nd rotate
+            // 3 rotations total
+            sequence.addCommands(new IntakeCommand(intake, .35));
+            sequence.addCommands(new InstantCommand(() ->
+                SpindexerAndMotifStatus.SpindexerPattern.setBallInSlotX(0, intakeColors[1])));
+
+            // Rotation 2: ball 0 → slot 2, ball 1 → slot 1
+            sequence.addCommands(new RotateCCWCommand(spindexer));
+
+            // Flick ball 1 (parallel with intake)
+            sequence.addCommands(new FlickCommand(spindexer).alongWith(new IntakeCommand(intake, .5)));
+            sequence.addCommands(new InstantCommand(() ->
+                SpindexerAndMotifStatus.SpindexerPattern.setBallInSlotX(0, intakeColors[2])));
+
+            // After: slot 0 = intake[2], slot 1 = empty, slot 2 = intake[0]
+            // Need motifPattern[1] in slot 1
+            if (intakeColors[0] == motifPattern[1]) {
+                // Rotation 3: CW to bring intake[0] from slot 2 to slot 1
+                sequence.addCommands(new RotateCWCommand(spindexer));
+            } else {
+                // Rotation 3: CCW to bring intake[2] from slot 0 to slot 1
+                sequence.addCommands(new RotateCCWCommand(spindexer));
+            }
+            // Done: 3 rotations
+
+        } else {
+            // WORST CASE: Third intake ball is first to shoot - must load all first
+            // 4 rotations total
+            sequence.addCommands(new IntakeCommand(intake, .35));
+            sequence.addCommands(new InstantCommand(() ->
+                SpindexerAndMotifStatus.SpindexerPattern.setBallInSlotX(0, intakeColors[1])));
+
+            // Rotation 2: ball 0 → slot 2, ball 1 → slot 1
+            sequence.addCommands(new RotateCCWCommand(spindexer));
+            sequence.addCommands(new IntakeCommand(intake, .5));
+            sequence.addCommands(new InstantCommand(() ->
+                SpindexerAndMotifStatus.SpindexerPattern.setBallInSlotX(0, intakeColors[2])));
+
+            // After: slot 0 = intake[2], slot 1 = intake[1], slot 2 = intake[0]
+            // Rotation 3: CCW to bring intake[2] to slot 1
+            sequence.addCommands(new RotateCCWCommand(spindexer));
+
+            // After: slot 0 = intake[0], slot 1 = intake[2], slot 2 = intake[1]
+            sequence.addCommands(new FlickCommand(spindexer));
+
+            // After flick: slot 0 = intake[0], slot 1 = empty, slot 2 = intake[1]
+            // Rotation 4: get motifPattern[1] to slot 1
+            if (intakeColors[0] == motifPattern[1]) {
+                sequence.addCommands(new RotateCCWCommand(spindexer));
+            } else {
+                sequence.addCommands(new RotateCWCommand(spindexer));
+            }
+            // Done: 4 rotations
+        }
+
+        return sequence;
     }
 
     /**
@@ -125,19 +158,10 @@ public class CatalogCommands {
      * Useful when you don't need to track scan results externally.
      *
      * @param spindexer the spindexer subsystem
-     * @param shooter the shooter subsystem
      * @param intake the intake subsystem
-     * @param sensor1 first ball detector
-     * @param sensor2 second ball detector
-     * @param sensor3 third ball detector
      * @return a command that catalogs balls in fast mode
      */
-    public static Command catalogFastSimple(Spindexer spindexer, Shooter shooter,
-                                             Intake intake,
-                                             DualBallDetector sensor1,
-                                             DualBallDetector sensor2,
-                                             DualBallDetector sensor3) {
-        return catalogFast(spindexer, shooter, intake, sensor1, sensor2, sensor3,
-            results -> { /* No-op callback */ });
+    public static Command catalogFastSimple(Spindexer spindexer, Intake intake) {
+        return catalogFast(spindexer, intake);
     }
 }

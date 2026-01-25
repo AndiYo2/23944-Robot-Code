@@ -290,8 +290,7 @@ public class CommandSequenceBuilder {
      */
     public CommandSequenceBuilder catalog() {
         RobotHardware robot = RobotHardware.getInstance();
-        commands.add(CatalogCommands.catalogFastSimple(spindexer, shooter, intake,
-                robot.intakeSensorPair, robot.transferSensorPair, robot.rampSensorPair));
+        commands.add(CatalogCommands.catalogFastSimple(spindexer, intake));
         return this;
     }
 
@@ -558,8 +557,7 @@ public class CommandSequenceBuilder {
 
         public ParallelBuilder catalog() {
             RobotHardware robot = RobotHardware.getInstance();
-            parallelCommands.add(CatalogCommands.catalogFastSimple(spindexer, shooter, intake,
-                    robot.intakeSensorPair, robot.transferSensorPair, robot.rampSensorPair));
+            parallelCommands.add(CatalogCommands.catalogFastSimple(spindexer, intake));
             return this;
         }
 

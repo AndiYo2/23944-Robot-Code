@@ -54,6 +54,9 @@ public class SpindexerConstants {
     public static double ROTATION_TIME = 0.15;
     public static double INTAKE_TIME = 0.1;
 
+    // Shooting mode (Fast or Sorted) - can be set by auto
+    public static EnumConstants.ShootingMode currentMode = EnumConstants.ShootingMode.Sorted;
+
     // Shooting and cataloging timing constants
 
     public static double SHOOTER_FLIPPER_OUT_TIME = 0.075;

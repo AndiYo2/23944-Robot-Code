@@ -12,7 +12,7 @@ public class ServoPositionTesting extends OpMode {
     public Servo spindexer, shooter, hood;
     double spindexerPosition = SpindexerConstants.FLIPPER_POSITION_RETRACT;
     double shooterPosition = ShooterConstants.FLIPPER_POSITION_RETRACT;
-    double hoodPosition = ShooterConstants.HOOD_SERVO_CENTER_POSITION;
+    double hoodPosition = 1;
 
     @Override
     public void init() {

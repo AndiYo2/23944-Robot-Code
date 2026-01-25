@@ -8,7 +8,7 @@ public class LimelightConstants {
     public static boolean isLimelightDisabled = false;
 
     public static SpindexerAndMotifStatus.MotifPattern motifPattern =
-        new SpindexerAndMotifStatus.MotifPattern(EnumConstants.BallColor.Purple, EnumConstants.BallColor.Green, EnumConstants.BallColor.Purple);
+        new SpindexerAndMotifStatus.MotifPattern(EnumConstants.BallColor.Purple, EnumConstants.BallColor.Purple, EnumConstants.BallColor.Green);
 
     public static final EnumConstants.BallColor[] APRILTAG_21_PATTERN = {
         EnumConstants.BallColor.Green, EnumConstants.BallColor.Purple, EnumConstants.BallColor.Purple

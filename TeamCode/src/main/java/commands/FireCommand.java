@@ -21,11 +21,16 @@ public class FireCommand extends CommandBase {
     @Override
     public void initialize() {
         triggered = false;
+        // Trigger immediately if shooter is ready (enables true parallel execution)
+        if (shooter.getCurrentState() == FlickState.Idle) {
+            shooter.triggerShot();
+            triggered = true;
+        }
     }
 
     @Override
     public void execute() {
-        // Wait for shooter to be ready, then trigger
+        // Fallback: wait for shooter to be ready if not triggered in initialize
         if (!triggered && shooter.getCurrentState() == FlickState.Idle) {
             shooter.triggerShot();
             triggered = true;
