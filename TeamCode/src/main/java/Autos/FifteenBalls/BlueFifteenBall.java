@@ -11,41 +11,41 @@ import commands.CommandSequenceBuilder;
 import Constants.EnumConstants;
 import Constants.RobotConstants;
 
-@Autonomous(name = "RedFifteenBall", group = "FifteenBalll")
-public class RedFifteenBall extends AutonTemplate {
+@Autonomous(name = "BlueFifteenBall", group = "FifteenBalll")
+public class BlueFifteenBall extends AutonTemplate {
     public static double maxSpeed = 1;
     private PathChain shootToFirstOne, shootToFirstTwo, shootToFirstThree, firstToShoot, shootToSecond, secondToGate,
             gateToShoot, shootToThird, thirdToShoot, shootToFourth, fourthToShoot, shootToStop;
 
     // ===== POSES =====
-    private final Pose startPose = new Pose(87.5, 8.5, Math.toRadians(90));
+    private final Pose startPose = new Pose(56.5, 8.5, Math.toRadians(90));
 
-    private final Pose firstPickupPose1 = new Pose(129, 12.75, Math.toRadians(345));
+    private final Pose firstPickupPose1 = new Pose(15.0, 12.75, Math.toRadians(195));
 
-    private final Pose firstPickupPose2 = new Pose(130.7, 8.7, Math.toRadians(0));
-    private final Pose firstPickupPose3 = new Pose(133, 8.5, Math.toRadians(0));
+    private final Pose firstPickupPose2 = new Pose(13.3, 8.7, Math.toRadians(180));
+    private final Pose firstPickupPose3 = new Pose(11.0, 8.5, Math.toRadians(180));
 
-    private final Pose shootPose1 = new Pose(92.0, 12.5, Math.toRadians(65));
+    private final Pose shootPose1 = new Pose(52.0, 12.5, Math.toRadians(115));
 
-    private final Pose secondPickupPose = new Pose(124.5, 57.5, Math.toRadians(0));
+    private final Pose secondPickupPose = new Pose(19.5, 61.0, Math.toRadians(180));
 
-    private final Pose gatePose = new Pose(128.0, 67.0, Math.toRadians(0));
+    private final Pose gatePose = new Pose(16.0, 70.0, Math.toRadians(180));
 
-    private final Pose shootPose2 = new Pose(85.5, 81.5, Math.toRadians(50));
+    private final Pose shootPose2 = new Pose(58.5, 83.5, Math.toRadians(130));
 
-    private final Pose thirdPickupPose = new Pose(123.0, 81.5, Math.toRadians(0));
+    private final Pose thirdPickupPose = new Pose(21.0, 83.5, Math.toRadians(180));
 
-    private final Pose fourthPickupPose = new Pose(125.5, 34.5, Math.toRadians(0));
+    private final Pose fourthPickupPose = new Pose(18.5, 37.0, Math.toRadians(180));
 
-    private final Pose endPose = new Pose(92.5, 32.5, Math.toRadians(90));
+    private final Pose endPose = new Pose(51.5, 32.5, Math.toRadians(90));
 
     // ===== CONTROL POINTS =====
-    private final Pose shootToFirstControlPoint = new Pose(100.0, 19.5);
-    private final Pose firstToShootControlPoint = new Pose(111.5, 16.5);
-    private final Pose shootToSecondControlPoint = new Pose(90.0, 61.0);
-    private final Pose secondToGateControlPoint = new Pose(122.0, 69.0);
-    private final Pose gateToShootControlPoint = new Pose(99.5, 61);
-    private final Pose shootToFourthControlPoint = new Pose(74.0, 27.0);
+    private final Pose shootToFirstControlPoint = new Pose(44.0, 19.5);
+    private final Pose firstToShootControlPoint = new Pose(32.5, 16.5);
+    private final Pose shootToSecondControlPoint = new Pose(54.0, 66.0);
+    private final Pose secondToGateControlPoint = new Pose(21.0, 69.0);
+    private final Pose gateToShootControlPoint = new Pose(44.5, 61.0);
+    private final Pose shootToFourthControlPoint = new Pose(70.0, 32.5);
 
     @Override
     protected void buildPaths() {
@@ -127,7 +127,7 @@ public class RedFifteenBall extends AutonTemplate {
     @Override
     public void init() {
         super.init();
-        RobotConstants.Robot.allianceColor = EnumConstants.AllianceColor.Red;
+        RobotConstants.Robot.allianceColor = EnumConstants.AllianceColor.Blue;
         SpindexerConstants.currentMode = EnumConstants.ShootingMode.Fast;
         // TODO: Complete the sequence with all paths
         autonomousCommand = new CommandSequenceBuilder(follower, intake, spindexer, limelight, shooter, turret)

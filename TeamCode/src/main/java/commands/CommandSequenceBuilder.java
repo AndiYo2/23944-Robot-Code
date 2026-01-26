@@ -16,6 +16,7 @@ import java.util.function.Consumer;
 
 import commands.*;
 import Constants.EnumConstants.BallColor;
+import Constants.EnumConstants.ShootingMode;
 import Constants.SpindexerConstants;
 import pedroPathing.Constants;
 import subsystems.Intake;
@@ -329,6 +330,18 @@ public class CommandSequenceBuilder {
     }
 
     /**
+     * Sets the spindexer shooting mode.
+     * Use this to switch between Fast and Sorted modes mid-sequence.
+     *
+     * @param mode the shooting mode (Fast or Sorted)
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder setSpindexerMode(ShootingMode mode) {
+        commands.add(new InstantCommand(() -> SpindexerConstants.currentMode = mode));
+        return this;
+    }
+
+    /**
      * Adds an intake start command.
      *
      * @return this builder for chaining
@@ -573,6 +586,11 @@ public class CommandSequenceBuilder {
 
         public ParallelBuilder intakeStop() {
             parallelCommands.add(new IntakeStopCommand(intake));
+            return this;
+        }
+
+        public ParallelBuilder setSpindexerMode(ShootingMode mode) {
+            parallelCommands.add(new InstantCommand(() -> SpindexerConstants.currentMode = mode));
             return this;
         }
 
