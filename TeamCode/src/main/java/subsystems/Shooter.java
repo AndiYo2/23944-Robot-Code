@@ -146,19 +146,22 @@ public class Shooter extends SubsystemBase {
 
     /**
      * Convert hood angle to servo position.
-     * Servo 0 = 63 degrees (HOOD_MAX_ANGLE)
-     * Servo 1 = 30 degrees (HOOD_MIN_ANGLE)
+     * Servo 0.34 = 63 degrees (HOOD_MAX_ANGLE)
+     * Servo 1.0 = 30 degrees (HOOD_MIN_ANGLE)
      *
      * @param hoodAngleDegrees Target hood angle in degrees
-     * @return Servo position (0 to 1)
+     * @return Servo position (0.34 to 1.0)
      */
     private double hoodAngleToServoPosition(double hoodAngleDegrees) {
-        // Linear mapping: 30° → 1.0, 63° → 0.0
-        double position = (ShooterConstants.HOOD_MAX_ANGLE - hoodAngleDegrees) /
-                          (ShooterConstants.HOOD_MAX_ANGLE - ShooterConstants.HOOD_MIN_ANGLE);
+        // Linear mapping: 30° → 1.0, 63° → 0.34
+        double angleRange = ShooterConstants.HOOD_MAX_ANGLE - ShooterConstants.HOOD_MIN_ANGLE;
+        double servoRange = ShooterConstants.HOOD_SERVO_AT_MIN_ANGLE - ShooterConstants.HOOD_SERVO_AT_MAX_ANGLE;
+        double normalizedAngle = (hoodAngleDegrees - ShooterConstants.HOOD_MIN_ANGLE) / angleRange;
+        double position = ShooterConstants.HOOD_SERVO_AT_MIN_ANGLE - (normalizedAngle * servoRange);
 
         // Clamp to valid servo range
-        position = Math.max(0.0, Math.min(1.0, position));
+        position = Math.max(ShooterConstants.HOOD_SERVO_AT_MAX_ANGLE,
+                           Math.min(ShooterConstants.HOOD_SERVO_AT_MIN_ANGLE, position));
         return position;
     }
 

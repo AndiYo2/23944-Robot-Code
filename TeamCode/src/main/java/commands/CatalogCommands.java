@@ -23,7 +23,7 @@ public class CatalogCommands {
      * Sequence: rotate → parallel(flick, intake) → rotate → intake
      *
      * This is the simpler cataloging mode that just moves balls into position
-     * without sorting by color.
+     * without sorting by color. Tracks balls as Purple for sorted mode compatibility.
      *
      * @param spindexer the spindexer subsystem
      * @param intake the intake subsystem
@@ -31,10 +31,23 @@ public class CatalogCommands {
      */
     public static Command catalogFast(Spindexer spindexer, Intake intake) {
         return new SequentialCommandGroup(
+            // Ball 1 is already in slot 0 from intake - track it
+            new InstantCommand(() ->
+                SpindexerAndMotifStatus.SpindexerPattern.setBallInSlotX(0, EnumConstants.BallColor.Purple)),
+            // Rotate ball 1 to shooter slot (slot 1)
             new RotateCCWCommand(spindexer),
+            // Flick ball 1 out, intake ball 2 into slot 0
             new FlickCommand(spindexer).alongWith(new IntakeCommand(intake, .35)),
+            // Track ball 2 in slot 0
+            new InstantCommand(() ->
+                SpindexerAndMotifStatus.SpindexerPattern.setBallInSlotX(0, EnumConstants.BallColor.Purple)),
+            // Rotate ball 2 to shooter slot (slot 1)
             new RotateCCWCommand(spindexer),
-            new IntakeCommand(intake, .5)
+            // Intake ball 3 into slot 0
+            new IntakeCommand(intake, .5),
+            // Track ball 3 in slot 0
+            new InstantCommand(() ->
+                SpindexerAndMotifStatus.SpindexerPattern.setBallInSlotX(0, EnumConstants.BallColor.Purple))
         );
     }
 

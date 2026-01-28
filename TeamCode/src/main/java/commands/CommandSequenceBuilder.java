@@ -537,6 +537,11 @@ public class CommandSequenceBuilder {
             return this;
         }
 
+        public ParallelBuilder moveTo(Path path, boolean holdEnd) {
+            parallelCommands.add(new FollowPathCommand(follower, path, holdEnd));
+            return this;
+        }
+
         public ParallelBuilder moveTo(Path path, double maxPower, boolean holdEnd) {
             parallelCommands.add(new FollowPathCommand(follower, path, maxPower, holdEnd));
             return this;
@@ -549,6 +554,11 @@ public class CommandSequenceBuilder {
 
         public ParallelBuilder moveTo(PathChain pathChain, double maxPower) {
             parallelCommands.add(new FollowPathCommand(follower, pathChain, maxPower, true));
+            return this;
+        }
+
+        public ParallelBuilder moveTo(PathChain pathChain, boolean holdEnd) {
+            parallelCommands.add(new FollowPathCommand(follower, pathChain, holdEnd));
             return this;
         }
 

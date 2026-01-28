@@ -46,6 +46,7 @@ public class Spindexer extends SubsystemBase {
 
         // Initialize spindexer to 0°
         currentDegrees = EMPTY_RESET_DEGREES;
+        robot.spindexerServo.setPosition(degreesToServoPosition(EMPTY_RESET_DEGREES));
     }
 
     // ==================== CONVERSION METHODS ====================

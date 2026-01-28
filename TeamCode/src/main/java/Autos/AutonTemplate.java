@@ -68,6 +68,7 @@ public abstract class AutonTemplate extends OpMode {
         turret = new Turret();
         odometry = new Odometry();
         spindexer = new Spindexer();
+        spindexer.resetToEmptyPosition();
         limelight = new subsystems.Limelight();
 
         // Link Turret to Shooter for distance calculations
@@ -101,7 +102,7 @@ public abstract class AutonTemplate extends OpMode {
         }
 
         limelight.resetLimelight();
-        limelight.setMode(EnumConstants.LimelightMode.GoalTracking);
+        limelight.setMode(EnumConstants.LimelightMode.TagTracking);
     }
 
     @Override

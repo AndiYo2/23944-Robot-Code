@@ -27,7 +27,8 @@ public class ShooterConstants {
     public static double HOOD_MIN_ANGLE = 30.0;               // Minimum hood angle (degrees)
     public static double HOOD_MAX_ANGLE = 63.0;               // Maximum hood angle (degrees)
     public static double HOOD_DEFAULT_ANGLE = 45.0;           // Default hood angle when no lookup
-    public static double MIN_HOOD_SERVO_POSITION = 0.0001;    // Never set exactly 0
+    public static double HOOD_SERVO_AT_MIN_ANGLE = .88;       // Servo position at 30 degrees (min angle)
+    public static double HOOD_SERVO_AT_MAX_ANGLE = 0.48;      // Servo position at 63 degrees (max angle)
 
     // ==================== INTERPLUT DATA ====================
     // Format: {distance_inches, value} - MUST be sorted by distance ascending

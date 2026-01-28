@@ -13,7 +13,7 @@ import Constants.RobotConstants;
 
 @Autonomous(name = "RedFifteenBall", group = "FifteenBalll")
 public class RedFifteenBall extends AutonTemplate {
-    public static double maxSpeed = 1;
+    public static double maxSpeed = .8;
     private PathChain shootToFirstOne, shootToFirstTwo, shootToFirstThree, firstToShoot, shootToSecond, secondToGate,
             gateToShoot, shootToThird, thirdToShoot, shootToFourth, fourthToShoot, shootToStop;
 
@@ -22,30 +22,31 @@ public class RedFifteenBall extends AutonTemplate {
 
     private final Pose firstPickupPose1 = new Pose(129, 12.75, Math.toRadians(345));
 
-    private final Pose firstPickupPose2 = new Pose(130.7, 8.7, Math.toRadians(0));
-    private final Pose firstPickupPose3 = new Pose(133, 8.5, Math.toRadians(0));
+    private final Pose firstPickupPose2 = new Pose(130.7, 9.2, Math.toRadians(0));
+    private final Pose firstPickupPose3 = new Pose(133, 9, Math.toRadians(0));
 
     private final Pose shootPose1 = new Pose(92.0, 12.5, Math.toRadians(65));
 
-    private final Pose secondPickupPose = new Pose(124.5, 57.5, Math.toRadians(0));
+    private final Pose secondPickupPose = new Pose(126, 57.5, Math.toRadians(0));
 
-    private final Pose gatePose = new Pose(128.0, 67.0, Math.toRadians(0));
+    private final Pose gatePose = new Pose(127.0, 67.0, Math.toRadians(0));
 
     private final Pose shootPose2 = new Pose(85.5, 81.5, Math.toRadians(50));
 
-    private final Pose thirdPickupPose = new Pose(123.0, 81.5, Math.toRadians(0));
+    private final Pose thirdPickupPose = new Pose(126, 81.5, Math.toRadians(0));
 
-    private final Pose fourthPickupPose = new Pose(125.5, 34.5, Math.toRadians(0));
+    private final Pose fourthPickupPose = new Pose(128, 33.5, Math.toRadians(0));
 
     private final Pose endPose = new Pose(92.5, 32.5, Math.toRadians(90));
 
     // ===== CONTROL POINTS =====
     private final Pose shootToFirstControlPoint = new Pose(100.0, 19.5);
-    private final Pose firstToShootControlPoint = new Pose(111.5, 16.5);
-    private final Pose shootToSecondControlPoint = new Pose(90.0, 61.0);
-    private final Pose secondToGateControlPoint = new Pose(122.0, 69.0);
-    private final Pose gateToShootControlPoint = new Pose(99.5, 61);
-    private final Pose shootToFourthControlPoint = new Pose(74.0, 27.0);
+    private final Pose firstToShootControlPoint = new Pose(111.5, 19.5);
+    private final Pose shootToSecondControlPoint = new Pose(90.0, 65.0);
+    private final Pose secondToGateControlPoint = new Pose(120.0, 69.0);
+    private final Pose gateToShootControlPoint = new Pose(99.5, 59.5);
+    private final Pose shootToThirdControlPoint = new Pose(103, 81.5, Math.toRadians(0));
+    private final Pose shootToFourthControlPoint = new Pose(74.0, 24.0);
 
     @Override
     protected void buildPaths() {
@@ -94,8 +95,8 @@ public class RedFifteenBall extends AutonTemplate {
                 .build();
 
         shootToThird = follower.pathBuilder()
-                .addPath(new BezierLine(shootPose2, thirdPickupPose))
-                .setLinearHeadingInterpolation(shootPose2.getHeading(), thirdPickupPose.getHeading())
+                .addPath(new BezierCurve(shootPose2, shootToThirdControlPoint, thirdPickupPose))
+                .setLinearHeadingInterpolation(shootPose2.getHeading(), shootToThirdControlPoint.getHeading(), thirdPickupPose.getHeading())
                 .setGlobalDeceleration()
                 .build();
 
@@ -131,30 +132,31 @@ public class RedFifteenBall extends AutonTemplate {
         SpindexerConstants.currentMode = EnumConstants.ShootingMode.Fast;
         // TODO: Complete the sequence with all paths
         autonomousCommand = new CommandSequenceBuilder(follower, intake, spindexer, limelight, shooter, turret)
-                .parallel(p -> p.limelightScan().catalog())
+                .limelightScan()
+                .delay(.75)
                 .shoot()
-                .parallel(p -> p.moveTo(shootToFirstOne, .8).intakeStart())
-                .moveTo(shootToFirstTwo, .4)
-                .moveTo(shootToFirstThree, .4)
-                .delay(1)
+                .parallel(p -> p.moveTo(shootToFirstOne, maxSpeed, true).intakeStart())
+                .moveTo(shootToFirstTwo, .4, true)
+                .moveTo(shootToFirstThree, .4, true)
                 .intakeStop()
-                .parallel(p -> p.moveTo(firstToShoot, maxSpeed).catalog())
+                .parallel(p -> p.moveTo(firstToShoot, maxSpeed, true).catalog())
                 .shoot()
                 .setSpindexerMode(EnumConstants.ShootingMode.Sorted)
-                .parallel(p -> p.moveTo(shootToSecond).intakeStart())
-                .moveTo(secondToGate)
+                .parallel(p -> p.moveTo(shootToSecond, maxSpeed, true).intakeStart())
                 .intakeStop()
-                .parallel(p -> p.moveTo(gateToShoot).catalog())
+                .moveTo(secondToGate, .5, true)
+                .delay(.5)
+                .parallel(p -> p.moveTo(gateToShoot, maxSpeed, true).catalog())
                 .shoot()
-                .parallel(p -> p.moveTo(shootToThird).intakeStart())
+                .parallel(p -> p.moveTo(shootToThird, maxSpeed,true).intakeStart())
                 .intakeStop()
-                .parallel(p -> p.moveTo(thirdToShoot).catalog())
+                .parallel(p -> p.moveTo(thirdToShoot, maxSpeed,true).catalog())
                 .shoot()
-                .parallel(p -> p.moveTo(shootToFourth).intakeStart())
+                .parallel(p -> p.moveTo(shootToFourth, maxSpeed,true).intakeStart())
                 .intakeStop()
-                .parallel(p -> p.moveTo(fourthToShoot).catalog())
+                .parallel(p -> p.moveTo(fourthToShoot, maxSpeed,true).catalog())
                 .shoot()
-                .moveTo(shootToStop)
+                .moveTo(shootToStop, true)
                 .build();
     }
 }
