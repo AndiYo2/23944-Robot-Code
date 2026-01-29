@@ -286,12 +286,13 @@ public class CommandSequenceBuilder {
 
     /**
      * Adds a cataloging command.
+     * Automatically uses the correct cataloging mode (Fast or Sorted) based on
+     * SpindexerConstants.currentMode at execution time.
      *
      * @return this builder for chaining
      */
     public CommandSequenceBuilder catalog() {
-        RobotHardware robot = RobotHardware.getInstance();
-        commands.add(CatalogCommands.catalogFastSimple(spindexer, intake));
+        commands.add(new CatalogModeCommand(spindexer, intake));
         return this;
     }
 
@@ -579,8 +580,7 @@ public class CommandSequenceBuilder {
         }
 
         public ParallelBuilder catalog() {
-            RobotHardware robot = RobotHardware.getInstance();
-            parallelCommands.add(CatalogCommands.catalogFastSimple(spindexer, intake));
+            parallelCommands.add(new CatalogModeCommand(spindexer, intake));
             return this;
         }
 

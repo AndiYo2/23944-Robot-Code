@@ -23,20 +23,6 @@ public class EnumConstants {
         Retracted
     }
 
-    public enum RotationState {
-        IDLE,      // Ready for commands
-        ROTATING   // Busy rotating
-    }
-
-    public enum ShooterCases {
-        Idle,
-        Start,
-        SpindexerFlicking,
-        ShooterFlicking,
-        SpindexerRotating,
-        BallShot
-    }
-
     public enum BallColor {
         Purple,
         Green,

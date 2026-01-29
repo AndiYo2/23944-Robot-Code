@@ -306,6 +306,7 @@ public class Spindexer extends SubsystemBase {
                 currentState = FlickState.Retracted;
                 break;
             case Retracted:
+                if(flickerTimer.seconds() < .3) break;
                 currentState = FlickState.Idle;
                 break;
         }

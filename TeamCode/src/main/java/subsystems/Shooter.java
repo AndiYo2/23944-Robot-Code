@@ -320,7 +320,7 @@ public class Shooter extends SubsystemBase {
         // Prevent division by zero on first loop
         if (dt <= 0) dt = DEFAULT_LOOP_TIME;
 
-        // Always use LUT for velocity and hood angle based on distance
+        // Use LUT for velocity and hood angle based on distance
         updateVelocityFromDistance();
         setHoodAngle(requiredHoodAngle);
         double targetVelocity = requiredVelocity;

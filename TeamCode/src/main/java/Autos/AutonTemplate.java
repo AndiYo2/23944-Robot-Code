@@ -141,7 +141,35 @@ public abstract class AutonTemplate extends OpMode {
         intake.periodic();
         limelight.periodic();
 
+        // Update Panels telemetry
+        updatePanelsTelemetry();
+
         telemetry.update();
+    }
+
+    /**
+     * Updates Panels telemetry with autonomous-specific data.
+     * Displays: Hood angle, Actual Shooter velocity, Set motor velocity, Distance to goal, and Position
+     */
+    protected void updatePanelsTelemetry() {
+        // Hood angle
+        robotHardware.telemetryManager.debug(String.format("Hood Angle: %.1f deg", shooter.getTargetHoodAngle()));
+
+        // Shooter velocities
+        robotHardware.telemetryManager.debug(String.format("Set Velocity: %.0f ticks/sec", shooter.getTargetVelocity()));
+        robotHardware.telemetryManager.debug(String.format("Actual Velocity: %.0f ticks/sec", shooter.getCurrentVelocity()));
+
+        // Distance to goal
+        robotHardware.telemetryManager.debug(String.format("Distance to Goal: %.1f in", shooter.getDistanceToTarget()));
+
+        // Position
+        robotHardware.telemetryManager.debug(String.format("Position: X:%.1f Y:%.1f H:%.1f deg",
+            follower.getPose().getX(),
+            follower.getPose().getY(),
+            Math.toDegrees(follower.getPose().getHeading())));
+
+        // Send to Panels
+        robotHardware.telemetryManager.update(telemetry);
     }
 
 

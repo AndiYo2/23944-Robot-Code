@@ -20,9 +20,9 @@ public class SpindexerConstants {
     };
 
     // --- Flipper Positions ---
-    public static double FLIPPER_POSITION_EXTENDED = 0.85;
-    public static double FLIPPER_POSITION_RETRACT = 0.55;
-    public static double FLICK_TIME = 0.075;
+    public static double FLIPPER_POSITION_EXTENDED = 0.58;
+    public static double FLIPPER_POSITION_RETRACT = 0.35;
+    public static double FLICK_TIME = 0.12;
 
     // --- Degree-Based Position Constants ---
     // All positions in SERVO degrees (0-300° effective range)
@@ -34,7 +34,6 @@ public class SpindexerConstants {
     //   Slot 2: 120°, 300°
     public static final int DEGREE_INCREMENT = 60;          // One slot = 60°
     public static final int MAX_SERVO_DEGREES = 300;        // Max usable range
-    public static final int[] SLOT_POSITIONS_DEG = {0, 60, 120, 180, 240, 300};
     public static final int SLOTS_COUNT = 3;
 
     // Boundary wrapping (in degrees) - safety net, should rarely be used
@@ -52,15 +51,8 @@ public class SpindexerConstants {
 
     // Cataloging timing
     public static double ROTATION_TIME = 0.15;
-    public static double INTAKE_TIME = 0.1;
 
     // Shooting mode (Fast or Sorted) - can be set by auto
     public static EnumConstants.ShootingMode currentMode = EnumConstants.ShootingMode.Sorted;
 
-    // Shooting and cataloging timing constants
-
-    public static double SHOOTER_FLIPPER_OUT_TIME = 0.075;
-
-    public static double SPINDEXER_FLIPPER_OUT_TIME = 0.075; // Wait after spindexer flipper (same as FLICK_TIME)
-    public static double INTAKE_TIMING = 0.35;                // Wait during intake operation
 }
