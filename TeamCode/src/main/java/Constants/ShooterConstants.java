@@ -8,9 +8,9 @@ import com.bylazar.configurables.annotations.Configurable;
 @Configurable
 public class ShooterConstants {
     // ==================== FLIPPER POSITIONS ====================
-    public static double FLIPPER_POSITION_EXTENDED = 0.35;  // Push ball into flywheel
+    public static double FLIPPER_POSITION_EXTENDED = 0.4;  // Push ball into flywheel
     public static double FLIPPER_POSITION_RETRACT = 0.15;   // Ready position
-    public static double FLICK_TIME = 0.15;                 // Seconds to hold extended
+    public static double FLICK_TIME = 0.2;                 // Seconds to hold extended
 
     // ==================== VELOCITY CONSTANTS ====================
     public static double DEFAULT_VELOCITY = 2200.0;           // Default/initial flywheel velocity
@@ -36,46 +36,36 @@ public class ShooterConstants {
 
     // Velocity LUT - Distance (inches) -> Velocity (ticks/sec)
     public static double[][] VELOCITY_DATA = {
-        {0, 1850},
-        {40, 1850},
-        {49, 1820},
-        {57, 1900},
-        {65, 1950},
-        {70, 2000},
-        {74, 2020},
-        {83, 2100},
-        {95, 2180},
-        {104, 2300},
-        {115, 2400},
-        {126, 2700},
-        {135, 2720},
-        {140, 2760},
-        {145, 2800},
-        {153, 2800},
-        {162, 2900},
-        {300, 2900}
+        {0, 1720},
+        {42, 1720},
+        {55, 1820},
+        {66, 1870},
+        {80, 2020},
+        {90, 2120},
+        {100, 2200},
+        {113, 2470},
+        {128.6, 2570},
+        {140.5, 2670},
+        {146, 2720},
+        {150, 2820},
+        {300, 2820}
     };
 
     // Hood Angle LUT - Distance (inches) -> Hood Angle (degrees, 0=vertical, 90=horizontal)
     public static double[][] HOOD_DATA = {
         {0, 30},
-        {40, 30},
-        {49, 32},
-        {57, 36},
-        {65, 40},
-        {70, 40},
-        {74, 40},
-        {83, 44},
-        {95, 45},
-        {104, 49},
-        {115, 52},
-        {126, 56},
-        {135, 56},
-        {140, 56},
-        {145, 56},
-        {153, 54},
-        {162, 53},
-        {300, 53}
+        {42, 30},
+        {55, 34},
+        {66, 40},
+        {80, 45},
+        {90, 45.5},
+        {100, 46},
+        {113, 51},
+        {128.6, 52},
+        {140.5, 52.5},
+        {146, 54},
+        {150, 55},
+        {300, 55}
     };
 
     /**

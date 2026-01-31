@@ -36,15 +36,15 @@ public class Constants {
                     0.01
             ))
             .drivePIDFCoefficients(new FilteredPIDFCoefficients(
-                    0.015,
+                    0.012,
                     0,
-                    0.00935,
+                    0.0095,
                     0.6,
                     0.01))
             .secondaryDrivePIDFCoefficients(new FilteredPIDFCoefficients(
-                    0.0001,
+                    0.0075,
                     0,
-                    0.00005,
+                    0.00001,
                     0.6,
                     0.001))
             .lateralZeroPowerAcceleration(-62)

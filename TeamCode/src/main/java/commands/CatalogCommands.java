@@ -6,10 +6,7 @@ import com.arcrobotics.ftclib.command.SequentialCommandGroup;
 import Constants.EnumConstants;
 import subsystems.Intake;
 import subsystems.Spindexer;
-import utility.DualBallDetector;
 import utility.SpindexerAndMotifStatus;
-
-import java.util.function.Consumer;
 
 /**
  * Factory class for composing ball cataloging command sequences.
@@ -31,23 +28,20 @@ public class CatalogCommands {
      */
     public static Command catalogFast(Spindexer spindexer, Intake intake) {
         return new SequentialCommandGroup(
-            // Ball 1 is already in slot 0 from intake - track it
-            new InstantCommand(() ->
-                SpindexerAndMotifStatus.SpindexerPattern.setBallInSlotX(0, EnumConstants.BallColor.Purple)),
-            // Rotate ball 1 to shooter slot (slot 1)
+            // Rotate ball 1 from slot 0 to shooter slot (slot 1)
             new RotateCCWCommand(spindexer),
             // Flick ball 1 out, intake ball 2 into slot 0
             new FlickCommand(spindexer).alongWith(new IntakeCommand(intake, .35)),
-            // Track ball 2 in slot 0
-            new InstantCommand(() ->
-                SpindexerAndMotifStatus.SpindexerPattern.setBallInSlotX(0, EnumConstants.BallColor.Purple)),
             // Rotate ball 2 to shooter slot (slot 1)
             new RotateCCWCommand(spindexer),
-            // Intake ball 3 into slot 0
-            new IntakeCommand(intake, .5),
-            // Track ball 3 in slot 0
+            // Intake ball 3 into slot 0 (reverse intake to spit extras)
+            new IntakeCommand(intake, .5, true),
+            // Set final pattern: all 3 slots tracked as Purple
             new InstantCommand(() ->
-                SpindexerAndMotifStatus.SpindexerPattern.setBallInSlotX(0, EnumConstants.BallColor.Purple))
+                SpindexerAndMotifStatus.SpindexerPattern.setBallPattern(
+                    EnumConstants.BallColor.Purple,
+                    EnumConstants.BallColor.Purple,
+                    EnumConstants.BallColor.Purple))
         );
     }
 
@@ -70,7 +64,7 @@ public class CatalogCommands {
                                          EnumConstants.BallColor[] intakeColors) {
         SequentialCommandGroup sequence = new SequentialCommandGroup();
 
-        // Find which intake position has the first ball to shoot
+        // Find which intake position has the first ball to shoot (motifPattern[0])
         int firstBallPos = 0;
         for (int i = 0; i < 3; i++) {
             if (intakeColors[i] == motifPattern[0]) {
@@ -79,102 +73,71 @@ public class CatalogCommands {
             }
         }
 
-        // Track ball 0 entering slot 0
-        sequence.addCommands(new InstantCommand(() ->
-            SpindexerAndMotifStatus.SpindexerPattern.setBallInSlotX(0, intakeColors[0])));
+        // The final pattern to set after all physical movements complete.
+        // In all cases: motifPattern[0] is flicked, motifPattern[1] ends in slot 1,
+        // motifPattern[2] ends in slot 0 or slot 2.
+        final EnumConstants.BallColor[] finalPattern;
 
-        // Rotation 1: ball 0 → slot 1
+        // Rotation 1: move first intake ball from slot 0 to slot 1
         sequence.addCommands(new RotateCCWCommand(spindexer));
 
         if (firstBallPos == 0) {
-            // BEST CASE: First intake ball is first to shoot - flick early (parallel with intake)
-            // 2 rotations if intakeColors[1] == motifPattern[1], else 3
+            // BEST CASE: intake[0] == motifPattern[0], flick immediately
             sequence.addCommands(new FlickCommand(spindexer).alongWith(new IntakeCommand(intake, .35)));
-            sequence.addCommands(new InstantCommand(() ->
-                SpindexerAndMotifStatus.SpindexerPattern.setBallInSlotX(0, intakeColors[1])));
-
-            // Rotation 2: ball 1 → slot 1
             sequence.addCommands(new RotateCCWCommand(spindexer));
-            sequence.addCommands(new IntakeCommand(intake, .5));
-            sequence.addCommands(new InstantCommand(() ->
-                SpindexerAndMotifStatus.SpindexerPattern.setBallInSlotX(0, intakeColors[2])));
+            sequence.addCommands(new IntakeCommand(intake, .5, true));
 
-            // After: slot 0 = intake[2], slot 1 = intake[1], slot 2 = empty
-            if (intakeColors[1] != motifPattern[1]) {
-                // intake[2] is motifPattern[1], need to rotate CCW
-                // Rotation 3
+            if (intakeColors[1] == motifPattern[1]) {
+                // motifPattern[1] already in slot 1, done
+                finalPattern = new EnumConstants.BallColor[]{motifPattern[2], motifPattern[1], EnumConstants.BallColor.None};
+            } else {
+                // Extra CCW to bring motifPattern[1] (intake[2]) into slot 1
                 sequence.addCommands(new RotateCCWCommand(spindexer));
+                finalPattern = new EnumConstants.BallColor[]{EnumConstants.BallColor.None, motifPattern[1], motifPattern[2]};
             }
-            // Done: 2 or 3 rotations
 
         } else if (firstBallPos == 1) {
-            // Second intake ball is first to shoot - flick after 2nd rotate
-            // 3 rotations total
+            // intake[1] == motifPattern[0], need to wait for 2nd ball before flicking
             sequence.addCommands(new IntakeCommand(intake, .35));
-            sequence.addCommands(new InstantCommand(() ->
-                SpindexerAndMotifStatus.SpindexerPattern.setBallInSlotX(0, intakeColors[1])));
-
-            // Rotation 2: ball 0 → slot 2, ball 1 → slot 1
             sequence.addCommands(new RotateCCWCommand(spindexer));
+            sequence.addCommands(new FlickCommand(spindexer).alongWith(new IntakeCommand(intake, .5, true)));
 
-            // Flick ball 1 (parallel with intake)
-            sequence.addCommands(new FlickCommand(spindexer).alongWith(new IntakeCommand(intake, .5)));
-            sequence.addCommands(new InstantCommand(() ->
-                SpindexerAndMotifStatus.SpindexerPattern.setBallInSlotX(0, intakeColors[2])));
-
-            // After: slot 0 = intake[2], slot 1 = empty, slot 2 = intake[0]
-            // Need motifPattern[1] in slot 1
             if (intakeColors[0] == motifPattern[1]) {
-                // Rotation 3: CW to bring intake[0] from slot 2 to slot 1
+                // CW to bring intake[0] from slot 2 to slot 1
                 sequence.addCommands(new RotateCWCommand(spindexer));
+                finalPattern = new EnumConstants.BallColor[]{EnumConstants.BallColor.None, motifPattern[1], motifPattern[2]};
             } else {
-                // Rotation 3: CCW to bring intake[2] from slot 0 to slot 1
+                // CCW to bring intake[2] from slot 0 to slot 1
                 sequence.addCommands(new RotateCCWCommand(spindexer));
+                finalPattern = new EnumConstants.BallColor[]{motifPattern[2], motifPattern[1], EnumConstants.BallColor.None};
             }
-            // Done: 3 rotations
 
         } else {
-            // WORST CASE: Third intake ball is first to shoot - must load all first
-            // 4 rotations total
+            // WORST CASE: intake[2] == motifPattern[0], must load all 3 first
             sequence.addCommands(new IntakeCommand(intake, .35));
-            sequence.addCommands(new InstantCommand(() ->
-                SpindexerAndMotifStatus.SpindexerPattern.setBallInSlotX(0, intakeColors[1])));
-
-            // Rotation 2: ball 0 → slot 2, ball 1 → slot 1
             sequence.addCommands(new RotateCCWCommand(spindexer));
-            sequence.addCommands(new IntakeCommand(intake, .5));
-            sequence.addCommands(new InstantCommand(() ->
-                SpindexerAndMotifStatus.SpindexerPattern.setBallInSlotX(0, intakeColors[2])));
-
-            // After: slot 0 = intake[2], slot 1 = intake[1], slot 2 = intake[0]
-            // Rotation 3: CCW to bring intake[2] to slot 1
+            sequence.addCommands(new IntakeCommand(intake, .5, true));
             sequence.addCommands(new RotateCCWCommand(spindexer));
-
-            // After: slot 0 = intake[0], slot 1 = intake[2], slot 2 = intake[1]
             sequence.addCommands(new FlickCommand(spindexer));
 
-            // After flick: slot 0 = intake[0], slot 1 = empty, slot 2 = intake[1]
-            // Rotation 4: get motifPattern[1] to slot 1
             if (intakeColors[0] == motifPattern[1]) {
+                // CCW to bring intake[0] from slot 0 to slot 1
                 sequence.addCommands(new RotateCCWCommand(spindexer));
+                finalPattern = new EnumConstants.BallColor[]{motifPattern[2], motifPattern[1], EnumConstants.BallColor.None};
             } else {
+                // CW to bring intake[1] from slot 2 to slot 1
                 sequence.addCommands(new RotateCWCommand(spindexer));
+                finalPattern = new EnumConstants.BallColor[]{EnumConstants.BallColor.None, motifPattern[1], motifPattern[2]};
             }
-            // Done: 4 rotations
         }
+
+        // Set the authoritative final pattern in one shot, overwriting any
+        // intermediate state from rotation/flick commands
+        sequence.addCommands(new InstantCommand(() ->
+            SpindexerAndMotifStatus.SpindexerPattern.setBallPattern(
+                finalPattern[0], finalPattern[1], finalPattern[2])));
 
         return sequence;
     }
 
-    /**
-     * Simplified fast catalog with default callback.
-     * Useful when you don't need to track scan results externally.
-     *
-     * @param spindexer the spindexer subsystem
-     * @param intake the intake subsystem
-     * @return a command that catalogs balls in fast mode
-     */
-    public static Command catalogFastSimple(Spindexer spindexer, Intake intake) {
-        return catalogFast(spindexer, intake);
-    }
 }

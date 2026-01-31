@@ -11,17 +11,27 @@ import subsystems.Intake;
 public class IntakeCommand extends CommandBase {
     private final Intake intake;
     private final double duration;
+    private final boolean reverseIntake;
     private final ElapsedTime timer = new ElapsedTime();
 
     public IntakeCommand(Intake intake, double duration) {
+        this(intake, duration, false);
+    }
+
+    public IntakeCommand(Intake intake, double duration, boolean reverseIntake) {
         this.intake = intake;
         this.duration = duration;
+        this.reverseIntake = reverseIntake;
         addRequirements(intake);
     }
 
     @Override
     public void initialize() {
-        intake.runIntake();
+        if (reverseIntake) {
+            intake.runReverseIntakeTransfer();
+        } else {
+            intake.runIntake();
+        }
         timer.reset();
     }
 

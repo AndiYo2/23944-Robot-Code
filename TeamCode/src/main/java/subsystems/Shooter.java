@@ -320,8 +320,13 @@ public class Shooter extends SubsystemBase {
         // Prevent division by zero on first loop
         if (dt <= 0) dt = DEFAULT_LOOP_TIME;
 
-        // Use LUT for velocity and hood angle based on distance
-        updateVelocityFromDistance();
+        // Use manual tuning values when tuning mode is active, otherwise use LUT
+        if (ShooterConstants.ShooterTuning.TUNING_MODE) {
+            requiredVelocity = ShooterConstants.ShooterTuning.TUNING_VELOCITY;
+            requiredHoodAngle = ShooterConstants.ShooterTuning.TUNING_HOOD_ANGLE;
+        } else {
+            updateVelocityFromDistance();
+        }
         setHoodAngle(requiredHoodAngle);
         double targetVelocity = requiredVelocity;
 

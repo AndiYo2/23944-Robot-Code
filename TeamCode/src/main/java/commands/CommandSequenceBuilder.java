@@ -24,7 +24,7 @@ import subsystems.Limelight;
 import subsystems.Shooter;
 import subsystems.Spindexer;
 import subsystems.Turret;
-import utility.RobotHardware;
+
 
 /**
  * Fluent builder API for constructing autonomous command sequences using FTCLib.
@@ -286,8 +286,6 @@ public class CommandSequenceBuilder {
 
     /**
      * Adds a cataloging command.
-     * Automatically uses the correct cataloging mode (Fast or Sorted) based on
-     * SpindexerConstants.currentMode at execution time.
      *
      * @return this builder for chaining
      */

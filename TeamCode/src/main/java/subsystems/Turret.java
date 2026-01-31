@@ -7,8 +7,10 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
+import Constants.EnumConstants;
 import Constants.EnumConstants.FieldState;
 import Constants.FieldMap;
+import Constants.RobotConstants;
 import utility.RobotHardware;
 import Constants.TurretConstants;
 
@@ -124,8 +126,10 @@ public class Turret extends SubsystemBase {
         double turretAngleDeg = Math.toDegrees(turretAngleRad);
         turretAngleDeg = normalizeAngle(turretAngleDeg);
 
-        // Apply fine-tune calibration offset
-        turretAngleDeg += TurretConstants.TURRET_TRACKING_OFFSET;
+        // Apply fine-tune calibration offset (alliance-specific)
+        turretAngleDeg += (RobotConstants.Robot.allianceColor == EnumConstants.AllianceColor.Blue)
+                ? TurretConstants.BLUE_TURRET_TRACKING_OFFSET
+                : TurretConstants.RED_TURRET_TRACKING_OFFSET;
 
         // Check if target exceeds hardware limits
         if (turretAngleDeg > TurretConstants.HARD_STOP_CW) {
@@ -176,8 +180,10 @@ public class Turret extends SubsystemBase {
         double turretAngleDeg = Math.toDegrees(turretAngleRad);
         turretAngleDeg = normalizeAngle(turretAngleDeg);
 
-        // Apply calibration offset
-        turretAngleDeg += TurretConstants.TURRET_TRACKING_OFFSET;
+        // Apply calibration offset (alliance-specific)
+        turretAngleDeg += (RobotConstants.Robot.allianceColor == EnumConstants.AllianceColor.Blue)
+                ? TurretConstants.BLUE_TURRET_TRACKING_OFFSET
+                : TurretConstants.RED_TURRET_TRACKING_OFFSET;
 
         return turretAngleDeg;
     }

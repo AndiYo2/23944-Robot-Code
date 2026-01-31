@@ -14,8 +14,10 @@ import subsystems.Odometry;
 import subsystems.Intake;
 import subsystems.Spindexer;
 import Constants.OdometryConstants;
+import Constants.SpindexerConstants;
 import utility.RobotHardware;
 import utility.ShootingValidator;
+import utility.SpindexerAndMotifStatus;
 
 /**
  * Base template for all autonomous OpModes.
@@ -131,6 +133,16 @@ public abstract class AutonTemplate extends OpMode {
 
             telemetry.addData("Limelight Mode", limelight.getCurrentMode());
             telemetry.addData("Motif Detected", limelight.isMotifDetected());
+
+            // Spindexer debug
+            telemetry.addLine("--- SPINDEXER DEBUG ---");
+            telemetry.addData("Spindexer Degrees", "%d°", spindexer.getTargetPosition());
+            telemetry.addData("Spindexer Servo", "%.3f", spindexer.getServoPosition());
+            telemetry.addData("Ball Pattern", SpindexerAndMotifStatus.SpindexerPattern.getSpindexerPatternString());
+            telemetry.addData("Balls Tracked", SpindexerAndMotifStatus.SpindexerPattern.getBallCount());
+            telemetry.addData("Rotation Idle", spindexer.isRotationIdle());
+            telemetry.addData("Flick State", spindexer.getCurrentState());
+            telemetry.addData("Shooting Mode", SpindexerConstants.currentMode);
         }
 
         // Run subsystem periodic methods

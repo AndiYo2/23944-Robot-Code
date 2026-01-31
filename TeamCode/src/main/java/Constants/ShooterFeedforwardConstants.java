@@ -31,7 +31,7 @@ public class ShooterFeedforwardConstants {
      * The minimum power needed to overcome friction and start the flywheel moving.
      * HOW TO FIND: Slowly increase power from 0 until flywheel just starts spinning.
      */
-    public static double kS = 0.05;
+    public static double kS = 0.03;
 
     /**
      * Velocity gain (kV)
@@ -39,14 +39,14 @@ public class ShooterFeedforwardConstants {
      * HOW TO FIND: Run motor at power=1.0, measure max velocity, kV = 1.0 / maxVelocity
      * Example: If max velocity = 2800 ticks/sec, kV = 1.0/2800 = 0.000357
      */
-    public static double kV = 0.00030;
+    public static double kV = 0.00032;
 
     /**
      * Acceleration gain (kA)
      * Compensates for flywheel inertia during spinup. Usually 0 for flywheels.
      * Only needed if you want faster spinup response.
      */
-    public static double kA = 0.0;
+    public static double kA = 0.00001;
 
     // ==================== PID GAINS ====================
     // These handle "reactive" control - correcting for errors
@@ -56,7 +56,7 @@ public class ShooterFeedforwardConstants {
      * Reacts to current error. Helps with faster recovery after shooting a ball.
      * TUNE LAST - after feedforward is working well.
      */
-    public static double kP = 0.004;
+    public static double kP = 0.002;
 
     /**
      * Integral gain (kI)
@@ -64,7 +64,7 @@ public class ShooterFeedforwardConstants {
      * TUNE SECOND - after kS and kV are set.
      * Start very small (0.0001) and increase slowly.
      */
-    public static double kI = 0.000001;
+    public static double kI = 0.00001;
 
     /**
      * Derivative gain (kD)

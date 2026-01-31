@@ -22,6 +22,7 @@ import utility.ShootingValidator;
 import commands.ShootingCommands;
 import commands.CatalogCommands;
 import commands.ScanSensorsCommand;
+import commands.RelocalizePinpointCommand;
 
 abstract public class TeleOpTemplate extends CommandOpMode {
     protected MecanumDrive mecanumDrive;
@@ -61,6 +62,9 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         }
 
         configureButtonBindings();
+
+        // Start Limelight scanning for motif at teleop start
+        limelight.setMode(EnumConstants.LimelightMode.TagTracking);
     }
 
     protected void initHardware(boolean isAuto) {
@@ -196,6 +200,10 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_RIGHT)
                 .whenPressed(new InstantCommand(intake::reverse))
                 .whenReleased(new InstantCommand(intake::stopIntake));
+
+        // DPAD_LEFT: Switch to localization pipeline, relocalize, switch back
+        new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_LEFT)
+                .whenPressed(new RelocalizePinpointCommand(limelight));
     }
 
     @Override
@@ -204,6 +212,9 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
         // CRITICAL: Update Pinpoint odometry every loop (like in test OpMode)
         robot.pinpoint.update();
+
+        // Continuously cache limelight pose for relocalization
+        limelight.updateLimelightPose();
 
         updateSubsystems();
         updateTelemetry();
@@ -367,6 +378,11 @@ abstract public class TeleOpTemplate extends CommandOpMode {
                 r2.ballPresent ? "BALL" : "----", r2.color, r2.confidence * 100));
         telemetry.addData("  Sensor3 (Outer)", String.format("%s %s %.0f%%",
                 r3.ballPresent ? "BALL" : "----", r3.color, r3.confidence * 100));
+        telemetry.addLine("");
+
+        // RELOCALIZATION DEBUG
+        telemetry.addLine("=== RELOCALIZATION ===");
+        telemetry.addData("  Last Attempt", limelight.lastRelocDebug);
         telemetry.addLine("");
 
         // ODOMETRY section

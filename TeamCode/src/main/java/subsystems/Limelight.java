@@ -7,20 +7,24 @@ import Constants.EnumConstants;
 import Constants.LimelightConstants;
 import utility.RobotHardware;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
+
 import java.util.List;
 
 /**
- * Limelight subsystem for AprilTag detection.
- * Used to scan for motif AprilTags (21-23) to determine the ball pattern.
+ * Limelight subsystem for AprilTag detection and field relocalization.
+ * - Scans for motif AprilTags (21-23) to determine ball pattern
+ * - Provides MegaTag2-based field pose for Pinpoint relocalization
  *
  * STATIC STATE MUTATIONS:
  * This class modifies the following static fields in LimelightConstants:
  * - motifPattern: Updated when a motif AprilTag (21-23) is detected
- * - isLimelightDisabled: Set true after detection, false on reset/toggle
  * - manuallySlowedForScan: Controls shooter speed during scanning
  *
  * These mutations allow state to persist across OpModes for Auto->TeleOp transitions.
- * The scanForMotifTag() method is the primary source of these side effects.
  */
 public class Limelight extends SubsystemBase {
     private RobotHardware robot;
@@ -41,7 +45,7 @@ public class Limelight extends SubsystemBase {
      * Updates cached Limelight data from the sensor
      */
     public void updateLimelightData() {
-        if (robot.limelight != null && !LimelightConstants.isLimelightDisabled) {
+        if (robot.limelight != null) {
             latestResult = robot.limelight.getLatestResult();
         }
     }
@@ -51,9 +55,7 @@ public class Limelight extends SubsystemBase {
      *
      * SIDE EFFECTS (on detection):
      * - LimelightConstants.motifPattern: Updated with detected pattern
-     * - LimelightConstants.isLimelightDisabled: Set to true
      * - LimelightConstants.manuallySlowedForScan: Set to false
-     * - Limelight hardware: Stopped to conserve power
      * - currentMode: Switched to GoalTracking
      *
      * @return tag ID if detected (21-23), -1 if not detected
@@ -78,9 +80,6 @@ public class Limelight extends SubsystemBase {
                         motifDetected = true;
                         detectedTagId = tagId;
 
-                        // Turn off Limelight after detection
-                        robot.limelight.stop();
-                        LimelightConstants.isLimelightDisabled = true;
                         LimelightConstants.manuallySlowedForScan = false;
 
                         // Auto-switch back to Goal Tracking mode
@@ -102,12 +101,6 @@ public class Limelight extends SubsystemBase {
         if (currentMode == EnumConstants.LimelightMode.GoalTracking) {
             // Switch to Tag Tracking mode
             currentMode = EnumConstants.LimelightMode.TagTracking;
-
-            // Re-enable Limelight if it was disabled
-            if (LimelightConstants.isLimelightDisabled) {
-                LimelightConstants.isLimelightDisabled = false;
-                robot.limelight.start();
-            }
         } else {
             // Switch back to Goal Tracking mode
             currentMode = EnumConstants.LimelightMode.GoalTracking;
@@ -122,8 +115,6 @@ public class Limelight extends SubsystemBase {
     }
 
     public void resetLimelight() {
-        robot.limelight.start();
-        LimelightConstants.isLimelightDisabled = false;
         currentMode = EnumConstants.LimelightMode.TagTracking;
         motifDetected = false;
         detectedTagId = -1;
@@ -142,6 +133,76 @@ public class Limelight extends SubsystemBase {
 
     public int getDetectedTagId() {
         return detectedTagId;
+    }
+
+    // ==================== RELOCALIZATION ====================
+
+    /** Cached limelight pose, updated every loop */
+    private Pose2D limelightPose = null;
+
+    /** Debug string from the last relocalization attempt */
+    public String lastRelocDebug = "no attempt yet";
+
+    /**
+     * Updates the cached limelight pose from getBotpose() every loop.
+     * Matches Wmatistic's setLimelightPose() approach — continuously poll,
+     * apply on demand via relocalizePinpoint().
+     */
+    public void updateLimelightPose() {
+        LLResult result = robot.limelight.getLatestResult();
+        if (result != null && result.isValid()) {
+            Pose3D botpose = result.getBotpose();
+            if (botpose != null) {
+                // Limelight axes are rotated -90° from Pedro's
+                // pedroX = LL_y, pedroY = -LL_x (then shift from field-center to bottom-left)
+                double x = (botpose.getPosition().y * LimelightConstants.METERS_TO_INCHES)
+                        + LimelightConstants.FIELD_CENTER_OFFSET_INCHES;
+                double y = (-botpose.getPosition().x * LimelightConstants.METERS_TO_INCHES)
+                        + LimelightConstants.FIELD_CENTER_OFFSET_INCHES;
+                double headingRad = Math.toRadians(botpose.getOrientation().getYaw(AngleUnit.DEGREES) - 90);
+
+                limelightPose = new Pose2D(DistanceUnit.INCH, x, y, AngleUnit.RADIANS, headingRad);
+                lastRelocDebug = String.format("raw=(%.3fm, %.3fm, %.1f°) -> pedro=(%.1f, %.1f, %.1f°)",
+                        botpose.getPosition().x, botpose.getPosition().y,
+                        botpose.getOrientation().getYaw(AngleUnit.DEGREES),
+                        x, y, Math.toDegrees(headingRad));
+            }
+        }
+    }
+
+    /**
+     * Performs a hard-snap relocalization of the Pinpoint using the cached limelight pose.
+     * @return true if relocalization succeeded, false if no cached pose available
+     */
+    public boolean relocalizePinpoint() {
+        if (limelightPose == null) {
+            lastRelocDebug = "no limelight pose cached";
+            return false;
+        }
+
+        robot.pinpoint.setPosition(limelightPose);
+        robot.pinpoint.update();
+        lastRelocDebug = String.format("APPLIED (%.1f, %.1f)",
+                limelightPose.getX(DistanceUnit.INCH), limelightPose.getY(DistanceUnit.INCH));
+        return true;
+    }
+
+    public Pose2D getLimelightPose() {
+        return limelightPose;
+    }
+
+    // ==================== PIPELINE SWITCHING ====================
+
+    public void switchToLocalizationPipeline() {
+        if (robot.limelight != null) {
+            robot.limelight.pipelineSwitch(LimelightConstants.LOCALIZATION_PIPELINE);
+        }
+    }
+
+    public void switchToMotifPipeline() {
+        if (robot.limelight != null) {
+            robot.limelight.pipelineSwitch(LimelightConstants.MOTIF_PIPELINE);
+        }
     }
 
     @Override

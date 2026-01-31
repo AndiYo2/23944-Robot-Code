@@ -166,11 +166,7 @@ public class RobotHardware {
 
         transferSensor1 = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.transferSensor1);
         transferSensor2 = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.transferSensor2);
-        double[] transferGreen = {0.24, 0.44, 0.32};
-        double[] transferPurple = {0.31, 0.35, 0.35};
-        transferSensorPair = new DualBallDetector(transferSensor1, transferSensor2,
-                transferGreen, transferPurple, 0.15, 0.15,
-                400, 3500);  // S1 threshold 400, S2 threshold 3500 (S2 reads 3000 when empty)
+        transferSensorPair = new DualBallDetector(transferSensor1, transferSensor2);
 
 
         // ******************* SPINDEXER ******************* //

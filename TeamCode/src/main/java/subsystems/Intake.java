@@ -85,6 +85,9 @@ public class Intake extends SubsystemBase {
     public void reverse(){
         currentState = IntakeState.Reversing;
     }
+    public void runReverseIntakeTransfer(){
+        currentState = IntakeState.ReversedInBeltGo;
+    }
     public IntakeState getCurrentState() {
         return currentState;
     }

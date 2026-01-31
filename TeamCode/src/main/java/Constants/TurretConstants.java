@@ -49,9 +49,6 @@ public class TurretConstants {
     // TURRET_TRACKING_OFFSET: Fine-tune adjustment for systematic aim error (turret degrees)
     // Use this for small adjustments to correct aim
     // Positive = shift aim right, Negative = shift aim left
-    public static double TURRET_TRACKING_OFFSET = 0;
-
-    // Target angle for turret tuning mode (turret degrees)
-    // Adjust this via configurables to test turret at different positions
-    public static double TURRET_TUNING_TARGET = 0.0;
+    public static double BLUE_TURRET_TRACKING_OFFSET = -4.25;
+    public static double RED_TURRET_TRACKING_OFFSET = 0;
 }
