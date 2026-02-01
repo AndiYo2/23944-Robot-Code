@@ -6,10 +6,11 @@ import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import commands.CommandSequenceBuilder;
 import Constants.EnumConstants;
 import Constants.RobotConstants;
-
+@Disabled
 @Autonomous(name = "RedBack9Ball", group = "NineBall")
 public class RedBack9Ball extends AutonTemplate {
     public static double maxSpeed = .8;

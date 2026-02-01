@@ -37,12 +37,12 @@ public class ColorSensorTestOpMode extends LinearOpMode {
         detectors[0] = new DualBallDetector(sensors1[0], sensors2[0]); // Intake - defaults
         detectors[1] = new DualBallDetector(sensors1[1], sensors2[1]); // Ramp - defaults
 
-        // Transfer - custom profiles and thresholds
-        double[] transferGreen = {0.24, 0.44, 0.32};
-        double[] transferPurple = {0.31, 0.35, 0.35};
+        // Transfer - custom profiles and thresholds (must match RobotHardware)
+        double[] transferGreen = {0.21, 0.47, 0.32};
+        double[] transferPurple = {0.32, 0.31, 0.37};
         detectors[2] = new DualBallDetector(sensors1[2], sensors2[2],
                 transferGreen, transferPurple, 0.15, 0.15,
-                400, 3500);
+                200, 400);
 
         telemetry.addData("Status", "Initialized");
         telemetry.addData("Controls", "DPAD Left/Right to cycle pairs");

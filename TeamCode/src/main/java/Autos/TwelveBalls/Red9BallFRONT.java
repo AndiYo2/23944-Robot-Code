@@ -13,6 +13,7 @@ import commands.CommandSequenceBuilder;
 
 @Autonomous(name = "Red9BallFRONT")
 public class Red9BallFRONT extends AutonTemplate {
+    public static double delayBeforeShootSecond = 5;
     public static double maxSpeed = .8;
     private PathChain startToScan, scanToShoot, shootToSecond, secondToShoot, shootToFirst, firstToShoot, shootToStop;
 
