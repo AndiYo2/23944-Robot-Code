@@ -3,6 +3,7 @@ package pedroPathing;
 import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.control.FilteredPIDFCoefficients;
 import com.pedropathing.control.PIDFCoefficients;
+import com.pedropathing.control.PredictiveBrakingCoefficients;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.follower.FollowerConstants;
 import com.pedropathing.ftc.FollowerBuilder;
@@ -36,7 +37,7 @@ public class Constants {
                     0.01
             ))
             .drivePIDFCoefficients(new FilteredPIDFCoefficients(
-                    0.012,
+                    0.07,
                     0,
                     0.0095,
                     0.6,
@@ -48,7 +49,13 @@ public class Constants {
                     0.6,
                     0.001))
             .lateralZeroPowerAcceleration(-62)
-            .forwardZeroPowerAcceleration(-23.9);
+            .forwardZeroPowerAcceleration(-23.9)
+            .predictiveBrakingCoefficients(new PredictiveBrakingCoefficients(
+                    0.05,
+                    0.1,
+                    0.001
+            ))
+            .translationalIntegral(0);
 
     public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 1.2, .6);
 
