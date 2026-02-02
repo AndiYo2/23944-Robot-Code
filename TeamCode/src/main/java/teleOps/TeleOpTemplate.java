@@ -45,7 +45,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
      * @param fallbackStartPosition the start position to use if no auton ran
      */
     protected void initForAlliance(EnumConstants.AllianceColor allianceColor,
-                                   org.firstinspires.ftc.robotcore.external.navigation.Pose2D fallbackStartPosition) {
+                                   com.pedropathing.geometry.Pose fallbackStartPosition) {
         // Set alliance color BEFORE initHardware so it can use the correct settings
         RobotConstants.Robot.allianceColor = allianceColor;
         initHardware();
@@ -54,7 +54,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         // Only set position if no auton ran (endingAutonPose is null)
         // If auton ran, initHardware already set the position from endingAutonPose
         if (OdometryConstants.endingAutonPose == null) {
-            robot.pinpoint.setPosition(fallbackStartPosition);
+            robot.pinpoint.setPosition(OdometryConstants.toPose2D(fallbackStartPosition));
             robot.pinpoint.update();
         }
 
@@ -69,27 +69,19 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
         // Set starting position for TeleOp
         // If we have an ending auton pose, use it; otherwise use standard start point
-        org.firstinspires.ftc.robotcore.external.navigation.Pose2D startPosition;
+        com.pedropathing.geometry.Pose startPose;
         if (OdometryConstants.endingAutonPose != null) {
-            // Convert Pedro Pose to FTC Pose2D
-            com.pedropathing.geometry.Pose autonPose = OdometryConstants.endingAutonPose;
-            startPosition = new org.firstinspires.ftc.robotcore.external.navigation.Pose2D(
-                    org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit.INCH,
-                    autonPose.getX(),
-                    autonPose.getY(),
-                    org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.RADIANS,
-                    autonPose.getHeading());
+            startPose = OdometryConstants.endingAutonPose;
             telemetry.addData("TeleOp Init", "Using Auton End Position");
         } else {
-            // No auton ran - use standard starting position
-            startPosition = OdometryConstants.standardStartPoint;
+            startPose = OdometryConstants.standardStartPoint;
             telemetry.addData("TeleOp Init", "Using Standard Start Position");
         }
 
-        telemetry.addData("Setting Position To", startPosition);
+        telemetry.addData("Setting Position To", startPose);
         telemetry.update();
 
-        robot.pinpoint.setPosition(startPosition);
+        robot.pinpoint.setPosition(OdometryConstants.toPose2D(startPose));
         // CRITICAL: Update Pinpoint after setting position to apply it
         robot.pinpoint.update();
 

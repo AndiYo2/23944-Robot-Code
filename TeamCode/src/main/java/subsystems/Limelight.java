@@ -7,9 +7,9 @@ import Constants.EnumConstants;
 import Constants.LimelightConstants;
 import utility.RobotHardware;
 
+import com.pedropathing.geometry.Pose;
+import Constants.OdometryConstants;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 
 import java.util.List;
@@ -138,7 +138,7 @@ public class Limelight extends SubsystemBase {
     // ==================== RELOCALIZATION ====================
 
     /** Cached limelight pose, updated every loop */
-    private Pose2D limelightPose = null;
+    private Pose limelightPose = null;
 
     /** Debug string from the last relocalization attempt */
     public String lastRelocDebug = "no attempt yet";
@@ -161,7 +161,7 @@ public class Limelight extends SubsystemBase {
                         + LimelightConstants.FIELD_CENTER_OFFSET_INCHES;
                 double headingRad = Math.toRadians(botpose.getOrientation().getYaw(AngleUnit.DEGREES) - 90);
 
-                limelightPose = new Pose2D(DistanceUnit.INCH, x, y, AngleUnit.RADIANS, headingRad);
+                limelightPose = new Pose(x, y, headingRad);
                 lastRelocDebug = String.format("raw=(%.3fm, %.3fm, %.1f°) -> pedro=(%.1f, %.1f, %.1f°)",
                         botpose.getPosition().x, botpose.getPosition().y,
                         botpose.getOrientation().getYaw(AngleUnit.DEGREES),
@@ -180,14 +180,14 @@ public class Limelight extends SubsystemBase {
             return false;
         }
 
-        robot.pinpoint.setPosition(limelightPose);
+        robot.pinpoint.setPosition(OdometryConstants.toPose2D(limelightPose));
         robot.pinpoint.update();
         lastRelocDebug = String.format("APPLIED (%.1f, %.1f)",
-                limelightPose.getX(DistanceUnit.INCH), limelightPose.getY(DistanceUnit.INCH));
+                limelightPose.getX(), limelightPose.getY());
         return true;
     }
 
-    public Pose2D getLimelightPose() {
+    public Pose getLimelightPose() {
         return limelightPose;
     }
 

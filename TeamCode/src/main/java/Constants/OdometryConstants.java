@@ -11,11 +11,11 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
  */
 @Configurable
 public class OdometryConstants {
-    public static Pose2D blueStartPoint = new Pose2D(DistanceUnit.INCH, 56.5, 8.5, AngleUnit.DEGREES, 90);
-    public static Pose2D redStartPoint = new Pose2D(DistanceUnit.INCH, 87.5, 8.5, AngleUnit.DEGREES, 90);
+    public static Pose blueStartPoint = new Pose(56.5, 8.5, Math.toRadians(90));
+    public static Pose redStartPoint = new Pose(87.5, 8.5, Math.toRadians(90));
 
     // Default start point (Blue alliance by default)
-    public static Pose2D standardStartPoint = blueStartPoint;
+    public static Pose standardStartPoint = blueStartPoint;
 
     public static double yawScalar = .998148;
 
@@ -29,4 +29,9 @@ public class OdometryConstants {
     public static double RED_GOAL_Y = 140.0;
 
     public static Pose endingAutonPose;
+
+    /** Converts a Pedro Pose to FTC Pose2D for the Pinpoint odometry computer. */
+    public static Pose2D toPose2D(Pose pose) {
+        return new Pose2D(DistanceUnit.INCH, pose.getX(), pose.getY(), AngleUnit.RADIANS, pose.getHeading());
+    }
 }

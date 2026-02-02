@@ -31,7 +31,7 @@ import utility.SpindexerAndMotifStatus;
  * Right trigger does a timed shooter flipper flick (no flywheel spinup).
  */
 @TeleOp
-public class RedDemoTeleOp extends CommandOpMode {
+public class DemoTeleOp extends CommandOpMode {
 
     private final RobotHardware robot = RobotHardware.getInstance();
     private GamepadEx driverGamepad;
@@ -57,19 +57,13 @@ public class RedDemoTeleOp extends CommandOpMode {
         robot.init(hardwareMap, driverGamepad);
 
         // Set pinpoint position for turret tracking
-        org.firstinspires.ftc.robotcore.external.navigation.Pose2D startPosition;
+        com.pedropathing.geometry.Pose startPose;
         if (OdometryConstants.endingAutonPose != null) {
-            com.pedropathing.geometry.Pose autonPose = OdometryConstants.endingAutonPose;
-            startPosition = new org.firstinspires.ftc.robotcore.external.navigation.Pose2D(
-                    org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit.INCH,
-                    autonPose.getX(),
-                    autonPose.getY(),
-                    org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.RADIANS,
-                    autonPose.getHeading());
+            startPose = OdometryConstants.endingAutonPose;
         } else {
-            startPosition = OdometryConstants.redStartPoint;
+            startPose = OdometryConstants.redStartPoint;
         }
-        robot.pinpoint.setPosition(startPosition);
+        robot.pinpoint.setPosition(OdometryConstants.toPose2D(startPose));
         robot.pinpoint.update();
 
         // Set default shooting mode

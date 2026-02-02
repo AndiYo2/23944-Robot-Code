@@ -38,7 +38,7 @@ public class PinpointTestTeleop extends CommandOpMode {
         robot.init(hardwareMap, driverGamepad);
 
         // Set starting position for field testing
-        robot.pinpoint.setPosition(OdometryConstants.standardStartPoint);
+        robot.pinpoint.setPosition(OdometryConstants.toPose2D(OdometryConstants.standardStartPoint));
         robot.pinpoint.update(); // Apply the position
 
         mecanumDrive = new MecanumDrive();
