@@ -20,6 +20,7 @@ gradle-app.setting
 .idea/caches/
 .idea/modules.xml
 local.properties
+CLAUDE.local.md
 
 # Logs
 *.log
