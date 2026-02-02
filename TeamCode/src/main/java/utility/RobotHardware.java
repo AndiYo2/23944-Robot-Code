@@ -7,10 +7,8 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
 import com.qualcomm.robotcore.hardware.PwmControl;
-import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
@@ -26,7 +24,6 @@ public class RobotHardware {
 
 
     // ******************* LOCALIZERS ******************* //
-    public IMU imu;
     public GoBildaPinpointDriver pinpoint;
 
 
@@ -38,7 +35,6 @@ public class RobotHardware {
     public DcMotorEx shooterMotor2;
     public Servo shooterFlipper;
     public Servo shooterHood;
-    public AnalogInput shooterEncoder;
     public Servo turretServo;
 
 
@@ -63,7 +59,6 @@ public class RobotHardware {
     // ******************* SPINDEXER ******************* //
     public ServoImplEx spindexerServo;  // Using ServoImplEx for PWM range control
     public Servo spindexerFlipperServo;
-    public AnalogInput spindexerEncoder;  // Kept for position verification
 
     // ******************* VOLTAGE SENSOR ******************* //
     public VoltageSensor voltageSensor;
@@ -114,15 +109,6 @@ public class RobotHardware {
 
         frontLeft.setDirection(DcMotorEx.Direction.REVERSE);
         backLeft.setDirection(DcMotorEx.Direction.REVERSE);
-
-        // ******************* IMU ******************* //
-        // NOTE: Control Hub IMU initialized but not used - we use Pinpoint's built-in IMU instead
-//        imu = hardwareMap.get(IMU.class, "imu");
-//        IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
-//                RevHubOrientationOnRobot.LogoFacingDirection.RIGHT, //
-//                RevHubOrientationOnRobot.UsbFacingDirection.UP));
-//        imu.initialize(parameters);
-//        imu.resetYaw();
 
         // ******************* PINPOINT ******************* //
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, NamingConstants.Pinpoint.pinpoint);
@@ -175,7 +161,6 @@ public class RobotHardware {
 
         // ******************* SPINDEXER ******************* //
         spindexerFlipperServo = hardwareMap.get(Servo.class, NamingConstants.Spindexer.spindexerFlipperServo);
-        spindexerEncoder = hardwareMap.get(AnalogInput.class, NamingConstants.Spindexer.spindexerEncoder);
         spindexerServo = hardwareMap.get(ServoImplEx.class, NamingConstants.Spindexer.spindexerServo);
         spindexerServo.setPwmRange(new PwmControl.PwmRange(500, 2500));  // Full range for Axon at 6V
 
@@ -184,7 +169,6 @@ public class RobotHardware {
         shooterMotor2 = hardwareMap.get(DcMotorEx.class, NamingConstants.Shooter.shooter2);
         shooterMotor2.setDirection(DcMotorEx.Direction.REVERSE);
         turretServo = hardwareMap.get(Servo.class, NamingConstants.Turret.turret);
-        shooterEncoder = hardwareMap.get(AnalogInput.class, NamingConstants.Shooter.shooterEncoder);
         shooterFlipper = hardwareMap.get(Servo.class, NamingConstants.Shooter.shooterFlipperServo);
         shooterHood = hardwareMap.get(Servo.class, NamingConstants.Shooter.shooterHood);
 

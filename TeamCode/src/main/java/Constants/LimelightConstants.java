@@ -28,11 +28,6 @@ public class LimelightConstants {
     public static final double METERS_TO_INCHES = 39.3701;
     public static final double FIELD_CENTER_OFFSET_INCHES = 72.0;
 
-    // Camera offset from robot center in inches (must ALSO be set in Limelight web dashboard)
-    // Dashboard: http://limelight.local:5801 -> Settings -> 3D tab
-    public static final double CAMERA_OFFSET_LEFT_INCHES = 2.559;   // 6.5 cm -> inches. TODO: Verify exact value
-    public static final double CAMERA_OFFSET_BACK_INCHES = 5.5;     // TODO: Verify exact value
-    public static final double CAMERA_OFFSET_UP_INCHES = 15.0;      // TODO: Verify exact value
 
     public static EnumConstants.BallColor[] getMotifPatternForTag(int tagId) {
         switch (tagId) {

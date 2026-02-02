@@ -14,7 +14,6 @@ public class ShooterConstants {
 
     // ==================== VELOCITY CONSTANTS ====================
     public static double DEFAULT_VELOCITY = 2200.0;           // Default/initial flywheel velocity
-    public static double FALLBACK_VELOCITY = 2200.0;          // Fallback when lookup fails
     public static double DEFAULT_DISTANCE = 100.0;            // Default distance when turret unavailable
 
     // ==================== HOOD SERVO CONFIGURATION ====================
@@ -90,25 +89,25 @@ public class ShooterConstants {
     // See ShooterFeedforwardConstants for tuning documentation.
 
     /** Static friction compensation - references canonical source */
-    public static double kS = ShooterFeedforwardConstants.kS;
+    public static double kS = 0.03;
 
     /** Velocity gain - references canonical source */
-    public static double kV = ShooterFeedforwardConstants.kV;
+    public static double kV = 0.00032;
 
     /** Acceleration gain - references canonical source */
-    public static double kA = ShooterFeedforwardConstants.kA;
+    public static double kA = 0.00001;
 
     /** Proportional gain - references canonical source */
-    public static double VELOCITY_kP = ShooterFeedforwardConstants.kP;
+    public static double VELOCITY_kP = 0.002;
 
     /** Integral gain - references canonical source */
-    public static double VELOCITY_kI = ShooterFeedforwardConstants.kI;
+    public static double VELOCITY_kI = 0.00001;
 
     /** Derivative gain - references canonical source */
-    public static double VELOCITY_kD = ShooterFeedforwardConstants.kD;
+    public static double VELOCITY_kD = 0.0;
 
     /** Maximum integral accumulation - references canonical source */
-    public static double INTEGRAL_MAX = ShooterFeedforwardConstants.INTEGRAL_MAX;
+    public static double INTEGRAL_MAX = 0.3;
 
     /**
      * Maximum acceleration demand (ticks/sec^2).
@@ -117,5 +116,5 @@ public class ShooterConstants {
     public static double MAX_ACCELERATION = 15000.0;
 
     /** Velocity tolerance - references canonical source */
-    public static double VELOCITY_TOLERANCE = ShooterFeedforwardConstants.VELOCITY_TOLERANCE;
+    public static double VELOCITY_TOLERANCE = 50.0;
 }

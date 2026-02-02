@@ -1,4 +1,4 @@
-package Autos.TwelveBalls;
+package Autos.NineBalls;
 
 import Autos.AutonTemplate;
 import Constants.EnumConstants;
@@ -11,30 +11,29 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import commands.CommandSequenceBuilder;
 
 
-@Autonomous(name = "Red9BallFRONT")
-public class Red9BallFRONT extends AutonTemplate {
-    public static double delayBeforeShootSecond = 5;
+@Autonomous(name = "Blue9BallFRONT")
+public class Blue9BallFRONT extends AutonTemplate {
     public static double maxSpeed = .8;
     private PathChain startToScan, scanToShoot, shootToSecond, secondToShoot, shootToFirst, firstToShoot, shootToStop;
 
     // Named pose constants
-    private final Pose startPose = new Pose(128.500, 113.500, Math.toRadians(180));
-    private final Pose scanPose = new Pose(98.500, 97.500, Math.toRadians(90));
-    private final Pose shootPose = new Pose(90.000, 90.000, Math.toRadians(45));
+    private final Pose startPose = new Pose(15.500, 113.500, Math.toRadians(0));
+    private final Pose scanPose = new Pose(49.500, 95.000, Math.toRadians(90));
+    private final Pose shootPose = new Pose(54.000, 90.000, Math.toRadians(135));
 
     // ShootToSecond path
-    private final Pose secondControlPoint = new Pose(82.000, 55.000);
-    private final Pose secondPickupPose = new Pose(127.000, 56.000, Math.toRadians(0));
+    private final Pose secondControlPoint = new Pose(70.000, 59.000);
+    private final Pose secondPickupPose = new Pose(13.500, 58.000, Math.toRadians(180));
 
     // SecondToShoot path
-    private final Pose secondToShootControlPoint = new Pose(88.000, 69.500);
+    private final Pose secondToShootControlPoint = new Pose(57.515, 65.336);
 
     // ShootToFirst path
-    private final Pose firstControlPoint = new Pose(85.500, 76.298);
-    private final Pose firstPickupPose = new Pose(128.500, 82, Math.toRadians(0));
+    private final Pose firstControlPoint = new Pose(66.500, 78.500);
+    private final Pose firstPickupPose = new Pose(16.000, 86.000, Math.toRadians(180));
 
     // ShootToStop path
-    private final Pose stopPose = new Pose(116.000, 72.000, Math.toRadians(0));
+    private final Pose stopPose = new Pose(28.000, 72.000, Math.toRadians(180));
 
     @Override
     protected void buildPaths() {
@@ -87,7 +86,7 @@ public class Red9BallFRONT extends AutonTemplate {
     public void init() {
         super.init();
         SpindexerConstants.currentMode = EnumConstants.ShootingMode.Sorted;
-        Constants.RobotConstants.Robot.allianceColor = Constants.EnumConstants.AllianceColor.Red;
+        Constants.RobotConstants.Robot.allianceColor = Constants.EnumConstants.AllianceColor.Blue;
 
         autonomousCommand = new CommandSequenceBuilder(follower, intake, spindexer, limelight, shooter, turret)
                 .delay(.2)
