@@ -12,6 +12,11 @@ public class RobotConstants {
         public static final double HALF_SIZE = ROBOT_SIZE / 2.0; // Distance from center to edge
 
         public static EnumConstants.AllianceColor allianceColor;
+
+        public static final double MIN_SERVO_SAFE_POSITION = 0.0001;
+
+        // Toggle Panels telemetry on/off — disable for competition to save loop time
+        public static boolean ENABLE_TELEMETRY = true;
     }
 
     public static class Controls {

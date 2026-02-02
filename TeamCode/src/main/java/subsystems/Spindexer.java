@@ -8,6 +8,7 @@ import utility.RobotHardware;
 import Constants.SpindexerConstants;
 import utility.SpindexerAndMotifStatus;
 
+import static Constants.RobotConstants.Robot.MIN_SERVO_SAFE_POSITION;
 import static Constants.SpindexerConstants.*;
 
 /**
@@ -59,7 +60,7 @@ public class Spindexer extends SubsystemBase {
      */
     private double degreesToServoPosition(int degrees) {
         double position = (degrees + SpindexerConstants.SPINDEXER_OFFSET) / SERVO_DEGREES_PER_UNIT;
-        if (position < 0.01) position = 0.01;
+        if (position < MIN_SERVO_SAFE_POSITION) position = MIN_SERVO_SAFE_POSITION;
         return position;
     }
 

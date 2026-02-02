@@ -145,14 +145,6 @@ public abstract class AutonTemplate extends OpMode {
             telemetry.addData("Shooting Mode", SpindexerConstants.currentMode);
         }
 
-        // Run subsystem periodic methods
-        shooter.periodic();
-        turret.periodic();
-        odometry.periodic();
-        spindexer.periodic();
-        intake.periodic();
-        limelight.periodic();
-
         // Update Panels telemetry
         updatePanelsTelemetry();
 

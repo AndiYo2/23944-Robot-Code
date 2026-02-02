@@ -20,8 +20,8 @@ public class DualBallDetector {
     // =============================
     // Tunables
     // =============================
-    private static final int BUFFER_SIZE = 7;
-    private static final int REQUIRED_PRESENT = 5;
+    private static final int BUFFER_SIZE = 5;
+    private static final int REQUIRED_PRESENT = 3;
 
     // Per-sensor alpha thresholds
     private static final double MIN_ALPHA_NEAR = 400;

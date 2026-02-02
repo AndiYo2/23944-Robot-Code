@@ -26,8 +26,6 @@ public class TurretConstants {
     public static final double SERVO_CENTER_POSITION = 0.5;
     // Reference SpindexerConstants for Axon servo full range (single source of truth)
     public static final double SERVO_DEGREES_PER_UNIT = SpindexerConstants.SERVO_DEGREES_PER_UNIT;
-    public static final double MIN_SERVO_POSITION = 0.0001;  // Never set to exactly 0
-
     // Servo-to-turret gear ratio (2.5:1)
     // Servo rotates GEAR_RATIO degrees for every 1 degree of turret rotation
     public static final double GEAR_RATIO = 2.5;

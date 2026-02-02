@@ -57,7 +57,7 @@ public class Turret extends SubsystemBase {
                 (turretDegrees * TurretConstants.GEAR_RATIO / TurretConstants.SERVO_DEGREES_PER_UNIT);
 
         // Clamp to valid servo range and never use exactly 0
-        position = Math.max(TurretConstants.MIN_SERVO_POSITION, Math.min(1.0, position));
+        position = Math.max(RobotConstants.Robot.MIN_SERVO_SAFE_POSITION, Math.min(1.0, position));
         return position;
     }
 
