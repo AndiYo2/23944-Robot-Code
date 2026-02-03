@@ -48,14 +48,12 @@ public class ServoPositionTesting extends OpMode {
             hoodPosition -= .01;
         }
 
-        // Clamp hood position to valid range
         hoodPosition = Math.max(0.0, Math.min(1.0, hoodPosition));
 
         spindexer.setPosition(spindexerPosition);
         shooter.setPosition(shooterPosition);
         hood.setPosition(hoodPosition);
 
-        // Calculate hood angle for reference (using constants)
         double hoodAngle = (hoodPosition - ShooterConstants.HOOD_SERVO_CENTER_POSITION)
                 * ShooterConstants.HOOD_SERVO_DEGREES_PER_UNIT / ShooterConstants.HOOD_GEAR_RATIO;
 

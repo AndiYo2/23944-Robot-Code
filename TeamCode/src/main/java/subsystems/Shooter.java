@@ -6,15 +6,19 @@ import com.pedropathing.geometry.Pose;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import Constants.EnumConstants;
+
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import org.firstinspires.ftc.robotcore.external.navigation.UnnormalizedAngleUnit;
+
 import Constants.EnumConstants.FlickState;
 import Constants.FieldMap;
-import Constants.LimelightConstants;
-import Constants.RobotConstants;
+import Constants.TurretConstants;
 import utility.RobotHardware;
 import Constants.ShooterConstants;
 
-import static Constants.ShooterConstants.FLICK_TIME;
+import static Constants.ShooterConstants.SHOOTER_FLICK_TIME;
 
 public class Shooter extends SubsystemBase {
     // Hardware reference
@@ -53,12 +57,18 @@ public class Shooter extends SubsystemBase {
     private double lastError = 0;
     private double lastAcceleration = 0;
 
-    // InterpLUT instances for velocity and hood angle lookup
+    // InterpLUT instances for velocity, hood angle, and time-in-air lookup
     private InterpLUT velocityLUT;
     private InterpLUT hoodLUT;
+    private InterpLUT timeInAirLUT;
 
     // Current required hood angle
     private double requiredHoodAngle = ShooterConstants.HOOD_DEFAULT_ANGLE;
+
+    // Lead-compensated state (shared with Turret via getter)
+    private double leadAdjustedDistance = ShooterConstants.DEFAULT_DISTANCE;
+    private double currentTimeInAir = 0.0;
+    private double[] futurePose = new double[3]; // {x, y, headingRad}
 
 
     public Shooter() {
@@ -70,19 +80,15 @@ public class Shooter extends SubsystemBase {
         robot.shooterMotor1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         robot.shooterMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
-        // Flywheel motor 2 (reversed to spin same direction)
         robot.shooterMotor2.setDirection(DcMotor.Direction.REVERSE);
         robot.shooterMotor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         robot.shooterMotor2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         robot.shooterMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
-        // Start with ball flipper retracted
         robot.shooterFlipper.setPosition(ShooterConstants.FLIPPER_POSITION_RETRACT);
 
-        // Initialize InterpLUT instances
         initializeLUTs();
 
-        // Initialize hood to default angle
         setHoodAngle(ShooterConstants.HOOD_DEFAULT_ANGLE);
 
         loopTimer.reset();
@@ -92,19 +98,23 @@ public class Shooter extends SubsystemBase {
      * Initialize InterpLUT instances from ShooterConstants data.
      */
     private void initializeLUTs() {
-        // Velocity LUT
         velocityLUT = new InterpLUT();
         for (double[] entry : ShooterConstants.VELOCITY_DATA) {
             velocityLUT.add(entry[0], entry[1]);
         }
         velocityLUT.createLUT();
 
-        // Hood LUT
         hoodLUT = new InterpLUT();
         for (double[] entry : ShooterConstants.HOOD_DATA) {
             hoodLUT.add(entry[0], entry[1]);
         }
         hoodLUT.createLUT();
+
+        timeInAirLUT = new InterpLUT();
+        for (double[] entry : ShooterConstants.TIME_IN_AIR_DATA) {
+            timeInAirLUT.add(entry[0], entry[1]);
+        }
+        timeInAirLUT.createLUT();
     }
 
     public void setTurret(Turret turret) {
@@ -139,7 +149,6 @@ public class Shooter extends SubsystemBase {
     private double getHoodAngleFromDistance(double distance) {
         double angle = hoodLUT.get(distance);
 
-        // Clamp to valid range
         return Math.max(ShooterConstants.HOOD_MIN_ANGLE,
                        Math.min(ShooterConstants.HOOD_MAX_ANGLE, angle));
     }
@@ -159,7 +168,6 @@ public class Shooter extends SubsystemBase {
         double normalizedAngle = (hoodAngleDegrees - ShooterConstants.HOOD_MIN_ANGLE) / angleRange;
         double position = ShooterConstants.HOOD_SERVO_AT_MIN_ANGLE - (normalizedAngle * servoRange);
 
-        // Clamp to valid servo range
         position = Math.max(ShooterConstants.HOOD_SERVO_AT_MAX_ANGLE,
                            Math.min(ShooterConstants.HOOD_SERVO_AT_MIN_ANGLE, position));
         return position;
@@ -170,7 +178,6 @@ public class Shooter extends SubsystemBase {
      * @param angleDegrees Target angle (0=vertical, 90=horizontal)
      */
     public void setHoodAngle(double angleDegrees) {
-        // Clamp to valid range
         angleDegrees = Math.max(ShooterConstants.HOOD_MIN_ANGLE,
                                Math.min(ShooterConstants.HOOD_MAX_ANGLE, angleDegrees));
 
@@ -186,10 +193,106 @@ public class Shooter extends SubsystemBase {
         return requiredHoodAngle;
     }
 
+    /**
+     * Get interpolated time-in-air from distance.
+     * @param distance Distance to goal in inches
+     * @return Estimated flight time in seconds
+     */
+    public double getTimeInAirFromDistance(double distance) {
+        return timeInAirLUT.get(Math.max(0, Math.min(300, distance)));
+    }
+
+    /**
+     * Compute the predicted future robot pose based on current velocity and time-in-air.
+     * Uses one iteration of refinement: compute distance from current pose -> timeInAir ->
+     * future pose -> refined distance from future pose.
+     */
+    private void updateLeadCompensation() {
+        Pose2D currentPose = robot.pinpoint.getPosition();
+
+        double curX = currentPose.getX(DistanceUnit.INCH);
+        double curY = currentPose.getY(DistanceUnit.INCH);
+        double curH = currentPose.getHeading(AngleUnit.RADIANS);
+        double velX = robot.pinpoint.getVelX(DistanceUnit.INCH); // inches/sec
+        double velY = robot.pinpoint.getVelY(DistanceUnit.INCH); // inches/sec
+        double velH = robot.pinpoint.getHeadingVelocity(UnnormalizedAngleUnit.RADIANS); // rad/sec
+
+        // First pass: use current distance to estimate timeInAir
+        double currentDistance = getDistanceToTarget();
+        double tof = getTimeInAirFromDistance(currentDistance);
+
+        // Predict future pose
+        double futureX = curX + velX * tof;
+        double futureY = curY + velY * tof;
+        double futureH = curH + velH * tof;
+
+        // Second pass: refine using distance from future pose
+        double[] futureTurretPos = getTurretFieldPositionFrom(futureX, futureY, futureH);
+        Pose goalPosition = FieldMap.getGoalPosition();
+        double dx = goalPosition.getX() - futureTurretPos[0];
+        double dy = goalPosition.getY() - futureTurretPos[1];
+        double refinedDistance = Math.sqrt(dx * dx + dy * dy);
+        tof = getTimeInAirFromDistance(refinedDistance);
+
+        // Final future pose with refined timeInAir
+        futurePose[0] = curX + velX * tof;
+        futurePose[1] = curY + velY * tof;
+        futurePose[2] = curH + velH * tof;
+
+        // Recompute distance from final future turret position
+        futureTurretPos = getTurretFieldPositionFrom(futurePose[0], futurePose[1], futurePose[2]);
+        dx = goalPosition.getX() - futureTurretPos[0];
+        dy = goalPosition.getY() - futureTurretPos[1];
+        leadAdjustedDistance = Math.sqrt(dx * dx + dy * dy);
+        currentTimeInAir = tof;
+    }
+
+    /**
+     * Compute turret field position from a hypothetical robot pose.
+     * Mirrors Turret.getTurretFieldPosition() logic for a given pose.
+     */
+    private double[] getTurretFieldPositionFrom(double robotX, double robotY, double robotHeadingRad) {
+        double turretX = robotX +
+                (TurretConstants.TURRET_OFFSET_X * Math.sin(robotHeadingRad) +
+                 TurretConstants.TURRET_OFFSET_Y * Math.cos(robotHeadingRad));
+        double turretY = robotY +
+                (-TurretConstants.TURRET_OFFSET_X * Math.cos(robotHeadingRad) +
+                 TurretConstants.TURRET_OFFSET_Y * Math.sin(robotHeadingRad));
+        return new double[]{turretX, turretY};
+    }
+
+    /**
+     * Get the computed future pose for lead compensation.
+     * @return {x, y, headingRad} of predicted robot position at ball arrival time
+     */
+    public double[] getFuturePose() {
+        return futurePose;
+    }
+
+    /**
+     * Get the lead-adjusted distance (distance from predicted future position to goal).
+     */
+    public double getLeadAdjustedDistance() {
+        return leadAdjustedDistance;
+    }
+
+    /**
+     * Get current estimated time-in-air.
+     */
+    public double getCurrentTimeInAir() {
+        return currentTimeInAir;
+    }
+
     private void updateVelocityFromDistance() {
-        double distance = getDistanceToTarget();
-        requiredVelocity = getVelocityFromDistance(distance);
-        requiredHoodAngle = getHoodAngleFromDistance(distance);
+        if (ShooterConstants.SHOOT_WHILE_MOVING_ENABLED) {
+            updateLeadCompensation();
+            requiredVelocity = getVelocityFromDistance(leadAdjustedDistance);
+            requiredHoodAngle = getHoodAngleFromDistance(leadAdjustedDistance);
+        } else {
+            double distance = getDistanceToTarget();
+            requiredVelocity = getVelocityFromDistance(distance);
+            requiredHoodAngle = getHoodAngleFromDistance(distance);
+        }
     }
 
     private void flipperStateMachinePeriodic() {
@@ -202,7 +305,7 @@ public class Shooter extends SubsystemBase {
                 currentState = FlickState.Extended;
                 break;
             case Extended:
-                if (flickerTimer.seconds() < FLICK_TIME) break;
+                if (flickerTimer.seconds() < SHOOTER_FLICK_TIME) break;
                 robot.shooterFlipper.setPosition(ShooterConstants.FLIPPER_POSITION_RETRACT);
                 flickerTimer.reset();
                 currentState = FlickState.Retracted;

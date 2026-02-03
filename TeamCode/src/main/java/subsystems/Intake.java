@@ -16,7 +16,6 @@ public class Intake extends SubsystemBase {
 
     @Override
     public void periodic() {
-        // Check if timed intake should stop
         if (timedIntakeActive && timedIntakeTimer.seconds() >= timedIntakeDuration) {
             timedIntakeActive = false;
             stopIntake();

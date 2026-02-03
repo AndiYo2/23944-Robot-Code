@@ -21,7 +21,7 @@ public class ShootingValidator {
     private final Telemetry telemetry;
 
     private long lastOverrideTime = 0;
-    private static final long OVERRIDE_WARNING_THRESHOLD = 30000; // 30 seconds in milliseconds
+    private static final long OVERRIDE_WARNING_THRESHOLD = 30000;
 
     public ShootingValidator(Odometry odometry, Telemetry telemetry) {
         this.odometry = odometry;
@@ -30,19 +30,15 @@ public class ShootingValidator {
 
 
     public boolean canShoot(boolean overrideRequested) {
-        // Get current field state from odometry subsystem
         FieldState currentFieldState = odometry.getFieldState();
 
-        // Check if in shooting zone
         boolean inShootingZone = (currentFieldState == FieldState.ShootingZone);
 
-        // Allow if in zone OR override is active
         if (inShootingZone) {
             telemetry.addData("Shooting", "ALLOWED (In Zone)");
             telemetry.addData("Field Zone", "Shooting Zone");
             return true;
         } else if (overrideRequested) {
-            // Track override time for warning
             long currentTime = System.currentTimeMillis();
             if (lastOverrideTime == 0) {
                 lastOverrideTime = currentTime;
@@ -51,14 +47,12 @@ public class ShootingValidator {
             telemetry.addData("Shooting", "OVERRIDE ACTIVE");
             telemetry.addData("Field Zone", currentFieldState.toString());
 
-            // Warn if override held for too long
             if (currentTime - lastOverrideTime > OVERRIDE_WARNING_THRESHOLD) {
                 telemetry.addData("WARNING", "Override held for >30 seconds!");
             }
 
             return true;
         } else {
-            // Reset override timer when not in use
             lastOverrideTime = 0;
 
             telemetry.addData("Shooting", "BLOCKED (Outside Zone)");

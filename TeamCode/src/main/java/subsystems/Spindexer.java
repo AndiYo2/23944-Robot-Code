@@ -26,31 +26,23 @@ import static Constants.SpindexerConstants.*;
  */
 public class Spindexer extends SubsystemBase {
 
-    // Hardware reference
     private final RobotHardware robot;
 
-    // Flipper state
     private FlickState currentState = FlickState.Idle;
     private final ElapsedTime flickerTimer = new ElapsedTime();
 
-    // Rotation cooldown - prevents rapid repeated rotations
     private final ElapsedTime rotationCooldown = new ElapsedTime();
 
-    // Position tracking (in degrees)
     private int currentDegrees = EMPTY_RESET_DEGREES;
 
     public Spindexer() {
         this.robot = RobotHardware.getInstance();
 
-        // Initialize flipper to retracted position
         robot.spindexerFlipperServo.setPosition(SpindexerConstants.FLIPPER_POSITION_RETRACT);
 
-        // Initialize spindexer to 0°
         currentDegrees = EMPTY_RESET_DEGREES;
         robot.spindexerServo.setPosition(degreesToServoPosition(EMPTY_RESET_DEGREES));
     }
-
-    // ==================== CONVERSION METHODS ====================
 
     /**
      * Convert degrees to servo position (0-1 range).
@@ -82,7 +74,6 @@ public class Spindexer extends SubsystemBase {
     public void rotateCCW() {
         int newDegrees = currentDegrees - DEGREE_INCREMENT;
 
-        // Boundary wrapping
         if (newDegrees < 0) {
             newDegrees = CCW_WRAP_TO_DEG;  // 120°
         }
@@ -92,38 +83,6 @@ public class Spindexer extends SubsystemBase {
         SpindexerAndMotifStatus.SpindexerPattern.rotateBallsCCW();
     }
 
-    /**
-     * Rotate to a specific ball color, choosing direction to avoid boundary wrapping.
-     */
-    public boolean rotateToColor(EnumConstants.BallColor color) {
-        // Check slot 1 first (already in shooter position)
-        if (SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(1) == color) {
-            return true; // Already aligned - NO movement
-        }
-
-        boolean slot0Has = SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(0) == color;
-        boolean slot2Has = SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(2) == color;
-
-        if (slot0Has && slot2Has) {
-            // BOTH slots have target color - choose direction AWAY from boundary
-            rotateAwayFromBoundary();
-            return true;
-        }
-
-        // Only one slot has target - must go that direction
-        if (slot2Has) {
-            rotateCW();
-            return true;
-        }
-        if (slot0Has) {
-            rotateCCW();
-            return true;
-        }
-
-        // Color not found - rotate to any ball
-        rotateToNextClosestBall();
-        return false;
-    }
 
     /**
      * Smart direction choice to minimize wrapping.
@@ -146,37 +105,6 @@ public class Spindexer extends SubsystemBase {
         }
     }
 
-    public void rotateToNextClosestBall() {
-        boolean slot0Has = SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(0) != EnumConstants.BallColor.None;
-        boolean slot2Has = SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(2) != EnumConstants.BallColor.None;
-
-        if (slot0Has && slot2Has) {
-            rotateAwayFromBoundary();
-        } else if (slot0Has) {
-            rotateCCW();
-        } else if (slot2Has) {
-            rotateCW();
-        }
-    }
-
-    public void rotateToNearestEmptySlot() {
-        if (SpindexerAndMotifStatus.SpindexerPattern.isFull()) return;
-
-        // Check each slot for empty
-        boolean slot0Empty = SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(0) == EnumConstants.BallColor.None;
-        boolean slot1Empty = SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(1) == EnumConstants.BallColor.None;
-        boolean slot2Empty = SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(2) == EnumConstants.BallColor.None;
-
-        if (slot1Empty) return; // Already at empty slot
-
-        if (slot0Empty && slot2Empty) {
-            rotateAwayFromBoundary();
-        } else if (slot0Empty) {
-            rotateCCW();
-        } else if (slot2Empty) {
-            rotateCW();
-        }
-    }
 
     public void rotateToNextBall(){
         if(SpindexerConstants.currentMode == EnumConstants.ShootingMode.Fast){
@@ -199,15 +127,6 @@ public class Spindexer extends SubsystemBase {
         SpindexerAndMotifStatus.SpindexerPattern.clearAll();
     }
 
-    /**
-     * Assign a ball color to a specific slot (0-2).
-     * Convenience wrapper for SpindexerAndMotifStatus.SpindexerPattern.setBallInSlotX()
-     * @param slot Slot index (0=Intake, 1=Shooter, 2=Top Storage)
-     * @param color The ball color to assign
-     */
-    public void assignSlot(int slot, EnumConstants.BallColor color) {
-        SpindexerAndMotifStatus.SpindexerPattern.setBallInSlotX(slot, color);
-    }
 
     // ==================== SERVO CONTROL ====================
 

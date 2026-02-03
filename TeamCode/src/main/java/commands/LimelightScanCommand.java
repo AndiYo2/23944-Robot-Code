@@ -44,7 +44,6 @@ public class LimelightScanCommand extends CommandBase {
 
     @Override
     public void execute() {
-        // Check for timeout
         if (timer.seconds() >= timeoutSeconds && !limelight.isMotifDetected()) {
             timedOut = true;
         }
@@ -57,7 +56,6 @@ public class LimelightScanCommand extends CommandBase {
 
     @Override
     public void end(boolean interrupted) {
-        // Nothing to clean up
     }
 
     /** Returns true if the command completed due to timeout rather than detection */

@@ -23,7 +23,6 @@ public class ColorSensorTestOpMode extends LinearOpMode {
     @Override
     public void runOpMode() {
 
-        // Initialize all sensor pairs
         sensors1[0] = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.intakeSensor1);
         sensors2[0] = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.intakeSensor2);
 
@@ -33,7 +32,6 @@ public class ColorSensorTestOpMode extends LinearOpMode {
         sensors1[2] = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.transferSensor1);
         sensors2[2] = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.transferSensor2);
 
-        // Create detectors for each pair
         detectors[0] = new DualBallDetector(sensors1[0], sensors2[0]); // Intake - defaults
         detectors[1] = new DualBallDetector(sensors1[1], sensors2[1]); // Ramp - defaults
 
@@ -57,31 +55,24 @@ public class ColorSensorTestOpMode extends LinearOpMode {
                 currentPair = (currentPair + 1) % 3;
             }
             if (gamepad1.dpad_left && !prevDpadLeft) {
-                currentPair = (currentPair + 2) % 3; // +2 is same as -1 mod 3
+                currentPair = (currentPair + 2) % 3;
             }
             prevDpadRight = gamepad1.dpad_right;
             prevDpadLeft = gamepad1.dpad_left;
 
-            // === Update all detectors ===
             for (DualBallDetector detector : detectors) {
                 detector.update();
             }
 
-            // === Get current pair's data ===
             ColorSensor sensor1 = sensors1[currentPair];
             ColorSensor sensor2 = sensors2[currentPair];
             DualBallDetector.Result result = detectors[currentPair].detectBall();
 
-            // ============================
-            // Header
-            // ============================
+
             telemetry.addLine("=== " + PAIR_NAMES[currentPair] + " SENSORS ===");
             telemetry.addData("DPAD L/R", "Cycle pairs");
             telemetry.addLine();
 
-            // ============================
-            // Raw Sensor Telemetry
-            // ============================
             telemetry.addLine("--- RAW SENSOR DATA ---");
 
             telemetry.addData("S1 R", sensor1.red());
@@ -98,9 +89,7 @@ public class ColorSensorTestOpMode extends LinearOpMode {
 
             telemetry.addLine();
 
-            // ============================
-            // Normalized RGB (for tuning color profiles)
-            // ============================
+
             telemetry.addLine("--- NORMALIZED RGB ---");
             double sum1 = sensor1.red() + sensor1.green() + sensor1.blue();
             double sum2 = sensor2.red() + sensor2.green() + sensor2.blue();
@@ -121,9 +110,6 @@ public class ColorSensorTestOpMode extends LinearOpMode {
 
             telemetry.addLine();
 
-            // ============================
-            // Processed Detection Telemetry
-            // ============================
             telemetry.addLine("--- BALL DETECTION ---");
             telemetry.addData("Ball Present", result.ballPresent);
             telemetry.addData("Ball Color", result.color);

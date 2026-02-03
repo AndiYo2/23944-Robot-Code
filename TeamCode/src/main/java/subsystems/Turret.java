@@ -11,6 +11,7 @@ import Constants.EnumConstants;
 import Constants.EnumConstants.FieldState;
 import Constants.FieldMap;
 import Constants.RobotConstants;
+import Constants.ShooterConstants;
 import utility.RobotHardware;
 import Constants.TurretConstants;
 
@@ -23,23 +24,21 @@ import static Constants.TurretConstants.CENTER;
  * Conversion: servoPosition = 0.5 + (turretDegrees * GEAR_RATIO / SERVO_DEGREES_PER_UNIT)
  */
 public class Turret extends SubsystemBase {
-    // Hardware reference
     RobotHardware robot;
 
-    // Current target angle (turret degrees)
     private double currentTargetDegrees = 0.0;
 
-    // Last set angle for change threshold comparison
     private double lastSetDegrees = 0.0;
 
-    // Out-of-range tracking - set when target angle exceeds hardware limits
     private boolean targetOutOfRange = false;
     private double degreesOutOfRange = 0;
+
+    // Shooter reference for lead compensation (future pose)
+    private Shooter shooter;
 
     public Turret() {
         this.robot = RobotHardware.getInstance();
 
-        // Initialize turret to center position
         currentTargetDegrees = CENTER;
         lastSetDegrees = CENTER;
         applyServoPosition(CENTER);
@@ -56,21 +55,10 @@ public class Turret extends SubsystemBase {
         double position = TurretConstants.SERVO_CENTER_POSITION +
                 (turretDegrees * TurretConstants.GEAR_RATIO / TurretConstants.SERVO_DEGREES_PER_UNIT);
 
-        // Clamp to valid servo range and never use exactly 0
         position = Math.max(RobotConstants.Robot.MIN_SERVO_SAFE_POSITION, Math.min(1.0, position));
         return position;
     }
 
-    /**
-     * Convert servo position to turret degrees.
-     *
-     * @param servoPosition Servo position (0 to 1)
-     * @return Turret angle in degrees
-     */
-    private double servoPositionToTurretDegrees(double servoPosition) {
-        return (servoPosition - TurretConstants.SERVO_CENTER_POSITION) *
-                TurretConstants.SERVO_DEGREES_PER_UNIT / TurretConstants.GEAR_RATIO;
-    }
 
     /**
      * Apply the current target position to the servo.
@@ -78,6 +66,10 @@ public class Turret extends SubsystemBase {
     private void applyServoPosition(double turretDegrees) {
         double servoPosition = turretDegreesToServoPosition(turretDegrees);
         robot.turretServo.setPosition(servoPosition);
+    }
+
+    public void setShooter(Shooter shooter) {
+        this.shooter = shooter;
     }
 
     public double[] getTurretFieldPosition() {
@@ -95,11 +87,6 @@ public class Turret extends SubsystemBase {
         return new double[]{turretX, turretY};
     }
 
-    public void turretPeriodic(FieldState fieldState) {
-        // Always track to goal regardless of field state
-        setTurretDegree(getDegreesToGoal());
-    }
-
     public void setTurretDegree(double degree) {
         setTurretAngle(degree);
     }
@@ -115,7 +102,6 @@ public class Turret extends SubsystemBase {
         double deltaX = goalPosition.getX() - turretPos[0];
         double deltaY = goalPosition.getY() - turretPos[1];
 
-        // Field angle to goal (standard math: 0 = +X, CCW positive)
         double fieldAngleRad = Math.atan2(deltaY, deltaX);
 
         // Convert to robot-relative by subtracting robot heading
@@ -126,12 +112,10 @@ public class Turret extends SubsystemBase {
         double turretAngleDeg = Math.toDegrees(turretAngleRad);
         turretAngleDeg = normalizeAngle(turretAngleDeg);
 
-        // Apply fine-tune calibration offset (alliance-specific)
         turretAngleDeg += (RobotConstants.Robot.allianceColor == EnumConstants.AllianceColor.Blue)
                 ? TurretConstants.BLUE_TURRET_TRACKING_OFFSET
                 : TurretConstants.RED_TURRET_TRACKING_OFFSET;
 
-        // Check if target exceeds hardware limits
         if (turretAngleDeg > TurretConstants.HARD_STOP_CW) {
             targetOutOfRange = true;
             degreesOutOfRange = turretAngleDeg - TurretConstants.HARD_STOP_CW;
@@ -189,6 +173,19 @@ public class Turret extends SubsystemBase {
     }
 
     /**
+     * Get turret angle using lead compensation from the Shooter's predicted future pose.
+     * Falls back to standard getDegreesToGoal() if shoot-while-moving is disabled
+     * or if Shooter reference is unavailable.
+     */
+    public double getDegreesToGoalLeadAdjusted() {
+        if (!ShooterConstants.SHOOT_WHILE_MOVING_ENABLED || shooter == null) {
+            return getDegreesToGoal();
+        }
+        double[] future = shooter.getFuturePose();
+        return getDegreesToGoalFromPosition(future[0], future[1], future[2]);
+    }
+
+    /**
      * Normalizes angle to [-180, 180] range using modulo arithmetic (O(1)).
      */
     private double normalizeAngle(double degrees) {
@@ -205,13 +202,11 @@ public class Turret extends SubsystemBase {
      * @param targetAngleTurret Target angle in turret degrees
      */
     public void setTurretAngle(double targetAngleTurret) {
-        // Clamp to hard stop limits
         targetAngleTurret = Math.max(
             TurretConstants.HARD_STOP_CCW,
             Math.min(TurretConstants.HARD_STOP_CW, targetAngleTurret)
         );
 
-        // Check if change exceeds threshold
         if (Math.abs(targetAngleTurret - lastSetDegrees) >= TurretConstants.MIN_CHANGE_THRESHOLD) {
             currentTargetDegrees = targetAngleTurret;
             lastSetDegrees = targetAngleTurret;
@@ -248,9 +243,7 @@ public class Turret extends SubsystemBase {
 
     @Override
     public void periodic() {
-        // Always track to goal
-        setTurretDegree(getDegreesToGoal());
-        // Apply current target position to servo
+        setTurretDegree(getDegreesToGoalLeadAdjusted());
         applyServoPosition(currentTargetDegrees);
     }
 }

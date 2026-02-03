@@ -6,6 +6,7 @@ import com.arcrobotics.ftclib.command.CommandScheduler;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.util.Timer;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import pedroPathing.Constants;
 import subsystems.Shooter;
@@ -15,9 +16,11 @@ import subsystems.Intake;
 import subsystems.Spindexer;
 import Constants.OdometryConstants;
 import Constants.SpindexerConstants;
+import utility.FieldDrawing;
 import utility.RobotHardware;
 import utility.ShootingValidator;
 import utility.SpindexerAndMotifStatus;
+import utility.TelemetryHelper;
 
 /**
  * Base template for all autonomous OpModes.
@@ -36,6 +39,8 @@ public abstract class AutonTemplate extends OpMode {
     protected Spindexer spindexer;
     protected subsystems.Limelight limelight;
     protected ShootingValidator shootingValidator;
+    private TelemetryHelper telemetryHelper;
+    private final ElapsedTime loopTimer = new ElapsedTime();
 
     /** The autonomous command sequence built by subclasses */
     protected Command autonomousCommand;
@@ -76,10 +81,19 @@ public abstract class AutonTemplate extends OpMode {
         // Link Turret to Shooter for distance calculations
         shooter.setTurret(turret);
 
+        // Link Shooter to Turret for lead-compensated aiming
+        turret.setShooter(shooter);
+
         // Link Odometry to Shooter for field state
         shooter.setOdometry(odometry);
 
         shootingValidator = new ShootingValidator(odometry, telemetry);
+
+        telemetryHelper = new TelemetryHelper();
+        telemetryHelper.setSubsystems(shooter, turret, spindexer, odometry, limelight,
+                null, intake);
+
+        FieldDrawing.init();
 
         // Register subsystems with the command scheduler
         CommandScheduler.getInstance().registerSubsystem(intake, shooter, turret, odometry, spindexer, limelight);
@@ -105,10 +119,15 @@ public abstract class AutonTemplate extends OpMode {
 
         limelight.resetLimelight();
         limelight.setMode(EnumConstants.LimelightMode.TagTracking);
+
+        loopTimer.reset();
     }
 
     @Override
     public void loop() {
+        double loopMs = loopTimer.milliseconds();
+        loopTimer.reset();
+
         // Update follower FIRST (before commands run)
         follower.update();
 
@@ -120,12 +139,11 @@ public abstract class AutonTemplate extends OpMode {
         // Run the command scheduler
         CommandScheduler.getInstance().run();
 
-        // Display autonomous telemetry
+        // Display autonomous telemetry on Driver Station
         if (autonomousCommand != null) {
             telemetry.addData("Auto Status", autonomousCommand.isFinished() ? "Finished" : "Running");
             telemetry.addData("Follower Busy", follower.isBusy());
 
-            // DEBUG: Show follower position for debugging
             telemetry.addLine("--- POSITION DEBUG ---");
             telemetry.addData("Position", "X:%.1f Y:%.1f H:%.1f",
                 follower.getPose().getX(), follower.getPose().getY(),
@@ -134,7 +152,6 @@ public abstract class AutonTemplate extends OpMode {
             telemetry.addData("Limelight Mode", limelight.getCurrentMode());
             telemetry.addData("Motif Detected", limelight.isMotifDetected());
 
-            // Spindexer debug
             telemetry.addLine("--- SPINDEXER DEBUG ---");
             telemetry.addData("Spindexer Degrees", "%d°", spindexer.getTargetPosition());
             telemetry.addData("Spindexer Servo", "%.3f", spindexer.getServoPosition());
@@ -145,35 +162,11 @@ public abstract class AutonTemplate extends OpMode {
             telemetry.addData("Shooting Mode", SpindexerConstants.currentMode);
         }
 
-        // Update Panels telemetry
-        updatePanelsTelemetry();
+        // Panels telemetry (graph + debug) and field drawing
+        telemetryHelper.update(telemetry, loopMs);
+        FieldDrawing.drawFollowerDebug(follower);
 
         telemetry.update();
-    }
-
-    /**
-     * Updates Panels telemetry with autonomous-specific data.
-     * Displays: Hood angle, Actual Shooter velocity, Set motor velocity, Distance to goal, and Position
-     */
-    protected void updatePanelsTelemetry() {
-        // Hood angle
-        robotHardware.telemetryManager.debug(String.format("Hood Angle: %.1f deg", shooter.getTargetHoodAngle()));
-
-        // Shooter velocities
-        robotHardware.telemetryManager.debug(String.format("Set Velocity: %.0f ticks/sec", shooter.getTargetVelocity()));
-        robotHardware.telemetryManager.debug(String.format("Actual Velocity: %.0f ticks/sec", shooter.getCurrentVelocity()));
-
-        // Distance to goal
-        robotHardware.telemetryManager.debug(String.format("Distance to Goal: %.1f in", shooter.getDistanceToTarget()));
-
-        // Position
-        robotHardware.telemetryManager.debug(String.format("Position: X:%.1f Y:%.1f H:%.1f deg",
-            follower.getPose().getX(),
-            follower.getPose().getY(),
-            Math.toDegrees(follower.getPose().getHeading())));
-
-        // Send to Panels
-        robotHardware.telemetryManager.update(telemetry);
     }
 
 

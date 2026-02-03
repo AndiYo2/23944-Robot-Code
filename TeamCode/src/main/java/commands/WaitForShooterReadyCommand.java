@@ -26,7 +26,7 @@ public class WaitForShooterReadyCommand extends CommandBase {
 
     @Override
     public void execute() {
-        // Nothing to do - just waiting
+        // Nothing to do - just waiting lmao
     }
 
     @Override

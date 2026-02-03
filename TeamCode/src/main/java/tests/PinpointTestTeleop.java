@@ -37,14 +37,13 @@ public class PinpointTestTeleop extends CommandOpMode {
         driverGamepad = new GamepadEx(gamepad1);
         robot.init(hardwareMap, driverGamepad);
 
-        // Set starting position for field testing
         robot.pinpoint.setPosition(OdometryConstants.toPose2D(OdometryConstants.standardStartPoint));
         robot.pinpoint.update(); // Apply the position
 
         mecanumDrive = new MecanumDrive();
         robotX = 56.5;
         robotY = 8.5;
-        robotHeading = Math.toRadians(90); // 90° = 1.571 radians
+        robotHeading = Math.toRadians(90);
     }
 
     private void updateDrivetrain() {
@@ -105,7 +104,6 @@ public class PinpointTestTeleop extends CommandOpMode {
         return fieldCorners;
     }
     public void updateLocation(){
-        // CRITICAL: Update Pinpoint before reading values
         robot.pinpoint.update();
 
         robotX = robot.pinpoint.getPosX(DistanceUnit.INCH);
@@ -123,11 +121,9 @@ public class PinpointTestTeleop extends CommandOpMode {
 
         telemetry.addLine("========== CORNERS ==========");
 
-        // Get all corner positions
         double[][] corners = getCornerPositions();
         String[] cornerNames = {"Front-Right", "Front-Left", "Back-Right", "Back-Left"};
 
-        // Check if any corner is in shooting zone
         boolean inShootingZone = false;
 
         for (int i = 0; i < 4; i++) {
@@ -136,10 +132,10 @@ public class PinpointTestTeleop extends CommandOpMode {
             char zone = FieldMap.getPosition(cornerX, cornerY);
             String zoneName = getZoneName(zone);
 
-            // Add telemetry for this corner
+
             telemetry.addData(cornerNames[i], "(%.1f, %.1f) - %s", cornerX, cornerY, zoneName);
 
-            // Check if in shooting zone
+
             if (zone == 'S') {
                 inShootingZone = true;
             }
@@ -149,7 +145,7 @@ public class PinpointTestTeleop extends CommandOpMode {
         telemetry.addData("In Shooting Zone?", inShootingZone ? "YES" : "NO");
         telemetry.addLine("");
 
-        // IMU Status Info
+
         telemetry.addLine("========== IMU STATUS ==========");
         telemetry.addData("IMU Calibrated", "On Init (resetPosAndIMU)");
         telemetry.addData("Note", "Keep robot STILL during init!");

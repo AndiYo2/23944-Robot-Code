@@ -7,8 +7,6 @@ import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import commands.CommandSequenceBuilder;
-
-@Configurable
 @Autonomous(name = "ShootDipRed")
 public class ShootDipRed extends AutonTemplate {
     public static double maxSpeed = .8;

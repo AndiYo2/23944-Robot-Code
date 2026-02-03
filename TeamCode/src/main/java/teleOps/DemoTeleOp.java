@@ -5,6 +5,7 @@ import Constants.OdometryConstants;
 import Constants.RobotConstants;
 import Constants.ShooterConstants;
 import Constants.SpindexerConstants;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import utility.RobotHardware;
@@ -30,6 +31,7 @@ import utility.SpindexerAndMotifStatus;
  * Right joystick Y controls hood angle directly.
  * Right trigger does a timed shooter flipper flick (no flywheel spinup).
  */
+@Disabled
 @TeleOp
 public class DemoTeleOp extends CommandOpMode {
 
@@ -244,7 +246,7 @@ public class DemoTeleOp extends CommandOpMode {
                 shooterFlickState = EnumConstants.FlickState.Extended;
                 break;
             case Extended:
-                if (shooterFlickTimer.seconds() < ShooterConstants.FLICK_TIME) break;
+                if (shooterFlickTimer.seconds() < ShooterConstants.SHOOTER_FLICK_TIME) break;
                 robot.shooterFlipper.setPosition(ShooterConstants.FLIPPER_POSITION_RETRACT);
                 shooterFlickTimer.reset();
                 shooterFlickState = EnumConstants.FlickState.Retracted;

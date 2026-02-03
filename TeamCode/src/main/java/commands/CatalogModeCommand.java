@@ -39,21 +39,17 @@ public class CatalogModeCommand extends CommandBase {
         waitingForSensors = false;
 
         if (SpindexerConstants.currentMode == EnumConstants.ShootingMode.Sorted) {
-            // Check if motif pattern has been detected
             boolean motifValid =
                     SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(0) != EnumConstants.BallColor.None
                  || SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(1) != EnumConstants.BallColor.None
                  || SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(2) != EnumConstants.BallColor.None;
 
             if (motifValid && allSensorsReady()) {
-                // Sensors already have valid readings — start sorted catalog immediately
                 startSortedCatalog();
             } else if (motifValid) {
-                // Motif detected but sensors not ready — wait for them
                 waitingForSensors = true;
                 sensorTimer.reset();
             } else {
-                // No motif detected — fall back to fast
                 startFastCatalog();
             }
         } else {
@@ -68,7 +64,6 @@ public class CatalogModeCommand extends CommandBase {
                 waitingForSensors = false;
                 startSortedCatalog();
             } else if (sensorTimer.seconds() >= SENSOR_TIMEOUT) {
-                // Timeout — fall back to fast catalog
                 waitingForSensors = false;
                 startFastCatalog();
             }

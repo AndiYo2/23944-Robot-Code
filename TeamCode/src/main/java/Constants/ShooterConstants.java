@@ -8,9 +8,9 @@ import com.bylazar.configurables.annotations.Configurable;
 @Configurable
 public class ShooterConstants {
     // ==================== FLIPPER POSITIONS ====================
-    public static double FLIPPER_POSITION_EXTENDED = 0.4;  // Push ball into flywheel
-    public static double FLIPPER_POSITION_RETRACT = 0.15;   // Ready position
-    public static double FLICK_TIME = 0.2;                 // Seconds to hold extended
+    public static double FLIPPER_POSITION_EXTENDED = 0.4;
+    public static double FLIPPER_POSITION_RETRACT = 0.15;
+    public static double SHOOTER_FLICK_TIME = 0.2;
 
     // ==================== VELOCITY CONSTANTS ====================
     public static double DEFAULT_VELOCITY = 2200.0;           // Default/initial flywheel velocity
@@ -29,9 +29,30 @@ public class ShooterConstants {
     public static double HOOD_SERVO_AT_MIN_ANGLE = .88;       // Servo position at 30 degrees (min angle)
     public static double HOOD_SERVO_AT_MAX_ANGLE = 0.26;      // Servo position at 63 degrees (max angle)
 
+    public static boolean SHOOT_WHILE_MOVING_ENABLED = true;
+
     // ==================== INTERPLUT DATA ====================
     // Format: {distance_inches, value} - MUST be sorted by distance ascending
-    // Single LUT used by both alliances
+
+
+    // Time-in-air LUT - Distance (inches) -> Flight time (seconds)
+    // Approximate values - tune empirically by measuring ball flight at each distance
+    // Used to predict future robot position for lead-compensated aiming
+    public static double[][] TIME_IN_AIR_DATA = {
+        {0, 0.10},
+        {42, 0.12},
+        {55, 0.16},
+        {66, 0.19},
+        {80, 0.23},
+        {90, 0.27},
+        {100, 0.30},
+        {113, 0.35},
+        {128.6, 0.40},
+        {140.5, 0.44},
+        {146, 0.47},
+        {150, 0.50},
+        {300, 0.50}
+    };
 
     // Velocity LUT - Distance (inches) -> Velocity (ticks/sec)
     public static double[][] VELOCITY_DATA = {
@@ -88,25 +109,25 @@ public class ShooterConstants {
     // References ShooterFeedforwardConstants for single source of truth.
     // See ShooterFeedforwardConstants for tuning documentation.
 
-    /** Static friction compensation - references canonical source */
+    /** Static friction compensation */
     public static double kS = 0.03;
 
-    /** Velocity gain - references canonical source */
+    /** Velocity gain */
     public static double kV = 0.00032;
 
-    /** Acceleration gain - references canonical source */
+    /** Acceleration gain */
     public static double kA = 0.00001;
 
-    /** Proportional gain - references canonical source */
+    /** Proportional gain */
     public static double VELOCITY_kP = 0.002;
 
-    /** Integral gain - references canonical source */
+    /** Integral gain */
     public static double VELOCITY_kI = 0.00001;
 
-    /** Derivative gain - references canonical source */
+    /** Derivative gain */
     public static double VELOCITY_kD = 0.0;
 
-    /** Maximum integral accumulation - references canonical source */
+    /** Maximum integral accumulation */
     public static double INTEGRAL_MAX = 0.3;
 
     /**
@@ -115,6 +136,6 @@ public class ShooterConstants {
      */
     public static double MAX_ACCELERATION = 15000.0;
 
-    /** Velocity tolerance - references canonical source */
+    /** Velocity tolerance */
     public static double VELOCITY_TOLERANCE = 50.0;
 }

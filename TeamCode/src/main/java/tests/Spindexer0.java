@@ -12,7 +12,6 @@ public class Spindexer0 extends OpMode {
 
     private RobotHardware robot;
 
-    // PID variables
     private double targetPosition = 1.0;  // Always 0° (center)
 
 

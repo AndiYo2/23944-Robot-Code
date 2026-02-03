@@ -40,10 +40,8 @@ public class SpindexerConstants {
     public static final int CW_WRAP_TO_DEG = 180;           // At 300°, CW wraps to 180°
     public static final int CCW_WRAP_TO_DEG = 120;          // At 0°, CCW wraps to 120°
 
-    // Empty/reset position
     public static final int EMPTY_RESET_DEGREES = 300;
 
-    // Servo conversion constant
     public static final double SERVO_DEGREES_PER_UNIT = 355.0;  // Axon servo full range
 
     // Offset applied to ALL spindexer rotations (in degrees)

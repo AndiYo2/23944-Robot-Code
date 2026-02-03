@@ -13,6 +13,9 @@ import com.arcrobotics.ftclib.command.button.GamepadButton;
 import com.arcrobotics.ftclib.command.button.Trigger;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
+import com.pedropathing.geometry.Pose;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import subsystems.*;
 import utility.*;
 import commands.ShootingCommands;
@@ -33,6 +36,8 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     private ShootingValidator shootingValidator;
     private TelemetryHelper telemetryHelper;
     private final ElapsedTime loopTimer = new ElapsedTime();
+    private SimplePoseTracker poseTracker;
+    private double loopMs;
 
 
 
@@ -82,7 +87,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         telemetry.update();
 
         robot.pinpoint.setPosition(OdometryConstants.toPose2D(startPose));
-        // CRITICAL: Update Pinpoint after setting position to apply it
         robot.pinpoint.update();
 
         telemetry.addData("Position After Set", robot.pinpoint.getPosition());
@@ -104,13 +108,21 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         // Link Turret to Shooter for distance calculations
         shooter.setTurret(turret);
 
+        // Link Shooter to Turret for lead-compensated aiming
+        turret.setShooter(shooter);
+
         // Link Odometry to Shooter for field state
         shooter.setOdometry(odometry);
 
         shootingValidator = new ShootingValidator(odometry, telemetry);
 
         telemetryHelper = new TelemetryHelper();
-        telemetryHelper.setSubsystems(shooter, turret, spindexer, odometry, limelight);
+        telemetryHelper.setSubsystems(shooter, turret, spindexer, odometry, limelight,
+                mecanumDrive, intake);
+        telemetryHelper.setGamepad(gamepad1);
+
+        poseTracker = new SimplePoseTracker();
+        FieldDrawing.init();
 
         register(mecanumDrive, intake, shooter, spindexer, limelight, turret, odometry);
     }
@@ -137,7 +149,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
                     schedule(ShootingCommands.shootThreeBalls(shooter, spindexer));
                 });
 
-        // Drive controls
         new GamepadButton(driverGamepad, GamepadKeys.Button.START)
                 .whenPressed(new InstantCommand(mecanumDrive::resetYaw));
         new GamepadButton(driverGamepad, GamepadKeys.Button.B)
@@ -178,19 +189,22 @@ abstract public class TeleOpTemplate extends CommandOpMode {
                 .whenPressed(new InstantCommand(intake::reverse))
                 .whenReleased(new InstantCommand(intake::stopIntake));
 
-        // DPAD_LEFT: Switch to localization pipeline, relocalize, switch back
         new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_LEFT)
                 .whenPressed(new RelocalizePinpointCommand(limelight));
     }
 
     @Override
     public void run() {
-        double loopMs = loopTimer.milliseconds();
+        loopMs = loopTimer.milliseconds();
         loopTimer.reset();
 
         super.run();
 
         robot.pinpoint.update();
+
+        double poseX = robot.pinpoint.getPosX(DistanceUnit.INCH);
+        double poseY = robot.pinpoint.getPosY(DistanceUnit.INCH);
+        poseTracker.addPose(poseX, poseY);
 
         limelight.updateLimelightPose();
 
@@ -219,7 +233,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
                 ? EnumConstants.AllianceColor.Blue
                 : EnumConstants.AllianceColor.Red;
 
-        // Check alliance color (defaults to Blue if not set)
         if (RobotConstants.Robot.allianceColor != null &&
                 RobotConstants.Robot.allianceColor == invertedAlliance) {
             return new double[] {-rawY, -rawX, rawRotation};
@@ -248,6 +261,18 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
 
     private void updateTelemetry() {
-        telemetryHelper.update(telemetry);
+        telemetryHelper.update(telemetry, loopMs);
+
+        if (RobotConstants.Robot.ENABLE_TELEMETRY) {
+            double poseX = robot.pinpoint.getPosX(DistanceUnit.INCH);
+            double poseY = robot.pinpoint.getPosY(DistanceUnit.INCH);
+            double poseH = robot.pinpoint.getHeading(AngleUnit.RADIANS);
+            Pose currentPose = new Pose(poseX, poseY, poseH);
+            FieldDrawing.drawTeleOpDebug(
+                    poseTracker.getXArray(),
+                    poseTracker.getYArray(),
+                    poseTracker.getCount(),
+                    currentPose);
+        }
     }
 }

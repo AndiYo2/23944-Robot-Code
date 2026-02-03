@@ -17,9 +17,6 @@ public class DualBallDetector {
         }
     }
 
-    // =============================
-    // Tunables
-    // =============================
     private static final int BUFFER_SIZE = 5;
     private static final int REQUIRED_PRESENT = 3;
 
@@ -36,21 +33,12 @@ public class DualBallDetector {
 
     private static final double MIN_CONFIDENCE = 0.15;
 
-    // =============================
-    // Hardware
-    // =============================
     private final ColorSensor near;
     private final ColorSensor far;
 
-    // =============================
-    // Sensor state containers
-    // =============================
     private final SensorState nearState;
     private final SensorState farState;
 
-    // =============================
-    // Instance color config (allows per-detector tuning)
-    // =============================
     private final double[] greenProfile;
     private final double[] purpleProfile;
     private final double greenTolerance;
@@ -83,17 +71,11 @@ public class DualBallDetector {
         farState  = new SensorState(minAlphaFar);
     }
 
-    // =============================
-    // CALL EVERY LOOP
-    // =============================
     public void update() {
         nearState.updateFrom(near);
         farState.updateFrom(far);
     }
 
-    // =============================
-    // SAFE TO CALL ANYTIME
-    // =============================
     public Result detectBall() {
 
         Result nearResult = nearState.evaluate();
@@ -115,12 +97,10 @@ public class DualBallDetector {
     }
 
     private Result resolveResults(Result nearResult, Result farResult) {
-        // If neither sees a ball
         if (!nearResult.ballPresent && !farResult.ballPresent) {
             return new Result(false, BallColor.None, 0.0);
         }
 
-        // If only one sees a ball
         if (nearResult.ballPresent && !farResult.ballPresent) {
             return nearResult;
         }
@@ -128,7 +108,6 @@ public class DualBallDetector {
             return farResult;
         }
 
-        // Both see a ball — choose higher confidence
         if (nearResult.confidence > farResult.confidence) {
             return nearResult;
         } else {
@@ -136,9 +115,6 @@ public class DualBallDetector {
         }
     }
 
-    // =====================================================
-    // ================= SENSOR STATE ======================
-    // =====================================================
     private class SensorState {
 
         private final double minAlpha;
@@ -254,9 +230,6 @@ public class DualBallDetector {
         }
     }
 
-    // =============================
-    // Math helpers
-    // =============================
     private double confidence(double r, double g, double b,
                               double[] ref, double tol) {
         double d = Math.sqrt(

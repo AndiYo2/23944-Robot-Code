@@ -70,7 +70,6 @@ public class Limelight extends SubsystemBase {
         for (int tagId = 21; tagId <= 23; tagId++) {
             for (LLResultTypes.FiducialResult fr : fiducialResults) {
                 if (fr.getFiducialId() == tagId) {
-                    // Tag found! Update motif pattern
                     EnumConstants.BallColor[] pattern =
                         LimelightConstants.getMotifPatternForTag(tagId);
 
@@ -82,7 +81,6 @@ public class Limelight extends SubsystemBase {
 
                         LimelightConstants.manuallySlowedForScan = false;
 
-                        // Auto-switch back to Goal Tracking mode
                         currentMode = EnumConstants.LimelightMode.GoalTracking;
                         return tagId;
                     }
@@ -99,10 +97,8 @@ public class Limelight extends SubsystemBase {
      */
     public void toggleMode() {
         if (currentMode == EnumConstants.LimelightMode.GoalTracking) {
-            // Switch to Tag Tracking mode
             currentMode = EnumConstants.LimelightMode.TagTracking;
         } else {
-            // Switch back to Goal Tracking mode
             currentMode = EnumConstants.LimelightMode.GoalTracking;
         }
     }
@@ -120,7 +116,6 @@ public class Limelight extends SubsystemBase {
         detectedTagId = -1;
         LimelightConstants.manuallySlowedForScan = true;
 
-        // Reset motif pattern to default PGP to clear stale pattern from previous runs
         LimelightConstants.motifPattern.setBallPattern(
             EnumConstants.BallColor.Purple,
             EnumConstants.BallColor.Green,
@@ -207,7 +202,6 @@ public class Limelight extends SubsystemBase {
 
     @Override
     public void periodic() {
-        // Update Limelight data if in Tag Tracking mode
         if (currentMode == EnumConstants.LimelightMode.TagTracking && !motifDetected) {
             updateLimelightData();
             scanForMotifTag();

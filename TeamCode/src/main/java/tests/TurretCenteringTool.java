@@ -44,16 +44,13 @@ public class TurretCenteringTool extends OpMode {
 
     @Override
     public void start() {
-        // Set servo to center position
         robot.turretServo.setPosition(TurretConstants.SERVO_CENTER_POSITION);
     }
 
     @Override
     public void loop() {
-        // Refresh values from Panels dashboard
         PanelsConfigurables.INSTANCE.refreshClass(TurretConstants.class);
 
-        // EMERGENCY RELEASE - X button
         if (gamepad1.x) {
             robot.turretServo.setPosition(TurretConstants.SERVO_CENTER_POSITION);
             servoEnabled = false;
@@ -66,23 +63,23 @@ public class TurretCenteringTool extends OpMode {
             return;
         }
 
-        // TOGGLE SERVO - A button
+
         if (gamepad1.a && !aButtonPressed) {
             servoEnabled = !servoEnabled;
         }
         aButtonPressed = gamepad1.a;
 
-        // Apply servo position if enabled
+
         if (servoEnabled) {
             robot.turretServo.setPosition(TurretConstants.SERVO_CENTER_POSITION);
         }
 
-        // Calculate what turret angle corresponds to current servo position
+
         double currentServoPos = TurretConstants.SERVO_CENTER_POSITION;
         double turretDegrees = (currentServoPos - TurretConstants.SERVO_CENTER_POSITION) *
                 TurretConstants.SERVO_DEGREES_PER_UNIT / TurretConstants.GEAR_RATIO;
 
-        // Display telemetry
+
         telemetry.addLine("========================================");
         if (servoEnabled) {
             telemetry.addLine("   SERVO ON - HOLDING AT CENTER");
@@ -111,7 +108,6 @@ public class TurretCenteringTool extends OpMode {
 
     @Override
     public void stop() {
-        // Leave servo at center on stop
         robot.turretServo.setPosition(TurretConstants.SERVO_CENTER_POSITION);
     }
 }

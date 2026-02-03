@@ -36,7 +36,6 @@ public class RelocalizePinpointCommand extends CommandBase {
         if (timer.seconds() < SETTLE_SECONDS) {
             return;
         }
-        // Cache fresh pose from localization pipeline, then apply
         limelight.updateLimelightPose();
         success = limelight.relocalizePinpoint();
     }

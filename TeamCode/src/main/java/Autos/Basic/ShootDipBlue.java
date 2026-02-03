@@ -8,7 +8,6 @@ import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import commands.CommandSequenceBuilder;
 
-@Configurable
 @Autonomous(name = "ShootDipBlue")
 public class ShootDipBlue extends AutonTemplate {
     public static double maxSpeed = .8;

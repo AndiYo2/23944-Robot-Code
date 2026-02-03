@@ -7,7 +7,7 @@ import com.pedropathing.geometry.Pose;
 public class RobotConstants {
 
     public static class Robot {
-        // Robot dimensions (inches)
+        // Robot dimensions (inches) PLEASE PLEASE PLEASE UPDATE NEXT ITTERATION DO NOT FORGET SUPPER IMPORTANT AWOIDAWODUHIJASLKJ:DFA:LSKFJS
         public static final double ROBOT_SIZE = 17; // Robot width/length (square)
         public static final double HALF_SIZE = ROBOT_SIZE / 2.0; // Distance from center to edge
 
@@ -15,7 +15,6 @@ public class RobotConstants {
 
         public static final double MIN_SERVO_SAFE_POSITION = 0.0001;
 
-        // Toggle Panels telemetry on/off — disable for competition to save loop time
         public static boolean ENABLE_TELEMETRY = true;
     }
 
