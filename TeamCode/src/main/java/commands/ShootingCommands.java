@@ -14,17 +14,8 @@ import subsystems.Turret;
 public class ShootingCommands {
 
     /**
-     * Shoots all balls in the spindexer.
-     * Sequence for each ball: Fire -> Flick -> RotateToNext (except last ball)
-     *
-     * @param shooter the shooter subsystem
-     * @param spindexer the spindexer subsystem
-     * @param ballCount number of balls to shoot
-     * @return a command that shoots all balls
-     */
-    /**
-     * Shoots 3 balls - use this when ball detection hardware is unavailable.
-     * Sequence for each ball: Fire -> Flick -> RotateToNext (except last ball)
+     * Shoots 3 balls.
+     * Cataloging always ends at [m2, m1, None], so this uses a fixed sequence.
      *
      * @param shooter the shooter subsystem
      * @param spindexer the spindexer subsystem
@@ -46,8 +37,10 @@ public class ShootingCommands {
             sequence.addCommands(new FlickCommand(spindexer));
             sequence.addCommands(new FireCommand(shooter));
         }else if (ballCount == 3){
+            // Cataloging always ends at [m2, m1, None], so shooting is fixed:
+            // fire m0 (above), flick m1, CCW (m2 from slot 0 → slot 1), fire m1, flick m2, fire m2
             sequence.addCommands(new FlickCommand(spindexer));
-            sequence.addCommands(new RotateToNextCommand(spindexer).alongWith(new FireCommand(shooter)));
+            sequence.addCommands(new RotateCCWCommand(spindexer).alongWith(new FireCommand(shooter)));
             sequence.addCommands(new FlickCommand(spindexer));
             sequence.addCommands(new FireCommand(shooter));
         }

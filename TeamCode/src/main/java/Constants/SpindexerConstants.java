@@ -19,7 +19,6 @@ public class SpindexerConstants {
         EnumConstants.BallColor.Green    // Top Storage
     };
 
-    // --- Flipper Positions ---
     public static double FLIPPER_POSITION_EXTENDED = 0.58;
     public static double FLIPPER_POSITION_RETRACT = 0.35;
     public static double FLICK_TIME = 0.12;
@@ -36,21 +35,17 @@ public class SpindexerConstants {
     public static final int MAX_SERVO_DEGREES = 300;        // Max usable range
     public static final int SLOTS_COUNT = 3;
 
-    // Boundary wrapping (in degrees) - safety net, should rarely be used
     public static final int CW_WRAP_TO_DEG = 180;           // At 300°, CW wraps to 180°
     public static final int CCW_WRAP_TO_DEG = 120;          // At 0°, CCW wraps to 120°
 
-    public static final int EMPTY_RESET_DEGREES = 300;
+    public static final int EMPTY_RESET_DEGREES = 180;
 
     public static final double SERVO_DEGREES_PER_UNIT = 355.0;  // Axon servo full range
 
-    // Offset applied to ALL spindexer rotations (in degrees)
     public static double SPINDEXER_OFFSET = 50;
 
-    // Cataloging timing
     public static double ROTATION_TIME = 0.15;
 
-    // Shooting mode (Fast or Sorted) - can be set by auto
     public static EnumConstants.ShootingMode currentMode = EnumConstants.ShootingMode.Sorted;
 
 }

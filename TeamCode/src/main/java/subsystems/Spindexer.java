@@ -8,7 +8,6 @@ import utility.RobotHardware;
 import Constants.SpindexerConstants;
 import utility.SpindexerAndMotifStatus;
 
-import static Constants.RobotConstants.Robot.MIN_SERVO_SAFE_POSITION;
 import static Constants.SpindexerConstants.*;
 
 /**
@@ -52,7 +51,7 @@ public class Spindexer extends SubsystemBase {
      */
     private double degreesToServoPosition(int degrees) {
         double position = (degrees + SpindexerConstants.SPINDEXER_OFFSET) / SERVO_DEGREES_PER_UNIT;
-        if (position < MIN_SERVO_SAFE_POSITION) position = MIN_SERVO_SAFE_POSITION;
+        if (position < 0.01) position = 0.01;
         return position;
     }
 
@@ -61,7 +60,6 @@ public class Spindexer extends SubsystemBase {
     public void rotateCW() {
         int newDegrees = currentDegrees + DEGREE_INCREMENT;
 
-        // Boundary wrapping
         if (newDegrees > MAX_SERVO_DEGREES) {
             newDegrees = CW_WRAP_TO_DEG;  // 180°
         }
@@ -84,27 +82,6 @@ public class Spindexer extends SubsystemBase {
     }
 
 
-    /**
-     * Smart direction choice to minimize wrapping.
-     */
-    private void rotateAwayFromBoundary() {
-        // Near 0° boundary (within one increment)
-        if (currentDegrees <= DEGREE_INCREMENT) {
-            rotateCW();   // Go toward higher positions
-        }
-        // Near max boundary (within one increment)
-        else if (currentDegrees >= MAX_SERVO_DEGREES - DEGREE_INCREMENT) {
-            rotateCCW();  // Go toward lower positions
-        } else {
-            // Safe zone - prefer toward 120° (slot 2) for next load cycle
-            if (currentDegrees > CCW_WRAP_TO_DEG) {
-                rotateCCW();
-            } else {
-                rotateCW();
-            }
-        }
-    }
-
 
     public void rotateToNextBall(){
         if(SpindexerConstants.currentMode == EnumConstants.ShootingMode.Fast){
@@ -125,19 +102,6 @@ public class Spindexer extends SubsystemBase {
     public void resetToEmptyPosition() {
         currentDegrees = EMPTY_RESET_DEGREES;
         SpindexerAndMotifStatus.SpindexerPattern.clearAll();
-    }
-
-
-    // ==================== SERVO CONTROL ====================
-
-    /**
-     * Set spindexer to a specific degree position.
-     * @param degrees Target position in servo degrees (0-300)
-     */
-    public void setDegree(int degrees) {
-        if (degrees < 0 || degrees > MAX_SERVO_DEGREES) return;
-
-        currentDegrees = degrees;
     }
 
     // ==================== FLIPPER METHODS ====================
