@@ -51,7 +51,7 @@ public class MecanumDrive extends SubsystemBase {
 
     public double getRobotHeading(){
         // Return heading relative to the reset point (subtract offset)
-        robot.pinpoint.update();
+        // Pinpoint is updated once at the start of each loop in TeleOpTemplate.run()
         return robot.pinpoint.getHeading(AngleUnit.RADIANS) - headingOffset;
     }
 

@@ -132,9 +132,9 @@ public class DemoTeleOp extends CommandOpMode {
                                 SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(2)
                         };
                         EnumConstants.BallColor[] intakeColors = {
-                                robot.intakeSensorPair.detectBall().color,
-                                robot.transferSensorPair.detectBall().color,
-                                robot.rampSensorPair.detectBall().color
+                                robot.intakeSensorPair.quickCheck().color,
+                                robot.transferSensorPair.quickCheck().color,
+                                robot.rampSensorPair.quickCheck().color
                         };
                         schedule(CatalogCommands.catalogSorted(spindexer, intake, motifPattern, intakeColors));
                     } else {
@@ -175,10 +175,6 @@ public class DemoTeleOp extends CommandOpMode {
         // Shooter flipper state machine
         shooterFlipperStateMachine();
 
-        // Update ball sensors
-        robot.intakeSensorPair.update();
-        robot.transferSensorPair.update();
-        robot.rampSensorPair.update();
     }
 
     /**

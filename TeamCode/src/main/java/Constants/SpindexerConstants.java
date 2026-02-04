@@ -47,5 +47,4 @@ public class SpindexerConstants {
     public static double ROTATION_TIME = 0.15;
 
     public static EnumConstants.ShootingMode currentMode = EnumConstants.ShootingMode.Sorted;
-
 }

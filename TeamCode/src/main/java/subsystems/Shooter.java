@@ -50,6 +50,9 @@ public class Shooter extends SubsystemBase {
     // Default loop time when dt calculation fails (seconds)
     private static final double DEFAULT_LOOP_TIME = 0.02;
 
+    // Cached velocity (updated once per periodic() call, reused by getters)
+    private double cachedVelocity = 0;
+
     // Telemetry data for tuning
     private double lastFfOutput = 0;
     private double lastPidOutput = 0;
@@ -194,12 +197,12 @@ public class Shooter extends SubsystemBase {
     }
 
     /**
-     * Get interpolated time-in-air from distance.
-     * @param distance Distance to goal in inches
-     * @return Estimated flight time in seconds
+     * Get time-in-air (constant for this robot).
+     * @param distance Distance to goal in inches (unused, kept for API compatibility)
+     * @return Flight time in seconds
      */
     public double getTimeInAirFromDistance(double distance) {
-        return timeInAirLUT.get(Math.max(0, Math.min(300, distance)));
+        return ShooterConstants.TIME_IN_AIR;
     }
 
     /**
@@ -216,6 +219,16 @@ public class Shooter extends SubsystemBase {
         double velX = robot.pinpoint.getVelX(DistanceUnit.INCH); // inches/sec
         double velY = robot.pinpoint.getVelY(DistanceUnit.INCH); // inches/sec
         double velH = robot.pinpoint.getHeadingVelocity(UnnormalizedAngleUnit.RADIANS); // rad/sec
+
+        // Zero out noise-level velocities to prevent jitter when stationary
+        double speed = Math.sqrt(velX * velX + velY * velY);
+        if (speed < ShooterConstants.LEAD_VELOCITY_DEADBAND) {
+            velX = 0.0;
+            velY = 0.0;
+        }
+        if (Math.abs(velH) < ShooterConstants.LEAD_HEADING_VELOCITY_DEADBAND) {
+            velH = 0.0;
+        }
 
         // First pass: use current distance to estimate timeInAir
         double currentDistance = getDistanceToTarget();
@@ -338,8 +351,7 @@ public class Shooter extends SubsystemBase {
      * Check if flywheel is at target velocity (within tolerance).
      */
     public boolean isAtTargetVelocity() {
-        double currentVelocity = robot.shooterMotor1.getVelocity();
-        return Math.abs(requiredVelocity - currentVelocity) < ShooterConstants.VELOCITY_TOLERANCE;
+        return Math.abs(requiredVelocity - cachedVelocity) < ShooterConstants.VELOCITY_TOLERANCE;
     }
 
     /**
@@ -353,7 +365,7 @@ public class Shooter extends SubsystemBase {
      * Get current velocity for telemetry.
      */
     public double getCurrentVelocity() {
-        return (robot.shooterMotor1.getVelocity() + robot.shooterMotor2.getVelocity()) / 2.0;
+        return cachedVelocity;
     }
 
     /**
@@ -434,7 +446,9 @@ public class Shooter extends SubsystemBase {
         double targetVelocity = requiredVelocity;
 
         // Get current velocity (average of both motors for accuracy)
+        // Read once and cache for isAtTargetVelocity() / getCurrentVelocity()
         double currentVelocity = (robot.shooterMotor1.getVelocity() + robot.shooterMotor2.getVelocity()) / 2.0;
+        cachedVelocity = currentVelocity;
 
         // Calculate velocity error
         double velocityError = targetVelocity - currentVelocity;

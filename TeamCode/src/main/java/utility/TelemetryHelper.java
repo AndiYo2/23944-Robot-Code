@@ -1,5 +1,6 @@
 package utility;
 
+import Constants.EnumConstants.BallColor;
 import Constants.RobotConstants;
 import Constants.SpindexerConstants;
 import com.bylazar.telemetry.TelemetryManager;
@@ -27,6 +28,13 @@ public class TelemetryHelper {
     private MecanumDrive mecanumDrive;
     private Intake intake;
     private Gamepad gamepad;
+
+    // Throttle expensive I2C sensor reads (color sensors are not covered by bulk caching)
+    private static final int SENSOR_READ_INTERVAL = 5;
+    private int loopCount = 0;
+    private DualBallDetector.Result cachedIntakeResult = new DualBallDetector.Result(false, BallColor.None, 0.0);
+    private DualBallDetector.Result cachedTransferResult = new DualBallDetector.Result(false, BallColor.None, 0.0);
+    private DualBallDetector.Result cachedRampResult = new DualBallDetector.Result(false, BallColor.None, 0.0);
 
     public TelemetryHelper() {
         this.robot = RobotHardware.getInstance();
@@ -57,7 +65,20 @@ public class TelemetryHelper {
      * @param loopMs    current loop time in milliseconds (for graph tracking)
      */
     public void update(Telemetry telemetry, double loopMs) {
-        if (!RobotConstants.Robot.ENABLE_TELEMETRY) return;
+        // Always report loop timing regardless of ENABLE_TELEMETRY
+        panels.addData("Loop Time (ms)", loopMs);
+
+        if (!RobotConstants.Robot.ENABLE_TELEMETRY) {
+            panels.update(telemetry);
+            return;
+        }
+
+        // Cache values used in both debug text and graph sections
+        double currentVel = shooter.getCurrentVelocity();
+        double targetVel = shooter.getTargetVelocity();
+        double hoodAngle = shooter.getTargetHoodAngle();
+        double distance = shooter.getDistanceToTarget();
+        double turretAngle = turret.getTargetTurretAngle();
 
         // ==================== STATUS (debug text) ====================
         panels.debug("Pattern: " + SpindexerAndMotifStatus.SpindexerPattern.getSpindexerPatternString());
@@ -65,10 +86,10 @@ public class TelemetryHelper {
         panels.debug("Zone: " + odometry.getFieldState());
 
         if (limelight.isMotifDetected()) {
-            panels.debug(String.format("Motif: [%s, %s, %s]",
-                    SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(0),
-                    SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(1),
-                    SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(2)));
+            panels.debug("Motif: ["
+                    + SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(0) + ", "
+                    + SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(1) + ", "
+                    + SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(2) + "]");
         } else {
             panels.debug("Motif: Not Detected");
         }
@@ -87,60 +108,43 @@ public class TelemetryHelper {
         double x = robot.pinpoint.getPosX(DistanceUnit.INCH);
         double y = robot.pinpoint.getPosY(DistanceUnit.INCH);
         double heading = Math.toDegrees(robot.pinpoint.getHeading(AngleUnit.RADIANS));
-        panels.debug(String.format("Pose: (%.1f, %.1f) %.1f°", x, y, heading));
+        panels.debug("Pose: (" + (int)(x * 10) / 10.0 + ", " + (int)(y * 10) / 10.0 + ") " + (int)(heading * 10) / 10.0 + "°");
         panels.debug("Spind: " + spindexer.getCurrentDegrees() + "°");
 
         // ==================== TARGETING (debug text) ====================
-        panels.debug(String.format("Turret: %.1f°", turret.getTargetTurretAngle()));
-        panels.debug(String.format("Hood: %.1f°", shooter.getTargetHoodAngle()));
-        panels.debug(String.format("Dist: %.1f in", shooter.getDistanceToTarget()));
-        panels.debug(String.format("Vel: %.0f / %.0f tks",
-                shooter.getCurrentVelocity(), shooter.getTargetVelocity()));
+        panels.debug("Turret: " + (int)(turretAngle * 10) / 10.0 + "°");
+        panels.debug("Hood: " + (int)(hoodAngle * 10) / 10.0 + "°");
+        panels.debug("Dist: " + (int)(distance * 10) / 10.0 + " in");
+        panels.debug("Vel: " + (int) currentVel + " / " + (int) targetVel + " tks");
 
         // ==================== SENSORS (debug text) ====================
-        DualBallDetector.Result r1 = robot.intakeSensorPair.detectBall();
-        DualBallDetector.Result r2 = robot.transferSensorPair.detectBall();
-        DualBallDetector.Result r3 = robot.rampSensorPair.detectBall();
-        panels.debug(String.format("Intake:   %s %s %.0f%%",
-                r1.ballPresent ? "BALL" : "----", r1.color, r1.confidence * 100));
-        panels.debug(String.format("Transfer: %s %s %.0f%%",
-                r2.ballPresent ? "BALL" : "----", r2.color, r2.confidence * 100));
-        panels.debug(String.format("Ramp:     %s %s %.0f%%",
-                r3.ballPresent ? "BALL" : "----", r3.color, r3.confidence * 100));
+        // Color sensors use I2C (not covered by bulk caching) — throttle reads
+        loopCount++;
+        if (loopCount % SENSOR_READ_INTERVAL == 0) {
+            cachedIntakeResult = robot.intakeSensorPair.quickCheck();
+            cachedTransferResult = robot.transferSensorPair.quickCheck();
+            cachedRampResult = robot.rampSensorPair.quickCheck();
+        }
+        panels.debug("Intake:   " + (cachedIntakeResult.ballPresent ? "BALL" : "----") + " " + cachedIntakeResult.color + " " + (int)(cachedIntakeResult.confidence * 100) + "%");
+        panels.debug("Transfer: " + (cachedTransferResult.ballPresent ? "BALL" : "----") + " " + cachedTransferResult.color + " " + (int)(cachedTransferResult.confidence * 100) + "%");
+        panels.debug("Ramp:     " + (cachedRampResult.ballPresent ? "BALL" : "----") + " " + cachedRampResult.color + " " + (int)(cachedRampResult.confidence * 100) + "%");
 
         // ==================== GRAPHS (Capture time-series) ====================
-        // Shooter
-        panels.addData("Shooter Velocity (actual)", shooter.getCurrentVelocity());
-        panels.addData("Shooter Velocity (target)", shooter.getTargetVelocity());
+        // Shooter (reuse cached values from above)
+        panels.addData("Shooter Velocity (actual)", currentVel);
+        panels.addData("Shooter Velocity (target)", targetVel);
         panels.addData("Velocity Error", shooter.getVelocityError());
-        panels.addData("Hood Angle", shooter.getTargetHoodAngle());
-        panels.addData("Distance to Target", shooter.getDistanceToTarget());
+        panels.addData("Hood Angle", hoodAngle);
+        panels.addData("Distance to Target", distance);
 
-        // Controller outputs
-        double[] outputs = shooter.getControllerOutputs();
-        panels.addData("FF Output", outputs[0]);
-        panels.addData("PID Output", outputs[1]);
-        panels.addData("Total Power", outputs[2]);
-
-        // Turret
-        panels.addData("Turret Target Angle", turret.getTargetTurretAngle());
+        // Turret (reuse cached turretAngle)
+        panels.addData("Turret Target Angle", turretAngle);
         panels.addData("Turret Degrees to Goal", turret.getDegreesToGoal());
-
-        // Loop time
-        panels.addData("Loop Time (ms)", loopMs);
+        panels.addData("Turret Raw Angle", turret.getRawTargetDegrees());
 
         // Battery voltage
         if (robot.voltageSensor != null) {
             panels.addData("Battery Voltage", robot.voltageSensor.getVoltage());
-        }
-
-        // Driver inputs (TeleOp only -- gamepad is null in Auto)
-        if (gamepad != null) {
-            panels.addData("Stick Left Y", -gamepad.left_stick_y);
-            panels.addData("Stick Left X", gamepad.left_stick_x);
-            panels.addData("Stick Right X", gamepad.right_stick_x);
-            panels.addData("Trigger Left", gamepad.left_trigger);
-            panels.addData("Trigger Right", gamepad.right_trigger);
         }
 
         // Push to Panels + DS

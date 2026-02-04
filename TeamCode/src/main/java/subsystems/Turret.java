@@ -28,10 +28,12 @@ public class Turret extends SubsystemBase {
 
     private double currentTargetDegrees = 0.0;
 
-    private double lastSetDegrees = 0.0;
-
     private boolean targetOutOfRange = false;
     private double degreesOutOfRange = 0;
+
+    private double smoothedTargetDegrees = 0.0;
+    private boolean smoothingInitialized = false;
+    private double rawTargetDegrees = 0.0;
 
     // Shooter reference for lead compensation (future pose)
     private Shooter shooter;
@@ -40,7 +42,6 @@ public class Turret extends SubsystemBase {
         this.robot = RobotHardware.getInstance();
 
         currentTargetDegrees = CENTER;
-        lastSetDegrees = CENTER;
         applyServoPosition(CENTER);
     }
 
@@ -197,7 +198,7 @@ public class Turret extends SubsystemBase {
 
     /**
      * Set the turret to a target angle.
-     * Only updates if the change exceeds MIN_CHANGE_THRESHOLD to prevent noise.
+     * EMA smoothing is applied for fluid motion; servo is written every frame.
      *
      * @param targetAngleTurret Target angle in turret degrees
      */
@@ -207,10 +208,19 @@ public class Turret extends SubsystemBase {
             Math.min(TurretConstants.HARD_STOP_CW, targetAngleTurret)
         );
 
-        if (Math.abs(targetAngleTurret - lastSetDegrees) >= TurretConstants.MIN_CHANGE_THRESHOLD) {
-            currentTargetDegrees = targetAngleTurret;
-            lastSetDegrees = targetAngleTurret;
+        rawTargetDegrees = targetAngleTurret;
+
+        // Apply EMA smoothing to reduce high-frequency oscillations
+        if (!smoothingInitialized) {
+            smoothedTargetDegrees = targetAngleTurret;
+            smoothingInitialized = true;
+        } else {
+            smoothedTargetDegrees = TurretConstants.SMOOTHING_ALPHA * targetAngleTurret
+                                  + (1.0 - TurretConstants.SMOOTHING_ALPHA) * smoothedTargetDegrees;
         }
+
+        // Always update — no deadband gating, so servo tracks continuously
+        currentTargetDegrees = smoothedTargetDegrees;
     }
 
     /**
@@ -239,6 +249,10 @@ public class Turret extends SubsystemBase {
      */
     public double getDegreesOutOfRange() {
         return degreesOutOfRange;
+    }
+
+    public double getRawTargetDegrees() {
+        return rawTargetDegrees;
     }
 
     @Override

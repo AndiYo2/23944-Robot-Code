@@ -90,9 +90,9 @@ public class CatalogModeCommand extends CommandBase {
 
     private boolean allSensorsReady() {
         RobotHardware robot = RobotHardware.getInstance();
-        return robot.intakeSensorPair.detectBall().color != EnumConstants.BallColor.None
-            && robot.transferSensorPair.detectBall().color != EnumConstants.BallColor.None
-            && robot.rampSensorPair.detectBall().color != EnumConstants.BallColor.None;
+        return robot.intakeSensorPair.quickCheck().color != EnumConstants.BallColor.None
+            && robot.transferSensorPair.quickCheck().color != EnumConstants.BallColor.None
+            && robot.rampSensorPair.quickCheck().color != EnumConstants.BallColor.None;
     }
 
     private void startSortedCatalog() {
@@ -103,9 +103,9 @@ public class CatalogModeCommand extends CommandBase {
                 SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(2)
         };
         EnumConstants.BallColor[] intakeColors = {
-                robot.intakeSensorPair.detectBall().color,
-                robot.transferSensorPair.detectBall().color,
-                robot.rampSensorPair.detectBall().color
+                robot.intakeSensorPair.quickCheck().color,
+                robot.transferSensorPair.quickCheck().color,
+                robot.rampSensorPair.quickCheck().color
         };
         actualCatalogCommand = CatalogCommands.catalogSorted(spindexer, intake, motifPattern, intakeColors);
         actualCatalogCommand.initialize();

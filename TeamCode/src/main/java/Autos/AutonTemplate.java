@@ -131,11 +131,6 @@ public abstract class AutonTemplate extends OpMode {
         // Update follower FIRST (before commands run)
         follower.update();
 
-        // Update sensors BEFORE commands execute to avoid race condition
-        robotHardware.intakeSensorPair.update();
-        robotHardware.transferSensorPair.update();
-        robotHardware.rampSensorPair.update();
-
         // Run the command scheduler
         CommandScheduler.getInstance().run();
 

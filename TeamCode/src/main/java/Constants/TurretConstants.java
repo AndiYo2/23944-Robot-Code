@@ -32,6 +32,8 @@ public class TurretConstants {
     public static double HARD_STOP_CCW = -70.0;  // Max left rotation (counter-clockwise)
     public static double CENTER = 0.0;
     public static double MIN_CHANGE_THRESHOLD = 0.5;
+    /** EMA smoothing factor for turret angle (0.0 = frozen, 1.0 = no smoothing). */
+    public static double SMOOTHING_ALPHA = 0.35;
 
     // Positive = shift aim right, Negative = shift aim left
     public static double BLUE_TURRET_TRACKING_OFFSET = -4.25;

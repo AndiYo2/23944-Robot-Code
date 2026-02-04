@@ -3,9 +3,8 @@ package Constants;
 import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.geometry.Pose;
 
-@Configurable
 public class RobotConstants {
-
+    @Configurable
     public static class Robot {
         // Robot dimensions (inches) PLEASE PLEASE PLEASE UPDATE NEXT ITTERATION DO NOT FORGET SUPPER IMPORTANT AWOIDAWODUHIJASLKJ:DFA:LSKFJS
         public static final double ROBOT_SIZE = 17; // Robot width/length (square)
@@ -17,7 +16,7 @@ public class RobotConstants {
 
         public static boolean ENABLE_TELEMETRY = true;
     }
-
+    @Configurable
     public static class Controls {
         public static final double TRIGGER_THRESHOLD = 0.3;
 

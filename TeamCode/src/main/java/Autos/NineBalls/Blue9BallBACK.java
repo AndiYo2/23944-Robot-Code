@@ -11,7 +11,6 @@ import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import commands.CommandSequenceBuilder;
 
-@Configurable
 @Autonomous(name = "Blue9BallBACK")
 public class Blue9BallBACK extends AutonTemplate {
     public static double delayBeforeShootSecond = 5;

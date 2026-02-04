@@ -33,9 +33,9 @@ public class ScanSensorsCommand extends InstantCommand {
                               DualBallDetector sensor2,
                               Consumer<ScanResults> callback) {
         super(() -> {
-            DualBallDetector.Result result0 = sensor0.detectBall();
-            DualBallDetector.Result result1 = sensor1.detectBall();
-            DualBallDetector.Result result2 = sensor2.detectBall();
+            DualBallDetector.Result result0 = sensor0.quickCheck();
+            DualBallDetector.Result result1 = sensor1.quickCheck();
+            DualBallDetector.Result result2 = sensor2.quickCheck();
             callback.accept(new ScanResults(result0, result1, result2));
         });
     }

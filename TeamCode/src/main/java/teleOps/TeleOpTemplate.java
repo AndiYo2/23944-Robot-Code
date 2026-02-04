@@ -168,7 +168,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
                 .whenPressed(() -> {
                     if (SpindexerConstants.currentMode == EnumConstants.ShootingMode.Sorted) {
                         EnumConstants.BallColor[] motifPattern = {SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(0), SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(1),SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(2)};
-                        EnumConstants.BallColor[] intakeColors = {robot.intakeSensorPair.detectBall().color,robot.transferSensorPair.detectBall().color,robot.rampSensorPair.detectBall().color};
+                        EnumConstants.BallColor[] intakeColors = {robot.intakeSensorPair.quickCheck().color,robot.transferSensorPair.quickCheck().color,robot.rampSensorPair.quickCheck().color};
                         schedule(CatalogCommands.catalogSorted(spindexer, intake, motifPattern, intakeColors));
                     } else {
                         schedule(CatalogCommands.catalogFast(spindexer, intake));
@@ -198,19 +198,15 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         loopMs = loopTimer.milliseconds();
         loopTimer.reset();
 
-        super.run();
-
         robot.pinpoint.update();
+
+        super.run();
 
         double poseX = robot.pinpoint.getPosX(DistanceUnit.INCH);
         double poseY = robot.pinpoint.getPosY(DistanceUnit.INCH);
         poseTracker.addPose(poseX, poseY);
 
         limelight.updateLimelightPose();
-
-        robot.intakeSensorPair.update();
-        robot.transferSensorPair.update();
-        robot.rampSensorPair.update();
 
         telemetry.addData("Loop", "%.1f ms (%.0f Hz)", loopMs, loopMs > 0 ? 1000.0 / loopMs : 0);
         updateTelemetry();
@@ -262,6 +258,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
     private void updateTelemetry() {
         telemetryHelper.update(telemetry, loopMs);
+        telemetry.addData("bruh:", loopMs);
 
         if (RobotConstants.Robot.ENABLE_TELEMETRY) {
             double poseX = robot.pinpoint.getPosX(DistanceUnit.INCH);

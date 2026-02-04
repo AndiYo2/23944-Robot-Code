@@ -11,11 +11,14 @@ import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
+import com.qualcomm.hardware.lynx.LynxModule;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import Constants.NamingConstants;
 import Constants.OdometryConstants;
+
+import java.util.List;
 
 public class RobotHardware {
 
@@ -100,6 +103,14 @@ public class RobotHardware {
         this.hardwareMap = hardwareMap;
         this.telemetryManager = PanelsTelemetry.INSTANCE.getTelemetry();
 
+        // ******************* BULK CACHING ******************* //
+        // AUTO mode batches all hub reads into a single bulk transaction per cycle.
+        // Re-reading the same value in one cycle triggers one extra bulk read, so
+        // subsystems should still cache values locally where possible.
+        List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
+        for (LynxModule hub : allHubs) {
+            hub.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
+        }
 
         // ******************* DRIVETRAIN ******************* //
         frontLeft = hardwareMap.get(DcMotorEx.class, NamingConstants.Drivetrain.frontLeftMotor);

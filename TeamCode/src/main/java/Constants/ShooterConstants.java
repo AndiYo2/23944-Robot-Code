@@ -31,6 +31,16 @@ public class ShooterConstants {
 
     public static boolean SHOOT_WHILE_MOVING_ENABLED = true;
 
+    // ==================== LEAD COMPENSATION FILTERING ====================
+    /** Minimum translational speed (in/sec) for lead compensation. Below this, robot is considered stationary. */
+    public static double LEAD_VELOCITY_DEADBAND = 3.0;
+    /** Minimum heading velocity (rad/sec) for heading lead compensation. Below this, heading is considered stable. */
+    public static double LEAD_HEADING_VELOCITY_DEADBAND = 0.05;
+
+    // ==================== TIME IN AIR ====================
+    /** Constant ball flight time from shooter to goal (seconds) */
+    public static double TIME_IN_AIR = 0.675;
+
     // ==================== INTERPLUT DATA ====================
     // Format: {distance_inches, value} - MUST be sorted by distance ascending
 
@@ -49,7 +59,7 @@ public class ShooterConstants {
         {113, 0.35},
         {128.6, 0.40},
         {140.5, 0.44},
-        {146, 0.47},
+        {146, 0.75},
         {150, 0.50},
         {300, 0.50}
     };
