@@ -258,7 +258,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
     private void updateTelemetry() {
         telemetryHelper.update(telemetry, loopMs);
-        telemetry.addData("bruh:", loopMs);
 
         if (RobotConstants.Robot.ENABLE_TELEMETRY) {
             double poseX = robot.pinpoint.getPosX(DistanceUnit.INCH);
