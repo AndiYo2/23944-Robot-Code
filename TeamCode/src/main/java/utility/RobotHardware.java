@@ -78,6 +78,10 @@ public class RobotHardware {
     // Volatile to ensure visibility across threads
     public volatile boolean enabled = false;
 
+    // Background sensor thread — reads color sensors off the main loop
+    private volatile boolean sensorThreadRunning = false;
+    private Thread sensorThread;
+
     /**
      * Returns the singleton instance of RobotHardware.
      * Thread-safe implementation using double-checked locking.
@@ -100,6 +104,9 @@ public class RobotHardware {
     }
 
     public void init(final HardwareMap hardwareMap) {
+        // Stop any sensor thread from a previous OpMode
+        stopSensorThread();
+
         this.hardwareMap = hardwareMap;
         this.telemetryManager = PanelsTelemetry.INSTANCE.getTelemetry();
 
@@ -195,6 +202,42 @@ public class RobotHardware {
             voltageSensor = hardwareMap.voltageSensor.iterator().next();
         } else {
             voltageSensor = null; // Will need null check when used
+        }
+
+        // ******************* BACKGROUND SENSOR THREAD ******************* //
+        startSensorThread();
+    }
+
+    private void startSensorThread() {
+        intakeSensorPair.setBackgroundMode(true);
+        transferSensorPair.setBackgroundMode(true);
+        rampSensorPair.setBackgroundMode(true);
+
+        sensorThreadRunning = true;
+        sensorThread = new Thread(() -> {
+            while (sensorThreadRunning) {
+                try {
+                    intakeSensorPair.updateCache();
+                    Thread.sleep(100);
+                    transferSensorPair.updateCache();
+                    Thread.sleep(100);
+                    rampSensorPair.updateCache();
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    break;
+                }
+            }
+        });
+        sensorThread.setDaemon(true);
+        sensorThread.setPriority(Thread.MIN_PRIORITY);
+        sensorThread.start();
+    }
+
+    public void stopSensorThread() {
+        sensorThreadRunning = false;
+        if (sensorThread != null) {
+            sensorThread.interrupt();
+            sensorThread = null;
         }
     }
 }

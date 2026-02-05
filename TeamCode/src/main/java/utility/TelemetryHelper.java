@@ -1,6 +1,5 @@
 package utility;
 
-import Constants.EnumConstants.BallColor;
 import Constants.RobotConstants;
 import Constants.SpindexerConstants;
 import com.bylazar.telemetry.TelemetryManager;
@@ -28,13 +27,6 @@ public class TelemetryHelper {
     private MecanumDrive mecanumDrive;
     private Intake intake;
     private Gamepad gamepad;
-
-    // Throttle expensive I2C sensor reads (color sensors are not covered by bulk caching)
-    private static final int SENSOR_READ_INTERVAL = 5;
-    private int loopCount = 0;
-    private DualBallDetector.Result cachedIntakeResult = new DualBallDetector.Result(false, BallColor.None, 0.0);
-    private DualBallDetector.Result cachedTransferResult = new DualBallDetector.Result(false, BallColor.None, 0.0);
-    private DualBallDetector.Result cachedRampResult = new DualBallDetector.Result(false, BallColor.None, 0.0);
 
     public TelemetryHelper() {
         this.robot = RobotHardware.getInstance();
@@ -118,16 +110,13 @@ public class TelemetryHelper {
         panels.debug("Vel: " + (int) currentVel + " / " + (int) targetVel + " tks");
 
         // ==================== SENSORS (debug text) ====================
-        // Color sensors use I2C (not covered by bulk caching) — throttle reads
-        loopCount++;
-        if (loopCount % SENSOR_READ_INTERVAL == 0) {
-            cachedIntakeResult = robot.intakeSensorPair.quickCheck();
-            cachedTransferResult = robot.transferSensorPair.quickCheck();
-            cachedRampResult = robot.rampSensorPair.quickCheck();
-        }
-        panels.debug("Intake:   " + (cachedIntakeResult.ballPresent ? "BALL" : "----") + " " + cachedIntakeResult.color + " " + (int)(cachedIntakeResult.confidence * 100) + "%");
-        panels.debug("Transfer: " + (cachedTransferResult.ballPresent ? "BALL" : "----") + " " + cachedTransferResult.color + " " + (int)(cachedTransferResult.confidence * 100) + "%");
-        panels.debug("Ramp:     " + (cachedRampResult.ballPresent ? "BALL" : "----") + " " + cachedRampResult.color + " " + (int)(cachedRampResult.confidence * 100) + "%");
+        // quickCheck() returns cached results from the background sensor thread (no I2C on main loop)
+        DualBallDetector.Result r1 = robot.intakeSensorPair.quickCheck();
+        DualBallDetector.Result r2 = robot.transferSensorPair.quickCheck();
+        DualBallDetector.Result r3 = robot.rampSensorPair.quickCheck();
+        panels.debug("Intake:   " + (r1.ballPresent ? "BALL" : "----") + " " + r1.color + " " + (int)(r1.confidence * 100) + "%");
+        panels.debug("Transfer: " + (r2.ballPresent ? "BALL" : "----") + " " + r2.color + " " + (int)(r2.confidence * 100) + "%");
+        panels.debug("Ramp:     " + (r3.ballPresent ? "BALL" : "----") + " " + r3.color + " " + (int)(r3.confidence * 100) + "%");
 
         // ==================== GRAPHS (Capture time-series) ====================
         // Shooter (reuse cached values from above)

@@ -8,6 +8,8 @@ import Constants.LimelightConstants;
 import utility.RobotHardware;
 
 import com.pedropathing.geometry.Pose;
+import com.pedropathing.geometry.PedroCoordinates;
+import com.pedropathing.ftc.InvertedFTCCoordinates;
 import Constants.OdometryConstants;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
@@ -145,22 +147,22 @@ public class Limelight extends SubsystemBase {
      */
     public void updateLimelightPose() {
         LLResult result = robot.limelight.getLatestResult();
-        if (result != null && result.isValid()) {
+        if (result != null && result.isValid()
+                && !result.getFiducialResults().isEmpty()) {
             Pose3D botpose = result.getBotpose();
             if (botpose != null) {
-                // Limelight axes are rotated -90° from Pedro's
-                // pedroX = LL_y, pedroY = -LL_x (then shift from field-center to bottom-left)
-                double x = (botpose.getPosition().y * LimelightConstants.METERS_TO_INCHES)
-                        + LimelightConstants.FIELD_CENTER_OFFSET_INCHES;
-                double y = (-botpose.getPosition().x * LimelightConstants.METERS_TO_INCHES)
-                        + LimelightConstants.FIELD_CENTER_OFFSET_INCHES;
-                double headingRad = Math.toRadians(botpose.getOrientation().getYaw(AngleUnit.DEGREES) - 90);
+                double xInches = botpose.getPosition().x * LimelightConstants.METERS_TO_INCHES;
+                double yInches = botpose.getPosition().y * LimelightConstants.METERS_TO_INCHES;
+                double headingRad = botpose.getOrientation().getYaw(AngleUnit.RADIANS);
 
-                limelightPose = new Pose(x, y, headingRad);
+                Pose ftcPose = new Pose(xInches, yInches, headingRad, InvertedFTCCoordinates.INSTANCE);
+                limelightPose = ftcPose.getAsCoordinateSystem(PedroCoordinates.INSTANCE);
+
                 lastRelocDebug = String.format("raw=(%.3fm, %.3fm, %.1f°) -> pedro=(%.1f, %.1f, %.1f°)",
                         botpose.getPosition().x, botpose.getPosition().y,
                         botpose.getOrientation().getYaw(AngleUnit.DEGREES),
-                        x, y, Math.toDegrees(headingRad));
+                        limelightPose.getX(), limelightPose.getY(),
+                        Math.toDegrees(limelightPose.getHeading()));
             }
         }
     }
@@ -179,6 +181,7 @@ public class Limelight extends SubsystemBase {
         robot.pinpoint.update();
         lastRelocDebug = String.format("APPLIED (%.1f, %.1f)",
                 limelightPose.getX(), limelightPose.getY());
+        limelightPose = null;
         return true;
     }
 

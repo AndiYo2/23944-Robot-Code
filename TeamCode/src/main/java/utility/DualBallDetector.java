@@ -44,6 +44,11 @@ public class DualBallDetector {
     private final double greenTolerance;
     private final double purpleTolerance;
 
+    // Background thread caching: when enabled, quickCheck() returns the cached
+    // result instead of reading I2C hardware on the calling thread.
+    private volatile boolean backgroundMode = false;
+    private volatile Result cachedResult = new Result(false, BallColor.None, 0.0);
+
     public DualBallDetector(ColorSensor sensor1, ColorSensor sensor2) {
         this(sensor1, sensor2, GREEN_N, PURPLE_N, GREEN_TOL, PURPLE_TOL);
     }
@@ -87,13 +92,32 @@ public class DualBallDetector {
     /**
      * Single-read fallback for immediate detection.
      * Lower confidence than averaged detectBall(), but no buffer latency.
-     * Use when you need instant detection and can't wait for buffer to fill.
+     *
+     * When background mode is active, returns the most recent cached result
+     * (updated by the background sensor thread) instead of reading hardware.
      */
     public Result quickCheck() {
+        if (backgroundMode) {
+            return cachedResult;
+        }
         Result nearResult = nearState.instantRead(near);
         Result farResult  = farState.instantRead(far);
 
         return resolveResults(nearResult, farResult);
+    }
+
+    /**
+     * Reads sensors and stores the result in the cache.
+     * Called by the background sensor thread — not by the main loop.
+     */
+    public void updateCache() {
+        Result nearResult = nearState.instantRead(near);
+        Result farResult  = farState.instantRead(far);
+        cachedResult = resolveResults(nearResult, farResult);
+    }
+
+    public void setBackgroundMode(boolean on) {
+        backgroundMode = on;
     }
 
     private Result resolveResults(Result nearResult, Result farResult) {

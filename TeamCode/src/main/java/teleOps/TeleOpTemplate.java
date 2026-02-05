@@ -206,8 +206,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         double poseY = robot.pinpoint.getPosY(DistanceUnit.INCH);
         poseTracker.addPose(poseX, poseY);
 
-        limelight.updateLimelightPose();
-
         telemetry.addData("Loop", "%.1f ms (%.0f Hz)", loopMs, loopMs > 0 ? 1000.0 / loopMs : 0);
         updateTelemetry();
     }
