@@ -9,7 +9,7 @@ import com.bylazar.configurables.annotations.Configurable;
 public class ShooterConstants {
     // ==================== FLIPPER POSITIONS ====================
     public static double FLIPPER_POSITION_EXTENDED = 0.25;
-    public static double FLIPPER_POSITION_RETRACT = 0.45;
+    public static double FLIPPER_POSITION_RETRACT = 0.46;
     public static double SHOOTER_FLICK_TIME = 0.2;
 
     // ==================== VELOCITY CONSTANTS ====================
