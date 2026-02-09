@@ -12,7 +12,7 @@ public class Spindexer0 extends OpMode {
 
     private RobotHardware robot;
 
-    private double targetPosition = 1.0;  // Always 0° (center)
+    private double targetPosition = 1.0;
 
 
     @Override

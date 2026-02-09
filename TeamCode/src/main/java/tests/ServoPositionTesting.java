@@ -54,8 +54,7 @@ public class ServoPositionTesting extends OpMode {
         shooter.setPosition(shooterPosition);
         hood.setPosition(hoodPosition);
 
-        double hoodAngle = (hoodPosition - ShooterConstants.HOOD_SERVO_CENTER_POSITION)
-                * ShooterConstants.HOOD_SERVO_DEGREES_PER_UNIT / ShooterConstants.HOOD_GEAR_RATIO;
+        double hoodAngle = hoodPosition * 355.0;
 
         telemetry.addData("--- HOOD ---", "");
         telemetry.addData("Hood Position", "%.3f", hoodPosition);

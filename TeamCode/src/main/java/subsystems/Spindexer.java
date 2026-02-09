@@ -129,40 +129,18 @@ public class Spindexer extends SubsystemBase {
         return currentState;
     }
 
-    /**
-     * Get current position in degrees.
-     */
     public int getCurrentDegrees() {
         return currentDegrees;
     }
 
-    /**
-     * Get current servo position (for debugging).
-     */
     public double getServoPosition() {
         return degreesToServoPosition(currentDegrees);
     }
 
-    /**
-     * Get current slot index (0, 1, or 2) based on degree position.
-     */
-    public int getSpindPosTracker() {
-        return (currentDegrees / DEGREE_INCREMENT) % SLOTS_COUNT;
-    }
-
-    /**
-     * Get target position in degrees (for telemetry compatibility).
-     */
     public int getTargetPosition() {
         return currentDegrees;
     }
 
-    /**
-     * Check if rotation is complete.
-     */
-    public boolean isDoneRotating() {
-        return rotationCooldown.seconds() > ROTATION_TIME;
-    }
 
     // ==================== PERIODIC UPDATES ====================
 

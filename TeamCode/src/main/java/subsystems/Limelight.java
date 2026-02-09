@@ -184,11 +184,6 @@ public class Limelight extends SubsystemBase {
         limelightPose = null;
         return true;
     }
-
-    public Pose getLimelightPose() {
-        return limelightPose;
-    }
-
     // ==================== PIPELINE SWITCHING ====================
 
     public void switchToLocalizationPipeline() {

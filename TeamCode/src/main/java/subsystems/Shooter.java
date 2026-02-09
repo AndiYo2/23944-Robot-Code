@@ -33,13 +33,10 @@ public class Shooter extends SubsystemBase {
     // Flywheel velocity (ticks/sec) - updated each loop based on distance to goal
     private double requiredVelocity = ShooterConstants.DEFAULT_VELOCITY;
 
-    // Ball flipper state machine
-    FlickState currentState = FlickState.Idle;
+    private FlickState currentState = FlickState.Idle;
     private ElapsedTime flickerTimer = new ElapsedTime();
 
-    // Manual velocity override (for tuning/testing)
-    private boolean manualVelocityMode = false;
-    private double manualVelocity = ShooterConstants.DEFAULT_VELOCITY;
+
 
     // Custom feedforward + PID state
     private ElapsedTime loopTimer = new ElapsedTime();
@@ -63,7 +60,6 @@ public class Shooter extends SubsystemBase {
     // InterpLUT instances for velocity, hood angle, and time-in-air lookup
     private InterpLUT velocityLUT;
     private InterpLUT hoodLUT;
-    private InterpLUT timeInAirLUT;
 
     // Current required hood angle
     private double requiredHoodAngle = ShooterConstants.HOOD_DEFAULT_ANGLE;
@@ -112,12 +108,6 @@ public class Shooter extends SubsystemBase {
             hoodLUT.add(entry[0], entry[1]);
         }
         hoodLUT.createLUT();
-
-        timeInAirLUT = new InterpLUT();
-        for (double[] entry : ShooterConstants.TIME_IN_AIR_DATA) {
-            timeInAirLUT.add(entry[0], entry[1]);
-        }
-        timeInAirLUT.createLUT();
     }
 
     public void setTurret(Turret turret) {
@@ -282,20 +272,6 @@ public class Shooter extends SubsystemBase {
         return futurePose;
     }
 
-    /**
-     * Get the lead-adjusted distance (distance from predicted future position to goal).
-     */
-    public double getLeadAdjustedDistance() {
-        return leadAdjustedDistance;
-    }
-
-    /**
-     * Get current estimated time-in-air.
-     */
-    public double getCurrentTimeInAir() {
-        return currentTimeInAir;
-    }
-
     private void updateVelocityFromDistance() {
         if (ShooterConstants.SHOOT_WHILE_MOVING_ENABLED) {
             updateLeadCompensation();
@@ -373,57 +349,6 @@ public class Shooter extends SubsystemBase {
      */
     public double getTargetVelocity() {
         return requiredVelocity;
-    }
-
-    /**
-     * Get controller outputs for tuning telemetry.
-     * Returns [ffOutput, pidOutput, totalPower, acceleration]
-     */
-    public double[] getControllerOutputs() {
-        return new double[] { lastFfOutput, lastPidOutput, lastTotalPower, lastAcceleration };
-    }
-
-    /**
-     * Check if tuning mode is active.
-     */
-    public boolean isTuningMode() {
-        return ShooterConstants.ShooterTuning.TUNING_MODE;
-    }
-
-    /**
-     * Get current distance to target for tuning telemetry.
-     */
-    public double getTuningDistance() {
-        return getDistanceToTarget();
-    }
-
-    /**
-     * Get current set velocity for tuning telemetry.
-     */
-    public double getTuningSetVelocity() {
-        return requiredVelocity;
-    }
-
-    /**
-     * Get current set hood angle for tuning telemetry.
-     */
-    public double getTuningSetHoodAngle() {
-        return requiredHoodAngle;
-    }
-
-    /**
-     * Set manual velocity for tuning.
-     */
-    public void setManualVelocity(double velocity) {
-        manualVelocityMode = true;
-        manualVelocity = velocity;
-    }
-
-    /**
-     * Disable manual velocity mode.
-     */
-    public void disableManualVelocity() {
-        manualVelocityMode = false;
     }
 
     @Override

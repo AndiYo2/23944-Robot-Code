@@ -19,9 +19,6 @@ public class OdometryConstants {
 
     public static double yawScalar = .998148;
 
-    public static Pose redParkZone = new Pose(38.75, 32.5, Math.toRadians(90));
-    public static Pose blueParkZone = new Pose(105.25, 32.5, Math.toRadians(90));
-
 
     public static double BLUE_GOAL_X = 3.0;
     public static double BLUE_GOAL_Y = 140.0;

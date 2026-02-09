@@ -223,32 +223,13 @@ public class Turret extends SubsystemBase {
         currentTargetDegrees = smoothedTargetDegrees;
     }
 
-    /**
-     * Get the current target angle in turret degrees.
-     */
+
     public double getTargetTurretAngle() {
         return currentTargetDegrees;
     }
 
-    /**
-     * Get the current servo position (0 to 1).
-     */
-    public double getServoPosition() {
-        return turretDegreesToServoPosition(currentTargetDegrees);
-    }
-
-    /**
-     * Check if target is out of range.
-     */
     public boolean isTargetOutOfRange() {
         return targetOutOfRange;
-    }
-
-    /**
-     * Get how many degrees the target is out of range.
-     */
-    public double getDegreesOutOfRange() {
-        return degreesOutOfRange;
     }
 
     public double getRawTargetDegrees() {

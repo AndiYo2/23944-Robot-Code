@@ -6,9 +6,7 @@ package Constants;
 public class EnumConstants {
     public enum FieldState {
         IdleZone,
-        ShootingZone,
-        ParkZone,
-        PenaltyZone
+        ShootingZone
     }
 
     public enum AllianceColor {
@@ -41,7 +39,6 @@ public class EnumConstants {
     public enum DriveState {
         Idle,
         FieldRelative,
-        RobotRelative,
         SlowMode,
         AutoDriving,
         Parking,

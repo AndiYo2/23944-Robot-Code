@@ -61,23 +61,4 @@ public class ShootingValidator {
             return false;
         }
     }
-
-
-    public String getStatus(boolean overrideRequested) {
-        FieldState currentFieldState = odometry.getFieldState();
-        boolean inShootingZone = (currentFieldState == FieldState.ShootingZone);
-
-        if (inShootingZone) {
-            return "ALLOWED";
-        } else if (overrideRequested) {
-            return "OVERRIDE";
-        } else {
-            return "BLOCKED";
-        }
-    }
-
-
-    public boolean isInShootingZone() {
-        return odometry.getFieldState() == FieldState.ShootingZone;
-    }
 }

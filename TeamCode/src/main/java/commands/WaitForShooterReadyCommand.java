@@ -26,7 +26,6 @@ public class WaitForShooterReadyCommand extends CommandBase {
 
     @Override
     public void execute() {
-        // Nothing to do - just waiting lmao
     }
 
     @Override
@@ -36,6 +35,5 @@ public class WaitForShooterReadyCommand extends CommandBase {
 
     @Override
     public void end(boolean interrupted) {
-        // Nothing to clean up
     }
 }

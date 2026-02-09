@@ -55,22 +55,7 @@ public class MecanumDrive extends SubsystemBase {
         return robot.pinpoint.getHeading(AngleUnit.RADIANS) - headingOffset;
     }
 
-    /**
-     * Updates the follower for position hold during parking.
-     * Call this in the main loop when parking is active.
-     */
-    public void updateFollower() {
-        if (activeFollower != null) {
-            activeFollower.update();
-        }
-    }
 
-    public void stop() {
-        robot.frontLeft.setPower(0);
-        robot.backLeft.setPower(0);
-        robot.frontRight.setPower(0);
-        robot.backRight.setPower(0);
-    }
 
     public void drive(double ly, double lx, double rx) {
         // Auto-transition from Idle when joystick input detected
@@ -118,11 +103,9 @@ public class MecanumDrive extends SubsystemBase {
     private void stateMachinePeriodic() {
         switch (currentState) {
             case Idle:
-                // Not moving
                 break;
             case FieldRelative:
             case SlowMode:
-                // Handled by drive() method
                 break;
             case AutoDriving:
                 // Check if autonomous navigation is complete
@@ -141,10 +124,6 @@ public class MecanumDrive extends SubsystemBase {
     // ****** STATE QUERIES ******
     public DriveState getCurrentState() {
         return currentState;
-    }
-
-    public boolean isIdle() {
-        return currentState == DriveState.Idle;
     }
 
     @Override

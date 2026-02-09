@@ -119,7 +119,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         telemetryHelper = new TelemetryHelper();
         telemetryHelper.setSubsystems(shooter, turret, spindexer, odometry, limelight,
                 mecanumDrive, intake);
-        telemetryHelper.setGamepad(gamepad1);
 
         poseTracker = new SimplePoseTracker();
         FieldDrawing.init();

@@ -27,6 +27,5 @@ public class RotateCCWCommand extends CommandBase {
 
     @Override
     public void end(boolean interrupted) {
-        // No cleanup needed
     }
 }

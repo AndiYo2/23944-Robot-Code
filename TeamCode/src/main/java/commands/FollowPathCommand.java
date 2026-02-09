@@ -81,7 +81,6 @@ public class FollowPathCommand extends CommandBase {
 
     @Override
     public void execute() {
-        // Follower.update() is called in the main loop, nothing to do here
     }
 
     @Override
@@ -91,6 +90,5 @@ public class FollowPathCommand extends CommandBase {
 
     @Override
     public void end(boolean interrupted) {
-        // Nothing to clean up
     }
 }

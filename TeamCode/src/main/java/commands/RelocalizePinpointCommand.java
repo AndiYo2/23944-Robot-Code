@@ -49,8 +49,4 @@ public class RelocalizePinpointCommand extends CommandBase {
     public void end(boolean interrupted) {
         limelight.switchToMotifPipeline();
     }
-
-    public boolean wasSuccessful() {
-        return success;
-    }
 }

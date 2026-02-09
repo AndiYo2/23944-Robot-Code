@@ -5,8 +5,12 @@ import utility.SpindexerAndMotifStatus;
 
 @Configurable
 public class LimelightConstants {
-    public static SpindexerAndMotifStatus.MotifPattern motifPattern =
-        new SpindexerAndMotifStatus.MotifPattern(EnumConstants.BallColor.Purple, EnumConstants.BallColor.Purple, EnumConstants.BallColor.Green);
+    public static final SpindexerAndMotifStatus.MotifPattern motifPattern = new SpindexerAndMotifStatus.MotifPattern();
+
+    static {
+        SpindexerAndMotifStatus.MotifPattern.setBallPattern(
+            EnumConstants.BallColor.Purple, EnumConstants.BallColor.Purple, EnumConstants.BallColor.Green);
+    }
 
     public static final EnumConstants.BallColor[] APRILTAG_21_PATTERN = {
         EnumConstants.BallColor.Green, EnumConstants.BallColor.Purple, EnumConstants.BallColor.Purple

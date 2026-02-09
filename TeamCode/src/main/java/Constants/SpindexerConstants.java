@@ -1,16 +1,12 @@
 package Constants;
 
 import com.bylazar.configurables.annotations.Configurable;
-import utility.SpindexerAndMotifStatus;
 
 /**
  * Spindexer subsystem constants.
  */
 @Configurable
 public class SpindexerConstants {
-    public static SpindexerAndMotifStatus.SpindexerPattern spindexerPattern =
-        new SpindexerAndMotifStatus.SpindexerPattern(EnumConstants.BallColor.None, EnumConstants.BallColor.None, EnumConstants.BallColor.None);
-
     // Default preload pattern for autonomous (skips cataloging)
     // Slot 0 = Intake, Slot 1 = Shooter, Slot 2 = Top Storage
     public static final EnumConstants.BallColor[] DEFAULT_PRELOAD = {
@@ -33,7 +29,6 @@ public class SpindexerConstants {
     //   Slot 2: 120°, 300°
     public static final int DEGREE_INCREMENT = 60;          // One slot = 60°
     public static final int MAX_SERVO_DEGREES = 300;        // Max usable range
-    public static final int SLOTS_COUNT = 3;
 
     public static final int CW_WRAP_TO_DEG = 180;           // At 300°, CW wraps to 180°
     public static final int CCW_WRAP_TO_DEG = 120;          // At 0°, CCW wraps to 120°

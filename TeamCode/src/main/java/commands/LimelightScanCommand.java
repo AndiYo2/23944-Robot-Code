@@ -57,9 +57,4 @@ public class LimelightScanCommand extends CommandBase {
     @Override
     public void end(boolean interrupted) {
     }
-
-    /** Returns true if the command completed due to timeout rather than detection */
-    public boolean didTimeout() {
-        return timedOut;
-    }
 }

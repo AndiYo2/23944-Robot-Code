@@ -6,7 +6,7 @@ import com.pedropathing.geometry.Pose;
 public class RobotConstants {
     @Configurable
     public static class Robot {
-        // Robot dimensions (inches) PLEASE PLEASE PLEASE UPDATE NEXT ITTERATION DO NOT FORGET SUPPER IMPORTANT AWOIDAWODUHIJASLKJ:DFA:LSKFJS
+        // Robot dimensions (inches) — UPDATE EACH ITERATION
         public static final double ROBOT_SIZE = 17; // Robot width/length (square)
         public static final double HALF_SIZE = ROBOT_SIZE / 2.0; // Distance from center to edge
 

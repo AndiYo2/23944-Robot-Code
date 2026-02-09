@@ -7,7 +7,6 @@ import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.math.Vector;
 import com.pedropathing.paths.Path;
-import com.pedropathing.paths.PathChain;
 import com.pedropathing.util.PoseHistory;
 
 /**
@@ -110,12 +109,6 @@ public class FieldDrawing {
         panelsField.setStyle(style);
         panelsField.moveCursor(points[0][0], points[0][1]);
         panelsField.line(points[1][0], points[1][1]);
-    }
-
-    public static void drawPath(PathChain pathChain, Style style) {
-        for (int i = 0; i < pathChain.size(); i++) {
-            drawPath(pathChain.getPath(i), style);
-        }
     }
 
     public static void drawPoseHistory(PoseHistory poseTracker, Style style) {

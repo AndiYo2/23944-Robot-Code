@@ -31,22 +31,9 @@ public class SpindexerAndMotifStatus {
             EnumConstants.BallColor.None
         };
 
-        /**
-         * Constructor to initialize pattern. Note: affects static state.
-         * Prefer using static setBallPattern() method for clarity.
-         */
-        public SpindexerPattern(EnumConstants.BallColor zero, EnumConstants.BallColor one, EnumConstants.BallColor two) {
-            spindexerPattern = new EnumConstants.BallColor[]{zero, one, two};
-        }
-
         /** Gets the ball color in the specified slot (0-2) */
         public static synchronized EnumConstants.BallColor getBallInSlotX(int x) {
             return spindexerPattern[x];
-        }
-
-        /** Sets the specified slot to None (empty) */
-        public static synchronized void setBallPatternNone(int x) {
-            spindexerPattern[x] = EnumConstants.BallColor.None;
         }
 
         /** Sets the ball color in the specified slot */
@@ -78,13 +65,6 @@ public class SpindexerAndMotifStatus {
             spindexerPattern[0] = spindexerPattern[1];
             spindexerPattern[1] = spindexerPattern[2];
             spindexerPattern[2] = temp0;
-        }
-
-        /** Returns true if all three slots contain balls */
-        public static boolean isFull() {
-            return spindexerPattern[0] != EnumConstants.BallColor.None
-                    && spindexerPattern[1] != EnumConstants.BallColor.None
-                    && spindexerPattern[2] != EnumConstants.BallColor.None;
         }
 
         /** Returns formatted string showing pattern: [I:color S:color T:color] */
@@ -119,22 +99,9 @@ public class SpindexerAndMotifStatus {
             EnumConstants.BallColor.None
         };
 
-        /**
-         * Constructor to initialize pattern. Note: affects static state.
-         * Prefer using static setBallPattern() method for clarity.
-         */
-        public MotifPattern(EnumConstants.BallColor zero, EnumConstants.BallColor one, EnumConstants.BallColor two) {
-            ballPattern = new EnumConstants.BallColor[]{zero, one, two};
-        }
-
         /** Gets the ball color in the specified slot (0-2) */
         public static synchronized EnumConstants.BallColor getBallColorInSlotX(int x) {
             return ballPattern[x];
-        }
-
-        /** Sets the ball pattern from an array */
-        public static synchronized void setBallPattern(EnumConstants.BallColor[] pattern) {
-            ballPattern = pattern;
         }
 
         /** Sets all three slot colors at once */

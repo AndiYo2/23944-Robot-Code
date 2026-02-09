@@ -3,7 +3,6 @@ package utility;
 import Constants.RobotConstants;
 import Constants.SpindexerConstants;
 import com.bylazar.telemetry.TelemetryManager;
-import com.qualcomm.robotcore.hardware.Gamepad;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
@@ -26,7 +25,6 @@ public class TelemetryHelper {
     private Limelight limelight;
     private MecanumDrive mecanumDrive;
     private Intake intake;
-    private Gamepad gamepad;
 
     public TelemetryHelper() {
         this.robot = RobotHardware.getInstance();
@@ -43,10 +41,6 @@ public class TelemetryHelper {
         this.limelight = limelight;
         this.mecanumDrive = mecanumDrive;
         this.intake = intake;
-    }
-
-    public void setGamepad(Gamepad gamepad) {
-        this.gamepad = gamepad;
     }
 
     /**
@@ -72,7 +66,7 @@ public class TelemetryHelper {
         double distance = shooter.getDistanceToTarget();
         double turretAngle = turret.getTargetTurretAngle();
 
-        // ==================== STATUS (debug text) ====================
+        // Status
         panels.debug("Pattern: " + SpindexerAndMotifStatus.SpindexerPattern.getSpindexerPatternString());
         panels.debug("Mode: " + SpindexerConstants.currentMode);
         panels.debug("Zone: " + odometry.getFieldState());
@@ -96,21 +90,20 @@ public class TelemetryHelper {
         }
         panels.debug("Shooter Ready: " + shooter.isAtTargetVelocity());
 
-        // ==================== POSITION (debug text) ====================
+        // Position
         double x = robot.pinpoint.getPosX(DistanceUnit.INCH);
         double y = robot.pinpoint.getPosY(DistanceUnit.INCH);
         double heading = Math.toDegrees(robot.pinpoint.getHeading(AngleUnit.RADIANS));
         panels.debug("Pose: (" + (int)(x * 10) / 10.0 + ", " + (int)(y * 10) / 10.0 + ") " + (int)(heading * 10) / 10.0 + "°");
         panels.debug("Spind: " + spindexer.getCurrentDegrees() + "°");
 
-        // ==================== TARGETING (debug text) ====================
+        // Targeting
         panels.debug("Turret: " + (int)(turretAngle * 10) / 10.0 + "°");
         panels.debug("Hood: " + (int)(hoodAngle * 10) / 10.0 + "°");
         panels.debug("Dist: " + (int)(distance * 10) / 10.0 + " in");
         panels.debug("Vel: " + (int) currentVel + " / " + (int) targetVel + " tks");
 
-        // ==================== SENSORS (debug text) ====================
-        // quickCheck() returns cached results from the background sensor thread (no I2C on main loop)
+        // Sensors
         DualBallDetector.Result r1 = robot.intakeSensorPair.quickCheck();
         DualBallDetector.Result r2 = robot.transferSensorPair.quickCheck();
         DualBallDetector.Result r3 = robot.rampSensorPair.quickCheck();
@@ -118,25 +111,22 @@ public class TelemetryHelper {
         panels.debug("Transfer: " + (r2.ballPresent ? "BALL" : "----") + " " + r2.color + " " + (int)(r2.confidence * 100) + "%");
         panels.debug("Ramp:     " + (r3.ballPresent ? "BALL" : "----") + " " + r3.color + " " + (int)(r3.confidence * 100) + "%");
 
-        // ==================== GRAPHS (Capture time-series) ====================
-        // Shooter (reuse cached values from above)
+        // Graphs
         panels.addData("Shooter Velocity (actual)", currentVel);
         panels.addData("Shooter Velocity (target)", targetVel);
         panels.addData("Velocity Error", shooter.getVelocityError());
         panels.addData("Hood Angle", hoodAngle);
         panels.addData("Distance to Target", distance);
 
-        // Turret (reuse cached turretAngle)
+
         panels.addData("Turret Target Angle", turretAngle);
         panels.addData("Turret Degrees to Goal", turret.getDegreesToGoal());
         panels.addData("Turret Raw Angle", turret.getRawTargetDegrees());
 
-        // Battery voltage
         if (robot.voltageSensor != null) {
             panels.addData("Battery Voltage", robot.voltageSensor.getVoltage());
         }
 
-        // Push to Panels + DS
         panels.update(telemetry);
     }
 }

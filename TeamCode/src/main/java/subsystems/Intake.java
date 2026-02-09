@@ -30,7 +30,6 @@ public class Intake extends SubsystemBase {
     private void stateMachinePeriodic() {
         switch (currentState) {
             case Idle:
-                // Motors stopped
                 break;
             case Intaking:
                 setIntakePower(1.0);
@@ -65,16 +64,6 @@ public class Intake extends SubsystemBase {
         currentState = IntakeState.Intaking;
     }
 
-    /**
-     * Start intake and automatically stop after duration.
-     * Non-blocking - returns immediately, intake stops in periodic().
-     */
-    public void runIntakeBeltForDuration(double seconds) {
-        currentState = IntakeState.ReversedInBeltGo;
-        timedIntakeDuration = seconds;
-        timedIntakeTimer.reset();
-        timedIntakeActive = true;
-    }
     public void stopIntake(){
         currentState = IntakeState.Idle;
         setIntakePower(0);
