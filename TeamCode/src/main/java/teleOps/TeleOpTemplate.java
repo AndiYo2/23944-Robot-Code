@@ -14,8 +14,6 @@ import com.arcrobotics.ftclib.command.button.Trigger;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.pedropathing.geometry.Pose;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import subsystems.*;
 import utility.*;
 import commands.ShootingCommands;
@@ -39,7 +37,8 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     private SimplePoseTracker poseTracker;
     private double loopMs;
 
-
+    // Pre-allocated array for getTransformedControls() to avoid GC pressure
+    private final double[] controlsArray = new double[3];
 
 
     /**
@@ -197,13 +196,14 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         loopMs = loopTimer.milliseconds();
         loopTimer.reset();
 
+        robot.clearBulkCache();
         robot.pinpoint.update();
+        robot.updateCachedPose();
+        robot.pollNextSensor();
 
         super.run();
 
-        double poseX = robot.pinpoint.getPosX(DistanceUnit.INCH);
-        double poseY = robot.pinpoint.getPosY(DistanceUnit.INCH);
-        poseTracker.addPose(poseX, poseY);
+        poseTracker.addPose(robot.cachedPoseX, robot.cachedPoseY);
 
         telemetry.addData("Loop", "%.1f ms (%.0f Hz)", loopMs, loopMs > 0 ? 1000.0 / loopMs : 0);
         updateTelemetry();
@@ -215,7 +215,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
      * Red alliance inverts X and Y axes to account for mirrored starting position.
      * Use SWAP_ALLIANCE_CONTROLS in RobotConstants to swap which alliance gets inverted controls.
      *
-     * @return double array [fieldY, fieldX, rotation]
+     * @return double array [fieldY, fieldX, rotation] — pre-allocated, do NOT store reference
      */
     private double[] getTransformedControls() {
         double rawY = -gamepad1.left_stick_y;
@@ -228,10 +228,15 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
         if (RobotConstants.Robot.allianceColor != null &&
                 RobotConstants.Robot.allianceColor == invertedAlliance) {
-            return new double[] {-rawY, -rawX, rawRotation};
+            controlsArray[0] = -rawY;
+            controlsArray[1] = -rawX;
+            controlsArray[2] = rawRotation;
         } else {
-            return new double[] {rawY, rawX, rawRotation};
+            controlsArray[0] = rawY;
+            controlsArray[1] = rawX;
+            controlsArray[2] = rawRotation;
         }
+        return controlsArray;
     }
 
     /**
@@ -257,10 +262,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         telemetryHelper.update(telemetry, loopMs);
 
         if (RobotConstants.Robot.ENABLE_TELEMETRY) {
-            double poseX = robot.pinpoint.getPosX(DistanceUnit.INCH);
-            double poseY = robot.pinpoint.getPosY(DistanceUnit.INCH);
-            double poseH = robot.pinpoint.getHeading(AngleUnit.RADIANS);
-            Pose currentPose = new Pose(poseX, poseY, poseH);
+            Pose currentPose = new Pose(robot.cachedPoseX, robot.cachedPoseY, robot.cachedHeading);
             FieldDrawing.drawTeleOpDebug(
                     poseTracker.getXArray(),
                     poseTracker.getYArray(),

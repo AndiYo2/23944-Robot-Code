@@ -7,11 +7,6 @@ import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
-import org.firstinspires.ftc.robotcore.external.navigation.UnnormalizedAngleUnit;
-
 import Constants.EnumConstants.FlickState;
 import Constants.FieldMap;
 import Constants.TurretConstants;
@@ -68,6 +63,20 @@ public class Shooter extends SubsystemBase {
     private double leadAdjustedDistance = ShooterConstants.DEFAULT_DISTANCE;
     private double currentTimeInAir = 0.0;
     private double[] futurePose = new double[3]; // {x, y, headingRad}
+
+    // Hood servo dirty flag — only write when position changes
+    private double lastHoodServoPosition = -1.0;
+    private static final double SERVO_EPSILON = 0.001;
+
+    // Pre-allocated array for getTurretFieldPositionFrom() to avoid GC pressure
+    private final double[] turretFieldPosTemp = new double[2];
+
+    // Pre-computed turret offset in polar form (same as Turret class)
+    private static final double TURRET_OFFSET_MAG = Math.sqrt(
+            TurretConstants.TURRET_OFFSET_X * TurretConstants.TURRET_OFFSET_X +
+            TurretConstants.TURRET_OFFSET_Y * TurretConstants.TURRET_OFFSET_Y);
+    private static final double TURRET_OFFSET_ANGLE = Math.atan2(
+            TurretConstants.TURRET_OFFSET_Y, TurretConstants.TURRET_OFFSET_X);
 
 
     public Shooter() {
@@ -167,7 +176,7 @@ public class Shooter extends SubsystemBase {
     }
 
     /**
-     * Set the hood to a specific angle.
+     * Set the hood to a specific angle, gated behind dirty flag.
      * @param angleDegrees Target angle (0=vertical, 90=horizontal)
      */
     public void setHoodAngle(double angleDegrees) {
@@ -175,7 +184,10 @@ public class Shooter extends SubsystemBase {
                                Math.min(ShooterConstants.HOOD_MAX_ANGLE, angleDegrees));
 
         double servoPosition = hoodAngleToServoPosition(angleDegrees);
-        robot.shooterHood.setPosition(servoPosition);
+        if (Math.abs(servoPosition - lastHoodServoPosition) > SERVO_EPSILON) {
+            robot.shooterHood.setPosition(servoPosition);
+            lastHoodServoPosition = servoPosition;
+        }
         requiredHoodAngle = angleDegrees;
     }
 
@@ -197,18 +209,15 @@ public class Shooter extends SubsystemBase {
 
     /**
      * Compute the predicted future robot pose based on current velocity and time-in-air.
-     * Uses one iteration of refinement: compute distance from current pose -> timeInAir ->
-     * future pose -> refined distance from future pose.
+     * Single-pass: getTimeInAirFromDistance() returns a constant, so refinement is unnecessary.
      */
     private void updateLeadCompensation() {
-        Pose2D currentPose = robot.pinpoint.getPosition();
-
-        double curX = currentPose.getX(DistanceUnit.INCH);
-        double curY = currentPose.getY(DistanceUnit.INCH);
-        double curH = currentPose.getHeading(AngleUnit.RADIANS);
-        double velX = robot.pinpoint.getVelX(DistanceUnit.INCH); // inches/sec
-        double velY = robot.pinpoint.getVelY(DistanceUnit.INCH); // inches/sec
-        double velH = robot.pinpoint.getHeadingVelocity(UnnormalizedAngleUnit.RADIANS); // rad/sec
+        double curX = robot.cachedPoseX;
+        double curY = robot.cachedPoseY;
+        double curH = robot.cachedHeading;
+        double velX = robot.cachedVelX;
+        double velY = robot.cachedVelY;
+        double velH = robot.cachedHeadingVel;
 
         // Zero out noise-level velocities to prevent jitter when stationary
         double speed = Math.sqrt(velX * velX + velY * velY);
@@ -220,48 +229,32 @@ public class Shooter extends SubsystemBase {
             velH = 0.0;
         }
 
-        // First pass: use current distance to estimate timeInAir
-        double currentDistance = getDistanceToTarget();
-        double tof = getTimeInAirFromDistance(currentDistance);
+        // Single pass: timeInAir is constant, so refinement produces identical results
+        double tof = ShooterConstants.TIME_IN_AIR;
 
         // Predict future pose
-        double futureX = curX + velX * tof;
-        double futureY = curY + velY * tof;
-        double futureH = curH + velH * tof;
-
-        // Second pass: refine using distance from future pose
-        double[] futureTurretPos = getTurretFieldPositionFrom(futureX, futureY, futureH);
-        Pose goalPosition = FieldMap.getGoalPosition();
-        double dx = goalPosition.getX() - futureTurretPos[0];
-        double dy = goalPosition.getY() - futureTurretPos[1];
-        double refinedDistance = Math.sqrt(dx * dx + dy * dy);
-        tof = getTimeInAirFromDistance(refinedDistance);
-
-        // Final future pose with refined timeInAir
         futurePose[0] = curX + velX * tof;
         futurePose[1] = curY + velY * tof;
         futurePose[2] = curH + velH * tof;
 
-        // Recompute distance from final future turret position
-        futureTurretPos = getTurretFieldPositionFrom(futurePose[0], futurePose[1], futurePose[2]);
-        dx = goalPosition.getX() - futureTurretPos[0];
-        dy = goalPosition.getY() - futureTurretPos[1];
+        // Compute distance from future turret position using pre-computed polar offset
+        double[] futureTurretPos = getTurretFieldPositionFrom(futurePose[0], futurePose[1], futurePose[2]);
+        Pose goalPosition = FieldMap.getGoalPosition();
+        double dx = goalPosition.getX() - futureTurretPos[0];
+        double dy = goalPosition.getY() - futureTurretPos[1];
         leadAdjustedDistance = Math.sqrt(dx * dx + dy * dy);
         currentTimeInAir = tof;
     }
 
     /**
      * Compute turret field position from a hypothetical robot pose.
-     * Mirrors Turret.getTurretFieldPosition() logic for a given pose.
+     * Uses pre-computed polar offset and returns pre-allocated array.
      */
     private double[] getTurretFieldPositionFrom(double robotX, double robotY, double robotHeadingRad) {
-        double turretX = robotX +
-                (TurretConstants.TURRET_OFFSET_X * Math.sin(robotHeadingRad) +
-                 TurretConstants.TURRET_OFFSET_Y * Math.cos(robotHeadingRad));
-        double turretY = robotY +
-                (-TurretConstants.TURRET_OFFSET_X * Math.cos(robotHeadingRad) +
-                 TurretConstants.TURRET_OFFSET_Y * Math.sin(robotHeadingRad));
-        return new double[]{turretX, turretY};
+        double combinedAngle = robotHeadingRad + TURRET_OFFSET_ANGLE;
+        turretFieldPosTemp[0] = robotX + TURRET_OFFSET_MAG * Math.sin(combinedAngle);
+        turretFieldPosTemp[1] = robotY - TURRET_OFFSET_MAG * Math.cos(combinedAngle);
+        return turretFieldPosTemp;
     }
 
     /**

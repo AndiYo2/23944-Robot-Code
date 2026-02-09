@@ -3,12 +3,7 @@ package subsystems;
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.pedropathing.geometry.Pose;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
-
 import Constants.EnumConstants;
-import Constants.EnumConstants.FieldState;
 import Constants.FieldMap;
 import Constants.RobotConstants;
 import Constants.ShooterConstants;
@@ -38,6 +33,24 @@ public class Turret extends SubsystemBase {
     // Shooter reference for lead compensation (future pose)
     private Shooter shooter;
 
+    // Cached degrees-to-goal from periodic() — avoids duplicate calculation in telemetry
+    private double lastDegreesToGoal = 0.0;
+
+    // Servo dirty flag — only write when position changes by more than epsilon
+    private double lastServoPosition = -1.0;
+    private static final double SERVO_EPSILON = 0.001;
+
+    // Pre-allocated array for getTurretFieldPosition() to avoid GC pressure
+    private final double[] turretFieldPos = new double[2];
+
+    // Pre-computed turret offset in polar form (magnitude and angle)
+    // Avoids recomputing sin/cos of offset every call — these never change at runtime
+    private static final double TURRET_OFFSET_MAG = Math.sqrt(
+            TurretConstants.TURRET_OFFSET_X * TurretConstants.TURRET_OFFSET_X +
+            TurretConstants.TURRET_OFFSET_Y * TurretConstants.TURRET_OFFSET_Y);
+    private static final double TURRET_OFFSET_ANGLE = Math.atan2(
+            TurretConstants.TURRET_OFFSET_Y, TurretConstants.TURRET_OFFSET_X);
+
     public Turret() {
         this.robot = RobotHardware.getInstance();
 
@@ -62,30 +75,32 @@ public class Turret extends SubsystemBase {
 
 
     /**
-     * Apply the current target position to the servo.
+     * Apply the current target position to the servo, gated behind dirty flag.
      */
     private void applyServoPosition(double turretDegrees) {
         double servoPosition = turretDegreesToServoPosition(turretDegrees);
-        robot.turretServo.setPosition(servoPosition);
+        if (Math.abs(servoPosition - lastServoPosition) > SERVO_EPSILON) {
+            robot.turretServo.setPosition(servoPosition);
+            lastServoPosition = servoPosition;
+        }
     }
 
     public void setShooter(Shooter shooter) {
         this.shooter = shooter;
     }
 
+    /**
+     * Compute turret field position from cached robot pose using pre-computed polar offset.
+     * Returns pre-allocated array — do NOT store the reference across calls.
+     */
     public double[] getTurretFieldPosition() {
-        Pose2D currentPose = robot.pinpoint.getPosition();
-        double robotHeading = currentPose.getHeading(AngleUnit.RADIANS);
+        double robotHeading = robot.cachedHeading;
 
-        // Apply 2D rotation to transform robot-relative offset to field coordinates
-        double turretX = currentPose.getX(DistanceUnit.INCH) +
-                        (TurretConstants.TURRET_OFFSET_X * Math.sin(robotHeading) +
-                         TurretConstants.TURRET_OFFSET_Y * Math.cos(robotHeading));
-        double turretY = currentPose.getY(DistanceUnit.INCH) +
-                        (-TurretConstants.TURRET_OFFSET_X * Math.cos(robotHeading) +
-                         TurretConstants.TURRET_OFFSET_Y * Math.sin(robotHeading));
+        double combinedAngle = robotHeading + TURRET_OFFSET_ANGLE;
+        turretFieldPos[0] = robot.cachedPoseX + TURRET_OFFSET_MAG * Math.sin(combinedAngle);
+        turretFieldPos[1] = robot.cachedPoseY - TURRET_OFFSET_MAG * Math.cos(combinedAngle);
 
-        return new double[]{turretX, turretY};
+        return turretFieldPos;
     }
 
     public void setTurretDegree(double degree) {
@@ -93,7 +108,6 @@ public class Turret extends SubsystemBase {
     }
 
     public double getDegreesToGoal() {
-        Pose2D currentPose = robot.pinpoint.getPosition();
         Pose goalPosition = FieldMap.getGoalPosition();
 
         // Get turret field position (accounts for offset from robot center)
@@ -106,7 +120,7 @@ public class Turret extends SubsystemBase {
         double fieldAngleRad = Math.atan2(deltaY, deltaX);
 
         // Convert to robot-relative by subtracting robot heading
-        double robotHeadingRad = currentPose.getHeading(AngleUnit.RADIANS);
+        double robotHeadingRad = robot.cachedHeading;
         double turretAngleRad = fieldAngleRad - robotHeadingRad;
 
         // Convert to degrees and normalize to [-180, 180]
@@ -143,13 +157,10 @@ public class Turret extends SubsystemBase {
     public double getDegreesToGoalFromPosition(double robotX, double robotY, double robotHeadingRad) {
         Pose goalPosition = FieldMap.getGoalPosition();
 
-        // Calculate turret field position from hypothetical robot position
-        double turretX = robotX +
-                (TurretConstants.TURRET_OFFSET_X * Math.sin(robotHeadingRad) +
-                 TurretConstants.TURRET_OFFSET_Y * Math.cos(robotHeadingRad));
-        double turretY = robotY +
-                (-TurretConstants.TURRET_OFFSET_X * Math.cos(robotHeadingRad) +
-                 TurretConstants.TURRET_OFFSET_Y * Math.sin(robotHeadingRad));
+        // Calculate turret field position using pre-computed polar offset
+        double combinedAngle = robotHeadingRad + TURRET_OFFSET_ANGLE;
+        double turretX = robotX + TURRET_OFFSET_MAG * Math.sin(combinedAngle);
+        double turretY = robotY - TURRET_OFFSET_MAG * Math.cos(combinedAngle);
 
         // Vector from turret to goal
         double deltaX = goalPosition.getX() - turretX;
@@ -236,9 +247,15 @@ public class Turret extends SubsystemBase {
         return rawTargetDegrees;
     }
 
+    /** Get the cached degrees-to-goal computed in the last periodic() call. */
+    public double getLastDegreesToGoal() {
+        return lastDegreesToGoal;
+    }
+
     @Override
     public void periodic() {
-        setTurretDegree(getDegreesToGoalLeadAdjusted());
+        lastDegreesToGoal = getDegreesToGoalLeadAdjusted();
+        setTurretDegree(lastDegreesToGoal);
         applyServoPosition(currentTargetDegrees);
     }
 }

@@ -4,8 +4,6 @@ import Constants.RobotConstants;
 import Constants.SpindexerConstants;
 import com.bylazar.telemetry.TelemetryManager;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import subsystems.*;
 
 /**
@@ -90,10 +88,10 @@ public class TelemetryHelper {
         }
         panels.debug("Shooter Ready: " + shooter.isAtTargetVelocity());
 
-        // Position
-        double x = robot.pinpoint.getPosX(DistanceUnit.INCH);
-        double y = robot.pinpoint.getPosY(DistanceUnit.INCH);
-        double heading = Math.toDegrees(robot.pinpoint.getHeading(AngleUnit.RADIANS));
+        // Position — use cached pose values
+        double x = robot.cachedPoseX;
+        double y = robot.cachedPoseY;
+        double heading = Math.toDegrees(robot.cachedHeading);
         panels.debug("Pose: (" + (int)(x * 10) / 10.0 + ", " + (int)(y * 10) / 10.0 + ") " + (int)(heading * 10) / 10.0 + "°");
         panels.debug("Spind: " + spindexer.getCurrentDegrees() + "°");
 
@@ -120,7 +118,7 @@ public class TelemetryHelper {
 
 
         panels.addData("Turret Target Angle", turretAngle);
-        panels.addData("Turret Degrees to Goal", turret.getDegreesToGoal());
+        panels.addData("Turret Degrees to Goal", turret.getLastDegreesToGoal());
         panels.addData("Turret Raw Angle", turret.getRawTargetDegrees());
 
         if (robot.voltageSensor != null) {

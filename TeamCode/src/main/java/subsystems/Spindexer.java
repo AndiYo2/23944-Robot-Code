@@ -34,6 +34,10 @@ public class Spindexer extends SubsystemBase {
 
     private int currentDegrees = EMPTY_RESET_DEGREES;
 
+    // Servo dirty flag — only write when position actually changes
+    private double lastSpindexerServoPosition = -1.0;
+    private static final double SERVO_EPSILON = 0.001;
+
     public Spindexer() {
         this.robot = RobotHardware.getInstance();
 
@@ -147,7 +151,11 @@ public class Spindexer extends SubsystemBase {
     @Override
     public void periodic() {
         flipperStateMachinePeriodic();
-        robot.spindexerServo.setPosition(degreesToServoPosition(currentDegrees));
+        double targetPos = degreesToServoPosition(currentDegrees);
+        if (Math.abs(targetPos - lastSpindexerServoPosition) > SERVO_EPSILON) {
+            robot.spindexerServo.setPosition(targetPos);
+            lastSpindexerServoPosition = targetPos;
+        }
     }
 
     private void flipperStateMachinePeriodic() {

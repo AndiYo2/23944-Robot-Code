@@ -2,10 +2,6 @@ package subsystems;
 
 import com.arcrobotics.ftclib.command.SubsystemBase;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
-
 import Constants.EnumConstants.FieldState;
 import Constants.FieldMap;
 import Constants.RobotConstants;
@@ -18,30 +14,37 @@ public class Odometry extends SubsystemBase {
     // Field zone state - determines whether turret tracks goal or stays centered
     private FieldState fieldState = FieldState.IdleZone;
 
+    // Throttle counter — only run updateFieldState() every N loops
+    private int fieldStateCounter = 0;
+    private static final int FIELD_STATE_INTERVAL = 8;
+
+    // Pre-allocated corner array for updateFieldState() to avoid GC pressure
+    private final double[][] corners = new double[4][2];
+
 
     public Odometry() {
         this.robot = RobotHardware.getInstance();
     }
 
     public void updateFieldState() {
-        Pose2D currentPose = robot.pinpoint.getPosition();
-        double centerX = currentPose.getX(DistanceUnit.INCH);
-        double centerY = currentPose.getY(DistanceUnit.INCH);
-        double heading = currentPose.getHeading(AngleUnit.RADIANS);
+        double centerX = robot.cachedPoseX;
+        double centerY = robot.cachedPoseY;
+        double heading = robot.cachedHeading;
         double halfSize = RobotConstants.Robot.HALF_SIZE;
 
         // Robot corners in robot-relative coordinates [forward, right]
-        double[][] corners = {
-            { halfSize,  halfSize},  // Front-right
-            { halfSize, -halfSize},  // Front-left
-            {-halfSize,  halfSize},  // Back-right
-            {-halfSize, -halfSize}   // Back-left
-        };
+        corners[0][0] =  halfSize; corners[0][1] =  halfSize;  // Front-right
+        corners[1][0] =  halfSize; corners[1][1] = -halfSize;  // Front-left
+        corners[2][0] = -halfSize; corners[2][1] =  halfSize;  // Back-right
+        corners[3][0] = -halfSize; corners[3][1] = -halfSize;  // Back-left
+
+        double cosH = Math.cos(heading);
+        double sinH = Math.sin(heading);
 
         boolean inShootingZone = false;
         for (double[] corner : corners) {
-            double cornerX = centerX + (corner[0] * Math.cos(heading) + corner[1] * Math.sin(heading));
-            double cornerY = centerY + (corner[0] * Math.sin(heading) - corner[1] * Math.cos(heading));
+            double cornerX = centerX + (corner[0] * cosH + corner[1] * sinH);
+            double cornerY = centerY + (corner[0] * sinH - corner[1] * cosH);
 
             if (FieldMap.getPosition(cornerX, cornerY) == 'S') {
                 inShootingZone = true;
@@ -58,6 +61,9 @@ public class Odometry extends SubsystemBase {
 
     @Override
     public void periodic() {
-        updateFieldState();
+        if (++fieldStateCounter >= FIELD_STATE_INTERVAL) {
+            fieldStateCounter = 0;
+            updateFieldState();
+        }
     }
 }

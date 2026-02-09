@@ -1,6 +1,8 @@
 package utility;
 
 import com.qualcomm.robotcore.hardware.ColorSensor;
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import Constants.EnumConstants.BallColor;
 
 public class DualBallDetector {
@@ -49,6 +51,10 @@ public class DualBallDetector {
     private volatile boolean backgroundMode = false;
     private volatile Result cachedResult = new Result(false, BallColor.None, 0.0);
 
+    // Per-side cached results for round-robin partial updates
+    private volatile Result cachedNearResult = new Result(false, BallColor.None, 0.0);
+    private volatile Result cachedFarResult = new Result(false, BallColor.None, 0.0);
+
     public DualBallDetector(ColorSensor sensor1, ColorSensor sensor2) {
         this(sensor1, sensor2, GREEN_N, PURPLE_N, GREEN_TOL, PURPLE_TOL);
     }
@@ -94,7 +100,7 @@ public class DualBallDetector {
      * Lower confidence than averaged detectBall(), but no buffer latency.
      *
      * When background mode is active, returns the most recent cached result
-     * (updated by the background sensor thread) instead of reading hardware.
+     * (updated by round-robin polling) instead of reading hardware.
      */
     public Result quickCheck() {
         if (backgroundMode) {
@@ -107,13 +113,30 @@ public class DualBallDetector {
     }
 
     /**
-     * Reads sensors and stores the result in the cache.
-     * Called by the background sensor thread — not by the main loop.
+     * Reads both sensors and stores the result in the cache.
      */
     public void updateCache() {
         Result nearResult = nearState.instantRead(near);
         Result farResult  = farState.instantRead(far);
         cachedResult = resolveResults(nearResult, farResult);
+    }
+
+    /**
+     * Update only the near sensor's cached result and re-resolve the pair.
+     * Used by round-robin polling to update one sensor at a time.
+     */
+    public void updateNearCache() {
+        cachedNearResult = nearState.instantRead(near);
+        cachedResult = resolveResults(cachedNearResult, cachedFarResult);
+    }
+
+    /**
+     * Update only the far sensor's cached result and re-resolve the pair.
+     * Used by round-robin polling to update one sensor at a time.
+     */
+    public void updateFarCache() {
+        cachedFarResult = farState.instantRead(far);
+        cachedResult = resolveResults(cachedNearResult, cachedFarResult);
     }
 
     public void setBackgroundMode(boolean on) {
@@ -217,19 +240,22 @@ public class DualBallDetector {
         }
 
         /**
-         * Single instantaneous read - bypasses buffer entirely.
-         * Reads directly from hardware, applies same color matching logic.
+         * Single instantaneous read using NormalizedColorSensor for a single
+         * I2C bulk read instead of 4 individual transactions.
          */
         Result instantRead(ColorSensor s) {
-            double a = s.alpha();
+            NormalizedRGBA colors = ((NormalizedColorSensor) s).getNormalizedColors();
+
+            // Scale alpha to approximate raw range for threshold compatibility
+            double a = colors.alpha * 1024.0;
 
             if (a < minAlpha) {
                 return new Result(false, BallColor.None, 0.0);
             }
 
-            double red = s.red();
-            double grn = s.green();
-            double blu = s.blue();
+            double red = colors.red;
+            double grn = colors.green;
+            double blu = colors.blue;
 
             double sum = red + grn + blu;
             if (sum <= 0) {

@@ -18,6 +18,10 @@ public class SimplePoseTracker {
     private int count = 0;
     private int head = 0;
 
+    // Pre-allocated output arrays at max size — reused across calls
+    private final double[] xOutput = new double[MAX_SIZE];
+    private final double[] yOutput = new double[MAX_SIZE];
+
     /**
      * Record a new position. Only stores it if the robot moved
      * more than MIN_DISTANCE_THRESHOLD from the previous point.
@@ -37,14 +41,16 @@ public class SimplePoseTracker {
         if (count < MAX_SIZE) count++;
     }
 
-    /** Get the x positions array ordered oldest to newest. */
+    /** Get the x positions array ordered oldest to newest (pre-allocated, do NOT store reference). */
     public double[] getXArray() {
-        return getOrderedArray(xPositions);
+        fillOrderedArray(xPositions, xOutput);
+        return xOutput;
     }
 
-    /** Get the y positions array ordered oldest to newest. */
+    /** Get the y positions array ordered oldest to newest (pre-allocated, do NOT store reference). */
     public double[] getYArray() {
-        return getOrderedArray(yPositions);
+        fillOrderedArray(yPositions, yOutput);
+        return yOutput;
     }
 
     /** Number of recorded positions. */
@@ -52,15 +58,13 @@ public class SimplePoseTracker {
         return count;
     }
 
-    private double[] getOrderedArray(double[] source) {
-        double[] result = new double[count];
+    private void fillOrderedArray(double[] source, double[] dest) {
         if (count < MAX_SIZE) {
-            System.arraycopy(source, 0, result, 0, count);
+            System.arraycopy(source, 0, dest, 0, count);
         } else {
             int tailLength = MAX_SIZE - head;
-            System.arraycopy(source, head, result, 0, tailLength);
-            System.arraycopy(source, 0, result, tailLength, head);
+            System.arraycopy(source, head, dest, 0, tailLength);
+            System.arraycopy(source, 0, dest, tailLength, head);
         }
-        return result;
     }
 }

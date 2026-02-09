@@ -4,8 +4,6 @@ import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
 
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-
 import Constants.DriveConstants;
 import Constants.EnumConstants.DriveState;
 import utility.RobotHardware;
@@ -43,16 +41,15 @@ public class MecanumDrive extends SubsystemBase {
     }
 
     public void resetYaw(){
-        // Store current heading as offset - makes current direction the new "forward"
+        // Store current cached heading as offset - makes current direction the new "forward"
         // This preserves position (for shooter aiming) while resetting driver orientation
-        robot.pinpoint.update();
-        headingOffset = robot.pinpoint.getHeading(AngleUnit.RADIANS);
+        headingOffset = robot.cachedHeading;
     }
 
     public double getRobotHeading(){
         // Return heading relative to the reset point (subtract offset)
-        // Pinpoint is updated once at the start of each loop in TeleOpTemplate.run()
-        return robot.pinpoint.getHeading(AngleUnit.RADIANS) - headingOffset;
+        // Cached heading is updated once at the start of each loop in TeleOpTemplate.run()
+        return robot.cachedHeading - headingOffset;
     }
 
 

@@ -14,6 +14,10 @@ public class Intake extends SubsystemBase {
     private double timedIntakeDuration = 0;
     private boolean timedIntakeActive = false;
 
+    // Track last written motor powers to skip redundant writes
+    private double lastIntakePower = 0;
+    private double lastBeltPower = 0;
+
     @Override
     public void periodic() {
         if (timedIntakeActive && timedIntakeTimer.seconds() >= timedIntakeDuration) {
@@ -55,10 +59,16 @@ public class Intake extends SubsystemBase {
     }
 
     public void setIntakePower(double power) {
-        robot.intakeMotor.setPower(power);
+        if (power != lastIntakePower) {
+            robot.intakeMotor.setPower(power);
+            lastIntakePower = power;
+        }
     }
     public void setStagingMotorPower(double power) {
-        robot.intakeBeltMotor.setPower(power);
+        if (power != lastBeltPower) {
+            robot.intakeBeltMotor.setPower(power);
+            lastBeltPower = power;
+        }
     }
     public void runIntake(){
         currentState = IntakeState.Intaking;

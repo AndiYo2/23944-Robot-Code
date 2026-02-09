@@ -14,7 +14,9 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.UnnormalizedAngleUnit;
 import Constants.NamingConstants;
 import Constants.OdometryConstants;
 
@@ -78,9 +80,21 @@ public class RobotHardware {
     // Volatile to ensure visibility across threads
     public volatile boolean enabled = false;
 
-    // Background sensor thread — reads color sensors off the main loop
-    private volatile boolean sensorThreadRunning = false;
-    private Thread sensorThread;
+    // ******************* BULK CACHING ******************* //
+    private List<LynxModule> allHubs;
+
+    // ******************* ROUND-ROBIN SENSOR POLLING ******************* //
+    private DualBallDetector[] sensorDetectors;
+    private boolean[] isNearSensor;
+    private int roundRobinIndex = 0;
+
+    // ******************* CACHED PINPOINT POSE ******************* //
+    public double cachedPoseX;
+    public double cachedPoseY;
+    public double cachedHeading;
+    public double cachedVelX;
+    public double cachedVelY;
+    public double cachedHeadingVel;
 
     /**
      * Returns the singleton instance of RobotHardware.
@@ -104,19 +118,15 @@ public class RobotHardware {
     }
 
     public void init(final HardwareMap hardwareMap) {
-        // Stop any sensor thread from a previous OpMode
-        stopSensorThread();
-
         this.hardwareMap = hardwareMap;
         this.telemetryManager = PanelsTelemetry.INSTANCE.getTelemetry();
 
         // ******************* BULK CACHING ******************* //
-        // AUTO mode batches all hub reads into a single bulk transaction per cycle.
-        // Re-reading the same value in one cycle triggers one extra bulk read, so
-        // subsystems should still cache values locally where possible.
-        List<LynxModule> allHubs = hardwareMap.getAll(LynxModule.class);
+        // MANUAL mode: we clear the cache once at the top of each loop,
+        // so all reads within that loop hit the same bulk-read snapshot.
+        allHubs = hardwareMap.getAll(LynxModule.class);
         for (LynxModule hub : allHubs) {
-            hub.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
+            hub.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
         }
 
         // ******************* DRIVETRAIN ******************* //
@@ -176,6 +186,19 @@ public class RobotHardware {
                 0.15, 0.15,                        // green/purple tolerance
                 200, 400);                         // near/far alpha thresholds
 
+        // Set all detectors to background mode for round-robin polling
+        intakeSensorPair.setBackgroundMode(true);
+        transferSensorPair.setBackgroundMode(true);
+        rampSensorPair.setBackgroundMode(true);
+
+        // Round-robin: 6 sensors, cycling near/far across 3 detector pairs
+        sensorDetectors = new DualBallDetector[]{
+            intakeSensorPair, intakeSensorPair,
+            rampSensorPair, rampSensorPair,
+            transferSensorPair, transferSensorPair
+        };
+        isNearSensor = new boolean[]{true, false, true, false, true, false};
+        roundRobinIndex = 0;
 
         // ******************* SPINDEXER ******************* //
         spindexerFlipperServo = hardwareMap.get(Servo.class, NamingConstants.Spindexer.spindexerFlipperServo);
@@ -203,41 +226,32 @@ public class RobotHardware {
         } else {
             voltageSensor = null; // Will need null check when used
         }
-
-        // ******************* BACKGROUND SENSOR THREAD ******************* //
-        startSensorThread();
     }
 
-    private void startSensorThread() {
-        intakeSensorPair.setBackgroundMode(true);
-        transferSensorPair.setBackgroundMode(true);
-        rampSensorPair.setBackgroundMode(true);
-
-        sensorThreadRunning = true;
-        sensorThread = new Thread(() -> {
-            while (sensorThreadRunning) {
-                try {
-                    intakeSensorPair.updateCache();
-                    Thread.sleep(100);
-                    transferSensorPair.updateCache();
-                    Thread.sleep(100);
-                    rampSensorPair.updateCache();
-                    Thread.sleep(100);
-                } catch (InterruptedException e) {
-                    break;
-                }
-            }
-        });
-        sensorThread.setDaemon(true);
-        sensorThread.setPriority(Thread.MIN_PRIORITY);
-        sensorThread.start();
-    }
-
-    public void stopSensorThread() {
-        sensorThreadRunning = false;
-        if (sensorThread != null) {
-            sensorThread.interrupt();
-            sensorThread = null;
+    /** Clear bulk cache on all hubs. Call once at the top of each loop. */
+    public void clearBulkCache() {
+        for (LynxModule hub : allHubs) {
+            hub.clearBulkCache();
         }
+    }
+
+    /** Read ONE color sensor in round-robin order (6 sensors total). Call once per loop. */
+    public void pollNextSensor() {
+        if (isNearSensor[roundRobinIndex]) {
+            sensorDetectors[roundRobinIndex].updateNearCache();
+        } else {
+            sensorDetectors[roundRobinIndex].updateFarCache();
+        }
+        roundRobinIndex = (roundRobinIndex + 1) % 6;
+    }
+
+    /** Read pinpoint pose/velocities once and cache for the entire loop. */
+    public void updateCachedPose() {
+        cachedPoseX = pinpoint.getPosX(DistanceUnit.INCH);
+        cachedPoseY = pinpoint.getPosY(DistanceUnit.INCH);
+        cachedHeading = pinpoint.getHeading(AngleUnit.RADIANS);
+        cachedVelX = pinpoint.getVelX(DistanceUnit.INCH);
+        cachedVelY = pinpoint.getVelY(DistanceUnit.INCH);
+        cachedHeadingVel = pinpoint.getHeadingVelocity(UnnormalizedAngleUnit.RADIANS);
     }
 }

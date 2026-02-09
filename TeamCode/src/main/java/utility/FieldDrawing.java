@@ -57,13 +57,19 @@ public class FieldDrawing {
      * @param count    number of valid entries in the arrays
      * @param current  current robot pose
      */
+    // Draw every Nth point when trail is long to reduce overhead
+    private static final int TRAIL_SKIP = 4;
+
     public static void drawTeleOpDebug(double[] xHistory, double[] yHistory,
                                        int count, Pose current) {
         if (count > 1) {
             panelsField.setStyle(trailStyle);
-            for (int i = 0; i < count - 1; i++) {
+            // When trail is long, skip points to reduce line draw calls
+            int step = (count > 50) ? TRAIL_SKIP : 1;
+            for (int i = 0; i < count - step; i += step) {
+                int next = Math.min(i + step, count - 1);
                 panelsField.moveCursor(xHistory[i], yHistory[i]);
-                panelsField.line(xHistory[i + 1], yHistory[i + 1]);
+                panelsField.line(xHistory[next], yHistory[next]);
             }
         }
         drawRobot(current, trailStyle);
