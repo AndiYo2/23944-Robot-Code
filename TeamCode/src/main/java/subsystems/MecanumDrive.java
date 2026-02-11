@@ -12,6 +12,7 @@ import Constants.OdometryConstants;
 public class MecanumDrive extends SubsystemBase {
     private RobotHardware robot;
     private boolean slowmode;
+    private double dynamicSpeedMultiplier = 1.0;
     private DriveState currentState = DriveState.FieldRelative;
     private Follower activeFollower = null;
     private double headingOffset = 0; // Offset applied when driver resets yaw
@@ -34,6 +35,10 @@ public class MecanumDrive extends SubsystemBase {
         } else {
             currentState = DriveState.FieldRelative;
         }
+    }
+
+    public void setDynamicSpeedMultiplier(double multiplier) {
+        this.dynamicSpeedMultiplier = multiplier;
     }
 
     public void setPose(Pose pose) {
@@ -89,7 +94,7 @@ public class MecanumDrive extends SubsystemBase {
         double frontRightPower = (rotY - rotX - rx) / denominator;
         double backRightPower = (rotY + rotX - rx) / denominator;
 
-        double mult = slowmode ? DriveConstants.SLOW_MODE_MULTIPLIER : 1;
+        double mult = Math.min(slowmode ? DriveConstants.SLOW_MODE_MULTIPLIER : 1, dynamicSpeedMultiplier);
 
         robot.frontLeft.setPower(frontLeftPower * mult);
         robot.backLeft.setPower(backLeftPower * mult);

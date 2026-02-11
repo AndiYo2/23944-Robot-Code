@@ -1,5 +1,6 @@
 package teleOps;
 
+import Constants.DriveConstants;
 import Constants.EnumConstants;
 import Constants.OdometryConstants;
 import Constants.RobotConstants;
@@ -129,14 +130,17 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         mecanumDrive.setDefaultCommand(
                 new RunCommand(() -> {
                     double[] controls = getTransformedControls();
+                    mecanumDrive.setDynamicSpeedMultiplier(getDynamicSlowMultiplier());
                     mecanumDrive.drive(controls[0], controls[1], controls[2]);
                 }, mecanumDrive)
         );
 
-        new Trigger(() -> gamepad1.left_trigger > RobotConstants.Controls.TRIGGER_THRESHOLD)
-                .whenActive(() -> intake.runIntake())
-                .whenInactive(() -> intake.stopIntake());
+        // Right bumper — intake (hold to run)
+        new GamepadButton(driverGamepad, GamepadKeys.Button.RIGHT_BUMPER)
+                .whenPressed(new InstantCommand(() -> intake.runIntake()))
+                .whenReleased(new InstantCommand(() -> intake.stopIntake()));
 
+        // Right trigger — shoot
         new Trigger(() -> gamepad1.right_trigger > RobotConstants.Controls.TRIGGER_THRESHOLD)
                 .whenActive(() -> {
                     boolean override = gamepad1.right_stick_button;
@@ -147,21 +151,27 @@ abstract public class TeleOpTemplate extends CommandOpMode {
                     schedule(ShootingCommands.shootThreeBalls(shooter, spindexer));
                 });
 
-        new GamepadButton(driverGamepad, GamepadKeys.Button.START)
-                .whenPressed(new InstantCommand(mecanumDrive::resetYaw));
-        new GamepadButton(driverGamepad, GamepadKeys.Button.B)
-                .whenPressed(new InstantCommand(mecanumDrive::toggleSlowMode));
+        // Left trigger — dynamic slow mode (handled in drive default command)
 
-        new GamepadButton(driverGamepad, GamepadKeys.Button.A)
-                .whenPressed(() -> {
-                    SpindexerConstants.currentMode = (SpindexerConstants.currentMode == EnumConstants.ShootingMode.Fast)
-                            ? EnumConstants.ShootingMode.Sorted
-                            : EnumConstants.ShootingMode.Fast;
-                });
+        // Left bumper — rotate CCW spindexer
+        new GamepadButton(driverGamepad, GamepadKeys.Button.LEFT_BUMPER)
+                .whenPressed(new InstantCommand(this::manualRotateCCW));
 
-        new GamepadButton(driverGamepad, GamepadKeys.Button.X)
-                .whenPressed(new InstantCommand(spindexer::triggerFlick));
+        // Dpad Up — reset limelight
+        new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_UP)
+                .whenPressed(new InstantCommand(limelight::resetLimelight));
+        // Dpad Down — rotate CW spindexer
+        new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_DOWN)
+                .whenPressed(new InstantCommand(this::manualRotateCW));
+        // Dpad Left — relocalize
+        new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_LEFT)
+                .whenPressed(new RelocalizePinpointCommand(limelight));
+        // Dpad Right — invert intake (hold)
+        new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_RIGHT)
+                .whenPressed(new InstantCommand(intake::reverse))
+                .whenReleased(new InstantCommand(intake::stopIntake));
 
+        // Triangle/Y — catalogue
         new GamepadButton(driverGamepad, GamepadKeys.Button.Y)
                 .whenPressed(() -> {
                     if (SpindexerConstants.currentMode == EnumConstants.ShootingMode.Sorted) {
@@ -173,22 +183,25 @@ abstract public class TeleOpTemplate extends CommandOpMode {
                     }
                 });
 
-        new GamepadButton(driverGamepad, GamepadKeys.Button.LEFT_BUMPER)
-                .whenPressed(new InstantCommand(this::manualRotateCCW));
+        // X/A — toggle sorting mode
+        new GamepadButton(driverGamepad, GamepadKeys.Button.A)
+                .whenPressed(() -> {
+                    SpindexerConstants.currentMode = (SpindexerConstants.currentMode == EnumConstants.ShootingMode.Fast)
+                            ? EnumConstants.ShootingMode.Sorted
+                            : EnumConstants.ShootingMode.Fast;
+                });
 
-        new GamepadButton(driverGamepad, GamepadKeys.Button.RIGHT_BUMPER)
-                .whenPressed(new InstantCommand(this::manualRotateCW));
+        // Square/X — manual spindexer flipper
+        new GamepadButton(driverGamepad, GamepadKeys.Button.X)
+                .whenPressed(new InstantCommand(spindexer::triggerFlick));
 
-        new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_UP)
-                .whenPressed(new InstantCommand(limelight::toggleMode));
-        new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_DOWN)
-                .whenPressed(new InstantCommand(limelight::resetLimelight));
-        new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_RIGHT)
-                .whenPressed(new InstantCommand(intake::reverse))
-                .whenReleased(new InstantCommand(intake::stopIntake));
+        // Circle/B — toggle slow mode
+        new GamepadButton(driverGamepad, GamepadKeys.Button.B)
+                .whenPressed(new InstantCommand(mecanumDrive::toggleSlowMode));
 
-        new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_LEFT)
-                .whenPressed(new RelocalizePinpointCommand(limelight));
+        // Options/Start — reset IMU/yaw
+        new GamepadButton(driverGamepad, GamepadKeys.Button.START)
+                .whenPressed(new InstantCommand(mecanumDrive::resetYaw));
     }
 
     @Override
@@ -237,6 +250,20 @@ abstract public class TeleOpTemplate extends CommandOpMode {
             controlsArray[2] = rawRotation;
         }
         return controlsArray;
+    }
+
+    /**
+     * Computes a speed multiplier from the left trigger for dynamic slow mode.
+     * No press (below deadband) = 1.0 (full speed), full press = DYNAMIC_SLOW_MIN (0.25).
+     */
+    private double getDynamicSlowMultiplier() {
+        double trigger = gamepad1.left_trigger;
+        if (trigger < DriveConstants.DYNAMIC_SLOW_DEADBAND) {
+            return 1.0;
+        }
+        double normalized = (trigger - DriveConstants.DYNAMIC_SLOW_DEADBAND)
+                / (1.0 - DriveConstants.DYNAMIC_SLOW_DEADBAND);
+        return 1.0 - normalized * (1.0 - DriveConstants.DYNAMIC_SLOW_MIN);
     }
 
     /**

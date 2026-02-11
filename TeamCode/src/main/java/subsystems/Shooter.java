@@ -363,9 +363,8 @@ public class Shooter extends SubsystemBase {
         setHoodAngle(requiredHoodAngle);
         double targetVelocity = requiredVelocity;
 
-        // Get current velocity (average of both motors for accuracy)
-        // Read once and cache for isAtTargetVelocity() / getCurrentVelocity()
-        double currentVelocity = (robot.shooterMotor1.getVelocity() + robot.shooterMotor2.getVelocity()) / 2.0;
+        // Motor 1 encoder is dead — read motor 2 only until rebuild
+        double currentVelocity = robot.shooterMotor2.getVelocity();
         cachedVelocity = currentVelocity;
 
         // Calculate velocity error
