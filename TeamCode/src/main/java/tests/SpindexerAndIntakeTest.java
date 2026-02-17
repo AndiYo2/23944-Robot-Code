@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import Constants.EnumConstants;
 import Constants.ShooterConstants;
+import Constants.ShootingSequenceConstants;
 import Constants.SpindexerConstants;
 import subsystems.Intake;
 import subsystems.Spindexer;
@@ -56,7 +57,7 @@ public class SpindexerAndIntakeTest extends CommandOpMode {
         intake = new Intake();
 
         // Retract shooter flipper at start
-        robot.shooterFlipper.setPosition(ShooterConstants.FLIPPER_POSITION_RETRACT);
+        robot.shooterFlipper.setPosition(ShootingSequenceConstants.SHOOTER_FLIPPER_RETRACT);
 
         register(spindexer, intake);
     }
@@ -86,12 +87,12 @@ public class SpindexerAndIntakeTest extends CommandOpMode {
 
         // ==================== SHOOTER FLIPPER (single flip only) ====================
         if (gamepad1.right_trigger > 0.3 && !shooterFlipperExtended) {
-            robot.shooterFlipper.setPosition(ShooterConstants.FLIPPER_POSITION_EXTENDED);
+            robot.shooterFlipper.setPosition(ShootingSequenceConstants.SHOOTER_FLIPPER_EXTENDED);
             shooterFlipperExtended = true;
             shooterFlipperTimer = getRuntime();
         }
         if (shooterFlipperExtended && (getRuntime() - shooterFlipperTimer) > SHOOTER_FLIP_DURATION) {
-            robot.shooterFlipper.setPosition(ShooterConstants.FLIPPER_POSITION_RETRACT);
+            robot.shooterFlipper.setPosition(ShootingSequenceConstants.SHOOTER_FLIPPER_RETRACT);
             shooterFlipperExtended = false;
         }
 

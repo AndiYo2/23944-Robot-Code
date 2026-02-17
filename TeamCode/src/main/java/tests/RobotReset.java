@@ -4,6 +4,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import Constants.ShooterConstants;
+import Constants.ShootingSequenceConstants;
 import Constants.SpindexerConstants;
 import Constants.TurretConstants;
 import utility.RobotHardware;
@@ -57,8 +58,8 @@ public class RobotReset extends OpMode {
         telemetry.addData("Turret", "0.5 (center)");
         telemetry.addData("Spindexer", "0.5 (center)");
         telemetry.addData("Hood", "1.0 (retracted)");
-        telemetry.addData("Spindexer Flipper", "%.2f (retract)", SpindexerConstants.FLIPPER_POSITION_RETRACT);
-        telemetry.addData("Shooter Flipper", "%.2f (retract)", ShooterConstants.FLIPPER_POSITION_RETRACT);
+        telemetry.addData("Spindexer Flipper", "%.2f (retract)", ShootingSequenceConstants.SPINDEXER_FLIPPER_RETRACT);
+        telemetry.addData("Shooter Flipper", "%.2f (retract)", ShootingSequenceConstants.SHOOTER_FLIPPER_RETRACT);
         telemetry.addLine();
         telemetry.addLine("Press START to re-apply reset.");
 
@@ -69,8 +70,8 @@ public class RobotReset extends OpMode {
         robot.turretServo.setPosition(TurretConstants.SERVO_CENTER_POSITION);
         robot.spindexerServo.setPosition(0.5);
         robot.shooterHood.setPosition(1.0);
-        robot.spindexerFlipperServo.setPosition(SpindexerConstants.FLIPPER_POSITION_RETRACT);
-        robot.shooterFlipper.setPosition(ShooterConstants.FLIPPER_POSITION_RETRACT);
+        robot.spindexerFlipperServo.setPosition(ShootingSequenceConstants.SPINDEXER_FLIPPER_RETRACT);
+        robot.shooterFlipper.setPosition(ShootingSequenceConstants.SHOOTER_FLIPPER_RETRACT);
         resetApplied = true;
     }
 

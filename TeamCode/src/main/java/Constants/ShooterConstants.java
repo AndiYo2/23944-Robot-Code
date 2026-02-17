@@ -7,11 +7,6 @@ import com.bylazar.configurables.annotations.Configurable;
  */
 @Configurable
 public class ShooterConstants {
-    // Flipper positions
-    public static double FLIPPER_POSITION_EXTENDED = 0.25;
-    public static double FLIPPER_POSITION_RETRACT = 0.46;
-    public static double SHOOTER_FLICK_TIME = 0.2;
-
     // Velocity defaults
     public static double DEFAULT_VELOCITY = 2200.0;
     public static double DEFAULT_DISTANCE = 100.0;

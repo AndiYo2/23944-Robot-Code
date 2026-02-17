@@ -4,6 +4,7 @@ import Constants.EnumConstants;
 import Constants.OdometryConstants;
 import Constants.RobotConstants;
 import Constants.ShooterConstants;
+import Constants.ShootingSequenceConstants;
 import Constants.SpindexerConstants;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -86,7 +87,7 @@ public class DemoTeleOp extends CommandOpMode {
         robot.shooterMotor2.setPower(0);
 
         // Initialize shooter flipper to retracted position (direct servo control)
-        robot.shooterFlipper.setPosition(ShooterConstants.FLIPPER_POSITION_RETRACT);
+        robot.shooterFlipper.setPosition(ShootingSequenceConstants.SHOOTER_FLIPPER_RETRACT);
 
         // Initialize hood to default angle
         setHoodAngleDirect(ShooterConstants.HOOD_DEFAULT_ANGLE);
@@ -237,13 +238,13 @@ public class DemoTeleOp extends CommandOpMode {
 
         switch (shooterFlickState) {
             case Start:
-                robot.shooterFlipper.setPosition(ShooterConstants.FLIPPER_POSITION_EXTENDED);
+                robot.shooterFlipper.setPosition(ShootingSequenceConstants.SHOOTER_FLIPPER_EXTENDED);
                 shooterFlickTimer.reset();
                 shooterFlickState = EnumConstants.FlickState.Extended;
                 break;
             case Extended:
-                if (shooterFlickTimer.seconds() < ShooterConstants.SHOOTER_FLICK_TIME) break;
-                robot.shooterFlipper.setPosition(ShooterConstants.FLIPPER_POSITION_RETRACT);
+                if (shooterFlickTimer.seconds() < ShootingSequenceConstants.SHOOTER_FLICK_TIME) break;
+                robot.shooterFlipper.setPosition(ShootingSequenceConstants.SHOOTER_FLIPPER_RETRACT);
                 shooterFlickTimer.reset();
                 shooterFlickState = EnumConstants.FlickState.Retracted;
                 break;

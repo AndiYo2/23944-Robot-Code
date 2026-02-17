@@ -12,8 +12,7 @@ import Constants.FieldMap;
 import Constants.TurretConstants;
 import utility.RobotHardware;
 import Constants.ShooterConstants;
-
-import static Constants.ShooterConstants.SHOOTER_FLICK_TIME;
+import Constants.ShootingSequenceConstants;
 
 public class Shooter extends SubsystemBase {
     // Hardware reference
@@ -93,7 +92,7 @@ public class Shooter extends SubsystemBase {
         robot.shooterMotor2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         robot.shooterMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
-        robot.shooterFlipper.setPosition(ShooterConstants.FLIPPER_POSITION_RETRACT);
+        robot.shooterFlipper.setPosition(ShootingSequenceConstants.SHOOTER_FLIPPER_RETRACT);
 
         initializeLUTs();
 
@@ -278,21 +277,23 @@ public class Shooter extends SubsystemBase {
     }
 
     private void flipperStateMachinePeriodic() {
-        if (currentState == FlickState.Idle) return;
-
         switch (currentState) {
+            case Idle:
+                robot.shooterFlipper.setPosition(ShootingSequenceConstants.SHOOTER_FLIPPER_RETRACT);
+                break;
             case Start:
-                robot.shooterFlipper.setPosition(ShooterConstants.FLIPPER_POSITION_EXTENDED);
+                robot.shooterFlipper.setPosition(ShootingSequenceConstants.SHOOTER_FLIPPER_EXTENDED);
                 flickerTimer.reset();
                 currentState = FlickState.Extended;
                 break;
             case Extended:
-                if (flickerTimer.seconds() < SHOOTER_FLICK_TIME) break;
-                robot.shooterFlipper.setPosition(ShooterConstants.FLIPPER_POSITION_RETRACT);
+                if (flickerTimer.seconds() < ShootingSequenceConstants.SHOOTER_FLICK_TIME) break;
+                robot.shooterFlipper.setPosition(ShootingSequenceConstants.SHOOTER_FLIPPER_RETRACT);
                 flickerTimer.reset();
                 currentState = FlickState.Retracted;
                 break;
             case Retracted:
+                if (flickerTimer.seconds() < ShootingSequenceConstants.SHOOTER_RETRACT_DELAY) break;
                 currentState = FlickState.Idle;
                 break;
         }

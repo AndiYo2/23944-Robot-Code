@@ -10,11 +10,13 @@ package Constants;
  */
 public class NamingConstants {
 
+
     public static class Drivetrain {
         public static String frontLeftMotor = "frontLeftMotor";   // E0
         public static String backLeftMotor = "backLeftMotor";     // E1
         public static String frontRightMotor = "frontRightMotor"; // E2
         public static String backRightMotor = "backRightMotor";   // E3
+        public static String parkServo = "parkServo";
     }
 
     public static class Intake {
@@ -39,8 +41,8 @@ public class NamingConstants {
     }
 
     public static class ColorSensor {
-        public static String intakeSensor1 = "intakeSensor1"; // E1
-        public static String intakeSensor2 = "intakeSensor2";  // E2
+        public static String intakeSensor1 = "spindexerSensor1"; // E1
+        public static String intakeSensor2 = "spindexerSensor2";  // E2
         public static String rampSensor1 = "rampSensor1"; // CH 0
         public static String rampSensor2 = "rampSensor2";  // CH 1 ( V3 )
         public static String transferSensor1 = "transferSensor1"; // CH 2

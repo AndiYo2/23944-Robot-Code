@@ -26,6 +26,8 @@ import utility.RobotHardware;
  *
  *   D-Pad Up       = increase hood angle (hold to ramp)
  *   D-Pad Down     = decrease hood angle (hold to ramp)
+ *   D-Pad Right    = increase default flywheel speed
+ *   D-Pad Left     = decrease default flywheel speed
  */
 @TeleOp(name = "Shooter Test", group = "Tests")
 public class ShooterTest extends OpMode {
@@ -34,7 +36,11 @@ public class ShooterTest extends OpMode {
     private DcMotorEx motor1, motor2;
 
     private double hoodAngle = ShooterConstants.HOOD_DEFAULT_ANGLE;
+    private double defaultSpeed = 0.0;
     private static final double HOOD_INCREMENT = 0.5; // degrees per loop while held
+    private static final double SPEED_INCREMENT = 0.025; // power per press
+    private boolean prevDpadRight = false;
+    private boolean prevDpadLeft = false;
 
     private final ElapsedTime loopTimer = new ElapsedTime();
 
@@ -62,7 +68,8 @@ public class ShooterTest extends OpMode {
 
         telemetry.addLine("=== SHOOTER TEST ===");
         telemetry.addLine("LStick Y = Flywheel | RStick X = Turret");
-        telemetry.addLine("DPad U/D = Hood | RB/LB = Motor isolate");
+        telemetry.addLine("DPad U/D = Hood | DPad L/R = Flywheel Speed");
+        telemetry.addLine("RB/LB = Motor isolate");
         telemetry.addLine("A = Reset Encoders");
         telemetry.update();
     }
@@ -73,7 +80,17 @@ public class ShooterTest extends OpMode {
         loopTimer.reset();
 
         // ==================== SHOOTER FLYWHEEL ====================
-        double power = -gamepad1.left_stick_y;
+        if (gamepad1.dpad_right && !prevDpadRight) {
+            defaultSpeed = Math.min(1.0, defaultSpeed + SPEED_INCREMENT);
+        }
+        if (gamepad1.dpad_left && !prevDpadLeft) {
+            defaultSpeed = Math.max(-1.0, defaultSpeed - SPEED_INCREMENT);
+        }
+        prevDpadRight = gamepad1.dpad_right;
+        prevDpadLeft = gamepad1.dpad_left;
+
+        double stickInput = -gamepad1.left_stick_y;
+        double power = Math.abs(stickInput) > 0.05 ? stickInput : defaultSpeed;
 
         boolean motor1Only = gamepad1.right_bumper;
         boolean motor2Only = gamepad1.left_bumper;
@@ -143,6 +160,7 @@ public class ShooterTest extends OpMode {
 
         // Shooter section
         telemetry.addLine("=== SHOOTER ===");
+        telemetry.addData("Default Speed", "%.2f", defaultSpeed);
         telemetry.addData("Commanded Power", "%.2f", power);
         telemetry.addLine("-- Motor 1 (C0, Left) --");
         telemetry.addData("  Power", "%.2f", power1);

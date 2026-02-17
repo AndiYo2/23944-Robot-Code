@@ -15,10 +15,6 @@ public class SpindexerConstants {
         EnumConstants.BallColor.Green    // Top Storage
     };
 
-    public static double FLIPPER_POSITION_EXTENDED = 0.58;
-    public static double FLIPPER_POSITION_RETRACT = 0.35;
-    public static double FLICK_TIME = 0.12;
-
     // --- Degree-Based Position Constants ---
     // All positions in SERVO degrees (0-300° effective range)
     // Conversion to servo position: degrees / 355.0
@@ -37,9 +33,7 @@ public class SpindexerConstants {
 
     public static final double SERVO_DEGREES_PER_UNIT = 355.0;  // Axon servo full range
 
-    public static double SPINDEXER_OFFSET = 50;
-
-    public static double ROTATION_TIME = 0.15;
+    public static double SPINDEXER_OFFSET = 10;
 
     public static EnumConstants.ShootingMode currentMode = EnumConstants.ShootingMode.Sorted;
 }

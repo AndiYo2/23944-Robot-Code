@@ -39,7 +39,7 @@ public class ShootingCommands {
         }else if (ballCount == 3){
             // Cataloging always ends at [m2, m1, None], so shooting is fixed:
             // fire m0 (above), flick m1, CCW (m2 from slot 0 → slot 1), fire m1, flick m2, fire m2
-            sequence.addCommands(new FlickCommand(spindexer));
+        sequence.addCommands(new FlickCommand(spindexer));
             sequence.addCommands(new RotateCCWCommand(spindexer).alongWith(new FireCommand(shooter)));
             sequence.addCommands(new FlickCommand(spindexer));
             sequence.addCommands(new FireCommand(shooter));

@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import Constants.EnumConstants;
 import Constants.EnumConstants.FlickState;
 import utility.RobotHardware;
+import Constants.ShootingSequenceConstants;
 import Constants.SpindexerConstants;
 import utility.SpindexerAndMotifStatus;
 
@@ -41,7 +42,7 @@ public class Spindexer extends SubsystemBase {
     public Spindexer() {
         this.robot = RobotHardware.getInstance();
 
-        robot.spindexerFlipperServo.setPosition(SpindexerConstants.FLIPPER_POSITION_RETRACT);
+        robot.spindexerFlipperServo.setPosition(ShootingSequenceConstants.SPINDEXER_FLIPPER_RETRACT);
 
         currentDegrees = EMPTY_RESET_DEGREES;
         robot.spindexerServo.setPosition(degreesToServoPosition(EMPTY_RESET_DEGREES));
@@ -122,7 +123,7 @@ public class Spindexer extends SubsystemBase {
     // ==================== STATE QUERIES ====================
 
     public boolean isRotationIdle() {
-        return rotationCooldown.seconds() > ROTATION_TIME;
+        return rotationCooldown.seconds() > ShootingSequenceConstants.SPINDEXER_ROTATION_TIME;
     }
 
     public boolean isReadyToFlip() {
@@ -159,24 +160,23 @@ public class Spindexer extends SubsystemBase {
     }
 
     private void flipperStateMachinePeriodic() {
-        if (currentState == FlickState.Idle) return;
-
         switch (currentState) {
             case Idle:
+                robot.spindexerFlipperServo.setPosition(ShootingSequenceConstants.SPINDEXER_FLIPPER_RETRACT);
                 break;
             case Start:
-                robot.spindexerFlipperServo.setPosition(SpindexerConstants.FLIPPER_POSITION_EXTENDED);
+                robot.spindexerFlipperServo.setPosition(ShootingSequenceConstants.SPINDEXER_FLIPPER_EXTENDED);
                 flickerTimer.reset();
                 currentState = FlickState.Extended;
                 break;
             case Extended:
-                if (flickerTimer.seconds() < FLICK_TIME) break;
-                robot.spindexerFlipperServo.setPosition(SpindexerConstants.FLIPPER_POSITION_RETRACT);
+                if (flickerTimer.seconds() < ShootingSequenceConstants.SPINDEXER_FLICK_TIME) break;
+                robot.spindexerFlipperServo.setPosition(ShootingSequenceConstants.SPINDEXER_FLIPPER_RETRACT);
                 flickerTimer.reset();
                 currentState = FlickState.Retracted;
                 break;
             case Retracted:
-                if(flickerTimer.seconds() < .3) break;
+                if(flickerTimer.seconds() < ShootingSequenceConstants.SPINDEXER_RETRACT_DELAY) break;
                 currentState = FlickState.Idle;
                 break;
         }

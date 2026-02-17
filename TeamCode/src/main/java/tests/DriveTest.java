@@ -3,13 +3,16 @@ package tests;
 import com.arcrobotics.ftclib.command.CommandOpMode;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 import Constants.DriveConstants;
 import Constants.FieldMap;
+import Constants.NamingConstants;
 import Constants.OdometryConstants;
 import Constants.RobotConstants;
 import subsystems.MecanumDrive;
@@ -25,6 +28,8 @@ import utility.RobotHardware;
  *   B              = toggle slow mode
  *   Start          = reset yaw
  *   A              = toggle field-relative / robot-relative
+ *   D-Pad Up/Down  = park servo +/- 0.01
+ *   Y              = toggle park servo extend/retract
  */
 @TeleOp(name = "Drive Test", group = "Tests")
 public class DriveTest extends CommandOpMode {
@@ -32,6 +37,10 @@ public class DriveTest extends CommandOpMode {
     private MecanumDrive mecanumDrive;
     private GamepadEx driverGamepad;
     private final RobotHardware robot = RobotHardware.getInstance();
+
+    private Servo parkServo;
+    private double parkPosition = 0.5;
+    private boolean parkExtended = false;
 
     private double robotX, robotY, robotHeading;
     private boolean fieldRelative = true;
@@ -49,6 +58,9 @@ public class DriveTest extends CommandOpMode {
         robot.backLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         robot.frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         robot.backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        parkServo = hardwareMap.get(Servo.class, NamingConstants.Drivetrain.parkServo);
+        parkServo.setPosition(parkPosition);
 
         mecanumDrive = new MecanumDrive();
         register(mecanumDrive);
@@ -80,6 +92,20 @@ public class DriveTest extends CommandOpMode {
         if (gamepad1.start) {
             mecanumDrive.resetYaw();
         }
+
+        // Park servo tuning
+        driverGamepad.readButtons();
+        if (driverGamepad.wasJustPressed(GamepadKeys.Button.DPAD_UP)) {
+            parkPosition = Math.min(1.0, parkPosition + 0.01);
+        }
+        if (driverGamepad.wasJustPressed(GamepadKeys.Button.DPAD_DOWN)) {
+            parkPosition = Math.max(0.0, parkPosition - 0.01);
+        }
+        if (driverGamepad.wasJustPressed(GamepadKeys.Button.Y)) {
+            parkExtended = !parkExtended;
+            parkPosition = parkExtended ? DriveConstants.PARK_SERVO_EXTEND : DriveConstants.PARK_SERVO_RETRACT;
+        }
+        parkServo.setPosition(parkPosition);
 
         // Toggle slow mode on B
         // (handled via subsystem, but we track for telemetry)
@@ -159,10 +185,17 @@ public class DriveTest extends CommandOpMode {
         telemetry.addData("Heading Vel", "%.2f rad/s", robot.cachedHeadingVel);
         telemetry.addLine();
 
+        telemetry.addLine("=== PARK SERVO ===");
+        telemetry.addData("Position", parkPosition);
+        telemetry.addData("State", parkExtended ? "EXTENDED" : "RETRACTED");
+        telemetry.addLine();
+
         telemetry.addLine("=== CONTROLS ===");
         telemetry.addLine("A: Toggle Field/Robot Relative");
         telemetry.addLine("B: Toggle Slow Mode");
         telemetry.addLine("Start: Reset Yaw");
+        telemetry.addLine("DPad Up/Down: Park Servo +/- 0.01");
+        telemetry.addLine("Y: Toggle Park Extend/Retract");
 
         telemetry.update();
     }
