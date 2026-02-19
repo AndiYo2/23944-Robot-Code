@@ -15,8 +15,8 @@ public class ShooterConstants {
     public static double HOOD_MIN_ANGLE = 30.0;
     public static double HOOD_MAX_ANGLE = 63.0;
     public static double HOOD_DEFAULT_ANGLE = 45.0;
-    public static double HOOD_SERVO_AT_MIN_ANGLE = .88;
-    public static double HOOD_SERVO_AT_MAX_ANGLE = 0.26;
+    public static double HOOD_SERVO_AT_MIN_ANGLE = 1;
+    public static double HOOD_SERVO_AT_MAX_ANGLE = 0.38;
 
     public static boolean SHOOT_WHILE_MOVING_ENABLED = true;
 
