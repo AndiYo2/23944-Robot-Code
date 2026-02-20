@@ -16,7 +16,8 @@ public class NamingConstants {
         public static String backLeftMotor = "backLeftMotor";     // E1
         public static String frontRightMotor = "frontRightMotor"; // E2
         public static String backRightMotor = "backRightMotor";   // E3
-        public static String parkServo = "parkServo";
+        public static String kickServo = "kickServo";
+        public static String beamServo = "beamServo";
     }
 
     public static class Intake {

@@ -15,4 +15,7 @@ public class DriveConstants {
 
     public static double PARK_SERVO_EXTEND = 0.57;
     public static double PARK_SERVO_RETRACT = 0.44;
+
+    public static double BEAM_SERVO_EXTENDED = .64;
+    public static double BEAM_SERVO_RETRACTED = 0.26;
 }

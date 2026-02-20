@@ -19,6 +19,7 @@ import subsystems.*;
 import utility.*;
 import commands.ShootingCommands;
 import commands.CatalogCommands;
+import commands.ParkCommand;
 import commands.RelocalizePinpointCommand;
 
 abstract public class TeleOpTemplate extends CommandOpMode {
@@ -202,6 +203,10 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         // Options/Start — reset IMU/yaw
         new GamepadButton(driverGamepad, GamepadKeys.Button.START)
                 .whenPressed(new InstantCommand(mecanumDrive::resetYaw));
+
+        // Share/Back — deploy park mechanism
+        new GamepadButton(driverGamepad, GamepadKeys.Button.BACK)
+                .whenPressed(new ParkCommand());
     }
 
     @Override

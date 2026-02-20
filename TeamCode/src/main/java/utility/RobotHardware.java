@@ -20,6 +20,9 @@ public class RobotHardware {
     // ******************* DRIVE TRAIN ******************* //
     public DcMotorEx frontLeft, backLeft, frontRight, backRight;
 
+    // ******************* PARK ******************* //
+    public Servo kickServo, beamServo;
+
 
     // ******************* LOCALIZERS ******************* //
     public GoBildaPinpointDriver pinpoint;
@@ -130,6 +133,10 @@ public class RobotHardware {
 
         frontLeft.setDirection(DcMotorEx.Direction.REVERSE);
         backLeft.setDirection(DcMotorEx.Direction.REVERSE);
+
+        // ******************* PARK ******************* //
+        kickServo = hardwareMap.get(Servo.class, NamingConstants.Drivetrain.kickServo);
+        beamServo = hardwareMap.get(Servo.class, NamingConstants.Drivetrain.beamServo);
 
         // ******************* PINPOINT ******************* //
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, NamingConstants.Pinpoint.pinpoint);

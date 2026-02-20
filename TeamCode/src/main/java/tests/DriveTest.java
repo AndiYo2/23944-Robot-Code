@@ -28,8 +28,10 @@ import utility.RobotHardware;
  *   B              = toggle slow mode
  *   Start          = reset yaw
  *   A              = toggle field-relative / robot-relative
- *   D-Pad Up/Down  = park servo +/- 0.01
- *   Y              = toggle park servo extend/retract
+ *   D-Pad Up/Down  = kick servo +/- 0.01
+ *   Y              = toggle kick servo extend/retract
+ *   LB/RB          = beam servo -/+ 0.01
+ *   X              = toggle beam servo extend/retract
  */
 @TeleOp(name = "Drive Test", group = "Tests")
 public class DriveTest extends CommandOpMode {
@@ -38,9 +40,12 @@ public class DriveTest extends CommandOpMode {
     private GamepadEx driverGamepad;
     private final RobotHardware robot = RobotHardware.getInstance();
 
-    private Servo parkServo;
+    private Servo parkServo, beamServo;
     private double parkPosition = 0.5;
     private boolean parkExtended = false;
+
+    private double beamPosition = DriveConstants.BEAM_SERVO_RETRACTED;
+    private boolean beamExtended = false;
 
     private double robotX, robotY, robotHeading;
     private boolean fieldRelative = true;
@@ -59,7 +64,8 @@ public class DriveTest extends CommandOpMode {
         robot.frontRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         robot.backRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        parkServo = hardwareMap.get(Servo.class, NamingConstants.Drivetrain.parkServo);
+        parkServo = hardwareMap.get(Servo.class, NamingConstants.Drivetrain.kickServo);
+        beamServo = hardwareMap.get(Servo.class, NamingConstants.Drivetrain.beamServo);
         parkServo.setPosition(parkPosition);
 
         mecanumDrive = new MecanumDrive();
@@ -106,6 +112,19 @@ public class DriveTest extends CommandOpMode {
             parkPosition = parkExtended ? DriveConstants.PARK_SERVO_EXTEND : DriveConstants.PARK_SERVO_RETRACT;
         }
         parkServo.setPosition(parkPosition);
+
+        // Beam servo tuning
+        if (driverGamepad.wasJustPressed(GamepadKeys.Button.RIGHT_BUMPER)) {
+            beamPosition = Math.min(1.0, beamPosition + 0.01);
+        }
+        if (driverGamepad.wasJustPressed(GamepadKeys.Button.LEFT_BUMPER)) {
+            beamPosition = Math.max(0.0, beamPosition - 0.01);
+        }
+        if (driverGamepad.wasJustPressed(GamepadKeys.Button.X)) {
+            beamExtended = !beamExtended;
+            beamPosition = beamExtended ? DriveConstants.BEAM_SERVO_EXTENDED : DriveConstants.BEAM_SERVO_RETRACTED;
+        }
+        beamServo.setPosition(beamPosition);
 
         // Toggle slow mode on B
         // (handled via subsystem, but we track for telemetry)
@@ -185,17 +204,24 @@ public class DriveTest extends CommandOpMode {
         telemetry.addData("Heading Vel", "%.2f rad/s", robot.cachedHeadingVel);
         telemetry.addLine();
 
-        telemetry.addLine("=== PARK SERVO ===");
+        telemetry.addLine("=== KICK SERVO ===");
         telemetry.addData("Position", parkPosition);
         telemetry.addData("State", parkExtended ? "EXTENDED" : "RETRACTED");
+        telemetry.addLine();
+
+        telemetry.addLine("=== BEAM SERVO ===");
+        telemetry.addData("Position", beamPosition);
+        telemetry.addData("State", beamExtended ? "EXTENDED" : "RETRACTED");
         telemetry.addLine();
 
         telemetry.addLine("=== CONTROLS ===");
         telemetry.addLine("A: Toggle Field/Robot Relative");
         telemetry.addLine("B: Toggle Slow Mode");
         telemetry.addLine("Start: Reset Yaw");
-        telemetry.addLine("DPad Up/Down: Park Servo +/- 0.01");
-        telemetry.addLine("Y: Toggle Park Extend/Retract");
+        telemetry.addLine("DPad Up/Down: Kick Servo +/- 0.01");
+        telemetry.addLine("Y: Toggle Kick Extend/Retract");
+        telemetry.addLine("LB/RB: Beam Servo -/+ 0.01");
+        telemetry.addLine("X: Toggle Beam Extend/Retract");
 
         telemetry.update();
     }
