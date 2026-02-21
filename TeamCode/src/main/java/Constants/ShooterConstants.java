@@ -18,7 +18,7 @@ public class ShooterConstants {
     public static double HOOD_SERVO_AT_MIN_ANGLE = 1;
     public static double HOOD_SERVO_AT_MAX_ANGLE = 0.38;
 
-    public static boolean SHOOT_WHILE_MOVING_ENABLED = true;
+    public static boolean SHOOT_WHILE_MOVING_ENABLED = false;
 
     // Lead compensation filtering
     /** Minimum translational speed (in/sec) for lead compensation. Below this, robot is considered stationary. */

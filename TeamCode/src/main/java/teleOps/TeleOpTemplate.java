@@ -4,6 +4,7 @@ import Constants.DriveConstants;
 import Constants.EnumConstants;
 import Constants.OdometryConstants;
 import Constants.RobotConstants;
+import Constants.ShooterConstants;
 import Constants.SpindexerConstants;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -38,6 +39,8 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     private final ElapsedTime loopTimer = new ElapsedTime();
     private SimplePoseTracker poseTracker;
     private double loopMs;
+
+    private boolean shootWhileMovingActive = false;
 
     // Pre-allocated array for getTransformedControls() to avoid GC pressure
     private final double[] controlsArray = new double[3];
@@ -141,11 +144,17 @@ abstract public class TeleOpTemplate extends CommandOpMode {
                 .whenPressed(new InstantCommand(() -> intake.runIntake()))
                 .whenReleased(new InstantCommand(() -> intake.stopIntake()));
 
+        // Right stick button — toggle shoot-while-moving (also overrides zone restriction)
+        new GamepadButton(driverGamepad, GamepadKeys.Button.RIGHT_STICK_BUTTON)
+                .whenPressed(() -> {
+                    shootWhileMovingActive = !shootWhileMovingActive;
+                    ShooterConstants.SHOOT_WHILE_MOVING_ENABLED = shootWhileMovingActive;
+                });
+
         // Right trigger — shoot
         new Trigger(() -> gamepad1.right_trigger > RobotConstants.Controls.TRIGGER_THRESHOLD)
                 .whenActive(() -> {
-                    boolean override = gamepad1.right_stick_button;
-                    if (!shootingValidator.canShoot(override)) {
+                    if (!shootingValidator.canShoot(shootWhileMovingActive)) {
                         gamepad1.rumble(200);
                         return;
                     }

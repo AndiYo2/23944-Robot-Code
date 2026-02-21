@@ -16,7 +16,6 @@ public class Odometry extends SubsystemBase {
 
     // Throttle counter — only run updateFieldState() every N loops
     private int fieldStateCounter = 0;
-    private static final int FIELD_STATE_INTERVAL = 8;
 
     // Pre-allocated corner array for updateFieldState() to avoid GC pressure
     private final double[][] corners = new double[4][2];
@@ -61,9 +60,7 @@ public class Odometry extends SubsystemBase {
 
     @Override
     public void periodic() {
-        if (++fieldStateCounter >= FIELD_STATE_INTERVAL) {
             fieldStateCounter = 0;
             updateFieldState();
-        }
     }
 }
