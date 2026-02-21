@@ -120,6 +120,15 @@ public class Spindexer extends SubsystemBase {
         }
     }
 
+    public void extendFlipper() {
+        robot.spindexerFlipperServo.setPosition(ShootingSequenceConstants.SPINDEXER_FLIPPER_EXTENDED);
+        SpindexerAndMotifStatus.SpindexerPattern.setBallInSlotX(1, EnumConstants.BallColor.None);
+    }
+
+    public void retractFlipper() {
+        robot.spindexerFlipperServo.setPosition(ShootingSequenceConstants.SPINDEXER_FLIPPER_RETRACT);
+    }
+
     // ==================== STATE QUERIES ====================
 
     public boolean isRotationIdle() {
@@ -162,7 +171,6 @@ public class Spindexer extends SubsystemBase {
     private void flipperStateMachinePeriodic() {
         switch (currentState) {
             case Idle:
-                robot.spindexerFlipperServo.setPosition(ShootingSequenceConstants.SPINDEXER_FLIPPER_RETRACT);
                 break;
             case Start:
                 robot.spindexerFlipperServo.setPosition(ShootingSequenceConstants.SPINDEXER_FLIPPER_EXTENDED);

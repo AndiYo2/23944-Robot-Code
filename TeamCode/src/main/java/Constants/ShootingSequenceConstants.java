@@ -21,6 +21,9 @@ public class ShootingSequenceConstants {
     public static double SPINDEXER_FLICK_TIME = 0.075;
     public static double SPINDEXER_RETRACT_DELAY = 0;
 
+    // --- Pipelining ---
+    public static double SHOOTER_EXTEND_HALFWAY = 0.03;
+
     // --- Spindexer Rotation ---
     public static double SPINDEXER_ROTATION_TIME = 0.15;
 }

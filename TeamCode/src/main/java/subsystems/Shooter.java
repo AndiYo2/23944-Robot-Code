@@ -279,7 +279,6 @@ public class Shooter extends SubsystemBase {
     private void flipperStateMachinePeriodic() {
         switch (currentState) {
             case Idle:
-                robot.shooterFlipper.setPosition(ShootingSequenceConstants.SHOOTER_FLIPPER_RETRACT);
                 break;
             case Start:
                 robot.shooterFlipper.setPosition(ShootingSequenceConstants.SHOOTER_FLIPPER_EXTENDED);
@@ -303,6 +302,14 @@ public class Shooter extends SubsystemBase {
         if (currentState == FlickState.Idle) {
             currentState = FlickState.Start;
         }
+    }
+
+    public void extendFlipper() {
+        robot.shooterFlipper.setPosition(ShootingSequenceConstants.SHOOTER_FLIPPER_EXTENDED);
+    }
+
+    public void retractFlipper() {
+        robot.shooterFlipper.setPosition(ShootingSequenceConstants.SHOOTER_FLIPPER_RETRACT);
     }
 
     public FlickState getCurrentState() {

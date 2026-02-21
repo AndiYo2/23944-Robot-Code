@@ -31,7 +31,8 @@ public class CatalogCommands {
             // Rotate ball 1 from slot 0 to shooter slot (slot 1)
             new RotateCCWCommand(spindexer),
             // Flick ball 1 out, intake ball 2 into slot 0
-            new FlickCommand(spindexer).alongWith(new IntakeCommand(intake, .35)),
+            new ExtendSpindexerFlipperCommand(spindexer)
+                .andThen(new RetractSpindexerFlipperCommand(spindexer)).alongWith(new IntakeCommand(intake, .35)),
             // Rotate ball 2 to shooter slot (slot 1)
             new RotateCCWCommand(spindexer),
             // Intake ball 3 into slot 0 (reverse intake to spit extras)
@@ -85,7 +86,8 @@ public class CatalogCommands {
             // intake[0] == motifPattern[0]: flick first ball immediately
             // CCW moves ball 1 to slot 1, flick it to shooter
             sequence.addCommands(new RotateCCWCommand(spindexer));
-            sequence.addCommands(new FlickCommand(spindexer).alongWith(new IntakeCommand(intake, .35)));
+            sequence.addCommands(new ExtendSpindexerFlipperCommand(spindexer)
+                .andThen(new RetractSpindexerFlipperCommand(spindexer)).alongWith(new IntakeCommand(intake, .35)));
 
             if (intakeColors[1] == motifPattern[1]) {
                 // Case 1a: intake order matches motif order
@@ -108,7 +110,8 @@ public class CatalogCommands {
             sequence.addCommands(new RotateCWCommand(spindexer));
             sequence.addCommands(new IntakeCommand(intake, .35));
             sequence.addCommands(new RotateCCWCommand(spindexer));
-            sequence.addCommands(new FlickCommand(spindexer));
+            sequence.addCommands(new ExtendSpindexerFlipperCommand(spindexer)
+                .andThen(new RetractSpindexerFlipperCommand(spindexer)));
 
             if (intakeColors[0] == motifPattern[1]) {
                 // Case 2a: ball 1 is m1 (second to shoot)
@@ -138,7 +141,8 @@ public class CatalogCommands {
                 sequence.addCommands(new IntakeCommand(intake, .5, true));
                 sequence.addCommands(new RotateCWCommand(spindexer));
                 sequence.addCommands(new RotateCWCommand(spindexer));
-                sequence.addCommands(new FlickCommand(spindexer));
+                sequence.addCommands(new ExtendSpindexerFlipperCommand(spindexer)
+                .andThen(new RetractSpindexerFlipperCommand(spindexer)));
                 sequence.addCommands(new RotateCCWCommand(spindexer));
             } else {
                 // Case 3b: intake = [m2, m1, m0]
@@ -149,7 +153,8 @@ public class CatalogCommands {
                 sequence.addCommands(new RotateCWCommand(spindexer));
                 sequence.addCommands(new IntakeCommand(intake, .5, true));
                 sequence.addCommands(new RotateCCWCommand(spindexer));
-                sequence.addCommands(new FlickCommand(spindexer));
+                sequence.addCommands(new ExtendSpindexerFlipperCommand(spindexer)
+                .andThen(new RetractSpindexerFlipperCommand(spindexer)));
                 sequence.addCommands(new RotateCCWCommand(spindexer));
             }
         }
