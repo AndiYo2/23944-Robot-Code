@@ -295,6 +295,17 @@ public class CommandSequenceBuilder {
     }
 
     /**
+     * Adds an auto cataloging command that assumes intake is already running.
+     * Never stops the intake mid-sequence; only reverses it at the end.
+     *
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder autoCatalog() {
+        commands.add(new AutoCatalogModeCommand(spindexer, intake));
+        return this;
+    }
+
+    /**
      * Sets the initial spindexer ball pattern using the default preload.
      *
      * @return this builder for chaining
@@ -337,6 +348,17 @@ public class CommandSequenceBuilder {
      */
     public CommandSequenceBuilder setSpindexerMode(ShootingMode mode) {
         commands.add(new InstantCommand(() -> SpindexerConstants.currentMode = mode));
+        return this;
+    }
+
+    /**
+     * Enables or disables shoot-while-moving lead compensation.
+     *
+     * @param enabled true to enable, false to disable
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder setShootWhileMoving(boolean enabled) {
+        commands.add(new SetShootWhileMovingCommand(enabled));
         return this;
     }
 
@@ -582,6 +604,11 @@ public class CommandSequenceBuilder {
             return this;
         }
 
+        public ParallelBuilder autoCatalog() {
+            parallelCommands.add(new AutoCatalogModeCommand(spindexer, intake));
+            return this;
+        }
+
         public ParallelBuilder preload() {
             parallelCommands.add(new PreloadCommand());
             return this;
@@ -599,6 +626,11 @@ public class CommandSequenceBuilder {
 
         public ParallelBuilder setSpindexerMode(ShootingMode mode) {
             parallelCommands.add(new InstantCommand(() -> SpindexerConstants.currentMode = mode));
+            return this;
+        }
+
+        public ParallelBuilder setShootWhileMoving(boolean enabled) {
+            parallelCommands.add(new SetShootWhileMovingCommand(enabled));
             return this;
         }
 

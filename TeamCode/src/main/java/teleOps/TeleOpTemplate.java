@@ -169,8 +169,8 @@ abstract public class TeleOpTemplate extends CommandOpMode {
                 .whenPressed(() -> {
                     if (SpindexerConstants.currentMode == EnumConstants.ShootingMode.Sorted) {
                         EnumConstants.BallColor[] motifPattern = {SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(0), SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(1),SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(2)};
-                        // Order matches physical ball path: spindexer slot (first in) → ramp → belt area (last in)
-                        EnumConstants.BallColor[] intakeColors = {robot.intakeSensorPair.quickCheck().color,robot.rampSensorPair.quickCheck().color,robot.transferSensorPair.quickCheck().color};
+                        // Order matches physical ball path: spindexer slot (first in) → transfer → ramp (last in)
+                        EnumConstants.BallColor[] intakeColors = {robot.intakeSensorPair.quickCheck().color,robot.transferSensorPair.quickCheck().color,robot.rampSensorPair.quickCheck().color};
                         schedule(CatalogCommands.catalogSorted(spindexer, intake, motifPattern, intakeColors));
                     } else {
                         schedule(CatalogCommands.catalogFast(spindexer, intake));

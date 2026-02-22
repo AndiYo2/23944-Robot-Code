@@ -3,6 +3,7 @@ package commands;
 import com.arcrobotics.ftclib.command.Command;
 import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.SequentialCommandGroup;
+import com.arcrobotics.ftclib.command.WaitCommand;
 import Constants.EnumConstants;
 import subsystems.Intake;
 import subsystems.Spindexer;
@@ -32,7 +33,7 @@ public class CatalogCommands {
             new RotateCCWCommand(spindexer),
             // Flick ball 1 out, intake ball 2 into slot 0
             new ExtendSpindexerFlipperCommand(spindexer)
-                .andThen(new RetractSpindexerFlipperCommand(spindexer)).alongWith(new IntakeCommand(intake, .5)),
+                .andThen(new RetractSpindexerFlipperCommand(spindexer)).alongWith(new IntakeCommand(intake, .6)),
             // Rotate ball 2 to shooter slot (slot 1)
             new RotateCCWCommand(spindexer),
             // Intake ball 3 into slot 0 (reverse intake to spit extras)
@@ -158,6 +159,133 @@ public class CatalogCommands {
                 sequence.addCommands(new RotateCCWCommand(spindexer));
             }
         }
+
+        // Final pattern is always the same: m2 in slot 0, m1 in slot 1, slot 2 empty
+        sequence.addCommands(new InstantCommand(() ->
+            SpindexerAndMotifStatus.SpindexerPattern.setBallPattern(
+                motifPattern[2], motifPattern[1], EnumConstants.BallColor.None)));
+
+        return sequence;
+    }
+
+    // ==================== Auto Catalog Variants ====================
+    // These assume intake is already running and never stop it mid-sequence.
+    // WaitCommands replace IntakeCommands for timing. Only at the very end
+    // does the intake switch to ReversedInBeltGo for a fixed duration.
+
+    /**
+     * Fast auto catalog - assumes intake is already running.
+     * Never stops the intake during the sequence. At the end, switches to
+     * ReversedInBeltGo (intake reversed, belt forward) for 0.5s to spit extras.
+     *
+     * @param spindexer the spindexer subsystem
+     * @param intake the intake subsystem
+     * @return a command that catalogs balls in fast mode without stopping intake
+     */
+    public static Command catalogFastAuto(Spindexer spindexer, Intake intake) {
+        return new SequentialCommandGroup(
+            // Rotate ball 1 from slot 0 to shooter slot (slot 1)
+            new RotateCCWCommand(spindexer),
+            // Flick ball 1 out, wait for ball 2 to arrive (intake already running)
+            new ExtendSpindexerFlipperCommand(spindexer)
+                .andThen(new RetractSpindexerFlipperCommand(spindexer)).alongWith(new WaitCommand(600)),
+            // Rotate ball 2 to shooter slot (slot 1)
+            new RotateCCWCommand(spindexer),
+            // Reverse intake to spit extras, belt keeps going to pull ball 3 in
+            new IntakeCommand(intake, .5, true),
+            // Set final pattern: all 3 slots tracked as Purple
+            new InstantCommand(() ->
+                SpindexerAndMotifStatus.SpindexerPattern.setBallPattern(
+                    EnumConstants.BallColor.Purple,
+                    EnumConstants.BallColor.Purple,
+                    EnumConstants.BallColor.Purple))
+        );
+    }
+
+    /**
+     * Sorted auto catalog - assumes intake is already running.
+     * Same 6-case sorting logic as catalogSorted, but never stops the intake
+     * mid-sequence. WaitCommands replace IntakeCommands for timing. At the very
+     * end, switches to ReversedInBeltGo for 0.5s to spit extras.
+     *
+     * @param spindexer the spindexer subsystem
+     * @param intake the intake subsystem
+     * @param motifPattern the desired shooting order [first, second, third]
+     * @param intakeColors the order balls come in from intake [first, second, third]
+     * @return a command that catalogs balls in sorted mode without stopping intake
+     */
+    public static Command catalogSortedAuto(Spindexer spindexer, Intake intake, EnumConstants.BallColor[] motifPattern,
+                                             EnumConstants.BallColor[] intakeColors) {
+        SequentialCommandGroup sequence = new SequentialCommandGroup();
+
+        // Find which intake position has the first ball to shoot (motifPattern[0])
+        int firstBallPos = 0;
+        for (int i = 0; i < 3; i++) {
+            if (intakeColors[i] == motifPattern[0]) {
+                firstBallPos = i;
+                break;
+            }
+        }
+
+        if (firstBallPos == 0) {
+            sequence.addCommands(new RotateCCWCommand(spindexer));
+            sequence.addCommands(new ExtendSpindexerFlipperCommand(spindexer)
+                .andThen(new RetractSpindexerFlipperCommand(spindexer)).alongWith(new WaitCommand(350)));
+
+            if (intakeColors[1] == motifPattern[1]) {
+                // Case 1a
+                sequence.addCommands(new RotateCCWCommand(spindexer));
+            } else {
+                // Case 1b
+                sequence.addCommands(new RotateCWCommand(spindexer));
+                sequence.addCommands(new WaitCommand(500));
+                sequence.addCommands(new RotateCCWCommand(spindexer));
+            }
+
+        } else if (firstBallPos == 1) {
+            sequence.addCommands(new RotateCWCommand(spindexer));
+            sequence.addCommands(new WaitCommand(350));
+            sequence.addCommands(new RotateCCWCommand(spindexer));
+            sequence.addCommands(new ExtendSpindexerFlipperCommand(spindexer)
+                .andThen(new RetractSpindexerFlipperCommand(spindexer)));
+
+            if (intakeColors[0] == motifPattern[1]) {
+                // Case 2a
+                sequence.addCommands(new RotateCCWCommand(spindexer));
+            } else {
+                // Case 2b
+                sequence.addCommands(new RotateCWCommand(spindexer));
+                sequence.addCommands(new WaitCommand(500));
+                sequence.addCommands(new RotateCCWCommand(spindexer));
+            }
+
+        } else {
+            if (intakeColors[0] == motifPattern[1]) {
+                // Case 3a
+                sequence.addCommands(new RotateCCWCommand(spindexer));
+                sequence.addCommands(new WaitCommand(350));
+                sequence.addCommands(new RotateCCWCommand(spindexer));
+                sequence.addCommands(new WaitCommand(500));
+                sequence.addCommands(new RotateCWCommand(spindexer));
+                sequence.addCommands(new RotateCWCommand(spindexer));
+                sequence.addCommands(new ExtendSpindexerFlipperCommand(spindexer)
+                    .andThen(new RetractSpindexerFlipperCommand(spindexer)));
+                sequence.addCommands(new RotateCCWCommand(spindexer));
+            } else {
+                // Case 3b
+                sequence.addCommands(new RotateCWCommand(spindexer));
+                sequence.addCommands(new WaitCommand(350));
+                sequence.addCommands(new RotateCWCommand(spindexer));
+                sequence.addCommands(new WaitCommand(500));
+                sequence.addCommands(new RotateCCWCommand(spindexer));
+                sequence.addCommands(new ExtendSpindexerFlipperCommand(spindexer)
+                    .andThen(new RetractSpindexerFlipperCommand(spindexer)));
+                sequence.addCommands(new RotateCCWCommand(spindexer));
+            }
+        }
+
+        // Reverse intake to spit extras, belt keeps going to pull last ball in
+        sequence.addCommands(new IntakeCommand(intake, .5, true));
 
         // Final pattern is always the same: m2 in slot 0, m1 in slot 1, slot 2 empty
         sequence.addCommands(new InstantCommand(() ->
