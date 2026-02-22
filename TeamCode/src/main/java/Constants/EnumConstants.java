@@ -4,11 +4,6 @@ package Constants;
  * All enumerations used throughout the robot code.
  */
 public class EnumConstants {
-    public enum FieldState {
-        IdleZone,
-        ShootingZone
-    }
-
     public enum AllianceColor {
         Red,
         Blue

@@ -11,10 +11,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 import Constants.DriveConstants;
-import Constants.FieldMap;
 import Constants.NamingConstants;
 import Constants.OdometryConstants;
-import Constants.RobotConstants;
 import subsystems.MecanumDrive;
 import utility.RobotHardware;
 
@@ -161,32 +159,6 @@ public class DriveTest extends CommandOpMode {
         telemetry.addData("Y", "%.1f in", robotY);
         telemetry.addData("Heading", "%.1f deg (%.2f rad)",
                 Math.toDegrees(robotHeading), robotHeading);
-        telemetry.addData("Center Zone", getZoneName(FieldMap.getPosition(robotX, robotY)));
-        telemetry.addLine();
-
-        // Corners
-        telemetry.addLine("=== CORNERS ===");
-        double halfSize = RobotConstants.Robot.HALF_SIZE;
-        double cosH = Math.cos(robotHeading);
-        double sinH = Math.sin(robotHeading);
-
-        double[][] offsets = {
-            { halfSize,  halfSize},  // Front-Right
-            { halfSize, -halfSize},  // Front-Left
-            {-halfSize,  halfSize},  // Back-Right
-            {-halfSize, -halfSize}   // Back-Left
-        };
-        String[] names = {"FR", "FL", "BR", "BL"};
-
-        boolean anyInShootZone = false;
-        for (int i = 0; i < 4; i++) {
-            double cx = robotX + (offsets[i][0] * cosH - offsets[i][1] * sinH);
-            double cy = robotY + (offsets[i][0] * sinH + offsets[i][1] * cosH);
-            char zone = FieldMap.getPosition(cx, cy);
-            telemetry.addData(names[i], "(%.1f, %.1f) %s", cx, cy, getZoneName(zone));
-            if (zone == 'S') anyInShootZone = true;
-        }
-        telemetry.addData("In Shooting Zone?", anyInShootZone ? "YES" : "NO");
         telemetry.addLine();
 
         // Motor powers
@@ -226,14 +198,4 @@ public class DriveTest extends CommandOpMode {
         telemetry.update();
     }
 
-    private String getZoneName(char zone) {
-        switch (zone) {
-            case 'N': return "Normal";
-            case 'S': return "Shoot Zone";
-            case 'R': return "Red Zone";
-            case 'B': return "Blue Zone";
-            case 'G': return "Goal";
-            default:  return "Unknown";
-        }
-    }
 }

@@ -32,7 +32,7 @@ public class CatalogCommands {
             new RotateCCWCommand(spindexer),
             // Flick ball 1 out, intake ball 2 into slot 0
             new ExtendSpindexerFlipperCommand(spindexer)
-                .andThen(new RetractSpindexerFlipperCommand(spindexer)).alongWith(new IntakeCommand(intake, .35)),
+                .andThen(new RetractSpindexerFlipperCommand(spindexer)).alongWith(new IntakeCommand(intake, .5)),
             // Rotate ball 2 to shooter slot (slot 1)
             new RotateCCWCommand(spindexer),
             // Intake ball 3 into slot 0 (reverse intake to spit extras)

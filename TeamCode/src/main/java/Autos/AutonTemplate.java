@@ -15,10 +15,10 @@ import subsystems.Odometry;
 import subsystems.Intake;
 import subsystems.Spindexer;
 import Constants.OdometryConstants;
+import Constants.ShooterConstants;
 import Constants.SpindexerConstants;
 import utility.FieldDrawing;
 import utility.RobotHardware;
-import utility.ShootingValidator;
 import utility.SpindexerAndMotifStatus;
 import utility.TelemetryHelper;
 
@@ -38,9 +38,10 @@ public abstract class AutonTemplate extends OpMode {
     protected Intake intake;
     protected Spindexer spindexer;
     protected subsystems.Limelight limelight;
-    protected ShootingValidator shootingValidator;
     private TelemetryHelper telemetryHelper;
     private final ElapsedTime loopTimer = new ElapsedTime();
+    private final ElapsedTime telemetryTimer = new ElapsedTime();
+    private static final double TELEMETRY_INTERVAL_MS = 200; // ~5 Hz
 
     /** The autonomous command sequence built by subclasses */
     protected Command autonomousCommand;
@@ -84,11 +85,6 @@ public abstract class AutonTemplate extends OpMode {
         // Link Shooter to Turret for lead-compensated aiming
         turret.setShooter(shooter);
 
-        // Link Odometry to Shooter for field state
-        shooter.setOdometry(odometry);
-
-        shootingValidator = new ShootingValidator(odometry, telemetry);
-
         telemetryHelper = new TelemetryHelper();
         telemetryHelper.setSubsystems(shooter, turret, spindexer, odometry, limelight,
                 null, intake);
@@ -117,6 +113,8 @@ public abstract class AutonTemplate extends OpMode {
             CommandScheduler.getInstance().schedule(autonomousCommand);
         }
 
+        ShooterConstants.SHOOT_WHILE_MOVING_ENABLED = true;
+
         limelight.resetLimelight();
         limelight.setMode(EnumConstants.LimelightMode.TagTracking);
 
@@ -130,38 +128,42 @@ public abstract class AutonTemplate extends OpMode {
 
         // Update follower FIRST (before commands run)
         follower.update();
+        robotHardware.updateCachedPose();
 
         // Run the command scheduler
         CommandScheduler.getInstance().run();
 
-        // Display autonomous telemetry on Driver Station
-        if (autonomousCommand != null) {
-            telemetry.addData("Auto Status", autonomousCommand.isFinished() ? "Finished" : "Running");
-            telemetry.addData("Follower Busy", follower.isBusy());
+        // Rate-limit telemetry sends to ~5 Hz to avoid synchronous WiFi lag spikes
+        if (telemetryTimer.milliseconds() >= TELEMETRY_INTERVAL_MS) {
+            telemetryTimer.reset();
 
-            telemetry.addLine("--- POSITION DEBUG ---");
-            telemetry.addData("Position", "X:%.1f Y:%.1f H:%.1f",
-                follower.getPose().getX(), follower.getPose().getY(),
-                Math.toDegrees(follower.getPose().getHeading()));
+            // Display autonomous telemetry on Driver Station
+            if (autonomousCommand != null) {
+                telemetry.addData("Auto Status", autonomousCommand.isFinished() ? "Finished" : "Running");
+                telemetry.addData("Follower Busy", follower.isBusy());
 
-            telemetry.addData("Limelight Mode", limelight.getCurrentMode());
-            telemetry.addData("Motif Detected", limelight.isMotifDetected());
+                telemetry.addLine("--- POSITION DEBUG ---");
+                telemetry.addData("Position", "X:%.1f Y:%.1f H:%.1f",
+                    follower.getPose().getX(), follower.getPose().getY(),
+                    Math.toDegrees(follower.getPose().getHeading()));
 
-            telemetry.addLine("--- SPINDEXER DEBUG ---");
-            telemetry.addData("Spindexer Degrees", "%d°", spindexer.getTargetPosition());
-            telemetry.addData("Spindexer Servo", "%.3f", spindexer.getServoPosition());
-            telemetry.addData("Ball Pattern", SpindexerAndMotifStatus.SpindexerPattern.getSpindexerPatternString());
-            telemetry.addData("Balls Tracked", SpindexerAndMotifStatus.SpindexerPattern.getBallCount());
-            telemetry.addData("Rotation Idle", spindexer.isRotationIdle());
-            telemetry.addData("Flick State", spindexer.getCurrentState());
-            telemetry.addData("Shooting Mode", SpindexerConstants.currentMode);
+                telemetry.addData("Limelight Mode", limelight.getCurrentMode());
+                telemetry.addData("Motif Detected", limelight.isMotifDetected());
+
+                telemetry.addLine("--- SPINDEXER DEBUG ---");
+                telemetry.addData("Spindexer Degrees", "%d°", spindexer.getTargetPosition());
+                telemetry.addData("Spindexer Servo", "%.3f", spindexer.getServoPosition());
+                telemetry.addData("Ball Pattern", SpindexerAndMotifStatus.SpindexerPattern.getSpindexerPatternString());
+                telemetry.addData("Balls Tracked", SpindexerAndMotifStatus.SpindexerPattern.getBallCount());
+                telemetry.addData("Rotation Idle", spindexer.isRotationIdle());
+                telemetry.addData("Flick State", spindexer.getCurrentState());
+                telemetry.addData("Shooting Mode", SpindexerConstants.currentMode);
+            }
+
+            // Panels telemetry (graph + debug) and field drawing
+            telemetryHelper.update(telemetry, loopMs);
+            FieldDrawing.drawFollowerDebug(follower);
         }
-
-        // Panels telemetry (graph + debug) and field drawing
-        telemetryHelper.update(telemetry, loopMs);
-        FieldDrawing.drawFollowerDebug(follower);
-
-        telemetry.update();
     }
 
 

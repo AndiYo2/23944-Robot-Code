@@ -114,6 +114,8 @@ public class DualBallDetector {
 
     /**
      * Reads both sensors and stores the result in the cache.
+     * Uses getNormalizedColors() — NOT bulk-cache-safe. Use updateCacheBulkSafe() instead
+     * when running in MANUAL bulk caching mode.
      */
     public void updateCache() {
         Result nearResult = nearState.instantRead(near);
@@ -122,11 +124,54 @@ public class DualBallDetector {
     }
 
     /**
+     * Reads both sensors using .alpha()/.red()/.green()/.blue() which go through
+     * the REV hub bulk read cache. Safe to call for all sensor pairs every loop
+     * when using MANUAL bulk caching mode.
+     */
+    public void updateCacheBulkSafe() {
+        Result nearResult = bulkSafeRead(near, nearState.minAlpha);
+        Result farResult  = bulkSafeRead(far, farState.minAlpha);
+        cachedResult = resolveResults(nearResult, farResult);
+    }
+
+    private Result bulkSafeRead(ColorSensor s, double minAlpha) {
+        double a = s.alpha();
+        if (a < minAlpha) {
+            return new Result(false, BallColor.None, 0.0);
+        }
+
+        double r = s.red();
+        double g = s.green();
+        double b = s.blue();
+
+        double sum = r + g + b;
+        if (sum <= 0) {
+            return new Result(false, BallColor.None, 0.0);
+        }
+
+        double rn = r / sum;
+        double gn = g / sum;
+        double bn = b / sum;
+
+        double gC = confidence(rn, gn, bn, greenProfile, greenTolerance);
+        double pC = confidence(rn, gn, bn, purpleProfile, purpleTolerance);
+
+        double bestC = Math.max(gC, pC);
+        if (bestC < MIN_CONFIDENCE) {
+            return new Result(false, BallColor.None, bestC);
+        }
+
+        return (gC > pC)
+                ? new Result(true, BallColor.Green, gC)
+                : new Result(true, BallColor.Purple, pC);
+    }
+
+    /**
      * Update only the near sensor's cached result and re-resolve the pair.
      * Used by round-robin polling to update one sensor at a time.
      */
     public void updateNearCache() {
-        cachedNearResult = nearState.instantRead(near);
+        cachedNearResult = bulkSafeRead(near, nearState.minAlpha);
         cachedResult = resolveResults(cachedNearResult, cachedFarResult);
     }
 
@@ -135,7 +180,7 @@ public class DualBallDetector {
      * Used by round-robin polling to update one sensor at a time.
      */
     public void updateFarCache() {
-        cachedFarResult = farState.instantRead(far);
+        cachedFarResult = bulkSafeRead(far, farState.minAlpha);
         cachedResult = resolveResults(cachedNearResult, cachedFarResult);
     }
 

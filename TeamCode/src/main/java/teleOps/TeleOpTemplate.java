@@ -34,13 +34,12 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     protected GamepadEx driverGamepad;
     private final RobotHardware robot = RobotHardware.getInstance();
 
-    private ShootingValidator shootingValidator;
     private TelemetryHelper telemetryHelper;
     private final ElapsedTime loopTimer = new ElapsedTime();
+    private final ElapsedTime telemetryTimer = new ElapsedTime();
+    private static final double TELEMETRY_INTERVAL_MS = 200; // ~5 Hz
     private SimplePoseTracker poseTracker;
     private double loopMs;
-
-    private boolean shootWhileMovingActive = false;
 
     // Pre-allocated array for getTransformedControls() to avoid GC pressure
     private final double[] controlsArray = new double[3];
@@ -115,11 +114,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         // Link Shooter to Turret for lead-compensated aiming
         turret.setShooter(shooter);
 
-        // Link Odometry to Shooter for field state
-        shooter.setOdometry(odometry);
-
-        shootingValidator = new ShootingValidator(odometry, telemetry);
-
         telemetryHelper = new TelemetryHelper();
         telemetryHelper.setSubsystems(shooter, turret, spindexer, odometry, limelight,
                 mecanumDrive, intake);
@@ -144,20 +138,9 @@ abstract public class TeleOpTemplate extends CommandOpMode {
                 .whenPressed(new InstantCommand(() -> intake.runIntake()))
                 .whenReleased(new InstantCommand(() -> intake.stopIntake()));
 
-        // Right stick button — toggle shoot-while-moving (also overrides zone restriction)
-        new GamepadButton(driverGamepad, GamepadKeys.Button.RIGHT_STICK_BUTTON)
-                .whenPressed(() -> {
-                    shootWhileMovingActive = !shootWhileMovingActive;
-                    ShooterConstants.SHOOT_WHILE_MOVING_ENABLED = shootWhileMovingActive;
-                });
-
         // Right trigger — shoot
         new Trigger(() -> gamepad1.right_trigger > RobotConstants.Controls.TRIGGER_THRESHOLD)
                 .whenActive(() -> {
-                    if (!shootingValidator.canShoot(shootWhileMovingActive)) {
-                        gamepad1.rumble(200);
-                        return;
-                    }
                     schedule(ShootingCommands.shootThreeBalls(shooter, spindexer));
                 });
 
@@ -186,7 +169,8 @@ abstract public class TeleOpTemplate extends CommandOpMode {
                 .whenPressed(() -> {
                     if (SpindexerConstants.currentMode == EnumConstants.ShootingMode.Sorted) {
                         EnumConstants.BallColor[] motifPattern = {SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(0), SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(1),SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(2)};
-                        EnumConstants.BallColor[] intakeColors = {robot.intakeSensorPair.quickCheck().color,robot.transferSensorPair.quickCheck().color,robot.rampSensorPair.quickCheck().color};
+                        // Order matches physical ball path: spindexer slot (first in) → ramp → belt area (last in)
+                        EnumConstants.BallColor[] intakeColors = {robot.intakeSensorPair.quickCheck().color,robot.rampSensorPair.quickCheck().color,robot.transferSensorPair.quickCheck().color};
                         schedule(CatalogCommands.catalogSorted(spindexer, intake, motifPattern, intakeColors));
                     } else {
                         schedule(CatalogCommands.catalogFast(spindexer, intake));
@@ -228,12 +212,17 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         robot.updateCachedPose();
         robot.pollNextSensor();
 
+        ShooterConstants.SHOOT_WHILE_MOVING_ENABLED = false;
+
         super.run();
 
         poseTracker.addPose(robot.cachedPoseX, robot.cachedPoseY);
 
-        telemetry.addData("Loop", "%.1f ms (%.0f Hz)", loopMs, loopMs > 0 ? 1000.0 / loopMs : 0);
-        updateTelemetry();
+        if (telemetryTimer.milliseconds() >= TELEMETRY_INTERVAL_MS) {
+            telemetryTimer.reset();
+            telemetry.addData("Loop", "%.1f ms (%.0f Hz)", loopMs, loopMs > 0 ? 1000.0 / loopMs : 0);
+            updateTelemetry();
+        }
     }
 
     /**

@@ -37,5 +37,5 @@ public class TurretConstants {
 
     // Positive = shift aim right, Negative = shift aim left
     public static double BLUE_TURRET_TRACKING_OFFSET = 4.25;
-    public static double RED_TURRET_TRACKING_OFFSET = 0;
+    public static double RED_TURRET_TRACKING_OFFSET = 4.25;
 }

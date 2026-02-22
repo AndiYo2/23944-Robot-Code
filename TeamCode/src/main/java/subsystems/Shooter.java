@@ -21,9 +21,6 @@ public class Shooter extends SubsystemBase {
     // Turret subsystem reference
     private Turret turret;
 
-    // Odometry subsystem reference
-    private Odometry odometry;
-
     // Flywheel velocity (ticks/sec) - updated each loop based on distance to goal
     private double requiredVelocity = ShooterConstants.DEFAULT_VELOCITY;
 
@@ -122,9 +119,6 @@ public class Shooter extends SubsystemBase {
         this.turret = turret;
     }
 
-    public void setOdometry(Odometry odometry) {
-        this.odometry = odometry;
-    }
 
     public double getDistanceToTarget() {
         if (turret == null) {

@@ -20,6 +20,9 @@ public class ShooterConstants {
 
     public static boolean SHOOT_WHILE_MOVING_ENABLED = false;
 
+    /** Minimum robot speed (in/sec) for shoot-while-moving lead compensation to activate in TeleOp */
+    public static double MOVING_WHILE_SHOOTING_VELOCITY_THRESHOLD = 2.0;
+
     // Lead compensation filtering
     /** Minimum translational speed (in/sec) for lead compensation. Below this, robot is considered stationary. */
     public static double LEAD_VELOCITY_DEADBAND = 3.0;
@@ -31,36 +34,38 @@ public class ShooterConstants {
 
     // Velocity LUT - Distance (inches) -> Velocity (ticks/sec)
     public static double[][] VELOCITY_DATA = {
-        {0, 1720},
-        {42, 1720},
-        {55, 1820},
-        {66, 1870},
-        {80, 2020},
-        {90, 2120},
-        {100, 2200},
-        {113, 2470},
-        {128.6, 2570},
-        {140.5, 2670},
-        {146, 2720},
-        {150, 2820},
-        {300, 2820}
+        {0, 1640},
+        {45, 1640},
+        {55, 1750},
+        {65, 1880},
+        {75, 1950},
+        {87, 2160},
+        {95, 2250},
+        {105, 2300},
+        {115, 2460},
+        {130, 2520},
+        {140, 2620},
+        {150, 2720},
+        {156, 2720},
+        {300, 2720}
     };
 
     // Hood Angle LUT - Distance (inches) -> Hood Angle (degrees, 0=vertical, 90=horizontal)
     public static double[][] HOOD_DATA = {
-        {0, 30},
-        {42, 30},
-        {55, 34},
-        {66, 40},
-        {80, 45},
-        {90, 45.5},
-        {100, 46},
-        {113, 51},
-        {128.6, 52},
-        {140.5, 52.5},
-        {146, 54},
+        {0, 32},
+        {45, 32},
+        {55, 36},
+        {65, 40},
+        {75, 43},
+        {87, 46},
+        {95, 50},
+        {105, 50},
+        {115, 51},
+        {130, 53},
+        {140, 53},
         {150, 55},
-        {300, 55}
+        {156, 52},
+        {300, 52}
     };
 
     /**
@@ -86,13 +91,13 @@ public class ShooterConstants {
     public static double kS = 0.03;
 
     /** Velocity gain */
-    public static double kV = 0.00032;
+    public static double kV = 0.000315;
 
     /** Acceleration gain */
-    public static double kA = 0.00001;
+    public static double kA = 0.00002;
 
     /** Proportional gain */
-    public static double VELOCITY_kP = 0.002;
+    public static double VELOCITY_kP = 0.00235;
 
     /** Integral gain */
     public static double VELOCITY_kI = 0.00001;

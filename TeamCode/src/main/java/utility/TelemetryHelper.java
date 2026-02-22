@@ -65,9 +65,8 @@ public class TelemetryHelper {
         double turretAngle = turret.getTargetTurretAngle();
 
         // Status
-        panels.debug("Pattern: " + SpindexerAndMotifStatus.SpindexerPattern.getSpindexerPatternString());
-        panels.debug("Mode: " + SpindexerConstants.currentMode);
-        panels.debug("Zone: " + odometry.getFieldState());
+        panels.debug("Spindexer Pattern: " + SpindexerAndMotifStatus.SpindexerPattern.getSpindexerPatternString());
+        panels.debug("Sorting Mode: " + SpindexerConstants.currentMode);
 
         if (limelight.isMotifDetected()) {
             panels.debug("Motif: ["
@@ -80,13 +79,6 @@ public class TelemetryHelper {
 
         panels.debug("LL Mode: " + limelight.getCurrentMode());
 
-        if (mecanumDrive != null) {
-            panels.debug("Drive: " + mecanumDrive.getCurrentState());
-        }
-        if (intake != null) {
-            panels.debug("Intake: " + intake.getCurrentState());
-        }
-        panels.debug("Shooter Ready: " + shooter.isAtTargetVelocity());
 
         // Position — use cached pose values
         double x = robot.cachedPoseX;
@@ -94,12 +86,6 @@ public class TelemetryHelper {
         double heading = Math.toDegrees(robot.cachedHeading);
         panels.debug("Pose: (" + (int)(x * 10) / 10.0 + ", " + (int)(y * 10) / 10.0 + ") " + (int)(heading * 10) / 10.0 + "°");
         panels.debug("Spind: " + spindexer.getCurrentDegrees() + "°");
-
-        // Targeting
-        panels.debug("Turret: " + (int)(turretAngle * 10) / 10.0 + "°");
-        panels.debug("Hood: " + (int)(hoodAngle * 10) / 10.0 + "°");
-        panels.debug("Dist: " + (int)(distance * 10) / 10.0 + " in");
-        panels.debug("Vel: " + (int) currentVel + " / " + (int) targetVel + " tks");
 
         // Sensors
         DualBallDetector.Result r1 = robot.intakeSensorPair.quickCheck();
@@ -115,11 +101,7 @@ public class TelemetryHelper {
         panels.addData("Velocity Error", shooter.getVelocityError());
         panels.addData("Hood Angle", hoodAngle);
         panels.addData("Distance to Target", distance);
-
-
         panels.addData("Turret Target Angle", turretAngle);
-        panels.addData("Turret Degrees to Goal", turret.getLastDegreesToGoal());
-        panels.addData("Turret Raw Angle", turret.getRawTargetDegrees());
 
         if (robot.voltageSensor != null) {
             panels.addData("Battery Voltage", robot.voltageSensor.getVoltage());

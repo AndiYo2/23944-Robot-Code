@@ -246,6 +246,13 @@ public class RobotHardware {
         roundRobinIndex = (roundRobinIndex + 1) % 6;
     }
 
+    /** Read ALL color sensors every cycle using bulk-cache-safe reads (3 pairs × 2 sensors). */
+    public void pollAllSensors() {
+        intakeSensorPair.updateCacheBulkSafe();
+        transferSensorPair.updateCacheBulkSafe();
+        rampSensorPair.updateCacheBulkSafe();
+    }
+
     /** Read pinpoint pose/velocities once and cache for the entire loop. */
     public void updateCachedPose() {
         cachedPoseX = pinpoint.getPosX(DistanceUnit.INCH);
