@@ -28,7 +28,7 @@ public class Red18Ball extends AutonTemplate {
     private final Pose mainShootPose = new Pose(86.000, 79.000, Math.toRadians(45));
 
     // Gate paths
-    private final Pose gatePose = new Pose(133.500, 57, Math.toRadians(30));
+    private final Pose gatePose = new Pose(132.000, 57, Math.toRadians(30));
     private final Pose gateShootPose = new Pose(86.000, 79.000, Math.toRadians(30));
 
     // ShootToFourth path
@@ -128,9 +128,9 @@ public class Red18Ball extends AutonTemplate {
                 .moveTo(startToShoot, maxSpeed, true)
                 .moveTo(shootToFirst, maxSpeed, true)
                 .moveTo(firstToShoot, maxSpeed, true)
-                .moveTo(ShootToGate1, maxSpeed, true)
+                .moveTo(ShootToGate1, .5, true)
                 .moveTo(GateToShoot1, maxSpeed, true)
-                .moveTo(ShootToGate2, maxSpeed, true)
+                .moveTo(ShootToGate2, .5, true)
                 .moveTo(GateToShoot2, maxSpeed, true)
                 .moveTo(ShootToFourth, maxSpeed, true)
                 .moveTo(fourthToShoot, maxSpeed, true)

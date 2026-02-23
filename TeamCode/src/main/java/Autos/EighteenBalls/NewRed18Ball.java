@@ -14,7 +14,7 @@ import commands.CommandSequenceBuilder;
 @Autonomous(name = "Red18Ball")
 public class NewRed18Ball extends AutonTemplate {
     public static double maxSpeed = 1;
-    private PathChain startToShoot, shootToFirst, firstToShoot, shootToGatePrep1, prepToGate1, gateToShoot1, shootToGatePrep2, prepToGate2, gateToShoot2, shootToFourth, fourthToShoot, shootToFifth, fifthToShootAndStop, testingStop;
+    private PathChain startToShoot, shootToFirst, firstToShoot, shootToGatePrep1, prepToThree, gateToShoot1, shootToGatePrep2, path13, gateToShoot2, shootToFourth, fourthToShoot, shootToFifth, fifthToShootAndStop, testingStop;
 
     // Named pose constants
     private final Pose startPose = new Pose(111.250, 135.000, Math.toRadians(90));
@@ -29,9 +29,10 @@ public class NewRed18Ball extends AutonTemplate {
 
     // Gate paths
     private final Pose gatePrepControlPoint = new Pose(102.000, 68.500);
-    private final Pose gatePrepPose = new Pose(127.500, 62.500, Math.toRadians(30));
     private final Pose gateControlPoint = new Pose(108.000, 65.000);
-    private final Pose gatePose = new Pose(132.000, 61.500, Math.toRadians(30));
+    private final Pose gatePrepPose = new Pose(128.000, 63.000, Math.toRadians(0));
+    private final Pose gateInnerControlPoint = new Pose(125, 57.500);
+    private final Pose gatePose = new Pose(132.500, 55.000, Math.toRadians(10));
     private final Pose gateShootPose = new Pose(86.000, 82.000, Math.toRadians(30));
 
     // ShootToFourth path
@@ -72,8 +73,8 @@ public class NewRed18Ball extends AutonTemplate {
                 .setGlobalDeceleration()
                 .build();
 
-        prepToGate1 = follower.pathBuilder()
-                .addPath(new BezierLine(gatePrepPose, gatePose))
+        prepToThree = follower.pathBuilder()
+                .addPath(new BezierCurve(gatePrepPose, gateInnerControlPoint, gatePose))
                 .setLinearHeadingInterpolation(gatePrepPose.getHeading(), gatePose.getHeading())
                 .setGlobalDeceleration()
                 .build();
@@ -90,8 +91,8 @@ public class NewRed18Ball extends AutonTemplate {
                 .setGlobalDeceleration()
                 .build();
 
-        prepToGate2 = follower.pathBuilder()
-                .addPath(new BezierLine(gatePrepPose, gatePose))
+        path13 = follower.pathBuilder()
+                .addPath(new BezierCurve(gatePrepPose, gateInnerControlPoint, gatePose))
                 .setLinearHeadingInterpolation(gatePrepPose.getHeading(), gatePose.getHeading())
                 .setGlobalDeceleration()
                 .build();
@@ -149,17 +150,20 @@ public class NewRed18Ball extends AutonTemplate {
                 .autoCatalog()
                 .moveTo(firstToShoot, maxSpeed, true)
                 .shoot()
-                .moveTo(shootToGatePrep1, maxSpeed, true)
+                .moveTo(shootToGatePrep1, .7, true)
+                .delay(.02)
                 .intakeStart()
-                .moveTo(prepToGate1, maxSpeed, true)
+                .moveTo(prepToThree, 1, true)
                 .delay(1)
                 .autoCatalog()
                 .moveTo(gateToShoot1, maxSpeed, true)
                 .shoot()
                 .setSpindexerMode(EnumConstants.ShootingMode.Sorted)
-                .moveTo(shootToGatePrep2, maxSpeed, true)
+                .delay(.5)
+                .moveTo(shootToGatePrep2, .5, true)
+                .delay(.02)
                 .intakeStart()
-                .moveTo(prepToGate2, maxSpeed, true)
+                .moveTo(path13, 1, true)
                 .delay(1)
                 .autoCatalog()
                 .moveTo(gateToShoot2, maxSpeed, true)

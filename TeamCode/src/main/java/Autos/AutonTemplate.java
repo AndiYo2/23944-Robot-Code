@@ -14,6 +14,7 @@ import subsystems.Turret;
 import subsystems.Odometry;
 import subsystems.Intake;
 import subsystems.Spindexer;
+import Constants.FieldMap;
 import Constants.OdometryConstants;
 import Constants.ShooterConstants;
 import Constants.SpindexerConstants;
@@ -113,7 +114,7 @@ public abstract class AutonTemplate extends OpMode {
             CommandScheduler.getInstance().schedule(autonomousCommand);
         }
 
-        ShooterConstants.SHOOT_WHILE_MOVING_ENABLED = true;
+        ShooterConstants.SHOOT_WHILE_MOVING_ENABLED = false;
 
         limelight.resetLimelight();
         limelight.setMode(EnumConstants.LimelightMode.TagTracking);
@@ -125,6 +126,9 @@ public abstract class AutonTemplate extends OpMode {
     public void loop() {
         double loopMs = loopTimer.milliseconds();
         loopTimer.reset();
+
+        // Clear bulk cache so hardware reads (encoders, sensors) return fresh data
+        robotHardware.clearBulkCache();
 
         // Update follower FIRST (before commands run)
         follower.update();
@@ -143,9 +147,21 @@ public abstract class AutonTemplate extends OpMode {
                 telemetry.addData("Follower Busy", follower.isBusy());
 
                 telemetry.addLine("--- POSITION DEBUG ---");
-                telemetry.addData("Position", "X:%.1f Y:%.1f H:%.1f",
+                telemetry.addData("Follower Pose", "X:%.1f Y:%.1f H:%.1f",
                     follower.getPose().getX(), follower.getPose().getY(),
                     Math.toDegrees(follower.getPose().getHeading()));
+                telemetry.addData("Pinpoint Pose", "X:%.1f Y:%.1f H:%.1f",
+                    robotHardware.cachedPoseX, robotHardware.cachedPoseY,
+                    Math.toDegrees(robotHardware.cachedHeading));
+
+                telemetry.addLine("--- SHOOTER DEBUG ---");
+                telemetry.addData("Distance", "%.1f in", shooter.getDistanceToTarget());
+                telemetry.addData("Target Vel", "%.0f", shooter.getTargetVelocity());
+                telemetry.addData("Actual Vel", "%.0f", shooter.getCurrentVelocity());
+                telemetry.addData("Hood Angle", "%.1f°", shooter.getTargetHoodAngle());
+                telemetry.addData("Goal", "X:%.0f Y:%.0f",
+                    FieldMap.getGoalPosition().getX(),
+                    FieldMap.getGoalPosition().getY());
 
                 telemetry.addData("Limelight Mode", limelight.getCurrentMode());
                 telemetry.addData("Motif Detected", limelight.isMotifDetected());

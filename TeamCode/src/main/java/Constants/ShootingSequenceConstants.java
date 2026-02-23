@@ -10,20 +10,20 @@ import com.bylazar.configurables.annotations.Configurable;
 @Configurable
 public class ShootingSequenceConstants {
     // --- Shooter Flipper ---
-    public static double SHOOTER_FLIPPER_EXTENDED = 0.26;
+    public static double SHOOTER_FLIPPER_EXTENDED = 0.28;//.26
     public static double SHOOTER_FLIPPER_RETRACT = 0.48;
-    public static double SHOOTER_FLICK_TIME = 0.12;//.09
-    public static double SHOOTER_RETRACT_DELAY = 0.1;//.075
+    public static double SHOOTER_FLICK_TIME = 0.15;//.12
+    public static double SHOOTER_RETRACT_DELAY = 0.125;//.1
 
     // --- Spindexer Flipper ---
-    public static double SPINDEXER_FLIPPER_EXTENDED = 0.41;
-    public static double SPINDEXER_FLIPPER_RETRACT = 0.49;
+    public static double SPINDEXER_FLIPPER_EXTENDED = 0.42;
+    public static double SPINDEXER_FLIPPER_RETRACT = 0.502;
     public static double SPINDEXER_FLICK_TIME = 0.075;
     public static double SPINDEXER_RETRACT_DELAY = 0;
 
     // --- Pipelining ---
-    public static double SHOOTER_EXTEND_HALFWAY = 0.03;
+    public static double SHOOTER_EXTEND_HALFWAY = 0.06; // 0.03
 
     // --- Spindexer Rotation ---
-    public static double SPINDEXER_ROTATION_TIME = 0.15;
+    public static double SPINDEXER_ROTATION_TIME = 0.16;//0.15
 }
