@@ -134,6 +134,9 @@ public abstract class AutonTemplate extends OpMode {
         follower.update();
         robotHardware.updateCachedPose();
 
+        // Poll color sensors (round-robin, 1 per loop) so quickCheck() returns live data
+        robotHardware.pollNextSensor();
+
         // Run the command scheduler
         CommandScheduler.getInstance().run();
 

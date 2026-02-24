@@ -594,6 +594,14 @@ public class CommandSequenceBuilder {
             return this;
         }
 
+        public ParallelBuilder shootAfterDelay(double seconds) {
+            parallelCommands.add(new SequentialCommandGroup(
+                    new WaitCommand((long)(seconds * 1000)),
+                    ShootingCommands.shootThreeBalls(shooter, spindexer)
+            ));
+            return this;
+        }
+
         public ParallelBuilder shoot(int ballCount) {
             parallelCommands.add(ShootingCommands.shootAllBalls(shooter, spindexer, ballCount));
             return this;

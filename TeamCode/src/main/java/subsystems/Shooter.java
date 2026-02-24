@@ -212,11 +212,17 @@ public class Shooter extends SubsystemBase {
         double velY = robot.cachedVelY;
         double velH = robot.cachedHeadingVel;
 
+        // Rotate Pinpoint robot-relative velocity into field-relative
+        double cos = Math.cos(curH);
+        double sin = Math.sin(curH);
+        double fieldVelX = velX * cos - velY * sin;
+        double fieldVelY = velX * sin + velY * cos;
+
         // Zero out noise-level velocities to prevent jitter when stationary
-        double speed = Math.sqrt(velX * velX + velY * velY);
+        double speed = Math.sqrt(fieldVelX * fieldVelX + fieldVelY * fieldVelY);
         if (speed < ShooterConstants.LEAD_VELOCITY_DEADBAND) {
-            velX = 0.0;
-            velY = 0.0;
+            fieldVelX = 0.0;
+            fieldVelY = 0.0;
         }
         if (Math.abs(velH) < ShooterConstants.LEAD_HEADING_VELOCITY_DEADBAND) {
             velH = 0.0;
@@ -226,8 +232,8 @@ public class Shooter extends SubsystemBase {
         double tof = ShooterConstants.TIME_IN_AIR;
 
         // Predict future pose
-        futurePose[0] = curX + velX * tof;
-        futurePose[1] = curY + velY * tof;
+        futurePose[0] = curX + fieldVelX * tof;
+        futurePose[1] = curY + fieldVelY * tof;
         futurePose[2] = curH + velH * tof;
 
         // Compute distance from future turret position using pre-computed polar offset

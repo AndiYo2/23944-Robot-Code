@@ -34,38 +34,38 @@ public class ShooterConstants {
 
     // Velocity LUT - Distance (inches) -> Velocity (ticks/sec)
     public static double[][] VELOCITY_DATA = {
-        {0, 1640},
-        {46, 1640},
-        {56, 1750},
-        {66, 1880},
-        {76, 1950},
-        {88, 2160},
-        {96, 2250},
-        {106, 2300},
-        {113, 2470},
-        {128.6, 2570},
-        {140.5, 2670},
-        {146, 2720},
-        {150, 2820},
-        {300, 2820}
+        {0, 1700},
+        {38, 1700},
+        {49, 1740},
+        {58, 1780},
+        {68.5, 1900},
+        {76.5, 2020},
+        {85, 2060},
+        {101, 2280},
+        {128, 2550},
+        {140, 2620},
+        {148, 2680},
+        {151, 2700},
+        {160, 2880},
+        {300, 2880}
     };
 
     // Hood Angle LUT - Distance (inches) -> Hood Angle (degrees, 0=vertical, 90=horizontal)
     public static double[][] HOOD_DATA = {
         {0, 32},
-        {46, 32},
-        {56, 36},
-        {66, 40},
-        {76, 43},
-        {88, 46},
-        {96, 50},
-        {106, 50},
-        {113, 51},
-        {128.6, 52},
-        {140.5, 52.5},
-        {146, 54},
-        {150, 55},
-        {300, 55}
+        {38, 32},
+        {49, 35},
+        {58, 37},
+        {68.5, 42},
+        {76.5, 45},
+        {85, 46.5},
+        {101, 48},
+        {128, 52},
+        {140, 53},
+        {148, 54},
+        {151, 54.5},
+        {160, 54.5},
+        {300, 54.5}
     };
 
     /**
@@ -91,13 +91,13 @@ public class ShooterConstants {
     public static double kS = 0.03;
 
     /** Velocity gain */
-    public static double kV = 0.000315;
+    public static double kV = 0.00032;
 
     /** Acceleration gain */
-    public static double kA = 0.00002;
+    public static double kA = 0.00001;
 
     /** Proportional gain */
-    public static double VELOCITY_kP = 0.00235;
+    public static double VELOCITY_kP = 0.002;
 
     /** Integral gain */
     public static double VELOCITY_kI = 0.00001;

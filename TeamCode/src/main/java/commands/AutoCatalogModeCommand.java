@@ -2,7 +2,6 @@ package commands;
 
 import com.arcrobotics.ftclib.command.CommandBase;
 import com.arcrobotics.ftclib.command.Command;
-import com.qualcomm.robotcore.util.ElapsedTime;
 import Constants.EnumConstants;
 import Constants.SpindexerConstants;
 import subsystems.Intake;
@@ -11,20 +10,15 @@ import utility.RobotHardware;
 import utility.SpindexerAndMotifStatus;
 
 /**
- * Auto catalog command that assumes intake is already running.
- * Same runtime-dispatch logic as CatalogModeCommand (sensor-waiting,
- * Fast/Sorted mode detection), but delegates to the auto catalog variants
- * that never stop the intake mid-sequence. Only at the end does the intake
- * switch to ReversedInBeltGo for a fixed duration.
+ * Auto catalog command - reads sensors immediately and sorts.
+ * When in Sorted mode with a valid motif, reads all sensor colors
+ * and runs the sorted catalog right away. Falls back to fast only
+ * if the motif pattern is unset or mode is Fast.
  */
 public class AutoCatalogModeCommand extends CommandBase {
-    private static final double SENSOR_TIMEOUT = 0.5;
-
     private final Spindexer spindexer;
     private final Intake intake;
     private Command actualCatalogCommand;
-    private boolean waitingForSensors;
-    private final ElapsedTime sensorTimer = new ElapsedTime();
 
     public AutoCatalogModeCommand(Spindexer spindexer, Intake intake) {
         this.spindexer = spindexer;
@@ -35,7 +29,6 @@ public class AutoCatalogModeCommand extends CommandBase {
     @Override
     public void initialize() {
         actualCatalogCommand = null;
-        waitingForSensors = false;
 
         if (SpindexerConstants.currentMode == EnumConstants.ShootingMode.Sorted) {
             boolean motifValid =
@@ -43,11 +36,8 @@ public class AutoCatalogModeCommand extends CommandBase {
                  || SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(1) != EnumConstants.BallColor.None
                  || SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(2) != EnumConstants.BallColor.None;
 
-            if (motifValid && allSensorsReady()) {
+            if (motifValid) {
                 startSortedCatalog();
-            } else if (motifValid) {
-                waitingForSensors = true;
-                sensorTimer.reset();
             } else {
                 startFastCatalog();
             }
@@ -58,17 +48,6 @@ public class AutoCatalogModeCommand extends CommandBase {
 
     @Override
     public void execute() {
-        if (waitingForSensors) {
-            if (allSensorsReady()) {
-                waitingForSensors = false;
-                startSortedCatalog();
-            } else if (sensorTimer.seconds() >= SENSOR_TIMEOUT) {
-                waitingForSensors = false;
-                startFastCatalog();
-            }
-            return;
-        }
-
         if (actualCatalogCommand != null) {
             actualCatalogCommand.execute();
         }
@@ -76,7 +55,6 @@ public class AutoCatalogModeCommand extends CommandBase {
 
     @Override
     public boolean isFinished() {
-        if (waitingForSensors) return false;
         return actualCatalogCommand != null && actualCatalogCommand.isFinished();
     }
 
@@ -85,13 +63,6 @@ public class AutoCatalogModeCommand extends CommandBase {
         if (actualCatalogCommand != null) {
             actualCatalogCommand.end(interrupted);
         }
-    }
-
-    private boolean allSensorsReady() {
-        RobotHardware robot = RobotHardware.getInstance();
-        return robot.intakeSensorPair.quickCheck().color != EnumConstants.BallColor.None
-            && robot.transferSensorPair.quickCheck().color != EnumConstants.BallColor.None
-            && robot.rampSensorPair.quickCheck().color != EnumConstants.BallColor.None;
     }
 
     private void startSortedCatalog() {

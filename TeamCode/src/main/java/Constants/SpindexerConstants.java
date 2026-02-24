@@ -35,5 +35,15 @@ public class SpindexerConstants {
 
     public static double SPINDEXER_OFFSET = 10;
 
+    // --- TeleOp Catalog Timings (seconds) ---
+    public static double TELEOP_FIRST_CATALOG_INTAKE_TIME = 0.6;
+    public static double TELEOP_REVERSE_CATALOG_INTAKE_TIME = 0.5;
+
+    // --- Auto Catalog Timings (seconds) ---
+    public static double AUTO_CATALOG_STOP_TIME = 0.3;
+    public static double AUTO_FIRST_CATALOG_INTAKE_TIME = 0.25;//.35
+    public static double AUTO_SECOND_CATALOG_INTAKE_TIME = 0.4;//.5
+    public static double AUTO_REVERSE_CATALOG_INTAKE_TIME = 0.35;//.5
+
     public static EnumConstants.ShootingMode currentMode = EnumConstants.ShootingMode.Sorted;
 }
