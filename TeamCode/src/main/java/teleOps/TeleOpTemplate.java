@@ -41,6 +41,8 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     private SimplePoseTracker poseTracker;
     private double loopMs;
 
+    private boolean servosInitialized = false;
+
     // Pre-allocated array for getTransformedControls() to avoid GC pressure
     private final double[] controlsArray = new double[3];
 
@@ -204,6 +206,13 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
     @Override
     public void run() {
+        if (!servosInitialized) {
+            shooter.initServoPositions();
+            turret.initServoPositions();
+            spindexer.initServoPositions();
+            servosInitialized = true;
+        }
+
         loopMs = loopTimer.milliseconds();
         loopTimer.reset();
 

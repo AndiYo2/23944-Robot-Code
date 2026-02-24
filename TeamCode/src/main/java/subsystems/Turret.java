@@ -55,6 +55,9 @@ public class Turret extends SubsystemBase {
         this.robot = RobotHardware.getInstance();
 
         currentTargetDegrees = CENTER;
+    }
+
+    public void initServoPositions() {
         applyServoPosition(CENTER);
     }
 

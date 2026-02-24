@@ -80,6 +80,11 @@ public abstract class AutonTemplate extends OpMode {
         spindexer.resetToEmptyPosition();
         limelight = new subsystems.Limelight();
 
+        // Set servo positions during auto init (allowed by FTC rules)
+        shooter.initServoPositions();
+        turret.initServoPositions();
+        spindexer.initServoPositions();
+
         // Link Turret to Shooter for distance calculations
         shooter.setTurret(turret);
 

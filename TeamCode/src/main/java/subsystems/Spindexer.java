@@ -42,9 +42,11 @@ public class Spindexer extends SubsystemBase {
     public Spindexer() {
         this.robot = RobotHardware.getInstance();
 
-        robot.spindexerFlipperServo.setPosition(ShootingSequenceConstants.SPINDEXER_FLIPPER_RETRACT);
-
         currentDegrees = EMPTY_RESET_DEGREES;
+    }
+
+    public void initServoPositions() {
+        robot.spindexerFlipperServo.setPosition(ShootingSequenceConstants.SPINDEXER_FLIPPER_RETRACT);
         robot.spindexerServo.setPosition(degreesToServoPosition(EMPTY_RESET_DEGREES));
     }
 

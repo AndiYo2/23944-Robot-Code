@@ -50,6 +50,8 @@ public class DemoTeleOp extends CommandOpMode {
     private EnumConstants.FlickState shooterFlickState = EnumConstants.FlickState.Idle;
     private final ElapsedTime shooterFlickTimer = new ElapsedTime();
 
+    private boolean servosInitialized = false;
+
     @Override
     public void initialize() {
         // Set alliance to Red
@@ -85,12 +87,6 @@ public class DemoTeleOp extends CommandOpMode {
         // SAFETY: Force shooter motors to zero - they must NEVER spin
         robot.shooterMotor1.setPower(0);
         robot.shooterMotor2.setPower(0);
-
-        // Initialize shooter flipper to retracted position (direct servo control)
-        robot.shooterFlipper.setPosition(ShootingSequenceConstants.SHOOTER_FLIPPER_RETRACT);
-
-        // Initialize hood to default angle
-        setHoodAngleDirect(ShooterConstants.HOOD_DEFAULT_ANGLE);
 
         // Configure button bindings
         configureButtonBindings();
@@ -161,6 +157,14 @@ public class DemoTeleOp extends CommandOpMode {
 
     @Override
     public void run() {
+        if (!servosInitialized) {
+            spindexer.initServoPositions();
+            turret.initServoPositions();
+            robot.shooterFlipper.setPosition(ShootingSequenceConstants.SHOOTER_FLIPPER_RETRACT);
+            setHoodAngleDirect(ShooterConstants.HOOD_DEFAULT_ANGLE);
+            servosInitialized = true;
+        }
+
         super.run();
 
         // Update odometry every loop (required for turret tracking)

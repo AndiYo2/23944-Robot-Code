@@ -45,5 +45,8 @@ public class SpindexerConstants {
     public static double AUTO_SECOND_CATALOG_INTAKE_TIME = 0.4;//.5
     public static double AUTO_REVERSE_CATALOG_INTAKE_TIME = 0.35;//.5
 
+    // Extra delay after rotation before flicking, lets servo physically arrive
+    public static double ROTATION_SETTLE_TIME = 0.08;
+
     public static EnumConstants.ShootingMode currentMode = EnumConstants.ShootingMode.Sorted;
 }

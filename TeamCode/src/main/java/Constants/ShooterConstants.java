@@ -85,6 +85,12 @@ public class ShooterConstants {
         public static double TUNING_HOOD_ANGLE = 45.0;
     }
 
+    // Voltage compensation
+    /** Enable battery voltage compensation to maintain consistent flywheel speed as voltage sags */
+    public static boolean VOLTAGE_COMPENSATION_ENABLED = true;
+    /** Nominal battery voltage used as the reference for compensation (volts) */
+    public static double NOMINAL_VOLTAGE = 13.0;
+
     // Feedforward + PID velocity control
 
     /** Static friction compensation */

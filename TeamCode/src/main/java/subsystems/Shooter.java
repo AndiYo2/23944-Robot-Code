@@ -89,13 +89,14 @@ public class Shooter extends SubsystemBase {
         robot.shooterMotor2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         robot.shooterMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
-        robot.shooterFlipper.setPosition(ShootingSequenceConstants.SHOOTER_FLIPPER_RETRACT);
-
         initializeLUTs();
 
-        setHoodAngle(ShooterConstants.HOOD_DEFAULT_ANGLE);
-
         loopTimer.reset();
+    }
+
+    public void initServoPositions() {
+        robot.shooterFlipper.setPosition(ShootingSequenceConstants.SHOOTER_FLIPPER_RETRACT);
+        setHoodAngle(ShooterConstants.HOOD_DEFAULT_ANGLE);
     }
 
     /**
@@ -424,6 +425,16 @@ public class Shooter extends SubsystemBase {
         // ==================== TOTAL OUTPUT ====================
         double totalPower = ffOutput + pidOutput;
         totalPower = clamp(totalPower, 0, 1.0);  // Motor power range (flywheel only spins one direction)
+
+        // Voltage compensation: scale power up as battery sags below nominal
+        if (ShooterConstants.VOLTAGE_COMPENSATION_ENABLED && robot.voltageSensor != null) {
+            double batteryVoltage = robot.voltageSensor.getVoltage();
+            if (batteryVoltage > 0) {
+                totalPower *= ShooterConstants.NOMINAL_VOLTAGE / batteryVoltage;
+                totalPower = clamp(totalPower, 0, 1.0);
+            }
+        }
+
         lastTotalPower = totalPower;
 
         // Apply power to both motors

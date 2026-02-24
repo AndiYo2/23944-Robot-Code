@@ -32,6 +32,7 @@ public class CatalogCommands {
         return new SequentialCommandGroup(
             // Rotate ball 1 from slot 0 to shooter slot (slot 1)
             new RotateCCWCommand(spindexer),
+            new WaitCommand((long)(SpindexerConstants.ROTATION_SETTLE_TIME * 1000)),
             // Flick ball 1 out, intake ball 2 into slot 0
             new ExtendSpindexerFlipperCommand(spindexer)
                 .andThen(new RetractSpindexerFlipperCommand(spindexer)).alongWith(new IntakeCommand(intake, SpindexerConstants.TELEOP_FIRST_CATALOG_INTAKE_TIME)),
@@ -88,6 +89,7 @@ public class CatalogCommands {
             // intake[0] == motifPattern[0]: flick first ball immediately
             // CCW moves ball 1 to slot 1, flick it to shooter
             sequence.addCommands(new RotateCCWCommand(spindexer));
+            sequence.addCommands(new WaitCommand((long)(SpindexerConstants.ROTATION_SETTLE_TIME * 1000)));
             sequence.addCommands(new ExtendSpindexerFlipperCommand(spindexer)
                 .andThen(new RetractSpindexerFlipperCommand(spindexer)).alongWith(new IntakeCommand(intake, SpindexerConstants.TELEOP_FIRST_CATALOG_INTAKE_TIME)));
 
@@ -112,6 +114,7 @@ public class CatalogCommands {
             sequence.addCommands(new RotateCWCommand(spindexer));
             sequence.addCommands(new IntakeCommand(intake, SpindexerConstants.TELEOP_FIRST_CATALOG_INTAKE_TIME));
             sequence.addCommands(new RotateCCWCommand(spindexer));
+            sequence.addCommands(new WaitCommand((long)(SpindexerConstants.ROTATION_SETTLE_TIME * 1000)));
             sequence.addCommands(new ExtendSpindexerFlipperCommand(spindexer)
                 .andThen(new RetractSpindexerFlipperCommand(spindexer)));
 
@@ -143,6 +146,7 @@ public class CatalogCommands {
                 sequence.addCommands(new IntakeCommand(intake, SpindexerConstants.TELEOP_REVERSE_CATALOG_INTAKE_TIME, true));
                 sequence.addCommands(new RotateCWCommand(spindexer));
                 sequence.addCommands(new RotateCWCommand(spindexer));
+                sequence.addCommands(new WaitCommand((long)(SpindexerConstants.ROTATION_SETTLE_TIME * 1000)));
                 sequence.addCommands(new ExtendSpindexerFlipperCommand(spindexer)
                 .andThen(new RetractSpindexerFlipperCommand(spindexer)));
                 sequence.addCommands(new RotateCCWCommand(spindexer));
@@ -155,6 +159,7 @@ public class CatalogCommands {
                 sequence.addCommands(new RotateCWCommand(spindexer));
                 sequence.addCommands(new IntakeCommand(intake, SpindexerConstants.TELEOP_REVERSE_CATALOG_INTAKE_TIME, true));
                 sequence.addCommands(new RotateCCWCommand(spindexer));
+                sequence.addCommands(new WaitCommand((long)(SpindexerConstants.ROTATION_SETTLE_TIME * 1000)));
                 sequence.addCommands(new ExtendSpindexerFlipperCommand(spindexer)
                 .andThen(new RetractSpindexerFlipperCommand(spindexer)));
                 sequence.addCommands(new RotateCCWCommand(spindexer));
@@ -192,6 +197,7 @@ public class CatalogCommands {
             new InstantCommand(() -> intake.runIntake()),
             // Rotate ball 1 from slot 0 to shooter slot (slot 1)
             new RotateCCWCommand(spindexer),
+            new WaitCommand((long)(SpindexerConstants.ROTATION_SETTLE_TIME * 1000)),
             // Flick ball 1 out, intake ball 2
             new ExtendSpindexerFlipperCommand(spindexer)
                 .andThen(new RetractSpindexerFlipperCommand(spindexer)).alongWith(new WaitCommand((long)(SpindexerConstants.AUTO_FIRST_CATALOG_INTAKE_TIME * 1000))),
@@ -240,6 +246,7 @@ public class CatalogCommands {
 
         if (firstBallPos == 0) {
             sequence.addCommands(new RotateCCWCommand(spindexer));
+            sequence.addCommands(new WaitCommand((long)(SpindexerConstants.ROTATION_SETTLE_TIME * 1000)));
             sequence.addCommands(new ExtendSpindexerFlipperCommand(spindexer)
                 .andThen(new RetractSpindexerFlipperCommand(spindexer)).alongWith(new WaitCommand((long)(SpindexerConstants.AUTO_FIRST_CATALOG_INTAKE_TIME * 1000))));
 
@@ -257,6 +264,7 @@ public class CatalogCommands {
             sequence.addCommands(new RotateCWCommand(spindexer));
             sequence.addCommands(new WaitCommand((long)(SpindexerConstants.AUTO_FIRST_CATALOG_INTAKE_TIME * 1000)));
             sequence.addCommands(new RotateCCWCommand(spindexer));
+            sequence.addCommands(new WaitCommand((long)(SpindexerConstants.ROTATION_SETTLE_TIME * 1000)));
             sequence.addCommands(new ExtendSpindexerFlipperCommand(spindexer)
                 .andThen(new RetractSpindexerFlipperCommand(spindexer)));
 
@@ -279,6 +287,7 @@ public class CatalogCommands {
                 sequence.addCommands(new WaitCommand((long)(SpindexerConstants.AUTO_SECOND_CATALOG_INTAKE_TIME * 1000)));
                 sequence.addCommands(new RotateCWCommand(spindexer));
                 sequence.addCommands(new RotateCWCommand(spindexer));
+                sequence.addCommands(new WaitCommand((long)(SpindexerConstants.ROTATION_SETTLE_TIME * 1000)));
                 sequence.addCommands(new ExtendSpindexerFlipperCommand(spindexer)
                     .andThen(new RetractSpindexerFlipperCommand(spindexer)));
                 sequence.addCommands(new RotateCCWCommand(spindexer));
@@ -289,6 +298,7 @@ public class CatalogCommands {
                 sequence.addCommands(new RotateCWCommand(spindexer));
                 sequence.addCommands(new WaitCommand((long)(SpindexerConstants.AUTO_SECOND_CATALOG_INTAKE_TIME * 1000)));
                 sequence.addCommands(new RotateCCWCommand(spindexer));
+                sequence.addCommands(new WaitCommand((long)(SpindexerConstants.ROTATION_SETTLE_TIME * 1000)));
                 sequence.addCommands(new ExtendSpindexerFlipperCommand(spindexer)
                     .andThen(new RetractSpindexerFlipperCommand(spindexer)));
                 sequence.addCommands(new RotateCCWCommand(spindexer));
