@@ -233,7 +233,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
             updateTelemetry();
         }
     }
-
     /**
      * Applies alliance-specific control mapping transformations.
      * Blue alliance uses standard field coordinates.
