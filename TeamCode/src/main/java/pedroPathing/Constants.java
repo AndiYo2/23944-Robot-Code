@@ -80,9 +80,9 @@ public class Constants {
             .rightRearMotorDirection(DcMotorEx.Direction.FORWARD);
 
     public static PinpointConstants localizerConstants = new PinpointConstants()
-            .forwardPodY(0)
-            .strafePodX(0)
-            .distanceUnit(DistanceUnit.INCH)
+            .forwardPodY(-0.5)
+            .strafePodX(36.5)
+            .distanceUnit(DistanceUnit.MM)
             .forwardEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD)
             .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD);
 

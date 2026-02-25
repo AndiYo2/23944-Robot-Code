@@ -141,7 +141,7 @@ public class RobotHardware {
         // ******************* PINPOINT ******************* //
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, NamingConstants.Pinpoint.pinpoint);
         pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
-        pinpoint.setOffsets(0.0, 0.0, DistanceUnit.INCH); // Centered by design in CAD
+        pinpoint.setOffsets(-0.5, 36.5, DistanceUnit.MM); // Y pod: 0.5mm right, X pod: 36.5mm forward of CoR
 
         // CRITICAL: Reset and calibrate IMU
         // Robot MUST be stationary during this! Calibration takes ~250ms

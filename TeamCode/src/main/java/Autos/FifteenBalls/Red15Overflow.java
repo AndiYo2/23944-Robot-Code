@@ -14,7 +14,7 @@ import commands.CommandSequenceBuilder;
 @Autonomous(name = "Red15Overflow")
 public class Red15Overflow extends AutonTemplate {
     public static double maxSpeed = 1;
-    private PathChain shootToFirstPrep, firstPrepToFirst, firstToShoot, shootToSecond, secondToGate, gateToShoot, shootToThird, thirdToShoot, shootToFourthPrep, fourthPrepToFourth, fourthToShoot, shootToCycle1Prep, cycle1PrepToCycle1, cycle1ToShoot, shootToEnd;
+    private PathChain shootToFirst, firstToShoot, shootToSecond, secondToGate, gateToShoot, shootToThird, thirdToShoot, shootToFourth, fourthToShoot, shootToCycle1, cycle1ToShoot, shootToEnd;
 
     // Start pose
     private final Pose startPose = new Pose(88.500, 8.500, Math.toRadians(90));
@@ -58,16 +58,11 @@ public class Red15Overflow extends AutonTemplate {
     protected void buildPaths() {
         follower.setStartingPose(startPose);
 
-        shootToFirstPrep = follower.pathBuilder()
+        shootToFirst = follower.pathBuilder()
                 .addPath(new BezierCurve(startPose, shootToFirstPrepControl, firstPrepPose))
                 .setLinearHeadingInterpolation(startPose.getHeading(), firstPrepPose.getHeading())
-                .setGlobalDeceleration()
-                .build();
-
-        firstPrepToFirst = follower.pathBuilder()
                 .addPath(new BezierLine(firstPrepPose, firstPickupPose))
                 .setLinearHeadingInterpolation(firstPrepPose.getHeading(), firstPickupPose.getHeading())
-                .setGlobalDeceleration()
                 .build();
 
         firstToShoot = follower.pathBuilder()
@@ -106,16 +101,11 @@ public class Red15Overflow extends AutonTemplate {
                 .setGlobalDeceleration()
                 .build();
 
-        shootToFourthPrep = follower.pathBuilder()
+        shootToFourth = follower.pathBuilder()
                 .addPath(new BezierCurve(postGateShootPose, shootToFourthPrepControl, fourthPrepPose))
                 .setLinearHeadingInterpolation(postGateShootPose.getHeading(), fourthPrepPose.getHeading())
-                .setGlobalDeceleration()
-                .build();
-
-        fourthPrepToFourth = follower.pathBuilder()
                 .addPath(new BezierLine(fourthPrepPose, fourthPickupPose))
                 .setLinearHeadingInterpolation(fourthPrepPose.getHeading(), fourthPickupPose.getHeading())
-                .setGlobalDeceleration()
                 .build();
 
         fourthToShoot = follower.pathBuilder()
@@ -124,16 +114,11 @@ public class Red15Overflow extends AutonTemplate {
                 .setGlobalDeceleration()
                 .build();
 
-        shootToCycle1Prep = follower.pathBuilder()
+        shootToCycle1 = follower.pathBuilder()
                 .addPath(new BezierLine(cycleShootPose, firstPrepPose))
                 .setLinearHeadingInterpolation(cycleShootPose.getHeading(), firstPrepPose.getHeading())
-                .setGlobalDeceleration()
-                .build();
-
-        cycle1PrepToCycle1 = follower.pathBuilder()
                 .addPath(new BezierLine(firstPrepPose, cycle1PickupPose))
                 .setLinearHeadingInterpolation(firstPrepPose.getHeading(), cycle1PickupPose.getHeading())
-                .setGlobalDeceleration()
                 .build();
 
         cycle1ToShoot = follower.pathBuilder()
@@ -154,15 +139,13 @@ public class Red15Overflow extends AutonTemplate {
         super.init();
         SpindexerConstants.currentMode = EnumConstants.ShootingMode.Fast;
         Constants.RobotConstants.Robot.allianceColor = Constants.EnumConstants.AllianceColor.Red;
-        Constants.TurretConstants.RED_TURRET_TRACKING_OFFSET -= 1;
+        Constants.TurretConstants.RED_TURRET_TRACKING_OFFSET = -3; // FIX BEFORE COMP
 
         autonomousCommand = new CommandSequenceBuilder(follower, intake, spindexer, limelight, shooter, turret)
-                .limelightScan()
-                .delay(.5)
-                .shoot()
+                .delay(.35)
+                .parallel(p -> p.shoot().limelightScan())
                 .intakeStart()
-                .moveTo(shootToFirstPrep, maxSpeed, false)
-                .moveTo(firstPrepToFirst, maxSpeed, false)
+                .moveTo(shootToFirst, maxSpeed, false)
                 .delay(.6)
                 .parallel(p -> p.moveTo(firstToShoot,maxSpeed,false).autoCatalog())
                 .shoot()
@@ -171,24 +154,23 @@ public class Red15Overflow extends AutonTemplate {
                 .intakeStop()
                 .moveTo(secondToGate, .8, false)
                 .setSpindexerMode(EnumConstants.ShootingMode.Sorted)
-                .delay(.85)
+                .delay(.4)
                 .parallel(p -> p.moveTo(gateToShoot,maxSpeed,false).autoCatalog())
                 .shoot()
                 .intakeStart()
                 .moveTo(shootToThird, maxSpeed, false)
-                .delay(.25)
+                .delay(.125)
                 .parallel(p -> p.moveTo(thirdToShoot,maxSpeed,false).autoCatalog())
                 .shoot()
                 .intakeStart()
-                .moveTo(shootToFourthPrep, maxSpeed, false)
-                .moveTo(fourthPrepToFourth, maxSpeed, false)
-                .delay(.25)
+                .moveTo(shootToFourth, maxSpeed, false)
+                .delay(.125)
                 .parallel(p -> p.moveTo(fourthToShoot,maxSpeed,false).autoCatalog())
                 .shoot()
                 .intakeStart()
                 .setSpindexerMode(EnumConstants.ShootingMode.Fast)
-                .moveTo(shootToCycle1Prep, maxSpeed, false)
-                .moveTo(cycle1PrepToCycle1, maxSpeed, false)
+                .moveTo(shootToCycle1, maxSpeed, false)
+                .delay(.3)
                 .parallel(p -> p.moveTo(cycle1ToShoot,maxSpeed,false).autoCatalog())
                 .shoot()
                 .moveTo(shootToEnd, maxSpeed, false)

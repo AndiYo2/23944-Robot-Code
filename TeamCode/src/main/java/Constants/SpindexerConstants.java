@@ -48,5 +48,5 @@ public class SpindexerConstants {
     // Extra delay after rotation before flicking, lets servo physically arrive
     public static double ROTATION_SETTLE_TIME = 0.08;
 
-    public static EnumConstants.ShootingMode currentMode = EnumConstants.ShootingMode.Sorted;
+    public static EnumConstants.ShootingMode currentMode = EnumConstants.ShootingMode.Fast;
 }
