@@ -1,6 +1,7 @@
 package commands;
 
 import com.arcrobotics.ftclib.command.CommandBase;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import subsystems.Spindexer;
 
 /**
@@ -10,6 +11,7 @@ import subsystems.Spindexer;
  */
 public class FlickCommand extends CommandBase {
     private final Spindexer spindexer;
+    private final ElapsedTime timer = new ElapsedTime();
     private boolean triggered = false;
 
     public FlickCommand(Spindexer spindexer) {
@@ -19,6 +21,7 @@ public class FlickCommand extends CommandBase {
 
     @Override
     public void initialize() {
+        timer.reset();
         triggered = false;
         if (spindexer.isReadyToFlip()) {
             spindexer.triggerFlick();
@@ -36,7 +39,7 @@ public class FlickCommand extends CommandBase {
 
     @Override
     public boolean isFinished() {
-        return triggered && spindexer.isReadyToFlip();
+        return (triggered && spindexer.isReadyToFlip()) || timer.seconds() >= 1.5;
     }
 
     @Override

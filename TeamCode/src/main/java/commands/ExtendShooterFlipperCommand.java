@@ -29,4 +29,11 @@ public class ExtendShooterFlipperCommand extends CommandBase {
     public boolean isFinished() {
         return timer.seconds() >= ShootingSequenceConstants.SHOOTER_FLICK_TIME;
     }
+
+    @Override
+    public void end(boolean interrupted) {
+        if (interrupted) {
+            shooter.retractFlipper();
+        }
+    }
 }

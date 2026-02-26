@@ -146,6 +146,7 @@ public class Limelight extends SubsystemBase {
      * apply on demand via relocalizePinpoint().
      */
     public void updateLimelightPose() {
+        if (robot.limelight == null) return;
         LLResult result = robot.limelight.getLatestResult();
         if (result != null && result.isValid()
                 && !result.getFiducialResults().isEmpty()) {

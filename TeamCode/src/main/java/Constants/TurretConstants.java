@@ -23,7 +23,7 @@ public class TurretConstants {
     public static final double SERVO_CENTER_POSITION = 0.5;
     public static final double SERVO_DEGREES_PER_UNIT = SpindexerConstants.SERVO_DEGREES_PER_UNIT;
     // Servo-to-turret gear ratio (2.5:1)
-    public static final double GEAR_RATIO = 200/96;
+    public static final double GEAR_RATIO = 200.0 / 96.0;
 
     // ==================== TURRET LIMITS ====================
     // Hard stop limits (turret degrees) - prevents hardware damage
@@ -37,5 +37,5 @@ public class TurretConstants {
 
     // Positive = shift aim right, Negative = shift aim left
     public static double BLUE_TURRET_TRACKING_OFFSET = -1;
-    public static double RED_TURRET_TRACKING_OFFSET = -2;
+    public static double RED_TURRET_TRACKING_OFFSET = 0;
 }

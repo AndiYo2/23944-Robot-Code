@@ -29,4 +29,11 @@ public class ExtendSpindexerFlipperCommand extends CommandBase {
     public boolean isFinished() {
         return timer.seconds() >= ShootingSequenceConstants.SPINDEXER_FLICK_TIME;
     }
+
+    @Override
+    public void end(boolean interrupted) {
+        if (interrupted) {
+            spindexer.retractFlipper();
+        }
+    }
 }

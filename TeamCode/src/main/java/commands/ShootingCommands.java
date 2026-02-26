@@ -71,7 +71,7 @@ public class ShootingCommands {
                             .andThen(new InstantCommand(() -> {
                                 spindexer.retractFlipper();
                                 spindexer.rotateCCW();
-                            }))
+                            }, spindexer))
                             .andThen(new WaitCommand((long)(ShootingSequenceConstants.SPINDEXER_ROTATION_TIME * 1000)))
                     )
             );

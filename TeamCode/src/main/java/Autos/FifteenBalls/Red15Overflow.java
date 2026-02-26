@@ -17,42 +17,48 @@ public class Red15Overflow extends AutonTemplate {
     private PathChain shootToFirst, firstToShoot, shootToSecond, secondToGate, gateToShoot, shootToThird, thirdToShoot, shootToFourth, fourthToShoot, shootToCycle1, cycle1ToShoot, shootToEnd;
 
     // Start pose
-    private final Pose startPose = new Pose(88.500, 8.500, Math.toRadians(90));
+    private final Pose startPose = new Pose(88.000, 8.000, Math.toRadians(90));
 
     // First prep & pickup
-    private final Pose shootToFirstPrepControl = new Pose(100.500, 17.500);
-    private final Pose firstPrepPose = new Pose(115.000, 9.000, Math.toRadians(0));
-    private final Pose firstPickupPose = new Pose(133.500, 9.000, Math.toRadians(0));
+    private final Pose shootToFirstPrepControl = new Pose(100.000, 17.000);
+    private final Pose firstPrepPose = new Pose(119.500, 10.000, Math.toRadians(0));
+    private final Pose firstPickupPose = new Pose(131.000, 10.000, Math.toRadians(0));
 
-    // Second pickup
-    private final Pose shootToSecondControl = new Pose(81.500, 61.500);
-    private final Pose secondPickupPose = new Pose(132.000, 58.000, Math.toRadians(0));
+    // First to shoot
+    private final Pose firstToShootControl = new Pose(109.000, 15.000);
+
+    // Second prep & pickup
+    private final Pose shootToSecondControl = new Pose(86.745, 52.766);
+    private final Pose secondPrepPose = new Pose(99.000, 57.500, Math.toRadians(0));
+    private final Pose secondPickupPose = new Pose(131.500, 57.500, Math.toRadians(0));
 
     // Gate area
-    private final Pose secondToGateControl = new Pose(119.000, 63.000);
-    private final Pose gatePose = new Pose(128.250, 64.000, Math.toRadians(0));
+    private final Pose secondToGateControl = new Pose(118.500, 62.500);
+    private final Pose gatePose = new Pose(126, 65.500, Math.toRadians(0));
 
     // Gate to shoot
-    private final Pose gateToShootControl = new Pose(96.000, 67.000);
-    private final Pose gateShootPose = new Pose(86.500, 79.000, Math.toRadians(30));
+    private final Pose gateToShootControl = new Pose(96.500, 65.000);
+    private final Pose gateShootPose = new Pose(86.000, 79.500, Math.toRadians(30));
 
     // Third pickup & main shoot area
-    private final Pose postGateShootPose = new Pose(86.500, 79.000, Math.toRadians(0));
-    private final Pose thirdPickupPose = new Pose(125.500, 79.000, Math.toRadians(0));
+    private final Pose postGateShootPose = new Pose(86.000, 79.500, Math.toRadians(0));
+    private final Pose shootToThirdControl = new Pose(109.500, 78.000);
+    private final Pose thirdPickupPose = new Pose(125.000, 82.000, Math.toRadians(0));
 
     // Fourth prep & pickup
-    private final Pose shootToFourthPrepControl = new Pose(76.117, 36.043);
-    private final Pose fourthPrepPose = new Pose(99.000, 31.000, Math.toRadians(0));
-    private final Pose fourthPickupPose = new Pose(132.000, 31.000, Math.toRadians(0));
+    private final Pose shootToFourthPrepControl = new Pose(75.500, 35.500);
+    private final Pose fourthPrepPose = new Pose(98.500, 33.000, Math.toRadians(0));
+    private final Pose fourthPickupPose = new Pose(131.500, 33.000, Math.toRadians(0));
 
     // Cycle shoot position
-    private final Pose cycleShootPose = new Pose(89.000, 12.500, Math.toRadians(30));
+    private final Pose cycleShootPose = new Pose(88.500, 12.000, Math.toRadians(30));
 
-    // Cycle 1 pickup
-    private final Pose cycle1PickupPose = new Pose(133.000, 9.000, Math.toRadians(0));
+    // Cycle 1 prep & pickup
+    private final Pose cycle1PrepPose = new Pose(114.500, 10.000, Math.toRadians(0));
+    private final Pose cycle1PickupPose = new Pose(131.000, 10.000, Math.toRadians(0));
 
     // End pose
-    private final Pose stopPose = new Pose(93.500, 23.500, Math.toRadians(30));
+    private final Pose stopPose = new Pose(93.000, 23.000, Math.toRadians(30));
 
     @Override
     protected void buildPaths() {
@@ -66,15 +72,16 @@ public class Red15Overflow extends AutonTemplate {
                 .build();
 
         firstToShoot = follower.pathBuilder()
-                .addPath(new BezierLine(firstPickupPose, cycleShootPose))
+                .addPath(new BezierCurve(firstPickupPose, firstToShootControl, cycleShootPose))
                 .setLinearHeadingInterpolation(firstPickupPose.getHeading(), cycleShootPose.getHeading())
                 .setGlobalDeceleration()
                 .build();
 
         shootToSecond = follower.pathBuilder()
-                .addPath(new BezierCurve(cycleShootPose, shootToSecondControl, secondPickupPose))
-                .setLinearHeadingInterpolation(cycleShootPose.getHeading(), secondPickupPose.getHeading())
-                .setGlobalDeceleration()
+                .addPath(new BezierCurve(cycleShootPose, shootToSecondControl, secondPrepPose))
+                .setLinearHeadingInterpolation(cycleShootPose.getHeading(), secondPrepPose.getHeading())
+                .addPath(new BezierLine(secondPrepPose, secondPickupPose))
+                .setTangentHeadingInterpolation()
                 .build();
 
         secondToGate = follower.pathBuilder()
@@ -90,7 +97,7 @@ public class Red15Overflow extends AutonTemplate {
                 .build();
 
         shootToThird = follower.pathBuilder()
-                .addPath(new BezierLine(postGateShootPose, thirdPickupPose))
+                .addPath(new BezierCurve(postGateShootPose, shootToThirdControl, thirdPickupPose))
                 .setLinearHeadingInterpolation(postGateShootPose.getHeading(), thirdPickupPose.getHeading())
                 .setGlobalDeceleration()
                 .build();
@@ -115,14 +122,14 @@ public class Red15Overflow extends AutonTemplate {
                 .build();
 
         shootToCycle1 = follower.pathBuilder()
-                .addPath(new BezierLine(cycleShootPose, firstPrepPose))
-                .setLinearHeadingInterpolation(cycleShootPose.getHeading(), firstPrepPose.getHeading())
-                .addPath(new BezierLine(firstPrepPose, cycle1PickupPose))
-                .setLinearHeadingInterpolation(firstPrepPose.getHeading(), cycle1PickupPose.getHeading())
+                .addPath(new BezierLine(cycleShootPose, cycle1PrepPose))
+                .setLinearHeadingInterpolation(Math.toRadians(0), cycle1PrepPose.getHeading())
+                .addPath(new BezierLine(cycle1PrepPose, cycle1PickupPose))
+                .setLinearHeadingInterpolation(cycle1PrepPose.getHeading(), cycle1PickupPose.getHeading())
                 .build();
 
         cycle1ToShoot = follower.pathBuilder()
-                .addPath(new BezierLine(cycle1PickupPose, cycleShootPose))
+                .addPath(new BezierCurve(cycle1PickupPose, firstToShootControl, cycleShootPose))
                 .setLinearHeadingInterpolation(cycle1PickupPose.getHeading(), cycleShootPose.getHeading())
                 .setGlobalDeceleration()
                 .build();
@@ -139,7 +146,6 @@ public class Red15Overflow extends AutonTemplate {
         super.init();
         SpindexerConstants.currentMode = EnumConstants.ShootingMode.Fast;
         Constants.RobotConstants.Robot.allianceColor = Constants.EnumConstants.AllianceColor.Red;
-        Constants.TurretConstants.RED_TURRET_TRACKING_OFFSET = -3; // FIX BEFORE COMP
 
         autonomousCommand = new CommandSequenceBuilder(follower, intake, spindexer, limelight, shooter, turret)
                 .delay(.35)

@@ -184,6 +184,17 @@ public class Turret extends SubsystemBase {
                 ? TurretConstants.BLUE_TURRET_TRACKING_OFFSET
                 : TurretConstants.RED_TURRET_TRACKING_OFFSET;
 
+        if (turretAngleDeg > TurretConstants.HARD_STOP_CW) {
+            targetOutOfRange = true;
+            degreesOutOfRange = turretAngleDeg - TurretConstants.HARD_STOP_CW;
+        } else if (turretAngleDeg < TurretConstants.HARD_STOP_CCW) {
+            targetOutOfRange = true;
+            degreesOutOfRange = TurretConstants.HARD_STOP_CCW - turretAngleDeg;
+        } else {
+            targetOutOfRange = false;
+            degreesOutOfRange = 0;
+        }
+
         return turretAngleDeg;
     }
 

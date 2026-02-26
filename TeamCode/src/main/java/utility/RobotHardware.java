@@ -227,6 +227,18 @@ public class RobotHardware {
         } else {
             voltageSensor = null; // Will need null check when used
         }
+
+        resetCachedState();
+    }
+
+    public void resetCachedState() {
+        cachedPoseX = 0;
+        cachedPoseY = 0;
+        cachedHeading = 0;
+        cachedVelX = 0;
+        cachedVelY = 0;
+        cachedHeadingVel = 0;
+        roundRobinIndex = 0;
     }
 
     /** Clear bulk cache on all hubs. Call once at the top of each loop. */
@@ -255,8 +267,23 @@ public class RobotHardware {
 
     /** Read pinpoint pose/velocities once and cache for the entire loop. */
     public void updateCachedPose() {
-        cachedPoseX = pinpoint.getPosX(DistanceUnit.INCH);
-        cachedPoseY = pinpoint.getPosY(DistanceUnit.INCH);
+        GoBildaPinpointDriver.DeviceStatus status = pinpoint.getDeviceStatus();
+        if (status != GoBildaPinpointDriver.DeviceStatus.READY) {
+            return; // Keep last good cached values
+        }
+
+        double newX = pinpoint.getPosX(DistanceUnit.INCH);
+        double newY = pinpoint.getPosY(DistanceUnit.INCH);
+
+        // Reject teleportation: >12 inches in one loop is physically impossible
+        double dx = newX - cachedPoseX;
+        double dy = newY - cachedPoseY;
+        if ((cachedPoseX != 0 || cachedPoseY != 0) && (dx * dx + dy * dy > 144)) {
+            return; // Keep last good values
+        }
+
+        cachedPoseX = newX;
+        cachedPoseY = newY;
         cachedHeading = pinpoint.getHeading(AngleUnit.RADIANS);
         cachedVelX = pinpoint.getVelX(DistanceUnit.INCH);
         cachedVelY = pinpoint.getVelY(DistanceUnit.INCH);

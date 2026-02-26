@@ -62,6 +62,8 @@ public abstract class AutonTemplate extends OpMode {
 
     @Override
     public void init() {
+        CommandScheduler.getInstance().reset();  // Clean slate from any prior OpMode
+
         pathTimer = new Timer();
         opmodeTimer = new Timer();
         opmodeTimer.resetTimer();

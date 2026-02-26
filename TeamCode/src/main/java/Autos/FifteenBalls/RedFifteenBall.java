@@ -131,7 +131,6 @@ public class RedFifteenBall extends AutonTemplate {
         super.init();
         RobotConstants.Robot.allianceColor = EnumConstants.AllianceColor.Red;
         SpindexerConstants.currentMode = EnumConstants.ShootingMode.Fast;
-        // TODO: Complete the sequence with all paths
         autonomousCommand = new CommandSequenceBuilder(follower, intake, spindexer, limelight, shooter, turret)
                 .limelightScan()
                 .delay(.75)

@@ -1,6 +1,7 @@
 package commands;
 
 import com.arcrobotics.ftclib.command.CommandBase;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import Constants.EnumConstants.FlickState;
 import subsystems.Shooter;
 
@@ -11,6 +12,7 @@ import subsystems.Shooter;
  */
 public class FireCommand extends CommandBase {
     private final Shooter shooter;
+    private final ElapsedTime timer = new ElapsedTime();
     private boolean triggered = false;
 
     public FireCommand(Shooter shooter) {
@@ -20,6 +22,7 @@ public class FireCommand extends CommandBase {
 
     @Override
     public void initialize() {
+        timer.reset();
         triggered = false;
         if (shooter.getCurrentState() == FlickState.Idle) {
             shooter.triggerShot();
@@ -37,7 +40,7 @@ public class FireCommand extends CommandBase {
 
     @Override
     public boolean isFinished() {
-        return triggered && shooter.getCurrentState() == FlickState.Idle;
+        return (triggered && shooter.getCurrentState() == FlickState.Idle) || timer.seconds() >= 1.5;
     }
 
     @Override

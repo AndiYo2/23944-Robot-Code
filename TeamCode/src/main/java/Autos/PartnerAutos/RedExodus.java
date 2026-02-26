@@ -14,23 +14,27 @@ import commands.CommandSequenceBuilder;
 @Autonomous(name = "RedExodus")
 public class RedExodus extends AutonTemplate {
     public static double maxSpeed = 1;
-    private PathChain startToShoot, shootToFirst, openGate1, firstGateToShoot, shootToGatePrep1, prepToThree, gateToShootThree, ShootToFourth, fourthToGate, fourthGateToShoot, shootToGatePrepFive, prepToFive, fiveToShoot;
+    private PathChain startToShoot, shootToFirstPrep, firstPrepToFirst, firstToGate, firstGateToShoot, shootToGatePrep1, prepToThree, gateToShootThree, ShootToFourth, fourthToGate, fourthGateToShoot, shootToGatePrepFive, prepToFive, fiveToShoot;
 
     // Named pose constants
-    private final Pose startPose = new Pose(111.250, 135.000, Math.toRadians(90));
-    private final Pose startingShootPose = new Pose(88.000, 80.000, Math.toRadians(90));
+    private final Pose startPose = new Pose(112.000, 134.000, Math.toRadians(90));
+    private final Pose startingShootPose = new Pose(88.000, 82.000, Math.toRadians(90));
 
-    // ShootToFirst path
-    private final Pose firstControlPoint = new Pose(78.000, 57.500);
-    private final Pose firstPickupPose = new Pose(123.500, 55.500, Math.toRadians(0));
+    // ShootToFirstPrep path
+    private final Pose firstPrepControlPoint = new Pose(90.000, 67.000);
+    private final Pose firstPrepPose = new Pose(100.500, 59, Math.toRadians(0));
 
-    // OpenGate1 path
+    // FirstPrepToFirst path
+    private final Pose firstPickupPose = new Pose(123.500, 59, Math.toRadians(0));
+
+    // FirstToGate path
     private final Pose openGateControlPoint = new Pose(120.000, 61.000);
-    private final Pose gatePrepPose = new Pose(128.000, 63.000, Math.toRadians(0));
+    private final Pose gatePrepPose = new Pose(126.000, 66.000, Math.toRadians(0));
 
     // FirstGateToShoot path
-    private final Pose firstGateControlPoint = new Pose(110.000, 64.500);
-    private final Pose gateShootPose = new Pose(88.000, 80.000, Math.toRadians(30));
+    private final Pose firstGateControlPoint = new Pose(105.500, 58.500);
+    private final Pose firstGatePrepPose = new Pose(128, 68.500, Math.toRadians(0));
+    private final Pose gateShootPose = new Pose(88.000, 82.000, Math.toRadians(30));
 
     // Gate prep paths
     private final Pose gatePrepControlPoint = new Pose(102.000, 68.500);
@@ -39,7 +43,7 @@ public class RedExodus extends AutonTemplate {
     private final Pose gateControlPoint = new Pose(108.000, 65.000);
 
     // ShootToFourth path
-    private final Pose fourthPickupPose = new Pose(127.000, 82.000, Math.toRadians(0));
+    private final Pose fourthPickupPose = new Pose(125.000, 82.000, Math.toRadians(0));
 
     // FourthToGate path
     private final Pose fourthGateControlPoint = new Pose(120.000, 76.000);
@@ -58,21 +62,27 @@ public class RedExodus extends AutonTemplate {
                 .setGlobalDeceleration()
                 .build();
 
-        shootToFirst = follower.pathBuilder()
-                .addPath(new BezierCurve(startingShootPose, firstControlPoint, firstPickupPose))
-                .setLinearHeadingInterpolation(startingShootPose.getHeading(), firstPickupPose.getHeading())
+        shootToFirstPrep = follower.pathBuilder()
+                .addPath(new BezierCurve(startingShootPose, firstPrepControlPoint, firstPrepPose))
+                .setLinearHeadingInterpolation(startingShootPose.getHeading(), firstPrepPose.getHeading())
                 .setGlobalDeceleration()
                 .build();
 
-        openGate1 = follower.pathBuilder()
-                .addPath(new BezierCurve(firstPickupPose, openGateControlPoint, gatePrepPose))
-                .setLinearHeadingInterpolation(firstPickupPose.getHeading(), gatePrepPose.getHeading())
+        firstPrepToFirst = follower.pathBuilder()
+                .addPath(new BezierLine(firstPrepPose, firstPickupPose))
+                .setLinearHeadingInterpolation(firstPrepPose.getHeading(), firstPickupPose.getHeading())
+                .setGlobalDeceleration()
+                .build();
+
+        firstToGate = follower.pathBuilder()
+                .addPath(new BezierCurve(firstPickupPose, openGateControlPoint, firstGatePrepPose))
+                .setLinearHeadingInterpolation(firstPickupPose.getHeading(), firstGatePrepPose.getHeading())
                 .setGlobalDeceleration()
                 .build();
 
         firstGateToShoot = follower.pathBuilder()
-                .addPath(new BezierCurve(gatePrepPose, firstGateControlPoint, gateShootPose))
-                .setLinearHeadingInterpolation(gatePrepPose.getHeading(), gateShootPose.getHeading())
+                .addPath(new BezierCurve(firstGatePrepPose, firstGateControlPoint, gateShootPose))
+                .setLinearHeadingInterpolation(firstGatePrepPose.getHeading(), gateShootPose.getHeading())
                 .setGlobalDeceleration()
                 .build();
 
@@ -96,7 +106,7 @@ public class RedExodus extends AutonTemplate {
 
         ShootToFourth = follower.pathBuilder()
                 .addPath(new BezierLine(gateShootPose, fourthPickupPose))
-                .setLinearHeadingInterpolation(gateShootPose.getHeading(), fourthPickupPose.getHeading())
+                .setLinearHeadingInterpolation(Math.toRadians(0), fourthPickupPose.getHeading())
                 .setGlobalDeceleration()
                 .build();
 
@@ -141,14 +151,19 @@ public class RedExodus extends AutonTemplate {
                 .moveTo(startToShoot, maxSpeed, false)
                 .shoot()
                 .intakeStart()
-                .moveTo(shootToFirst, maxSpeed, false)
-                .moveTo(openGate1, maxSpeed, false)
+                .moveTo(shootToFirstPrep, maxSpeed, false)
+                .moveTo(firstPrepToFirst, maxSpeed, false)
+                .intakeStop()
+                .moveTo(firstToGate, .8, false)
+                .delay(.8)
                 .parallel(p -> p.autoCatalog().moveTo(firstGateToShoot, maxSpeed, false))
                 .shoot()
                 .moveTo(shootToGatePrep1, .8, true)
-                .delay(.02)
+                .delay(1)
                 .intakeStart()
                 .moveTo(prepToThree, maxSpeed, false)
+                .delay(.75)
+                .intakeStop()
                 .delay(1)
                 .parallel(p -> p.autoCatalog().moveTo(gateToShootThree, maxSpeed, false))
                 .shoot()
@@ -156,13 +171,14 @@ public class RedExodus extends AutonTemplate {
                 .moveTo(ShootToFourth, maxSpeed, false)
                 .intakeStop()
                 .moveTo(fourthToGate, maxSpeed, false)
+                .delay(1)
                 .parallel(p -> p.autoCatalog().moveTo(fourthGateToShoot, maxSpeed, false))
                 .shoot()
                 .moveTo(shootToGatePrepFive, .8, true)
-                .delay(.02)
+                .delay(.75)
                 .intakeStart()
-                .delay(1)
                 .moveTo(prepToFive, maxSpeed, false)
+                .delay(1)
                 .parallel(p -> p.autoCatalog().moveTo(fiveToShoot, maxSpeed, false))
                 .shoot()
                 .build();
