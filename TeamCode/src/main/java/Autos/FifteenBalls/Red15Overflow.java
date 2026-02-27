@@ -50,7 +50,8 @@ public class Red15Overflow extends AutonTemplate {
     private final Pose fourthPrepPose = new Pose(98.500, 33.000, Math.toRadians(0));
     private final Pose fourthPickupPose = new Pose(131.500, 33.000, Math.toRadians(0));
 
-    // Cycle shoot position
+    // Shoot positions
+    private final Pose firstShootPose = new Pose(88.500, 13.500, Math.toRadians(30));
     private final Pose cycleShootPose = new Pose(88.500, 12.000, Math.toRadians(30));
 
     // Cycle 1 prep & pickup
@@ -72,14 +73,14 @@ public class Red15Overflow extends AutonTemplate {
                 .build();
 
         firstToShoot = follower.pathBuilder()
-                .addPath(new BezierCurve(firstPickupPose, firstToShootControl, cycleShootPose))
-                .setLinearHeadingInterpolation(firstPickupPose.getHeading(), cycleShootPose.getHeading())
+                .addPath(new BezierCurve(firstPickupPose, firstToShootControl, firstShootPose))
+                .setLinearHeadingInterpolation(firstPickupPose.getHeading(), firstShootPose.getHeading())
                 .setGlobalDeceleration()
                 .build();
 
         shootToSecond = follower.pathBuilder()
-                .addPath(new BezierCurve(cycleShootPose, shootToSecondControl, secondPrepPose))
-                .setLinearHeadingInterpolation(cycleShootPose.getHeading(), secondPrepPose.getHeading())
+                .addPath(new BezierCurve(firstShootPose, shootToSecondControl, secondPrepPose))
+                .setLinearHeadingInterpolation(firstShootPose.getHeading(), secondPrepPose.getHeading())
                 .addPath(new BezierLine(secondPrepPose, secondPickupPose))
                 .setTangentHeadingInterpolation()
                 .build();
@@ -160,7 +161,7 @@ public class Red15Overflow extends AutonTemplate {
                 .intakeStop()
                 .moveTo(secondToGate, .8, false)
                 .setSpindexerMode(EnumConstants.ShootingMode.Sorted)
-                .delay(.4)
+                .delay(.2)
                 .parallel(p -> p.moveTo(gateToShoot,maxSpeed,false).autoCatalog())
                 .shoot()
                 .intakeStart()
