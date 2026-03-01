@@ -34,38 +34,46 @@ public class ShooterConstants {
 
     // Velocity LUT - Distance (inches) -> Velocity (ticks/sec)
     public static double[][] VELOCITY_DATA = {
-        {0, 1700},
-        {38, 1700},
-        {49, 1740},
-        {58, 1780},
-        {68.5, 1900},
-        {76.5, 2020},
-        {85, 2060},
-        {101, 2280},
-        {128, 2550},
-        {140, 2620},
-        {148, 2680},
-        {151, 2700},
+        {0, 1780},
+        {41, 1780},
+        {46.5, 1800},
+        {62, 2000},
+        {70, 2040},
+        {78, 2060},
+        {93, 2200},
+        {100, 2280},
+        {110, 2360},
+        {128, 2560},
+        {133, 2620},
+        {140, 2640},
+        {144, 2680},
+        {151, 2760},
+        {158.5, 2880},
         {160, 2880},
-        {300, 2880}
+        {180, 2940},
+        {300, 2940}
     };
 
     // Hood Angle LUT - Distance (inches) -> Hood Angle (degrees, 0=vertical, 90=horizontal)
     public static double[][] HOOD_DATA = {
         {0, 32},
-        {38, 32},
-        {49, 35},
-        {58, 37},
-        {68.5, 42},
-        {76.5, 45},
-        {85, 46.5},
-        {101, 48},
-        {128, 52},
-        {140, 53},
-        {148, 54},
-        {151, 54.5},
-        {160, 54.5},
-        {300, 54.5}
+        {41, 32},
+        {46.5, 34},
+        {62, 42},
+        {70, 43},
+        {78, 44},
+        {93, 46},
+        {100, 47},
+        {110, 48},
+        {128, 51.5},
+        {133, 52},
+        {140, 52.5},
+        {144, 53},
+        {151, 53.5},
+        {158.5, 55},
+        {160, 55},
+        {180, 56},
+        {300, 56}
     };
 
     /**
@@ -79,10 +87,10 @@ public class ShooterConstants {
         public static boolean TUNING_MODE = false;
 
         /** Manual velocity setting (ticks/sec) - only used when TUNING_MODE is true */
-        public static double TUNING_VELOCITY = 2200.0;
+        public static double TUNING_VELOCITY = 2600.0;
 
         /** Manual hood angle setting (degrees) - only used when TUNING_MODE is true */
-        public static double TUNING_HOOD_ANGLE = 45.0;
+        public static double TUNING_HOOD_ANGLE = 53.0;
     }
 
     // Voltage compensation
@@ -97,7 +105,7 @@ public class ShooterConstants {
     public static double kS = 0.03;
 
     /** Velocity gain */
-    public static double kV = 0.00032;
+    public static double kV = 0.00029;
 
     /** Acceleration gain */
     public static double kA = 0.00001;
@@ -116,5 +124,5 @@ public class ShooterConstants {
     public static double MAX_ACCELERATION = 15000.0;
 
     /** Velocity tolerance */
-    public static double VELOCITY_TOLERANCE = 50.0;
+    public static double VELOCITY_TOLERANCE = 20.0;
 }

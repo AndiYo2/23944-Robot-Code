@@ -14,57 +14,56 @@ import commands.CommandSequenceBuilder;
 @Autonomous(name = "RedExodus")
 public class RedExodus extends AutonTemplate {
     public static double maxSpeed = 1;
-    private PathChain startToShoot, shootToFirstPrep, firstPrepToFirst, firstToGate, firstGateToShoot, shootToGatePrep1, prepToThree, gateToShootThree, ShootToFourth, fourthToGate, fourthGateToShoot, shootToGatePrepFive, prepToFive, fiveToShoot;
+    private PathChain startToShoot, shootToFirstPrep, firstPrepToFirst, firstToGate, firstGateToShoot, shootToGatePrep1, prepToThree, gateToShootThree, ShootToFourth, fourthToGate, fiveToShoot;
 
-    // Named pose constants
-    private final Pose startPose = new Pose(112.000, 134.000, Math.toRadians(90));
-    private final Pose startingShootPose = new Pose(88.000, 82.000, Math.toRadians(90));
+    // Start pose
+    private final Pose startPose = new Pose(112.000, 135.000, Math.toRadians(90));
 
-    // ShootToFirstPrep path
-    private final Pose firstPrepControlPoint = new Pose(90.000, 67.000);
-    private final Pose firstPrepPose = new Pose(100.500, 59, Math.toRadians(0));
+    // Shoot positions
+    private final Pose shootPoseStart = new Pose(88.000, 82.000, Math.toRadians(90));
+    private final Pose shootPose = new Pose(88.000, 82.000, Math.toRadians(30));
+    private final Pose postShootPose = new Pose(88.000, 82.000, Math.toRadians(0));
 
-    // FirstPrepToFirst path
-    private final Pose firstPickupPose = new Pose(123.500, 59, Math.toRadians(0));
+    // First prep & pickup
+    private final Pose firstPrepControl = new Pose(90.000, 67.000);
+    private final Pose firstPrepPose = new Pose(100.500, 59.000, Math.toRadians(0));
+    private final Pose firstPickupPose = new Pose(127.000, 59.000, Math.toRadians(0));
 
-    // FirstToGate path
-    private final Pose openGateControlPoint = new Pose(120.000, 61.000);
-    private final Pose gatePrepPose = new Pose(126.000, 66.000, Math.toRadians(0));
+    // First gate
+    private final Pose firstGateControl = new Pose(120.000, 61.000);
+    private final Pose firstGatePose = new Pose(126.250, 68.500, Math.toRadians(0));
+    private final Pose firstGateToShootControl = new Pose(105.500, 58.500);
 
-    // FirstGateToShoot path
-    private final Pose firstGateControlPoint = new Pose(105.500, 58.500);
-    private final Pose firstGatePrepPose = new Pose(128, 68.500, Math.toRadians(0));
-    private final Pose gateShootPose = new Pose(88.000, 82.000, Math.toRadians(30));
+    // Gate approach & pickup (shared by 2nd and 4th cycles)
+    private final Pose gateApproachControl = new Pose(102.000, 68.500);
+    private final Pose gateToPickupControl = new Pose(125.000, 57.500);
+    private final Pose gatePickupPose = new Pose(132.500, 55.000, Math.toRadians(0));
+    private final Pose pickupToShootControl = new Pose(108.000, 65.000);
 
-    // Gate prep paths
-    private final Pose gatePrepControlPoint = new Pose(102.000, 68.500);
-    private final Pose gateInnerControlPoint = new Pose(125.000, 57.500);
-    private final Pose gatePose = new Pose(132.500, 55.000, Math.toRadians(0));
-    private final Pose gateControlPoint = new Pose(108.000, 65.000);
+    // Second gate
+    private final Pose secondGatePose = new Pose(126.500, 64.500, Math.toRadians(0));
 
-    // ShootToFourth path
-    private final Pose fourthPickupPose = new Pose(125.000, 82.000, Math.toRadians(0));
+    // Third pickup & gate
+    private final Pose thirdPickupPose = new Pose(127.000, 80.000, Math.toRadians(0));
+    private final Pose thirdGateControl = new Pose(120.000, 76.000);
+    private final Pose thirdGatePose = new Pose(127.500, 78.000, Math.toRadians(0));
 
-    // FourthToGate path
-    private final Pose fourthGateControlPoint = new Pose(120.000, 76.000);
-    private final Pose fourthGatePose = new Pose(128.000, 75.000, Math.toRadians(0));
-
-    // FiveToShoot path
-    private final Pose lastShootPose = new Pose(86.000, 104.000, Math.toRadians(30));
+    // End pose
+    private final Pose lastShootPose = new Pose(91.500, 118.000, Math.toRadians(30));
 
     @Override
     protected void buildPaths() {
         follower.setStartingPose(startPose);
 
         startToShoot = follower.pathBuilder()
-                .addPath(new BezierLine(startPose, startingShootPose))
-                .setLinearHeadingInterpolation(startPose.getHeading(), startingShootPose.getHeading())
+                .addPath(new BezierLine(startPose, shootPoseStart))
+                .setLinearHeadingInterpolation(startPose.getHeading(), shootPoseStart.getHeading())
                 .setGlobalDeceleration()
                 .build();
 
         shootToFirstPrep = follower.pathBuilder()
-                .addPath(new BezierCurve(startingShootPose, firstPrepControlPoint, firstPrepPose))
-                .setLinearHeadingInterpolation(startingShootPose.getHeading(), firstPrepPose.getHeading())
+                .addPath(new BezierCurve(shootPoseStart, firstPrepControl, firstPrepPose))
+                .setLinearHeadingInterpolation(shootPoseStart.getHeading(), firstPrepPose.getHeading())
                 .setGlobalDeceleration()
                 .build();
 
@@ -75,68 +74,50 @@ public class RedExodus extends AutonTemplate {
                 .build();
 
         firstToGate = follower.pathBuilder()
-                .addPath(new BezierCurve(firstPickupPose, openGateControlPoint, firstGatePrepPose))
-                .setLinearHeadingInterpolation(firstPickupPose.getHeading(), firstGatePrepPose.getHeading())
+                .addPath(new BezierCurve(firstPickupPose, firstGateControl, firstGatePose))
+                .setLinearHeadingInterpolation(firstPickupPose.getHeading(), firstGatePose.getHeading())
                 .setGlobalDeceleration()
                 .build();
 
         firstGateToShoot = follower.pathBuilder()
-                .addPath(new BezierCurve(firstGatePrepPose, firstGateControlPoint, gateShootPose))
-                .setLinearHeadingInterpolation(firstGatePrepPose.getHeading(), gateShootPose.getHeading())
+                .addPath(new BezierCurve(firstGatePose, firstGateToShootControl, shootPose))
+                .setLinearHeadingInterpolation(firstGatePose.getHeading(), shootPose.getHeading())
                 .setGlobalDeceleration()
                 .build();
 
         shootToGatePrep1 = follower.pathBuilder()
-                .addPath(new BezierCurve(gateShootPose, gatePrepControlPoint, gatePrepPose))
-                .setLinearHeadingInterpolation(gateShootPose.getHeading(), gatePrepPose.getHeading())
+                .addPath(new BezierCurve(shootPose, gateApproachControl, secondGatePose))
+                .setLinearHeadingInterpolation(shootPose.getHeading(), secondGatePose.getHeading())
                 .setGlobalDeceleration()
                 .build();
 
         prepToThree = follower.pathBuilder()
-                .addPath(new BezierCurve(gatePrepPose, gateInnerControlPoint, gatePose))
-                .setLinearHeadingInterpolation(gatePrepPose.getHeading(), gatePose.getHeading())
+                .addPath(new BezierCurve(secondGatePose, gateToPickupControl, gatePickupPose))
+                .setLinearHeadingInterpolation(secondGatePose.getHeading(), gatePickupPose.getHeading())
                 .setGlobalDeceleration()
                 .build();
 
         gateToShootThree = follower.pathBuilder()
-                .addPath(new BezierCurve(gatePose, gateControlPoint, gateShootPose))
-                .setLinearHeadingInterpolation(gatePose.getHeading(), gateShootPose.getHeading())
+                .addPath(new BezierCurve(gatePickupPose, pickupToShootControl, shootPose))
+                .setLinearHeadingInterpolation(gatePickupPose.getHeading(), shootPose.getHeading())
                 .setGlobalDeceleration()
                 .build();
 
         ShootToFourth = follower.pathBuilder()
-                .addPath(new BezierLine(gateShootPose, fourthPickupPose))
-                .setLinearHeadingInterpolation(Math.toRadians(0), fourthPickupPose.getHeading())
+                .addPath(new BezierLine(postShootPose, thirdPickupPose))
+                .setLinearHeadingInterpolation(postShootPose.getHeading(), thirdPickupPose.getHeading())
                 .setGlobalDeceleration()
                 .build();
 
         fourthToGate = follower.pathBuilder()
-                .addPath(new BezierCurve(fourthPickupPose, fourthGateControlPoint, fourthGatePose))
-                .setLinearHeadingInterpolation(fourthPickupPose.getHeading(), fourthGatePose.getHeading())
-                .setGlobalDeceleration()
-                .build();
-
-        fourthGateToShoot = follower.pathBuilder()
-                .addPath(new BezierLine(fourthGatePose, gateShootPose))
-                .setLinearHeadingInterpolation(fourthGatePose.getHeading(), gateShootPose.getHeading())
-                .setGlobalDeceleration()
-                .build();
-
-        shootToGatePrepFive = follower.pathBuilder()
-                .addPath(new BezierCurve(gateShootPose, gatePrepControlPoint, gatePrepPose))
-                .setLinearHeadingInterpolation(gateShootPose.getHeading(), gatePrepPose.getHeading())
-                .setGlobalDeceleration()
-                .build();
-
-        prepToFive = follower.pathBuilder()
-                .addPath(new BezierCurve(gatePrepPose, gateInnerControlPoint, gatePose))
-                .setLinearHeadingInterpolation(gatePrepPose.getHeading(), gatePose.getHeading())
+                .addPath(new BezierCurve(thirdPickupPose, thirdGateControl, thirdGatePose))
+                .setLinearHeadingInterpolation(thirdPickupPose.getHeading(), thirdGatePose.getHeading())
                 .setGlobalDeceleration()
                 .build();
 
         fiveToShoot = follower.pathBuilder()
-                .addPath(new BezierCurve(gatePose, gateControlPoint, lastShootPose))
-                .setLinearHeadingInterpolation(gatePose.getHeading(), lastShootPose.getHeading())
+                .addPath(new BezierCurve(thirdGatePose, pickupToShootControl, lastShootPose))
+                .setLinearHeadingInterpolation(thirdGatePose.getHeading(), lastShootPose.getHeading())
                 .setGlobalDeceleration()
                 .build();
     }
@@ -153,32 +134,22 @@ public class RedExodus extends AutonTemplate {
                 .intakeStart()
                 .moveTo(shootToFirstPrep, maxSpeed, false)
                 .moveTo(firstPrepToFirst, maxSpeed, false)
-                .intakeStop()
-                .moveTo(firstToGate, .8, false)
-                .delay(.8)
-                .parallel(p -> p.autoCatalog().moveTo(firstGateToShoot, maxSpeed, false))
+                .parallel(p -> p.autoCatalog().moveTo(firstToGate, .8, false))
+                .delay(1.2)
+                .moveTo(firstGateToShoot, maxSpeed, false)
                 .shoot()
-                .moveTo(shootToGatePrep1, .8, true)
-                .delay(1)
                 .intakeStart()
+                .moveTo(shootToGatePrep1, .8, true)
+                .delay(2)
                 .moveTo(prepToThree, maxSpeed, false)
                 .delay(.75)
-                .intakeStop()
-                .delay(1)
                 .parallel(p -> p.autoCatalog().moveTo(gateToShootThree, maxSpeed, false))
                 .shoot()
                 .intakeStart()
                 .moveTo(ShootToFourth, maxSpeed, false)
-                .intakeStop()
-                .moveTo(fourthToGate, maxSpeed, false)
-                .delay(1)
-                .parallel(p -> p.autoCatalog().moveTo(fourthGateToShoot, maxSpeed, false))
-                .shoot()
-                .moveTo(shootToGatePrepFive, .8, true)
-                .delay(.75)
-                .intakeStart()
-                .moveTo(prepToFive, maxSpeed, false)
-                .delay(1)
+                .moveTo(fourthToGate, .8, false)
+                .autoCatalog()
+                .delay(.3)
                 .parallel(p -> p.autoCatalog().moveTo(fiveToShoot, maxSpeed, false))
                 .shoot()
                 .build();

@@ -11,10 +11,10 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import commands.CommandSequenceBuilder;
 
 
-@Autonomous(name = "Red15Overflow")
-public class Red15Overflow extends AutonTemplate {
+@Autonomous(name = "Red15Ball")
+public class Red15Ball extends AutonTemplate {
     public static double maxSpeed = 1;
-    private PathChain shootToFirst, firstToShoot, shootToSecond, secondToGate, gateToShoot, shootToThird, thirdToShoot, shootToFourth, fourthToShoot, shootToCycle1, cycle1ToShoot, shootToEnd;
+    private PathChain shootToFirst, firstToShoot, shootToSecond, secondToGate, gateToShoot, shootToThird, thirdToShoot, shootToFourth, fourthToShoot, shootToEnd;
 
     // Start pose
     private final Pose startPose = new Pose(88.000, 8.000, Math.toRadians(90));
@@ -34,7 +34,7 @@ public class Red15Overflow extends AutonTemplate {
 
     // Gate area
     private final Pose secondToGateControl = new Pose(118.500, 62.500);
-    private final Pose gatePose = new Pose(126, 65.500, Math.toRadians(0));
+    private final Pose gatePose = new Pose(126.75, 65.500, Math.toRadians(0));
 
     // Gate to shoot
     private final Pose gateToShootControl = new Pose(96.500, 65.000);
@@ -47,16 +47,13 @@ public class Red15Overflow extends AutonTemplate {
 
     // Fourth prep & pickup
     private final Pose shootToFourthPrepControl = new Pose(75.500, 35.500);
-    private final Pose fourthPrepPose = new Pose(98.500, 33.000, Math.toRadians(0));
-    private final Pose fourthPickupPose = new Pose(131.500, 33.000, Math.toRadians(0));
+    private final Pose fourthPrepPose = new Pose(98.500, 36.000, Math.toRadians(0));
+    private final Pose fourthPickupPose = new Pose(131.500, 36.000, Math.toRadians(0));
 
     // Shoot positions
     private final Pose firstShootPose = new Pose(88.500, 13.500, Math.toRadians(30));
     private final Pose cycleShootPose = new Pose(88.500, 12.000, Math.toRadians(30));
 
-    // Cycle 1 prep & pickup
-    private final Pose cycle1PrepPose = new Pose(114.500, 10.000, Math.toRadians(0));
-    private final Pose cycle1PickupPose = new Pose(131.000, 10.000, Math.toRadians(0));
 
     // End pose
     private final Pose stopPose = new Pose(93.000, 23.000, Math.toRadians(30));
@@ -122,18 +119,6 @@ public class Red15Overflow extends AutonTemplate {
                 .setGlobalDeceleration()
                 .build();
 
-        shootToCycle1 = follower.pathBuilder()
-                .addPath(new BezierLine(cycleShootPose, cycle1PrepPose))
-                .setLinearHeadingInterpolation(Math.toRadians(0), cycle1PrepPose.getHeading())
-                .addPath(new BezierLine(cycle1PrepPose, cycle1PickupPose))
-                .setLinearHeadingInterpolation(cycle1PrepPose.getHeading(), cycle1PickupPose.getHeading())
-                .build();
-
-        cycle1ToShoot = follower.pathBuilder()
-                .addPath(new BezierCurve(cycle1PickupPose, firstToShootControl, cycleShootPose))
-                .setLinearHeadingInterpolation(cycle1PickupPose.getHeading(), cycleShootPose.getHeading())
-                .setGlobalDeceleration()
-                .build();
 
         shootToEnd = follower.pathBuilder()
                 .addPath(new BezierLine(cycleShootPose, stopPose))
@@ -173,12 +158,6 @@ public class Red15Overflow extends AutonTemplate {
                 .moveTo(shootToFourth, maxSpeed, false)
                 .delay(.125)
                 .parallel(p -> p.moveTo(fourthToShoot,maxSpeed,false).autoCatalog())
-                .shoot()
-                .intakeStart()
-                .setSpindexerMode(EnumConstants.ShootingMode.Fast)
-                .moveTo(shootToCycle1, maxSpeed, false)
-                .delay(.3)
-                .parallel(p -> p.moveTo(cycle1ToShoot,maxSpeed,false).autoCatalog())
                 .shoot()
                 .moveTo(shootToEnd, maxSpeed, false)
                 .build();

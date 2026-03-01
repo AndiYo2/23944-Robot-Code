@@ -68,7 +68,7 @@ public class Constants {
     }
     public static MecanumConstants driveConstants = new MecanumConstants()
             .maxPower(1)
-            .xVelocity(74.5)
+            .xVelocity(77)
             .yVelocity(57.7)
             .rightFrontMotorName("frontRightMotor")
             .rightRearMotorName("backRightMotor")
@@ -83,6 +83,8 @@ public class Constants {
             .forwardPodY(-0.5)
             .strafePodX(36.5)
             .distanceUnit(DistanceUnit.MM)
+            .customEncoderResolution(19.65)
+            .yawScalar(0.998148)
             .forwardEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD)
             .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD);
 
