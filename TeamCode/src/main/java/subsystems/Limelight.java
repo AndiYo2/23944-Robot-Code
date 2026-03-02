@@ -83,7 +83,7 @@ public class Limelight extends SubsystemBase {
 
                         LimelightConstants.manuallySlowedForScan = false;
 
-                        currentMode = EnumConstants.LimelightMode.GoalTracking;
+                        setMode(EnumConstants.LimelightMode.GoalTracking);
                         return tagId;
                     }
                 }
@@ -99,13 +99,18 @@ public class Limelight extends SubsystemBase {
      */
     public void toggleMode() {
         if (currentMode == EnumConstants.LimelightMode.GoalTracking) {
-            currentMode = EnumConstants.LimelightMode.TagTracking;
+            setMode(EnumConstants.LimelightMode.TagTracking);
         } else {
-            currentMode = EnumConstants.LimelightMode.GoalTracking;
+            setMode(EnumConstants.LimelightMode.GoalTracking);
         }
     }
     public void setMode(EnumConstants.LimelightMode mode) {
         currentMode = mode;
+        if (mode == EnumConstants.LimelightMode.TagTracking) {
+            switchToMotifPipeline();
+        } else {
+            switchToLocalizationPipeline();
+        }
     }
 
     public EnumConstants.LimelightMode getCurrentMode() {
@@ -113,7 +118,6 @@ public class Limelight extends SubsystemBase {
     }
 
     public void resetLimelight() {
-        currentMode = EnumConstants.LimelightMode.TagTracking;
         motifDetected = false;
         detectedTagId = -1;
         LimelightConstants.manuallySlowedForScan = true;
@@ -122,6 +126,8 @@ public class Limelight extends SubsystemBase {
             EnumConstants.BallColor.Purple,
             EnumConstants.BallColor.Green,
             EnumConstants.BallColor.Purple);
+
+        setMode(EnumConstants.LimelightMode.GoalTracking);
     }
 
     public boolean isMotifDetected() {
@@ -147,10 +153,18 @@ public class Limelight extends SubsystemBase {
      */
     public void updateLimelightPose() {
         if (robot.limelight == null) return;
+
+        // Convert heading from Pedro to InvertedFTC frame (same frame the output uses)
+        // Using the Pedro library ensures the round-trip is consistent
+        Pose pedroHeading = new Pose(0, 0, robot.cachedHeading, PedroCoordinates.INSTANCE);
+        double ftcYaw = Math.toDegrees(
+                pedroHeading.getAsCoordinateSystem(InvertedFTCCoordinates.INSTANCE).getHeading());
+        robot.limelight.updateRobotOrientation(ftcYaw);
+
         LLResult result = robot.limelight.getLatestResult();
         if (result != null && result.isValid()
                 && !result.getFiducialResults().isEmpty()) {
-            Pose3D botpose = result.getBotpose();
+            Pose3D botpose = result.getBotpose_MT2();
             if (botpose != null) {
                 double xInches = botpose.getPosition().x * LimelightConstants.METERS_TO_INCHES;
                 double yInches = botpose.getPosition().y * LimelightConstants.METERS_TO_INCHES;
@@ -204,6 +218,8 @@ public class Limelight extends SubsystemBase {
         if (currentMode == EnumConstants.LimelightMode.TagTracking && !motifDetected) {
             updateLimelightData();
             scanForMotifTag();
+        } else {
+            updateLimelightPose();
         }
     }
 }

@@ -124,7 +124,6 @@ public abstract class AutonTemplate extends OpMode {
         ShooterConstants.SHOOT_WHILE_MOVING_ENABLED = false;
 
         limelight.resetLimelight();
-        limelight.setMode(EnumConstants.LimelightMode.TagTracking);
 
         loopTimer.reset();
     }
@@ -133,6 +132,7 @@ public abstract class AutonTemplate extends OpMode {
     public void loop() {
         double loopMs = loopTimer.milliseconds();
         loopTimer.reset();
+        telemetryHelper.recordLoop(loopMs);
 
         // Clear bulk cache so hardware reads (encoders, sensors) return fresh data
         robotHardware.clearBulkCache();
@@ -141,7 +141,7 @@ public abstract class AutonTemplate extends OpMode {
         follower.update();
         robotHardware.updateCachedPose();
 
-        // Poll color sensors (round-robin, 1 per loop) so quickCheck() returns live data
+        // Poll one color sensor per loop (round-robin across 6 sensors)
         robotHardware.pollNextSensor();
 
         // Run the command scheduler

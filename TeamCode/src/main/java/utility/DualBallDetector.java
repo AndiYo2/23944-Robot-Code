@@ -1,8 +1,10 @@
 package utility;
 
 import com.qualcomm.robotcore.hardware.ColorSensor;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import Constants.EnumConstants.BallColor;
 
 public class DualBallDetector {
@@ -55,6 +57,16 @@ public class DualBallDetector {
     private volatile Result cachedNearResult = new Result(false, BallColor.None, 0.0);
     private volatile Result cachedFarResult = new Result(false, BallColor.None, 0.0);
 
+    // Distance-based detection (REV V3 sensors)
+    private DistanceSensor nearDist;
+    private DistanceSensor farDist;
+    private double nearDistThreshold = 50.0;
+    private double farDistThreshold = 50.0;
+
+    // Color burst state machine
+    private int colorBurstRemaining = 0;
+    private boolean distanceDetected = false;
+
     public DualBallDetector(ColorSensor sensor1, ColorSensor sensor2) {
         this(sensor1, sensor2, GREEN_N, PURPLE_N, GREEN_TOL, PURPLE_TOL);
     }
@@ -70,6 +82,15 @@ public class DualBallDetector {
                             double[] greenProfile, double[] purpleProfile,
                             double greenTol, double purpleTol,
                             double minAlphaNear, double minAlphaFar) {
+        this(sensor1, sensor2, greenProfile, purpleProfile, greenTol, purpleTol,
+             minAlphaNear, minAlphaFar, 50.0, 50.0);
+    }
+
+    public DualBallDetector(ColorSensor sensor1, ColorSensor sensor2,
+                            double[] greenProfile, double[] purpleProfile,
+                            double greenTol, double purpleTol,
+                            double minAlphaNear, double minAlphaFar,
+                            double nearDistThreshold, double farDistThreshold) {
         this.near = sensor1;
         this.far = sensor2;
 
@@ -77,6 +98,17 @@ public class DualBallDetector {
         this.purpleProfile = purpleProfile;
         this.greenTolerance = greenTol;
         this.purpleTolerance = purpleTol;
+
+        this.nearDistThreshold = nearDistThreshold;
+        this.farDistThreshold = farDistThreshold;
+
+        // Cast to DistanceSensor if supported (REV V3)
+        if (sensor1 instanceof DistanceSensor) {
+            this.nearDist = (DistanceSensor) sensor1;
+        }
+        if (sensor2 instanceof DistanceSensor) {
+            this.farDist = (DistanceSensor) sensor2;
+        }
 
         nearState = new SensorState(minAlphaNear);
         farState  = new SensorState(minAlphaFar);
@@ -186,6 +218,58 @@ public class DualBallDetector {
 
     public void setBackgroundMode(boolean on) {
         backgroundMode = on;
+    }
+
+    // ========== Distance-based detection ==========
+
+    /** Check if either distance sensor detects a ball below its threshold. */
+    public boolean checkDistancePresent() {
+        boolean nearPresent = nearDist != null
+                && nearDist.getDistance(DistanceUnit.MM) < nearDistThreshold;
+        boolean farPresent = farDist != null
+                && farDist.getDistance(DistanceUnit.MM) < farDistThreshold;
+        return nearPresent || farPresent;
+    }
+
+    /** Get near-sensor distance in mm (for telemetry). Returns NaN if no DistanceSensor. */
+    public double getNearDistanceMM() {
+        return nearDist != null ? nearDist.getDistance(DistanceUnit.MM) : Double.NaN;
+    }
+
+    /** Get far-sensor distance in mm (for telemetry). Returns NaN if no DistanceSensor. */
+    public double getFarDistanceMM() {
+        return farDist != null ? farDist.getDistance(DistanceUnit.MM) : Double.NaN;
+    }
+
+    /** Trigger N cycles of RGBA reads to identify ball color. */
+    public void startColorBurst(int cycles) {
+        colorBurstRemaining = cycles;
+    }
+
+    /** True if currently performing color burst reads. */
+    public boolean isInColorBurst() {
+        return colorBurstRemaining > 0;
+    }
+
+    /** Perform one cycle of RGBA reads (bulk-safe) and decrement counter. */
+    public void colorBurstTick() {
+        if (colorBurstRemaining > 0) {
+            updateCacheBulkSafe();
+            colorBurstRemaining--;
+        }
+    }
+
+    public void setDistanceDetected(boolean detected) {
+        distanceDetected = detected;
+        if (!detected) {
+            cachedResult = new Result(false, BallColor.None, 0.0);
+            cachedNearResult = new Result(false, BallColor.None, 0.0);
+            cachedFarResult = new Result(false, BallColor.None, 0.0);
+        }
+    }
+
+    public boolean isDistanceDetected() {
+        return distanceDetected;
     }
 
     private Result resolveResults(Result nearResult, Result farResult) {

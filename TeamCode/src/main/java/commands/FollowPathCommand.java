@@ -90,5 +90,8 @@ public class FollowPathCommand extends CommandBase {
 
     @Override
     public void end(boolean interrupted) {
+        if (interrupted) {
+            follower.breakFollowing();
+        }
     }
 }

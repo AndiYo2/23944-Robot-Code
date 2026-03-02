@@ -25,6 +25,18 @@ public class ShootingCommands {
     }
 
     public static Command shootAllBalls(Shooter shooter, Spindexer spindexer, int ballCount) {
+        return shootAllBallsWithTime(shooter, spindexer, ballCount, ShootingSequenceConstants.SHOOTER_FLICK_TIME);
+    }
+
+    public static Command slowShootThreeBalls(Shooter shooter, Spindexer spindexer) {
+        return slowShootAllBalls(shooter, spindexer, 3);
+    }
+
+    public static Command slowShootAllBalls(Shooter shooter, Spindexer spindexer, int ballCount) {
+        return shootAllBallsWithTime(shooter, spindexer, ballCount, 0.30);
+    }
+
+    private static Command shootAllBallsWithTime(Shooter shooter, Spindexer spindexer, int ballCount, double flickTime) {
         SequentialCommandGroup sequence = new SequentialCommandGroup();
 
         if (ballCount <= 0) {
@@ -33,24 +45,24 @@ public class ShootingCommands {
 
         if (ballCount == 1) {
             sequence.addCommands(
-                new ExtendShooterFlipperCommand(shooter),
+                new ExtendShooterFlipperCommand(shooter, flickTime),
                 new RetractShooterFlipperCommand(shooter)
             );
         } else if (ballCount == 2) {
             sequence.addCommands(
                 // Ball 1
-                new ExtendShooterFlipperCommand(shooter),
+                new ExtendShooterFlipperCommand(shooter, flickTime),
                 new RetractShooterFlipperCommand(shooter),
                 // Ball 2
                 new ExtendSpindexerFlipperCommand(spindexer),
-                new ExtendShooterFlipperCommand(shooter),
+                new ExtendShooterFlipperCommand(shooter, flickTime),
                 new RetractShooterFlipperCommand(shooter)
                     .alongWith(new RetractSpindexerFlipperCommand(spindexer))
             );
         } else if (ballCount == 3) {
             // Ball 1
             sequence.addCommands(
-                new ExtendShooterFlipperCommand(shooter),
+                new ExtendShooterFlipperCommand(shooter, flickTime),
                 new RetractShooterFlipperCommand(shooter)
             );
 
@@ -64,7 +76,7 @@ public class ShootingCommands {
             long shooterHalfwayMs = (long)(ShootingSequenceConstants.SHOOTER_EXTEND_HALFWAY * 1000);
 
             sequence.addCommands(
-                new ExtendShooterFlipperCommand(shooter)
+                new ExtendShooterFlipperCommand(shooter, flickTime)
                     .andThen(new RetractShooterFlipperCommand(shooter))
                     .alongWith(
                         new WaitCommand(shooterHalfwayMs)
@@ -79,7 +91,7 @@ public class ShootingCommands {
             // Ball 3
             sequence.addCommands(
                 new ExtendSpindexerFlipperCommand(spindexer),
-                new ExtendShooterFlipperCommand(shooter),
+                new ExtendShooterFlipperCommand(shooter, flickTime),
                 new RetractShooterFlipperCommand(shooter)
                     .alongWith(new RetractSpindexerFlipperCommand(spindexer))
             );

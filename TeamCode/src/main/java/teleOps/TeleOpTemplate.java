@@ -70,7 +70,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
         configureButtonBindings();
 
-        limelight.setMode(EnumConstants.LimelightMode.TagTracking);
+        limelight.setMode(EnumConstants.LimelightMode.GoalTracking);
     }
 
     protected void initHardware() {
@@ -215,6 +215,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
         loopMs = loopTimer.milliseconds();
         loopTimer.reset();
+        telemetryHelper.recordLoop(loopMs);
 
         robot.clearBulkCache();
         robot.pinpoint.update();

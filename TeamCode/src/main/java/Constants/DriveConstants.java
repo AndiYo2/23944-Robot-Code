@@ -13,9 +13,9 @@ public class DriveConstants {
     public static double DYNAMIC_SLOW_DEADBAND = 0.15;
     public static double DYNAMIC_SLOW_MIN = 0.25;
 
-    public static double PARK_SERVO_EXTEND = 0.57;
-    public static double PARK_SERVO_RETRACT = 0.44;
+    public static double PARK_SERVO_EXTEND = 0.62;
+    public static double PARK_SERVO_RETRACT = 0.32;
 
-    public static double BEAM_SERVO_EXTENDED = .64;
-    public static double BEAM_SERVO_RETRACTED = 0.26;
+    public static double BEAM_SERVO_EXTENDED = .8;
+    public static double BEAM_SERVO_RETRACTED = 0.33;
 }

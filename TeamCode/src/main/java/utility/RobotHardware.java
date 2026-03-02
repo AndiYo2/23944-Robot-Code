@@ -12,6 +12,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.UnnormalizedAngleUnit;
 import Constants.NamingConstants;
 import Constants.OdometryConstants;
+import Constants.SensorConstants;
 
 import java.util.List;
 
@@ -84,6 +85,10 @@ public class RobotHardware {
     private boolean[] isNearSensor;
     private int roundRobinIndex = 0;
 
+    // ******************* SMART DISTANCE-BASED POLLING ******************* //
+    // Scan order: intake (back-most) → transfer → ramp (front-most)
+    private DualBallDetector[] smartScanOrder;
+
     // ******************* CACHED PINPOINT POSE ******************* //
     public double cachedPoseX;
     public double cachedPoseY;
@@ -91,6 +96,7 @@ public class RobotHardware {
     public double cachedVelX;
     public double cachedVelY;
     public double cachedHeadingVel;
+    public volatile boolean relocalizationPending = false;
 
     /**
      * Returns the singleton instance of RobotHardware.
@@ -173,11 +179,19 @@ public class RobotHardware {
         // Intake sensors (2 offset sensors at first spindexer slot to avoid ball holes)
         intakeSensor1 = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.intakeSensor1);
         intakeSensor2 = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.intakeSensor2);
-        intakeSensorPair = new DualBallDetector(intakeSensor1, intakeSensor2);
+        intakeSensorPair = new DualBallDetector(intakeSensor1, intakeSensor2,
+                new double[]{0.15, 0.55, 0.30}, new double[]{0.32, 0.22, 0.46},
+                0.15, 0.15, 400, 250,
+                SensorConstants.INTAKE_NEAR_DIST_THRESHOLD_MM,
+                SensorConstants.INTAKE_FAR_DIST_THRESHOLD_MM);
 
         rampSensor1 = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.rampSensor1);
         rampSensor2 = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.rampSensor2);
-        rampSensorPair = new DualBallDetector(rampSensor1, rampSensor2);
+        rampSensorPair = new DualBallDetector(rampSensor1, rampSensor2,
+                new double[]{0.15, 0.55, 0.30}, new double[]{0.32, 0.22, 0.46},
+                0.15, 0.15, 400, 250,
+                SensorConstants.RAMP_NEAR_DIST_THRESHOLD_MM,
+                SensorConstants.RAMP_FAR_DIST_THRESHOLD_MM);
 
         transferSensor1 = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.transferSensor1);
         transferSensor2 = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.transferSensor2);
@@ -185,7 +199,9 @@ public class RobotHardware {
                 new double[]{0.21, 0.47, 0.32},   // transfer green profile
                 new double[]{0.32, 0.31, 0.37},   // transfer purple profile
                 0.15, 0.15,                        // green/purple tolerance
-                200, 400);                         // near/far alpha thresholds
+                200, 400,                          // near/far alpha thresholds
+                SensorConstants.TRANSFER_NEAR_DIST_THRESHOLD_MM,
+                SensorConstants.TRANSFER_FAR_DIST_THRESHOLD_MM);
 
         // Set all detectors to background mode for round-robin polling
         intakeSensorPair.setBackgroundMode(true);
@@ -200,6 +216,9 @@ public class RobotHardware {
         };
         isNearSensor = new boolean[]{true, false, true, false, true, false};
         roundRobinIndex = 0;
+
+        // Smart scan: back-most empty first (intake → transfer → ramp)
+        smartScanOrder = new DualBallDetector[]{intakeSensorPair, transferSensorPair, rampSensorPair};
 
         // ******************* SPINDEXER ******************* //
         spindexerFlipperServo = hardwareMap.get(Servo.class, NamingConstants.Spindexer.spindexerFlipperServo);
@@ -218,7 +237,7 @@ public class RobotHardware {
         // ******************* LIMELIGHT ******************* //
          limelight = hardwareMap.get(Limelight3A.class, NamingConstants.Limelight.limelight);
         limelight.setPollRateHz(30);
-        limelight.pipelineSwitch(5);
+        limelight.pipelineSwitch(2);
         limelight.start();
 
         // ******************* VOLTAGE SENSOR ******************* //
@@ -238,7 +257,15 @@ public class RobotHardware {
         cachedVelX = 0;
         cachedVelY = 0;
         cachedHeadingVel = 0;
+        relocalizationPending = false;
         roundRobinIndex = 0;
+
+        // Clear smart polling distance detection state
+        if (smartScanOrder != null) {
+            for (DualBallDetector detector : smartScanOrder) {
+                detector.setDistanceDetected(false);
+            }
+        }
     }
 
     /** Clear bulk cache on all hubs. Call once at the top of each loop. */
@@ -265,6 +292,38 @@ public class RobotHardware {
         rampSensorPair.updateCacheBulkSafe();
     }
 
+    /**
+     * Smart distance-based sensor polling. Two phases:
+     * Phase 1: If any pair is mid-color-burst, tick it (1 bulk RGBA read).
+     * Phase 2: Distance scan — find first empty slot (back to front), check distance.
+     *          If ball detected, start color burst. If ball departed, clear detection.
+     */
+    public void smartPollSensors() {
+        // Phase 1: Service any active color burst
+        for (DualBallDetector detector : smartScanOrder) {
+            if (detector.isInColorBurst()) {
+                detector.colorBurstTick();
+                return;
+            }
+        }
+
+        // Phase 2: Distance scan — find first pair where ball is not yet confirmed
+        for (DualBallDetector detector : smartScanOrder) {
+            if (!detector.quickCheck().ballPresent) {
+                // Slot appears empty — check distance for incoming ball
+                if (detector.checkDistancePresent()) {
+                    detector.setDistanceDetected(true);
+                    detector.startColorBurst(SensorConstants.COLOR_READ_CYCLES);
+                }
+                return;
+            } else if (detector.isDistanceDetected() && !detector.checkDistancePresent()) {
+                // Ball was present but distance now clear — ball has departed
+                detector.setDistanceDetected(false);
+                return;
+            }
+        }
+    }
+
     /** Read pinpoint pose/velocities once and cache for the entire loop. */
     public void updateCachedPose() {
         GoBildaPinpointDriver.DeviceStatus status = pinpoint.getDeviceStatus();
@@ -275,11 +334,16 @@ public class RobotHardware {
         double newX = pinpoint.getPosX(DistanceUnit.INCH);
         double newY = pinpoint.getPosY(DistanceUnit.INCH);
 
-        // Reject teleportation: >12 inches in one loop is physically impossible
-        double dx = newX - cachedPoseX;
-        double dy = newY - cachedPoseY;
-        if ((cachedPoseX != 0 || cachedPoseY != 0) && (dx * dx + dy * dy > 144)) {
-            return; // Keep last good values
+        // After relocalization, allow the first large jump through
+        if (relocalizationPending) {
+            relocalizationPending = false;
+        } else {
+            // Reject teleportation: >12 inches in one loop is physically impossible
+            double dx = newX - cachedPoseX;
+            double dy = newY - cachedPoseY;
+            if ((cachedPoseX != 0 || cachedPoseY != 0) && (dx * dx + dy * dy > 144)) {
+                return; // Keep last good values
+            }
         }
 
         cachedPoseX = newX;

@@ -3,6 +3,7 @@ package commands;
 import com.arcrobotics.ftclib.command.Command;
 import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.ParallelCommandGroup;
+import com.arcrobotics.ftclib.command.ParallelRaceGroup;
 import com.arcrobotics.ftclib.command.SequentialCommandGroup;
 import com.arcrobotics.ftclib.command.WaitCommand;
 import com.pedropathing.follower.Follower;
@@ -170,6 +171,49 @@ public class CommandSequenceBuilder {
         return this;
     }
 
+    // ==================== Move-To-Until-Full Path Methods ====================
+    // Races FollowPathCommand against WaitForBallsCommand — stops path early when 3 balls detected.
+
+    public CommandSequenceBuilder moveToUntilFull(Path path) {
+        commands.add(new ParallelRaceGroup(new FollowPathCommand(follower, path, true), new WaitForBallsCommand(30.0)));
+        return this;
+    }
+
+    public CommandSequenceBuilder moveToUntilFull(Path path, boolean holdEnd) {
+        commands.add(new ParallelRaceGroup(new FollowPathCommand(follower, path, holdEnd), new WaitForBallsCommand(30.0)));
+        return this;
+    }
+
+    public CommandSequenceBuilder moveToUntilFull(PathChain pathChain) {
+        commands.add(new ParallelRaceGroup(new FollowPathCommand(follower, pathChain, true), new WaitForBallsCommand(30.0)));
+        return this;
+    }
+
+    public CommandSequenceBuilder moveToUntilFull(PathChain pathChain, boolean holdEnd) {
+        commands.add(new ParallelRaceGroup(new FollowPathCommand(follower, pathChain, holdEnd), new WaitForBallsCommand(30.0)));
+        return this;
+    }
+
+    public CommandSequenceBuilder moveToUntilFull(Path path, double maxPower) {
+        commands.add(new ParallelRaceGroup(new FollowPathCommand(follower, path, maxPower, true), new WaitForBallsCommand(30.0)));
+        return this;
+    }
+
+    public CommandSequenceBuilder moveToUntilFull(Path path, double maxPower, boolean holdEnd) {
+        commands.add(new ParallelRaceGroup(new FollowPathCommand(follower, path, maxPower, holdEnd), new WaitForBallsCommand(30.0)));
+        return this;
+    }
+
+    public CommandSequenceBuilder moveToUntilFull(PathChain pathChain, double maxPower) {
+        commands.add(new ParallelRaceGroup(new FollowPathCommand(follower, pathChain, maxPower, true), new WaitForBallsCommand(30.0)));
+        return this;
+    }
+
+    public CommandSequenceBuilder moveToUntilFull(PathChain pathChain, double maxPower, boolean holdEnd) {
+        commands.add(new ParallelRaceGroup(new FollowPathCommand(follower, pathChain, maxPower, holdEnd), new WaitForBallsCommand(30.0)));
+        return this;
+    }
+
     // ==================== Inline Coordinate Path Methods ====================
 
     /**
@@ -281,6 +325,27 @@ public class CommandSequenceBuilder {
      */
     public CommandSequenceBuilder shoot(int ballCount) {
         commands.add(ShootingCommands.shootAllBalls(shooter, spindexer, ballCount));
+        return this;
+    }
+
+    /**
+     * Adds a slow shooting command that shoots all 3 balls with extended flick time (0.30s).
+     *
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder slowShoot() {
+        commands.add(ShootingCommands.slowShootThreeBalls(shooter, spindexer));
+        return this;
+    }
+
+    /**
+     * Adds a slow shooting command with specified ball count and extended flick time (0.30s).
+     *
+     * @param ballCount number of balls to shoot
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder slowShoot(int ballCount) {
+        commands.add(ShootingCommands.slowShootAllBalls(shooter, spindexer, ballCount));
         return this;
     }
 
@@ -588,6 +653,47 @@ public class CommandSequenceBuilder {
             return this;
         }
 
+        // Move-to-until-full methods (race path against ball detection)
+        public ParallelBuilder moveToUntilFull(Path path) {
+            parallelCommands.add(new ParallelRaceGroup(new FollowPathCommand(follower, path, true), new WaitForBallsCommand(30.0)));
+            return this;
+        }
+
+        public ParallelBuilder moveToUntilFull(Path path, boolean holdEnd) {
+            parallelCommands.add(new ParallelRaceGroup(new FollowPathCommand(follower, path, holdEnd), new WaitForBallsCommand(30.0)));
+            return this;
+        }
+
+        public ParallelBuilder moveToUntilFull(PathChain pathChain) {
+            parallelCommands.add(new ParallelRaceGroup(new FollowPathCommand(follower, pathChain, true), new WaitForBallsCommand(30.0)));
+            return this;
+        }
+
+        public ParallelBuilder moveToUntilFull(PathChain pathChain, boolean holdEnd) {
+            parallelCommands.add(new ParallelRaceGroup(new FollowPathCommand(follower, pathChain, holdEnd), new WaitForBallsCommand(30.0)));
+            return this;
+        }
+
+        public ParallelBuilder moveToUntilFull(Path path, double maxPower) {
+            parallelCommands.add(new ParallelRaceGroup(new FollowPathCommand(follower, path, maxPower, true), new WaitForBallsCommand(30.0)));
+            return this;
+        }
+
+        public ParallelBuilder moveToUntilFull(Path path, double maxPower, boolean holdEnd) {
+            parallelCommands.add(new ParallelRaceGroup(new FollowPathCommand(follower, path, maxPower, holdEnd), new WaitForBallsCommand(30.0)));
+            return this;
+        }
+
+        public ParallelBuilder moveToUntilFull(PathChain pathChain, double maxPower) {
+            parallelCommands.add(new ParallelRaceGroup(new FollowPathCommand(follower, pathChain, maxPower, true), new WaitForBallsCommand(30.0)));
+            return this;
+        }
+
+        public ParallelBuilder moveToUntilFull(PathChain pathChain, double maxPower, boolean holdEnd) {
+            parallelCommands.add(new ParallelRaceGroup(new FollowPathCommand(follower, pathChain, maxPower, holdEnd), new WaitForBallsCommand(30.0)));
+            return this;
+        }
+
         // Action methods
         public ParallelBuilder shoot() {
             parallelCommands.add(ShootingCommands.shootThreeBalls(shooter, spindexer));
@@ -604,6 +710,16 @@ public class CommandSequenceBuilder {
 
         public ParallelBuilder shoot(int ballCount) {
             parallelCommands.add(ShootingCommands.shootAllBalls(shooter, spindexer, ballCount));
+            return this;
+        }
+
+        public ParallelBuilder slowShoot() {
+            parallelCommands.add(ShootingCommands.slowShootThreeBalls(shooter, spindexer));
+            return this;
+        }
+
+        public ParallelBuilder slowShoot(int ballCount) {
+            parallelCommands.add(ShootingCommands.slowShootAllBalls(shooter, spindexer, ballCount));
             return this;
         }
 

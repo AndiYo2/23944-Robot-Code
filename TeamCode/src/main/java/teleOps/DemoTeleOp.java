@@ -91,8 +91,8 @@ public class DemoTeleOp extends CommandOpMode {
         // Configure button bindings
         configureButtonBindings();
 
-        // Start Limelight in TagTracking mode
-        limelight.setMode(EnumConstants.LimelightMode.TagTracking);
+        // Start Limelight in GoalTracking mode (continuous localization)
+        limelight.setMode(EnumConstants.LimelightMode.GoalTracking);
     }
 
     private void configureButtonBindings() {

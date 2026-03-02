@@ -13,9 +13,15 @@ import subsystems.Shooter;
 public class ExtendShooterFlipperCommand extends CommandBase {
     private final Shooter shooter;
     private final ElapsedTime timer = new ElapsedTime();
+    private final double flickTime;
 
     public ExtendShooterFlipperCommand(Shooter shooter) {
+        this(shooter, ShootingSequenceConstants.SHOOTER_FLICK_TIME);
+    }
+
+    public ExtendShooterFlipperCommand(Shooter shooter, double flickTime) {
         this.shooter = shooter;
+        this.flickTime = flickTime;
         addRequirements(shooter);
     }
 
@@ -27,7 +33,7 @@ public class ExtendShooterFlipperCommand extends CommandBase {
 
     @Override
     public boolean isFinished() {
-        return timer.seconds() >= ShootingSequenceConstants.SHOOTER_FLICK_TIME;
+        return timer.seconds() >= flickTime;
     }
 
     @Override

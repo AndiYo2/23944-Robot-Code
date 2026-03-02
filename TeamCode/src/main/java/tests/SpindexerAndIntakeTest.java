@@ -67,7 +67,7 @@ public class SpindexerAndIntakeTest extends CommandOpMode {
         super.run();
 
         robot.clearBulkCache();
-        robot.pollNextSensor();
+        robot.smartPollSensors();
 
         // ==================== SPINDEXER ROTATIONS ====================
         if (gamepad1.dpad_right && !prevDpadRight) {

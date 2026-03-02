@@ -24,6 +24,16 @@ public class TelemetryHelper {
     private MecanumDrive mecanumDrive;
     private Intake intake;
 
+    // Rolling 60-second loop time tracker
+    private static final int LOOP_BUFFER_SIZE = 6000; // ~60s at 100 Hz max
+    private static final long WINDOW_NS = 60_000_000_000L; // 60 seconds in nanos
+    private final double[] loopBuffer = new double[LOOP_BUFFER_SIZE];
+    private final long[] loopTimestamps = new long[LOOP_BUFFER_SIZE];
+    private int loopHead = 0;  // next write index
+    private int loopCount = 0; // total entries in buffer
+    private double rollingAvgMs = 0;
+    private double rollingMaxMs = 0;
+
     public TelemetryHelper() {
         this.robot = RobotHardware.getInstance();
         this.panels = robot.telemetryManager;
@@ -42,6 +52,39 @@ public class TelemetryHelper {
     }
 
     /**
+     * Records a loop time sample. Call this every loop iteration (not just at telemetry rate)
+     * so all samples are captured for accurate avg/spike tracking.
+     */
+    public void recordLoop(double loopMs) {
+        long now = System.nanoTime();
+        loopBuffer[loopHead] = loopMs;
+        loopTimestamps[loopHead] = now;
+        loopHead = (loopHead + 1) % LOOP_BUFFER_SIZE;
+        if (loopCount < LOOP_BUFFER_SIZE) loopCount++;
+    }
+
+    private void computeLoopStats() {
+        long now = System.nanoTime();
+        long cutoff = now - WINDOW_NS;
+        double sum = 0;
+        double max = 0;
+        int validCount = 0;
+
+        for (int i = 0; i < loopCount; i++) {
+            // Walk the buffer from oldest to newest
+            int idx = (loopHead - loopCount + i + LOOP_BUFFER_SIZE) % LOOP_BUFFER_SIZE;
+            if (loopTimestamps[idx] < cutoff) continue;
+            double val = loopBuffer[idx];
+            sum += val;
+            if (val > max) max = val;
+            validCount++;
+        }
+
+        rollingAvgMs = validCount > 0 ? sum / validCount : 0;
+        rollingMaxMs = max;
+    }
+
+    /**
      * Pushes all telemetry data to Panels (debug text + graph time-series).
      * Complete no-op when ENABLE_TELEMETRY is false.
      *
@@ -49,8 +92,13 @@ public class TelemetryHelper {
      * @param loopMs    current loop time in milliseconds (for graph tracking)
      */
     public void update(Telemetry telemetry, double loopMs) {
+        computeLoopStats();
+
         // Always report loop timing regardless of ENABLE_TELEMETRY
         panels.addData("Loop Time (ms)", loopMs);
+        panels.addData("Avg Loop (60s)", rollingAvgMs);
+        panels.addData("Max Spike (60s)", rollingMaxMs);
+        panels.debug(String.format("Loop: %.1f ms | Avg: %.1f ms | Spike: %.1f ms", loopMs, rollingAvgMs, rollingMaxMs));
 
         if (!RobotConstants.Robot.ENABLE_TELEMETRY) {
             panels.update(telemetry);
@@ -94,6 +142,11 @@ public class TelemetryHelper {
         panels.debug("Intake:   " + (r1.ballPresent ? "BALL" : "----") + " " + r1.color + " " + (int)(r1.confidence * 100) + "%");
         panels.debug("Transfer: " + (r2.ballPresent ? "BALL" : "----") + " " + r2.color + " " + (int)(r2.confidence * 100) + "%");
         panels.debug("Ramp:     " + (r3.ballPresent ? "BALL" : "----") + " " + r3.color + " " + (int)(r3.confidence * 100) + "%");
+
+        // Sensor confidence (from cached quickCheck — no I2C reads)
+        panels.addData("Intake Confidence", r1.confidence);
+        panels.addData("Transfer Confidence", r2.confidence);
+        panels.addData("Ramp Confidence", r3.confidence);
 
         // Graphs
         panels.addData("Shooter Velocity (actual)", currentVel);

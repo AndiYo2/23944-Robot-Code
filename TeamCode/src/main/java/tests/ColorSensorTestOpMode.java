@@ -3,8 +3,12 @@ package tests;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.ColorSensor;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.hardware.lynx.LynxModule;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import utility.DualBallDetector;
 import Constants.NamingConstants;
+import Constants.SensorConstants;
 
 
 @TeleOp(name = "ColorSensorTestOpMode", group = "Tests")
@@ -14,7 +18,20 @@ public class ColorSensorTestOpMode extends LinearOpMode {
 
     private ColorSensor[] sensors1 = new ColorSensor[3];
     private ColorSensor[] sensors2 = new ColorSensor[3];
+    private DistanceSensor[] distSensors1 = new DistanceSensor[3];
+    private DistanceSensor[] distSensors2 = new DistanceSensor[3];
     private DualBallDetector[] detectors = new DualBallDetector[3];
+
+    private double[][] nearThresholds = {
+        {SensorConstants.INTAKE_NEAR_DIST_THRESHOLD_MM},
+        {SensorConstants.RAMP_NEAR_DIST_THRESHOLD_MM},
+        {SensorConstants.TRANSFER_NEAR_DIST_THRESHOLD_MM}
+    };
+    private double[][] farThresholds = {
+        {SensorConstants.INTAKE_FAR_DIST_THRESHOLD_MM},
+        {SensorConstants.RAMP_FAR_DIST_THRESHOLD_MM},
+        {SensorConstants.TRANSFER_FAR_DIST_THRESHOLD_MM}
+    };
 
     private int currentPair = 0;
     private boolean prevDpadLeft = false;
@@ -31,6 +48,17 @@ public class ColorSensorTestOpMode extends LinearOpMode {
 
         sensors1[2] = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.transferSensor1);
         sensors2[2] = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.transferSensor2);
+
+        // Cast to DistanceSensor (REV V3 implements both interfaces)
+        for (int i = 0; i < 3; i++) {
+            distSensors1[i] = (DistanceSensor) sensors1[i];
+            distSensors2[i] = (DistanceSensor) sensors2[i];
+        }
+
+        // Enable MANUAL bulk caching for accurate distance reads
+        for (LynxModule hub : hardwareMap.getAll(LynxModule.class)) {
+            hub.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
+        }
 
         detectors[0] = new DualBallDetector(sensors1[0], sensors2[0]); // Intake - defaults
         detectors[1] = new DualBallDetector(sensors1[1], sensors2[1]); // Ramp - defaults
@@ -60,12 +88,19 @@ public class ColorSensorTestOpMode extends LinearOpMode {
             prevDpadRight = gamepad1.dpad_right;
             prevDpadLeft = gamepad1.dpad_left;
 
+            // Clear bulk cache for fresh reads
+            for (LynxModule hub : hardwareMap.getAll(LynxModule.class)) {
+                hub.clearBulkCache();
+            }
+
             for (DualBallDetector detector : detectors) {
                 detector.update();
             }
 
             ColorSensor sensor1 = sensors1[currentPair];
             ColorSensor sensor2 = sensors2[currentPair];
+            DistanceSensor dist1 = distSensors1[currentPair];
+            DistanceSensor dist2 = distSensors2[currentPair];
             DualBallDetector.Result result = detectors[currentPair].detectBall();
 
 
@@ -107,6 +142,16 @@ public class ColorSensorTestOpMode extends LinearOpMode {
             } else {
                 telemetry.addData("S2 Norm", "N/A");
             }
+
+            telemetry.addLine();
+
+            telemetry.addLine("--- DISTANCE DATA ---");
+            double d1 = dist1.getDistance(DistanceUnit.MM);
+            double d2 = dist2.getDistance(DistanceUnit.MM);
+            telemetry.addData("S1 Dist (mm)", "%.1f", d1);
+            telemetry.addData("S2 Dist (mm)", "%.1f", d2);
+            telemetry.addData("Ball Detected (dist)",
+                    d1 < nearThresholds[currentPair][0] || d2 < farThresholds[currentPair][0]);
 
             telemetry.addLine();
 
