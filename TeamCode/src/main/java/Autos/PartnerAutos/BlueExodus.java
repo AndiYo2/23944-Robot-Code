@@ -17,7 +17,7 @@ public class BlueExodus extends AutonTemplate {
     private PathChain startToShoot, shootToFirstPrep, firstPrepToFirst, firstToGate, firstGateToShoot, shootToGatePrep1, prepToThree, gateToShootThree, ShootToFourth, fourthToGate, fiveToShoot;
 
     // Start pose
-    private final Pose startPose = new Pose(32.500, 134.000, Math.toRadians(90));
+    private final Pose startPose = new Pose(32.500, 133.500, Math.toRadians(90));
 
     // Shoot positions
     private final Pose shootPoseStart = new Pose(56.000, 82.000, Math.toRadians(90));
@@ -32,7 +32,7 @@ public class BlueExodus extends AutonTemplate {
 
     // First gate
     private final Pose firstGateControl = new Pose(24.000, 61.000);
-    private final Pose firstGatePose = new Pose(16.250, 67.000, Math.toRadians(180));
+    private final Pose firstGatePose = new Pose(16.750, 67.000, Math.toRadians(180));
     private final Pose firstGateToShootControl = new Pose(38.500, 58.500);
 
     // Gate approach & pickup (shared by 2nd and 4th cycles)
@@ -45,9 +45,9 @@ public class BlueExodus extends AutonTemplate {
     private final Pose secondGatePose = new Pose(16.800, 64.500, Math.toRadians(180));
 
     // Fourth pickup & gate
-    private final Pose fourthPickupPose = new Pose(15.500, 85.000, Math.toRadians(180));
+    private final Pose fourthPickupPose = new Pose(16.00, 85.000, Math.toRadians(180));
     private final Pose fourthGateControl = new Pose(25.000, 80.750);
-    private final Pose fourthGatePose = new Pose(16.500, 75.500, Math.toRadians(180));
+    private final Pose fourthGatePose = new Pose(16.500, 76.500, Math.toRadians(180));
 
     // End pose
     private final Pose lastShootPose = new Pose(52.500, 118.000, Math.toRadians(150));

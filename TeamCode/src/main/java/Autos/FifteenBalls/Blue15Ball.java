@@ -11,52 +11,54 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import commands.CommandSequenceBuilder;
 
 
-@Autonomous(name = "Red15Ball")
-public class Red15Ball extends AutonTemplate {
+@Autonomous(name = "Blue15Ball")
+public class Blue15Ball extends AutonTemplate {
     public static double maxSpeed = 1;
     private PathChain shootToFirst, firstToShoot, shootToSecond, secondToGate, gateToShoot, shootToThird, thirdToShoot, shootToFourth, fourthToShoot, shootToEnd;
 
     // Start pose
-    private final Pose startPose = new Pose(88.000, 8.000, Math.toRadians(90));
+    private final Pose startPose = new Pose(56.000, 8.000, Math.toRadians(90));
 
     // First prep & pickup
-    private final Pose shootToFirstPrepControl = new Pose(100.000, 17.000);
-    private final Pose firstPrepPose = new Pose(119.500, 10.000, Math.toRadians(0));
-    private final Pose firstPickupPose = new Pose(131.500, 10.000, Math.toRadians(0));
+    private final Pose shootToFirstPrepControl = new Pose(44.000, 17.000);
+    private final Pose firstPrepPose = new Pose(24.500, 10.000, Math.toRadians(180));
+    private final Pose firstPickupPose = new Pose(12.500, 10.000, Math.toRadians(180));
 
     // First to shoot
-    private final Pose firstToShootControl = new Pose(109.000, 15.000);
+    private final Pose firstToShootControl = new Pose(35.000, 15.000);
 
     // Second prep & pickup
-    private final Pose shootToSecondControl = new Pose(86.745, 52.766);
-    private final Pose secondPrepPose = new Pose(99.000, 57.500, Math.toRadians(0));
-    private final Pose secondPickupPose = new Pose(131.500, 57.500, Math.toRadians(0));
+    private final Pose shootToSecondControl = new Pose(57.255, 52.766);
+    private final Pose secondPrepPose = new Pose(45.000, 60.500, Math.toRadians(180));
+    private final Pose secondPickupPose = new Pose(12.500, 60.500, Math.toRadians(180));
 
     // Gate area
-    private final Pose secondToGateControl = new Pose(118.500, 62.500);
-    private final Pose gatePose = new Pose(126.75, 65.500, Math.toRadians(0));
+    private final Pose secondToGateControl = new Pose(25.500, 62.500);
+    private final Pose gatePose = new Pose(17.250, 65.500, Math.toRadians(180));
 
     // Gate to shoot
-    private final Pose gateToShootControl = new Pose(96.500, 65.000);
-    private final Pose gateShootPose = new Pose(86.000, 79.500, Math.toRadians(30));
+    private final Pose gateToShootControl = new Pose(47.500, 65.000);
+    private final Pose gateShootPose = new Pose(58.000, 85.000, Math.toRadians(150));
 
     // Third pickup & main shoot area
-    private final Pose postGateShootPose = new Pose(86.000, 79.500, Math.toRadians(0));
-    private final Pose shootToThirdControl = new Pose(109.500, 78.000);
-    private final Pose thirdPickupPose = new Pose(125.000, 82.000, Math.toRadians(0));
+    private final Pose postGateShootPose = new Pose(58.000, 85.000, Math.toRadians(180));
+    private final Pose thirdPickupPose = new Pose(19.000, 85.000, Math.toRadians(180));
+
+    // Post-third shoot area (thirdToShoot ends here, shootToFourth starts here)
+    private final Pose postThirdShootPose = new Pose(58.000, 79.500, Math.toRadians(180));
 
     // Fourth prep & pickup
-    private final Pose shootToFourthPrepControl = new Pose(75.500, 35.500);
-    private final Pose fourthPrepPose = new Pose(98.500, 36.000, Math.toRadians(0));
-    private final Pose fourthPickupPose = new Pose(131.500, 36.000, Math.toRadians(0));
+    private final Pose shootToFourthPrepControl = new Pose(68.500, 35.500);
+    private final Pose fourthPrepPose = new Pose(45.500, 38.000, Math.toRadians(180));
+    private final Pose fourthPickupPose = new Pose(12.500, 38.000, Math.toRadians(180));
 
     // Shoot positions
-    private final Pose firstShootPose = new Pose(88.500, 13.500, Math.toRadians(30));
-    private final Pose cycleShootPose = new Pose(88.500, 12.000, Math.toRadians(30));
+    private final Pose firstShootPose = new Pose(55.500, 13.500, Math.toRadians(150));
+    private final Pose cycleShootPose = new Pose(55.500, 12.000, Math.toRadians(150));
 
 
     // End pose
-    private final Pose stopPose = new Pose(93.000, 23.000, Math.toRadians(30));
+    private final Pose stopPose = new Pose(51.000, 23.000, Math.toRadians(150));
 
     @Override
     protected void buildPaths() {
@@ -95,20 +97,20 @@ public class Red15Ball extends AutonTemplate {
                 .build();
 
         shootToThird = follower.pathBuilder()
-                .addPath(new BezierCurve(postGateShootPose, shootToThirdControl, thirdPickupPose))
+                .addPath(new BezierLine(postGateShootPose, thirdPickupPose))
                 .setLinearHeadingInterpolation(postGateShootPose.getHeading(), thirdPickupPose.getHeading())
                 .setGlobalDeceleration()
                 .build();
 
         thirdToShoot = follower.pathBuilder()
-                .addPath(new BezierLine(thirdPickupPose, postGateShootPose))
-                .setLinearHeadingInterpolation(thirdPickupPose.getHeading(), postGateShootPose.getHeading())
+                .addPath(new BezierLine(thirdPickupPose, postThirdShootPose))
+                .setLinearHeadingInterpolation(thirdPickupPose.getHeading(), postThirdShootPose.getHeading())
                 .setGlobalDeceleration()
                 .build();
 
         shootToFourth = follower.pathBuilder()
-                .addPath(new BezierCurve(postGateShootPose, shootToFourthPrepControl, fourthPrepPose))
-                .setLinearHeadingInterpolation(postGateShootPose.getHeading(), fourthPrepPose.getHeading())
+                .addPath(new BezierCurve(postThirdShootPose, shootToFourthPrepControl, fourthPrepPose))
+                .setLinearHeadingInterpolation(postThirdShootPose.getHeading(), fourthPrepPose.getHeading())
                 .addPath(new BezierLine(fourthPrepPose, fourthPickupPose))
                 .setLinearHeadingInterpolation(fourthPrepPose.getHeading(), fourthPickupPose.getHeading())
                 .build();
@@ -131,7 +133,7 @@ public class Red15Ball extends AutonTemplate {
     public void init() {
         super.init();
         SpindexerConstants.currentMode = EnumConstants.ShootingMode.Fast;
-        Constants.RobotConstants.Robot.allianceColor = Constants.EnumConstants.AllianceColor.Red;
+        Constants.RobotConstants.Robot.allianceColor = Constants.EnumConstants.AllianceColor.Blue;
 
         autonomousCommand = new CommandSequenceBuilder(follower, intake, spindexer, limelight, shooter, turret)
                 .delay(.35)
