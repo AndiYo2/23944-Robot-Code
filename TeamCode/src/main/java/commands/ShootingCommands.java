@@ -33,7 +33,7 @@ public class ShootingCommands {
     }
 
     public static Command slowShootAllBalls(Shooter shooter, Spindexer spindexer, int ballCount) {
-        return shootAllBallsWithTime(shooter, spindexer, ballCount, 0.30);
+        return shootAllBallsWithTime(shooter, spindexer, ballCount, 0.375);
     }
 
     private static Command shootAllBallsWithTime(Shooter shooter, Spindexer spindexer, int ballCount, double flickTime) {

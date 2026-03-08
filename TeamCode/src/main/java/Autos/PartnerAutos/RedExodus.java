@@ -31,7 +31,7 @@ public class RedExodus extends AutonTemplate {
 
     // First gate
     private final Pose firstGateControl = new Pose(120.000, 61.000);
-    private final Pose firstGatePose = new Pose(127, 67.00, Math.toRadians(0));
+    private final Pose firstGatePose = new Pose(127, 68.50, Math.toRadians(0));
     private final Pose firstGateToShootControl = new Pose(105.500, 58.500);
 
     // Gate approach & pickup (shared by 2nd and 4th cycles)
@@ -41,7 +41,7 @@ public class RedExodus extends AutonTemplate {
     private final Pose pickupToShootControl = new Pose(108.000, 65.000);
 
     // Second gate
-    private final Pose secondGatePose = new Pose(127.250, 64.500, Math.toRadians(0));
+    private final Pose secondGatePose = new Pose(127.250, 63.500, Math.toRadians(0));
 
     // Third pickup & gate
     private final Pose thirdPickupPose = new Pose(128.00, 80.000, Math.toRadians(0));

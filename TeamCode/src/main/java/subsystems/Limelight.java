@@ -1,10 +1,13 @@
 package subsystems;
 
+import Constants.RobotConstants;
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import Constants.EnumConstants;
 import Constants.LimelightConstants;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import utility.RobotHardware;
 
 import com.pedropathing.geometry.Pose;
@@ -15,6 +18,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 
 import java.util.List;
+
+import static java.lang.Math.toRadians;
 
 /**
  * Limelight subsystem for AprilTag detection and field relocalization.
@@ -34,6 +39,9 @@ public class Limelight extends SubsystemBase {
     private EnumConstants.LimelightMode currentMode;
     private boolean motifDetected;
     private int detectedTagId;
+
+    private Pose2D redPose = new Pose2D(DistanceUnit.INCH,8, 8.5, AngleUnit.DEGREES, 0);
+    private Pose2D bluePose = new Pose2D(DistanceUnit.INCH,135, 8.5, AngleUnit.DEGREES, 180);
 
     public Limelight() {
         this.robot = RobotHardware.getInstance();
@@ -191,8 +199,12 @@ public class Limelight extends SubsystemBase {
             lastRelocDebug = "no limelight pose cached";
             return false;
         }
+        if(RobotConstants.Robot.allianceColor == EnumConstants.AllianceColor.Blue){
+            robot.pinpoint.setPosition(bluePose);
+        }else{
+            robot.pinpoint.setPosition(redPose);
+        }
 
-        robot.pinpoint.setPosition(OdometryConstants.toPose2D(limelightPose));
         robot.pinpoint.update();
         lastRelocDebug = String.format("APPLIED (%.1f, %.1f)",
                 limelightPose.getX(), limelightPose.getY());

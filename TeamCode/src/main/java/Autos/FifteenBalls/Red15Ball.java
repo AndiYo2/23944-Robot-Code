@@ -43,7 +43,7 @@ public class Red15Ball extends AutonTemplate {
     // Third pickup & main shoot area
     private final Pose postGateShootPose = new Pose(86.000, 79.500, Math.toRadians(0));
     private final Pose shootToThirdControl = new Pose(109.500, 78.000);
-    private final Pose thirdPickupPose = new Pose(125.000, 82.000, Math.toRadians(0));
+    private final Pose thirdPickupPose = new Pose(125.000, 84.000, Math.toRadians(0));
 
     // Fourth prep & pickup
     private final Pose shootToFourthPrepControl = new Pose(75.500, 35.500);
@@ -134,11 +134,11 @@ public class Red15Ball extends AutonTemplate {
         Constants.RobotConstants.Robot.allianceColor = Constants.EnumConstants.AllianceColor.Red;
 
         autonomousCommand = new CommandSequenceBuilder(follower, intake, spindexer, limelight, shooter, turret)
-                .delay(.35)
+                .delay(.55)
                 .parallel(p -> p.shoot().limelightScan())
                 .intakeStart()
                 .moveTo(shootToFirst, maxSpeed, false)
-                .delay(1.6)
+                .delay(1.1)
                 .parallel(p -> p.moveTo(firstToShoot,maxSpeed,false).autoCatalog())
                 .shoot()
                 .intakeStart()
@@ -146,19 +146,19 @@ public class Red15Ball extends AutonTemplate {
                 .intakeStop()
                 .moveTo(secondToGate, .8, false)
                 .setSpindexerMode(EnumConstants.ShootingMode.Sorted)
-                .delay(.2)
+                .delay(.6)
                 .parallel(p -> p.moveTo(gateToShoot,maxSpeed,false).autoCatalog())
-                .shoot()
+                .slowShoot()
                 .intakeStart()
                 .moveTo(shootToThird, maxSpeed, false)
-                .delay(.125)
-                .parallel(p -> p.moveTo(thirdToShoot,maxSpeed,false).autoCatalog())
-                .shoot()
+                .delay(.25)
+                .parallel(p -> p.moveTo(thirdToShoot,maxSpeed,false).catalog())
+                .slowShoot()
                 .intakeStart()
                 .moveTo(shootToFourth, maxSpeed, false)
                 .delay(.125)
                 .parallel(p -> p.moveTo(fourthToShoot,maxSpeed,false).autoCatalog())
-                .shoot()
+                .slowShoot()
                 .moveTo(shootToEnd, maxSpeed, false)
                 .build();
     }
