@@ -3,6 +3,7 @@ package subsystems;
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.Pose;
+import com.qualcomm.robotcore.hardware.DcMotor;
 
 import Constants.DriveConstants;
 import Constants.EnumConstants.DriveState;
@@ -57,6 +58,21 @@ public class MecanumDrive extends SubsystemBase {
         return robot.cachedHeading - headingOffset;
     }
 
+    private void setMotorModes(DcMotor.ZeroPowerBehavior mode) {
+        robot.frontLeft.setZeroPowerBehavior(mode);
+        robot.backLeft.setZeroPowerBehavior(mode);
+        robot.backRight.setZeroPowerBehavior(mode);
+        robot.frontRight.setZeroPowerBehavior(mode);
+    }
+
+    private void handleMotorMode(boolean driving) {
+        if (driving && robot.frontLeft.getZeroPowerBehavior().equals(DcMotor.ZeroPowerBehavior.BRAKE)) {
+            setMotorModes(DcMotor.ZeroPowerBehavior.FLOAT);
+        } else if (!driving && robot.frontLeft.getZeroPowerBehavior().equals(DcMotor.ZeroPowerBehavior.FLOAT)) {
+            setMotorModes(DcMotor.ZeroPowerBehavior.BRAKE);
+        }
+    }
+
 
 
     public void drive(double ly, double lx, double rx) {
@@ -67,8 +83,11 @@ public class MecanumDrive extends SubsystemBase {
 
         // Skip driving if in AutoDriving, Parking, or Locked state
         if (currentState == DriveState.AutoDriving || currentState == DriveState.Parking || currentState == DriveState.Locked) {
+            setMotorModes(DcMotor.ZeroPowerBehavior.BRAKE);
             return;
         }
+
+        handleMotorMode(Math.abs(ly) > DriveConstants.JOYSTICK_DEADBAND || Math.abs(lx) > DriveConstants.JOYSTICK_DEADBAND);
 
         double botHeading = getRobotHeading();
 
