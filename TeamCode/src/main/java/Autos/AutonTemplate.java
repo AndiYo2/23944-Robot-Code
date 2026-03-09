@@ -1,6 +1,5 @@
 package Autos;
 
-import Constants.EnumConstants;
 import com.arcrobotics.ftclib.command.Command;
 import com.arcrobotics.ftclib.command.CommandScheduler;
 import com.pedropathing.follower.Follower;
@@ -140,6 +139,7 @@ public abstract class AutonTemplate extends OpMode {
         // Update follower FIRST (before commands run)
         follower.update();
         robotHardware.updateCachedPose();
+        OdometryConstants.endingAutonPose = follower.getPose();
 
         // Poll one color sensor per loop (round-robin across 6 sensors)
         robotHardware.pollNextSensor();
@@ -195,8 +195,9 @@ public abstract class AutonTemplate extends OpMode {
 
     @Override
     public void stop() {
-        OdometryConstants.endingAutonPose = follower.getPose();
+        follower.startTeleopDrive(true);
         // Clean up the command scheduler
         CommandScheduler.getInstance().reset();
+        OdometryConstants.endingAutonPose = follower.getPose();
     }
 }
