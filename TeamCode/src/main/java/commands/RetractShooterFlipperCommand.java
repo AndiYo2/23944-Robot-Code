@@ -27,6 +27,7 @@ public class RetractShooterFlipperCommand extends CommandBase {
 
     @Override
     public boolean isFinished() {
-        return timer.seconds() >= ShootingSequenceConstants.SHOOTER_RETRACT_DELAY;
+        return timer.seconds() >= ShootingSequenceConstants.SHOOTER_RETRACT_DELAY
+            || shooter.isFlipperAtPosition(ShootingSequenceConstants.SHOOTER_FLIPPER_RETRACT);
     }
 }
