@@ -2,6 +2,7 @@ package tests;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
 import com.qualcomm.robotcore.hardware.PwmControl;
@@ -30,6 +31,19 @@ public class ServoTestTeleOp extends LinearOpMode {
         Servo shooterFlipper = hardwareMap.get(Servo.class, NamingConstants.Shooter.shooterFlipperServo);
         Servo shooterHood = hardwareMap.get(Servo.class, NamingConstants.Shooter.shooterHood);
         Servo turret = hardwareMap.get(Servo.class, NamingConstants.Turret.turret);
+
+        // Analog feedback encoders (0-3.3V → 0-1 position)
+        AnalogInput spindexerEncoder = hardwareMap.get(AnalogInput.class, NamingConstants.Spindexer.spindexerEncoder);
+        AnalogInput shooterFlipperEncoder = hardwareMap.get(AnalogInput.class, NamingConstants.Shooter.shooterFlipperEncoder);
+
+        // Map which servos have analog feedback (null = no encoder)
+        AnalogInput[] encoders = {
+                spindexerEncoder,       // Spindexer
+                null,                   // Spindexer Flipper
+                shooterFlipperEncoder,  // Shooter Flipper
+                null,                   // Shooter Hood
+                null                    // Turret
+        };
 
         String[] names = {
                 "Spindexer",
@@ -103,7 +117,12 @@ public class ServoTestTeleOp extends LinearOpMode {
             telemetry.addLine("");
             for (int i = 0; i < servos.length; i++) {
                 String prefix = (i == selectedIndex) ? ">> " : "   ";
-                telemetry.addData(prefix + names[i], "%.3f", positions[i]);
+                if (encoders[i] != null) {
+                    double actualPos = encoders[i].getVoltage() / 3.3;
+                    telemetry.addData(prefix + names[i], "Cmd: %.3f | Actual: %.3f", positions[i], actualPos);
+                } else {
+                    telemetry.addData(prefix + names[i], "%.3f", positions[i]);
+                }
             }
             telemetry.addLine("");
             telemetry.addData("Controls", "LB/RB = cycle | Stick Y = move | A = center");

@@ -36,6 +36,8 @@ public class RobotHardware {
     public DcMotorEx shooterMotor1;
     public DcMotorEx shooterMotor2;
     public Servo shooterFlipper;
+
+    public AnalogInput shooterFlipperEncoder;
     public Servo shooterHood;
     public Servo turretServo;
 
@@ -60,6 +62,8 @@ public class RobotHardware {
 
     // ******************* SPINDEXER ******************* //
     public ServoImplEx spindexerServo;  // Using ServoImplEx for PWM range control
+
+    public AnalogInput spindexerEncoder;
     public Servo spindexerFlipperServo;
 
     // ******************* VOLTAGE SENSOR ******************* //
@@ -223,6 +227,7 @@ public class RobotHardware {
         // ******************* SPINDEXER ******************* //
         spindexerFlipperServo = hardwareMap.get(Servo.class, NamingConstants.Spindexer.spindexerFlipperServo);
         spindexerServo = hardwareMap.get(ServoImplEx.class, NamingConstants.Spindexer.spindexerServo);
+        spindexerEncoder = hardwareMap.get(AnalogInput.class, NamingConstants.Spindexer.spindexerEncoder);
         spindexerServo.setPwmRange(new PwmControl.PwmRange(500, 2500));  // Full range for Axon at 6V
 
         // ******************* OUTTAKE ******************* //
@@ -231,6 +236,7 @@ public class RobotHardware {
         shooterMotor2.setDirection(DcMotorEx.Direction.REVERSE);
         turretServo = hardwareMap.get(Servo.class, NamingConstants.Turret.turret);
         shooterFlipper = hardwareMap.get(Servo.class, NamingConstants.Shooter.shooterFlipperServo);
+        shooterFlipperEncoder =  hardwareMap.get(AnalogInput.class, NamingConstants.Shooter.shooterFlipperEncoder);
         shooterHood = hardwareMap.get(Servo.class, NamingConstants.Shooter.shooterHood);
 
 
