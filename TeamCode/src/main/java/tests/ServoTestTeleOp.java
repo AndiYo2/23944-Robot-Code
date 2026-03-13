@@ -33,16 +33,16 @@ public class ServoTestTeleOp extends LinearOpMode {
         Servo turret = hardwareMap.get(Servo.class, NamingConstants.Turret.turret);
 
         // Analog feedback encoders (0-3.3V → 0-1 position)
-        AnalogInput spindexerEncoder = hardwareMap.get(AnalogInput.class, NamingConstants.Spindexer.spindexerEncoder);
+        AnalogInput spindexerFlipperEncoder = hardwareMap.get(AnalogInput.class, NamingConstants.Spindexer.spindexerFlipperEncoder);
         AnalogInput shooterFlipperEncoder = hardwareMap.get(AnalogInput.class, NamingConstants.Shooter.shooterFlipperEncoder);
 
         // Map which servos have analog feedback (null = no encoder)
         AnalogInput[] encoders = {
-                spindexerEncoder,       // Spindexer
-                null,                   // Spindexer Flipper
-                shooterFlipperEncoder,  // Shooter Flipper
-                null,                   // Shooter Hood
-                null                    // Turret
+                null,                       // Spindexer
+                spindexerFlipperEncoder,    // Spindexer Flipper
+                shooterFlipperEncoder,      // Shooter Flipper
+                null,                       // Shooter Hood
+                null                        // Turret
         };
 
         String[] names = {

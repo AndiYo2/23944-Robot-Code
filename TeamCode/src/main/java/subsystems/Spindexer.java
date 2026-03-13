@@ -137,10 +137,9 @@ public class Spindexer extends SubsystemBase {
         return rotationCooldown.seconds() > ShootingSequenceConstants.SPINDEXER_ROTATION_TIME;
     }
 
-    public boolean isAtTargetPosition() {
-        double actual = robot.spindexerEncoder.getVoltage() / 3.3;
-        double target = degreesToServoPosition(currentDegrees);
-        return Math.abs(actual - target) < ShootingSequenceConstants.SPINDEXER_POSITION_TOLERANCE;
+    public boolean isFlipperAtPosition(double targetPosition) {
+        double actual = robot.spindexerFlipperEncoder.getVoltage() / 3.3;
+        return Math.abs(actual - targetPosition) < ShootingSequenceConstants.SPINDEXER_FLIPPER_POSITION_TOLERANCE;
     }
 
     public boolean isReadyToFlip() {

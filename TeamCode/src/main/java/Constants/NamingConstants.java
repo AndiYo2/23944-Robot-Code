@@ -28,7 +28,7 @@ public class NamingConstants {
     public static class Spindexer {
         public static String spindexerServo = "spindexerServo";           // E4
 
-        public static String spindexerEncoder = "spindexerEncoder";
+        public static String spindexerFlipperEncoder = "spindexerFlipperEncoder";
         public static String spindexerFlipperServo = "spindexerFlipperServo"; // E5
     }
 

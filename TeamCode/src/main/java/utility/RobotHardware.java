@@ -63,7 +63,7 @@ public class RobotHardware {
     // ******************* SPINDEXER ******************* //
     public ServoImplEx spindexerServo;  // Using ServoImplEx for PWM range control
 
-    public AnalogInput spindexerEncoder;
+    public AnalogInput spindexerFlipperEncoder;
     public Servo spindexerFlipperServo;
 
     // ******************* VOLTAGE SENSOR ******************* //
@@ -227,7 +227,7 @@ public class RobotHardware {
         // ******************* SPINDEXER ******************* //
         spindexerFlipperServo = hardwareMap.get(Servo.class, NamingConstants.Spindexer.spindexerFlipperServo);
         spindexerServo = hardwareMap.get(ServoImplEx.class, NamingConstants.Spindexer.spindexerServo);
-        spindexerEncoder = hardwareMap.get(AnalogInput.class, NamingConstants.Spindexer.spindexerEncoder);
+        spindexerFlipperEncoder = hardwareMap.get(AnalogInput.class, NamingConstants.Spindexer.spindexerFlipperEncoder);
         spindexerServo.setPwmRange(new PwmControl.PwmRange(500, 2500));  // Full range for Axon at 6V
 
         // ******************* OUTTAKE ******************* //

@@ -29,5 +29,5 @@ public class ShootingSequenceConstants {
 
     // --- Analog Encoder Tolerances ---
     public static double SHOOTER_FLIPPER_POSITION_TOLERANCE = 0.02;
-    public static double SPINDEXER_POSITION_TOLERANCE = 0.02;
+    public static double SPINDEXER_FLIPPER_POSITION_TOLERANCE = 0.02;
 }

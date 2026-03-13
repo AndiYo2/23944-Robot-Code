@@ -27,6 +27,7 @@ public class RetractSpindexerFlipperCommand extends CommandBase {
 
     @Override
     public boolean isFinished() {
-        return timer.seconds() >= ShootingSequenceConstants.SPINDEXER_RETRACT_DELAY;
+        return timer.seconds() >= ShootingSequenceConstants.SPINDEXER_RETRACT_DELAY
+            || spindexer.isFlipperAtPosition(ShootingSequenceConstants.SPINDEXER_FLIPPER_RETRACT);
     }
 }

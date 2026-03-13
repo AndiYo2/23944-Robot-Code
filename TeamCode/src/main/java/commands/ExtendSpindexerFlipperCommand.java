@@ -27,7 +27,8 @@ public class ExtendSpindexerFlipperCommand extends CommandBase {
 
     @Override
     public boolean isFinished() {
-        return timer.seconds() >= ShootingSequenceConstants.SPINDEXER_FLICK_TIME;
+        return timer.seconds() >= ShootingSequenceConstants.SPINDEXER_FLICK_TIME
+            || spindexer.isFlipperAtPosition(ShootingSequenceConstants.SPINDEXER_FLIPPER_EXTENDED);
     }
 
     @Override
