@@ -313,6 +313,11 @@ public class Shooter extends SubsystemBase {
         robot.shooterFlipper.setPosition(ShootingSequenceConstants.SHOOTER_FLIPPER_RETRACT);
     }
 
+    public boolean isFlipperAtPosition(double targetPosition) {
+        double actual = robot.shooterFlipperEncoder.getVoltage() / 3.3;
+        return Math.abs(actual - targetPosition) < ShootingSequenceConstants.SHOOTER_FLIPPER_POSITION_TOLERANCE;
+    }
+
     public FlickState getCurrentState() {
         return currentState;
     }

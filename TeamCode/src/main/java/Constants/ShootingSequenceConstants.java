@@ -26,4 +26,8 @@ public class ShootingSequenceConstants {
 
     // --- Spindexer Rotation ---
     public static double SPINDEXER_ROTATION_TIME = 0.15;//0.14
+
+    // --- Analog Encoder Tolerances ---
+    public static double SHOOTER_FLIPPER_POSITION_TOLERANCE = 0.02;
+    public static double SPINDEXER_POSITION_TOLERANCE = 0.02;
 }

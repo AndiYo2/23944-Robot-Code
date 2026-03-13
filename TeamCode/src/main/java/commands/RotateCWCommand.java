@@ -22,7 +22,7 @@ public class RotateCWCommand extends CommandBase {
 
     @Override
     public boolean isFinished() {
-        return spindexer.isRotationIdle();
+        return spindexer.isRotationIdle() || spindexer.isAtTargetPosition();
     }
 
     @Override
