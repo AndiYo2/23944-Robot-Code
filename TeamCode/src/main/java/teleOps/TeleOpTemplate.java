@@ -6,6 +6,12 @@ import Constants.OdometryConstants;
 import Constants.RobotConstants;
 import Constants.ShooterConstants;
 import Constants.SpindexerConstants;
+
+import com.pedropathing.follower.Follower;
+import com.pedropathing.geometry.BezierLine;
+import com.pedropathing.paths.HeadingInterpolator;
+import com.pedropathing.paths.Path;
+import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.arcrobotics.ftclib.command.CommandOpMode;
@@ -16,6 +22,10 @@ import com.arcrobotics.ftclib.command.button.Trigger;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.pedropathing.geometry.Pose;
+
+import java.util.function.Supplier;
+
+import pedroPathing.Constants;
 import subsystems.*;
 import utility.*;
 import commands.ShootingCommands;
@@ -46,6 +56,11 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     // Pre-allocated array for getTransformedControls() to avoid GC pressure
     private final double[] controlsArray = new double[3];
 
+    // Pedro in Teleop
+    private Follower follower;
+    private Supplier<PathChain> pathChain;
+    private boolean autoDrive = false;
+
 
     /**
      * Consolidated initialization for alliance-specific TeleOp.
@@ -58,6 +73,12 @@ abstract public class TeleOpTemplate extends CommandOpMode {
                                    com.pedropathing.geometry.Pose fallbackStartPosition) {
         // Set alliance color BEFORE initHardware so it can use the correct settings
         RobotConstants.Robot.allianceColor = allianceColor;
+        follower = Constants.createFollower(hardwareMap);
+        follower.activateAllPIDFs();
+        pathChain = () -> follower.pathBuilder() //Lazy Curve Generation
+                .addPath(new Path(new BezierLine(follower::getPose, new Pose(72,72,Math.toRadians(135)))))
+                .setHeadingInterpolation(HeadingInterpolator.linearFromPoint(follower::getHeading, Math.toRadians(135), 0.8))
+                .build();
         initHardware();
         SpindexerConstants.currentMode = EnumConstants.ShootingMode.Fast;
 
@@ -66,9 +87,14 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         if (OdometryConstants.endingAutonPose == null) {
             robot.pinpoint.setPosition(OdometryConstants.toPose2D(fallbackStartPosition));
             robot.pinpoint.update();
+            follower.update();
         }
 
         configureButtonBindings();
+
+        telemetry.addData("Position After Set", follower.getPose());
+        telemetry.addData("Pinpoint", robot.pinpoint.getPosition());
+        telemetry.update();
 
         limelight.setMode(EnumConstants.LimelightMode.GoalTracking);
     }
@@ -129,9 +155,16 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     protected void configureButtonBindings() {
         mecanumDrive.setDefaultCommand(
                 new RunCommand(() -> {
-                    double[] controls = getTransformedControls();
-                    mecanumDrive.setDynamicSpeedMultiplier(getDynamicSlowMultiplier());
-                    mecanumDrive.drive(controls[0], controls[1], controls[2]);
+                    if (!autoDrive) {
+                        double[] controls = getTransformedControls();
+                        mecanumDrive.setDynamicSpeedMultiplier(getDynamicSlowMultiplier());
+                        mecanumDrive.drive(controls[0], controls[1], controls[2]);
+                    } else if (!follower.isBusy()) {
+                        follower.followPath(pathChain.get());
+                        follower.updateErrorAndVectors();
+                        follower.breakFollowing();
+                        autoDrive = false;
+                    }
                 }, mecanumDrive)
         );
 
@@ -202,6 +235,16 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         // Share/Back — deploy park mechanism
         new GamepadButton(driverGamepad, GamepadKeys.Button.BACK)
                 .whenPressed(new ParkCommand());
+
+        new GamepadButton(driverGamepad, GamepadKeys.Button.RIGHT_STICK_BUTTON)
+                .whenPressed(new InstantCommand(() -> {
+                    autoDrive = true;
+                    follower.followPath(pathChain.get());
+                }))
+                .whenReleased(new InstantCommand(() -> {
+                    follower.breakFollowing();
+                    autoDrive = false;
+                }));
     }
 
     @Override
@@ -218,13 +261,15 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         telemetryHelper.recordLoop(loopMs);
 
         robot.clearBulkCache();
-        robot.pinpoint.update();
-        robot.updateCachedPose();
         robot.pollNextSensor();
 
         ShooterConstants.SHOOT_WHILE_MOVING_ENABLED = false;
 
         super.run();
+
+        robot.pinpoint.update();
+        robot.updateCachedPose();
+        follower.update();
 
         poseTracker.addPose(robot.cachedPoseX, robot.cachedPoseY);
 
