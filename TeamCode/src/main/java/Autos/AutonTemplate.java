@@ -19,6 +19,7 @@ import Constants.ShooterConstants;
 import Constants.SpindexerConstants;
 import utility.FieldDrawing;
 import utility.RobotHardware;
+import commands.GuaranteeSortedAutoCatalogCommand;
 import utility.SpindexerAndMotifStatus;
 import utility.TelemetryHelper;
 
@@ -184,6 +185,7 @@ public abstract class AutonTemplate extends OpMode {
                 telemetry.addData("Rotation Idle", spindexer.isRotationIdle());
                 telemetry.addData("Flick State", spindexer.getCurrentState());
                 telemetry.addData("Shooting Mode", SpindexerConstants.currentMode);
+                telemetry.addData("Catalog Debug", GuaranteeSortedAutoCatalogCommand.lastCatalogDebug);
             }
 
             // Panels telemetry (graph + debug) and field drawing

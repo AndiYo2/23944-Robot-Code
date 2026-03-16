@@ -128,7 +128,7 @@ public class BlueBackCycler extends AutonTemplate {
                 .intakeStart()
                 .moveTo(shootToSecond, maxSpeed, false)
                 .delay(.55)
-                .parallel(p -> p.moveTo(secondToShoot, maxSpeed, false).catalog())
+                .parallel(p -> p.moveTo(secondToShoot, maxSpeed, false).autoCatalog())
                 .shoot()
                 .intakeStart()
                 .moveTo(shootToThird, maxSpeed, false)

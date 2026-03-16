@@ -371,6 +371,19 @@ public class CommandSequenceBuilder {
     }
 
     /**
+     * Adds a guaranteed sorted auto catalog command.
+     * Waits for all sensors to read non-None (up to 0.5s), forces fresh bulk-safe reads,
+     * validates colors, then runs sorted auto catalog. Falls back to fast auto if validation fails.
+     * Designed to run inside .parallel() groups so sensor-waiting overlaps with driving.
+     *
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder guaranteeSortedAutoCatalog() {
+        commands.add(new GuaranteeSortedAutoCatalogCommand(spindexer, intake));
+        return this;
+    }
+
+    /**
      * Sets the initial spindexer ball pattern using the default preload.
      *
      * @return this builder for chaining
@@ -730,6 +743,11 @@ public class CommandSequenceBuilder {
 
         public ParallelBuilder autoCatalog() {
             parallelCommands.add(new AutoCatalogModeCommand(spindexer, intake));
+            return this;
+        }
+
+        public ParallelBuilder guaranteeSortedAutoCatalog() {
+            parallelCommands.add(new GuaranteeSortedAutoCatalogCommand(spindexer, intake));
             return this;
         }
 
