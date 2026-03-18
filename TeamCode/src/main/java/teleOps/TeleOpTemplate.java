@@ -159,11 +159,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
                         double[] controls = getTransformedControls();
                         mecanumDrive.setDynamicSpeedMultiplier(getDynamicSlowMultiplier());
                         mecanumDrive.drive(controls[0], controls[1], controls[2]);
-                    } else if (!follower.isBusy()) {
-                        follower.followPath(pathChain.get());
-                        follower.updateErrorAndVectors();
-                        follower.breakFollowing();
-                        autoDrive = false;
                     }
                 }, mecanumDrive)
         );
