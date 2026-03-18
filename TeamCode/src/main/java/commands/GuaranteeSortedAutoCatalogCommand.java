@@ -25,7 +25,7 @@ import utility.SpindexerAndMotifStatus;
  * - Records debug telemetry
  */
 public class GuaranteeSortedAutoCatalogCommand extends CommandBase {
-    private static final double SENSOR_TIMEOUT = 0.5;
+    private static final double SENSOR_TIMEOUT = 0.3;
     public static String lastCatalogDebug = "";
 
     private final Spindexer spindexer;
@@ -56,8 +56,6 @@ public class GuaranteeSortedAutoCatalogCommand extends CommandBase {
             return;
         }
 
-        pollAllSensors();
-
         if (allSensorsReady()) {
             startSortedCatalog();
         } else {
@@ -69,8 +67,6 @@ public class GuaranteeSortedAutoCatalogCommand extends CommandBase {
     @Override
     public void execute() {
         if (waitingForSensors) {
-            pollAllSensors();
-
             if (allSensorsReady()) {
                 waitingForSensors = false;
                 startSortedCatalog();
@@ -100,13 +96,6 @@ public class GuaranteeSortedAutoCatalogCommand extends CommandBase {
         }
     }
 
-    private void pollAllSensors() {
-        RobotHardware robot = RobotHardware.getInstance();
-        robot.intakeSensorPair.updateCacheBulkSafe();
-        robot.transferSensorPair.updateCacheBulkSafe();
-        robot.rampSensorPair.updateCacheBulkSafe();
-    }
-
     private boolean allSensorsReady() {
         RobotHardware robot = RobotHardware.getInstance();
         return robot.intakeSensorPair.quickCheck().color != EnumConstants.BallColor.None
@@ -115,8 +104,6 @@ public class GuaranteeSortedAutoCatalogCommand extends CommandBase {
     }
 
     private void startSortedCatalog() {
-        pollAllSensors();
-
         RobotHardware robot = RobotHardware.getInstance();
         EnumConstants.BallColor[] motifPattern = {
                 SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(0),
