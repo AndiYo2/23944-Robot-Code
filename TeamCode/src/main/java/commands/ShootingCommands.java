@@ -24,6 +24,7 @@ public class ShootingCommands {
         return shootAllBalls(shooter, spindexer, 3);
     }
 
+
     public static Command shootAllBalls(Shooter shooter, Spindexer spindexer, int ballCount) {
         return shootAllBallsWithTime(shooter, spindexer, ballCount, ShootingSequenceConstants.SHOOTER_FLICK_TIME);
     }
@@ -32,8 +33,16 @@ public class ShootingCommands {
         return slowShootAllBalls(shooter, spindexer, 3);
     }
 
+    public static Command superSlowShootThreeBalls(Shooter shooter, Spindexer spindexer) {
+        return superSlowShootAllBalls(shooter, spindexer, 3);
+    }
+
     public static Command slowShootAllBalls(Shooter shooter, Spindexer spindexer, int ballCount) {
         return shootAllBallsWithTime(shooter, spindexer, ballCount, 0.375);
+    }
+
+    public static Command superSlowShootAllBalls(Shooter shooter, Spindexer spindexer, int ballCount) {
+        return shootAllBallsWithTime(shooter, spindexer, ballCount, 0.5);
     }
 
     private static Command shootAllBallsWithTime(Shooter shooter, Spindexer spindexer, int ballCount, double flickTime) {

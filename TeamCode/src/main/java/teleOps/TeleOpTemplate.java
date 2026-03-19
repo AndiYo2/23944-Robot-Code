@@ -45,6 +45,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
     // Pre-allocated array for getTransformedControls() to avoid GC pressure
     private final double[] controlsArray = new double[3];
+    private boolean endGame = false;
 
 
     /**
@@ -130,23 +131,26 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         mecanumDrive.setDefaultCommand(
                 new RunCommand(() -> {
                     double[] controls = getTransformedControls();
-                    mecanumDrive.setDynamicSpeedMultiplier(getDynamicSlowMultiplier());
                     mecanumDrive.drive(controls[0], controls[1], controls[2]);
                 }, mecanumDrive)
         );
 
-        // Right bumper — intake (hold to run)
+        // Right bumper — rotate CW spindexer
         new GamepadButton(driverGamepad, GamepadKeys.Button.RIGHT_BUMPER)
-                .whenPressed(new InstantCommand(() -> intake.runIntake()))
-                .whenReleased(new InstantCommand(() -> intake.stopIntake()));
+                .whenPressed(new InstantCommand(this::manualRotateCW));
 
         // Right trigger — shoot
         new Trigger(() -> gamepad1.right_trigger > RobotConstants.Controls.TRIGGER_THRESHOLD)
                 .whenActive(() -> {
-                    schedule(ShootingCommands.shootThreeBalls(shooter, spindexer));
+                    schedule(!endGame ?
+                            ShootingCommands.shootThreeBalls(shooter, spindexer) :
+                            ShootingCommands.superSlowShootThreeBalls(shooter, spindexer));
                 });
 
-        // Left trigger — dynamic slow mode (handled in drive default command)
+        // Left trigger — intake
+        new Trigger(() -> gamepad1.left_trigger > RobotConstants.Controls.TRIGGER_THRESHOLD)
+                .whenActive(new InstantCommand(() -> intake.runIntake()))
+                .whenInactive(new InstantCommand(() -> intake.stopIntake()));
 
         // Left bumper — rotate CCW spindexer
         new GamepadButton(driverGamepad, GamepadKeys.Button.LEFT_BUMPER)
@@ -155,9 +159,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         // Dpad Up — reset limelight
         new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_UP)
                 .whenPressed(new InstantCommand(limelight::resetLimelight));
-        // Dpad Down — rotate CW spindexer
-        new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_DOWN)
-                .whenPressed(new InstantCommand(this::manualRotateCW));
         // Dpad Left — relocalize
         new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_LEFT)
                 .whenPressed(new RelocalizePinpointCommand(limelight));
@@ -179,12 +180,10 @@ abstract public class TeleOpTemplate extends CommandOpMode {
                     }
                 });
 
-        // X/A — toggle sorting mode
+        // X/A — toggle super slow shooting mode (for endgame sorting accuracy)
         new GamepadButton(driverGamepad, GamepadKeys.Button.A)
                 .whenPressed(() -> {
-                    SpindexerConstants.currentMode = (SpindexerConstants.currentMode == EnumConstants.ShootingMode.Fast)
-                            ? EnumConstants.ShootingMode.Sorted
-                            : EnumConstants.ShootingMode.Fast;
+                    endGame = !endGame;
                 });
 
         // Square/X — manual spindexer flipper
