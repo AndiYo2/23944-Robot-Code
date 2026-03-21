@@ -1,0 +1,1 @@
+import"../chunks/Bzak7iHL.js";import"../chunks/eQhbZs1F.js";import{f as r,a5 as t,b as m}from"../chunks/8OrGzRw7.js";var p=r('<h1>Docs</h1> <a href="panels.bylazar.com">Official Docs</a>',1);function s(a){var o=p();t(2),m(a,o)}export{s as component};

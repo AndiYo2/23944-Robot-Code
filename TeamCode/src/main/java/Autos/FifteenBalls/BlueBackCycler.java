@@ -40,7 +40,8 @@ public class BlueBackCycler extends AutonTemplate {
     private final Pose returnToShootControl = new Pose(33.000, 19.000);
 
     // Fourth pickup
-    private final Pose fourthPickupPose = new Pose(14.000, 23.000, Math.toRadians(180));
+    private final Pose shootToFourthControl = new Pose(29.500, 48.500);
+    private final Pose fourthPickupPose = new Pose(14.000, 25.000, Math.toRadians(210));
 
     // End pose
     private final Pose stopPose = new Pose(49.500, 20.500, Math.toRadians(150));
@@ -84,8 +85,8 @@ public class BlueBackCycler extends AutonTemplate {
                 .build();
 
         shootToFourth = follower.pathBuilder()
-                .addPath(new BezierLine(postShootPose, fourthPickupPose))
-                .setLinearHeadingInterpolation(postShootPose.getHeading(), fourthPickupPose.getHeading())
+                .addPath(new BezierCurve(shootPose, shootToFourthControl, fourthPickupPose))
+                .setLinearHeadingInterpolation(shootPose.getHeading(), fourthPickupPose.getHeading())
                 .build();
 
         fourthToShoot = follower.pathBuilder()
@@ -97,12 +98,12 @@ public class BlueBackCycler extends AutonTemplate {
                 .addPath(new BezierLine(shootPose, cyclePrepPoseAngled))
                 .setLinearHeadingInterpolation(shootPose.getHeading(), cyclePrepPoseAngled.getHeading())
                 .addPath(new BezierLine(cyclePrepPoseAngled, cyclePickupPose))
-                .setLinearHeadingInterpolation(cyclePrepPoseAngled.getHeading(), cyclePickupPose.getHeading())
+                .setLinearHeadingInterpolation(cyclePrepPoseAngled.getHeading(), Math.toRadians(190))
                 .build();
 
         fifthToShoot = follower.pathBuilder()
                 .addPath(new BezierCurve(cyclePickupPose, returnToShootControl, shootPose))
-                .setLinearHeadingInterpolation(cyclePickupPose.getHeading(), shootPose.getHeading())
+                .setLinearHeadingInterpolation(Math.toRadians(190), shootPose.getHeading())
                 .build();
 
         shootToStop = follower.pathBuilder()
@@ -127,23 +128,17 @@ public class BlueBackCycler extends AutonTemplate {
                 .shoot()
                 .intakeStart()
                 .moveTo(shootToSecond, maxSpeed, false)
-                .delay(.55)
+                .delay(.15)
                 .parallel(p -> p.moveTo(secondToShoot, maxSpeed, false).autoCatalog())
                 .shoot()
                 .intakeStart()
-                .moveTo(shootToThird, maxSpeed, false)
-                .delay(.55)
-                .parallel(p -> p.moveTo(thirdToShoot, maxSpeed, false).autoCatalog())
+                .ballCollectMoveToAndCatalog(shootToThird, shootPose, .8, false, .3)
                 .shoot()
                 .intakeStart()
-                .moveTo(shootToFourth, maxSpeed, false)
-                .delay(.55)
-                .parallel(p -> p.moveTo(fourthToShoot, maxSpeed, false).autoCatalog())
+                .ballCollectMoveToAndCatalog(shootToFourth, shootPose, maxSpeed, false, .3)
                 .shoot()
                 .intakeStart()
-                .moveTo(shootToFifth, maxSpeed, false)
-                .delay(.55)
-                .parallel(p -> p.moveTo(fifthToShoot, maxSpeed, false).autoCatalog())
+                .ballCollectMoveToAndCatalog(shootToFifth, shootPose, maxSpeed, false, .3)
                 .shoot()
                 .moveTo(shootToStop, maxSpeed, false)
                 .build();

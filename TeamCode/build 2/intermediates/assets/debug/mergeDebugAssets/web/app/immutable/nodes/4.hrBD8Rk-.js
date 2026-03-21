@@ -1,0 +1,1 @@
+import"../chunks/Bzak7iHL.js";import{f as a,c as e,r as i,b as n,$ as p}from"../chunks/8OrGzRw7.js";import{s as c}from"../chunks/CfGvCu5U.js";var m=a('<section class="svelte-igsoki"><!></section>');function v(s,t){var o=m(),r=e(o);c(r,()=>t.children??p),i(o),n(s,o)}export{v as component};

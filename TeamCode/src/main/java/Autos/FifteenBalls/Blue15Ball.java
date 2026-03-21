@@ -34,7 +34,7 @@ public class Blue15Ball extends AutonTemplate {
 
     // Gate area
     private final Pose secondToGateControl = new Pose(25.500, 62.500);
-    private final Pose gatePose = new Pose(17.250, 65.500, Math.toRadians(180));
+    private final Pose gatePose = new Pose(17.250, 67.500, Math.toRadians(180));
 
     // Gate to shoot
     private final Pose gateToShootControl = new Pose(47.500, 65.000);
@@ -136,24 +136,22 @@ public class Blue15Ball extends AutonTemplate {
         Constants.RobotConstants.Robot.allianceColor = Constants.EnumConstants.AllianceColor.Blue;
 
         autonomousCommand = new CommandSequenceBuilder(follower, intake, spindexer, limelight, shooter, turret)
-                .delay(.55)
+                .delay(.45)
                 .parallel(p -> p.shoot().limelightScan())
                 .intakeStart()
                 .moveTo(shootToFirst, maxSpeed, false)
-                .delay(1.1)
+                .delay(.6)
                 .parallel(p -> p.moveTo(firstToShoot,maxSpeed,false).autoCatalog())
                 .shoot()
+                .setSpindexerMode(EnumConstants.ShootingMode.Sorted)
                 .intakeStart()
                 .moveTo(shootToSecond, maxSpeed, false) //decrease Y and maybe more forwards
-                .intakeStop()
-                .moveTo(secondToGate, .8, false)
-                .setSpindexerMode(EnumConstants.ShootingMode.Sorted)
-                .delay(.6)
-                .parallel(p -> p.moveTo(gateToShoot,maxSpeed,false).guaranteeSortedAutoCatalog())
+                .parallel(p -> p.moveTo(secondToGate,.8,false).guaranteeSortedAutoCatalog())
+                .moveTo(gateToShoot,maxSpeed,false)
                 .slowShoot()
                 .intakeStart()
                 .moveTo(shootToThird, maxSpeed, false)
-                .delay(.25)
+                .delay(.15)
                 .parallel(p -> p.moveTo(thirdToShoot,maxSpeed,false).guaranteeSortedAutoCatalog())
                 .slowShoot()
                 .intakeStart()

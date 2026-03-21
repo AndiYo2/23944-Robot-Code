@@ -171,6 +171,73 @@ public class CommandSequenceBuilder {
         return this;
     }
 
+    // ==================== Ball-Collect-MoveTo Methods ====================
+    // Collect phase: follows path until 3 balls or path ends.
+    // Then return phase: dynamic straight-line path back to returnPose.
+    // AndCatalog variants run autoCatalog in parallel with the return drive.
+
+    public CommandSequenceBuilder ballCollectMoveTo(Path collectPath, Pose returnPose, double maxPower, boolean holdEnd) {
+        commands.add(new SequentialCommandGroup(
+                new BallCollectMoveToCommand(follower, collectPath, maxPower),
+                new DynamicReturnPathCommand(follower, returnPose, maxPower, holdEnd)
+        ));
+        return this;
+    }
+
+    public CommandSequenceBuilder ballCollectMoveTo(PathChain collectPath, Pose returnPose, double maxPower, boolean holdEnd) {
+        commands.add(new SequentialCommandGroup(
+                new BallCollectMoveToCommand(follower, collectPath, maxPower),
+                new DynamicReturnPathCommand(follower, returnPose, maxPower, holdEnd)
+        ));
+        return this;
+    }
+
+    public CommandSequenceBuilder ballCollectMoveToAndCatalog(Path collectPath, Pose returnPose, double maxPower, boolean holdEnd) {
+        commands.add(new SequentialCommandGroup(
+                new BallCollectMoveToCommand(follower, collectPath, maxPower),
+                new ParallelCommandGroup(
+                        new DynamicReturnPathCommand(follower, returnPose, maxPower, holdEnd),
+                        new AutoCatalogModeCommand(spindexer, intake)
+                )
+        ));
+        return this;
+    }
+
+    public CommandSequenceBuilder ballCollectMoveToAndCatalog(Path collectPath, Pose returnPose, double maxPower, boolean holdEnd, double delaySec) {
+        commands.add(new SequentialCommandGroup(
+                new BallCollectMoveToCommand(follower, collectPath, maxPower),
+                new WaitCommand((long)(delaySec * 1000)),
+                new ParallelCommandGroup(
+                        new DynamicReturnPathCommand(follower, returnPose, maxPower, holdEnd),
+                        new AutoCatalogModeCommand(spindexer, intake)
+                )
+        ));
+        return this;
+    }
+
+    public CommandSequenceBuilder ballCollectMoveToAndCatalog(PathChain collectPath, Pose returnPose, double maxPower, boolean holdEnd) {
+        commands.add(new SequentialCommandGroup(
+                new BallCollectMoveToCommand(follower, collectPath, maxPower),
+                new ParallelCommandGroup(
+                        new DynamicReturnPathCommand(follower, returnPose, maxPower, holdEnd),
+                        new AutoCatalogModeCommand(spindexer, intake)
+                )
+        ));
+        return this;
+    }
+
+    public CommandSequenceBuilder ballCollectMoveToAndCatalog(PathChain collectPath, Pose returnPose, double maxPower, boolean holdEnd, double delaySec) {
+        commands.add(new SequentialCommandGroup(
+                new BallCollectMoveToCommand(follower, collectPath, maxPower),
+                new WaitCommand((long)(delaySec * 1000)),
+                new ParallelCommandGroup(
+                        new DynamicReturnPathCommand(follower, returnPose, maxPower, holdEnd),
+                        new AutoCatalogModeCommand(spindexer, intake)
+                )
+        ));
+        return this;
+    }
+
     // ==================== Move-To-Until-Full Path Methods ====================
     // Races FollowPathCommand against WaitForBallsCommand — stops path early when 3 balls detected.
 
@@ -663,6 +730,69 @@ public class CommandSequenceBuilder {
 
         public ParallelBuilder moveTo(PathChain pathChain, double maxPower, boolean holdEnd) {
             parallelCommands.add(new FollowPathCommand(follower, pathChain, maxPower, holdEnd));
+            return this;
+        }
+
+        // Ball-collect-moveTo methods (collect then auto-return)
+        public ParallelBuilder ballCollectMoveTo(Path collectPath, Pose returnPose, double maxPower, boolean holdEnd) {
+            parallelCommands.add(new SequentialCommandGroup(
+                    new BallCollectMoveToCommand(follower, collectPath, maxPower),
+                    new DynamicReturnPathCommand(follower, returnPose, maxPower, holdEnd)
+            ));
+            return this;
+        }
+
+        public ParallelBuilder ballCollectMoveTo(PathChain collectPath, Pose returnPose, double maxPower, boolean holdEnd) {
+            parallelCommands.add(new SequentialCommandGroup(
+                    new BallCollectMoveToCommand(follower, collectPath, maxPower),
+                    new DynamicReturnPathCommand(follower, returnPose, maxPower, holdEnd)
+            ));
+            return this;
+        }
+
+        public ParallelBuilder ballCollectMoveToAndCatalog(Path collectPath, Pose returnPose, double maxPower, boolean holdEnd) {
+            parallelCommands.add(new SequentialCommandGroup(
+                    new BallCollectMoveToCommand(follower, collectPath, maxPower),
+                    new ParallelCommandGroup(
+                            new DynamicReturnPathCommand(follower, returnPose, maxPower, holdEnd),
+                            new AutoCatalogModeCommand(spindexer, intake)
+                    )
+            ));
+            return this;
+        }
+
+        public ParallelBuilder ballCollectMoveToAndCatalog(Path collectPath, Pose returnPose, double maxPower, boolean holdEnd, double delaySec) {
+            parallelCommands.add(new SequentialCommandGroup(
+                    new BallCollectMoveToCommand(follower, collectPath, maxPower),
+                    new WaitCommand((long)(delaySec * 1000)),
+                    new ParallelCommandGroup(
+                            new DynamicReturnPathCommand(follower, returnPose, maxPower, holdEnd),
+                            new AutoCatalogModeCommand(spindexer, intake)
+                    )
+            ));
+            return this;
+        }
+
+        public ParallelBuilder ballCollectMoveToAndCatalog(PathChain collectPath, Pose returnPose, double maxPower, boolean holdEnd) {
+            parallelCommands.add(new SequentialCommandGroup(
+                    new BallCollectMoveToCommand(follower, collectPath, maxPower),
+                    new ParallelCommandGroup(
+                            new DynamicReturnPathCommand(follower, returnPose, maxPower, holdEnd),
+                            new AutoCatalogModeCommand(spindexer, intake)
+                    )
+            ));
+            return this;
+        }
+
+        public ParallelBuilder ballCollectMoveToAndCatalog(PathChain collectPath, Pose returnPose, double maxPower, boolean holdEnd, double delaySec) {
+            parallelCommands.add(new SequentialCommandGroup(
+                    new BallCollectMoveToCommand(follower, collectPath, maxPower),
+                    new WaitCommand((long)(delaySec * 1000)),
+                    new ParallelCommandGroup(
+                            new DynamicReturnPathCommand(follower, returnPose, maxPower, holdEnd),
+                            new AutoCatalogModeCommand(spindexer, intake)
+                    )
+            ));
             return this;
         }
 
