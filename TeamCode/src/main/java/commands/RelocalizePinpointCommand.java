@@ -21,7 +21,8 @@ public class RelocalizePinpointCommand extends CommandBase {
     @Override
     public void initialize() {
         RobotHardware.getInstance().relocalizationPending = true;
-        limelight.relocalizePinpointApriltag();
+        limelight.relocalizePinpoint();
+//        limelight.relocalizePinpointApriltag()
     }
 
     @Override
