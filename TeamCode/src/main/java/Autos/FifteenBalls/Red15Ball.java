@@ -145,6 +145,7 @@ public class Red15Ball extends AutonTemplate {
                 .intakeStart()
                 .moveTo(shootToSecond, maxSpeed, false)
                 .parallel(p -> p.moveTo(secondToGate,.8,false).guaranteeSortedAutoCatalog())
+                .delay(.3)
                 .moveTo(gateToShoot,maxSpeed,false)
                 .slowShoot()
                 .intakeStart()

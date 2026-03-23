@@ -147,6 +147,7 @@ public class Blue15Ball extends AutonTemplate {
                 .intakeStart()
                 .moveTo(shootToSecond, maxSpeed, false) //decrease Y and maybe more forwards
                 .parallel(p -> p.moveTo(secondToGate,.8,false).guaranteeSortedAutoCatalog())
+                .delay(.3)
                 .moveTo(gateToShoot,maxSpeed,false)
                 .slowShoot()
                 .intakeStart()
