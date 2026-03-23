@@ -174,12 +174,11 @@ public class Limelight extends SubsystemBase {
                 && !result.getFiducialResults().isEmpty()) {
             Pose3D botpose = result.getBotpose_MT2();
             if (botpose != null) {
-                double xInches = botpose.getPosition().x * LimelightConstants.METERS_TO_INCHES;
-                double yInches = botpose.getPosition().y * LimelightConstants.METERS_TO_INCHES;
-                double headingRad = botpose.getOrientation().getYaw(AngleUnit.RADIANS);
+                double xInches = (botpose.getPosition().x*(72*(1/LimelightConstants.METERS_TO_INCHES))) * LimelightConstants.METERS_TO_INCHES;
+                double yInches = (botpose.getPosition().y*(72*(1/LimelightConstants.METERS_TO_INCHES))) * LimelightConstants.METERS_TO_INCHES;
+                double heading = botpose.getOrientation().getYaw(AngleUnit.RADIANS) + (Math.PI/2);
 
-                Pose ftcPose = new Pose(xInches, yInches, headingRad, InvertedFTCCoordinates.INSTANCE);
-                limelightPose = ftcPose.getAsCoordinateSystem(PedroCoordinates.INSTANCE);
+                limelightPose = new Pose(xInches, yInches, heading);
 
                 lastRelocDebug = String.format("raw=(%.3fm, %.3fm, %.1f°) -> pedro=(%.1f, %.1f, %.1f°)",
                         botpose.getPosition().x, botpose.getPosition().y,
@@ -195,10 +194,6 @@ public class Limelight extends SubsystemBase {
      * @return true if relocalization succeeded, false if no cached pose available
      */
     public boolean relocalizePinpoint() {
-        if (limelightPose == null) {
-            lastRelocDebug = "no limelight pose cached";
-            return false;
-        }
         if(RobotConstants.Robot.allianceColor == EnumConstants.AllianceColor.Blue){
             robot.pinpoint.setPosition(bluePose);
         }else{
@@ -206,9 +201,18 @@ public class Limelight extends SubsystemBase {
         }
 
         robot.pinpoint.update();
+        limelightPose = null;
+        return true;
+    }
+
+    public boolean relocalizePinpointApriltag() {
+        if (limelightPose == null) {
+            lastRelocDebug = "no limelight pose cached";
+            return false;
+        }
+        robot.pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, limelightPose.getX(), limelightPose.getY(), AngleUnit.RADIANS, limelightPose.getHeading()));
         lastRelocDebug = String.format("APPLIED (%.1f, %.1f)",
                 limelightPose.getX(), limelightPose.getY());
-        limelightPose = null;
         return true;
     }
     // ==================== PIPELINE SWITCHING ====================

@@ -55,7 +55,8 @@ public class Constants {
                     0.1,
                     0.001
             ))
-            .translationalIntegral(0);
+            .translationalIntegral(0)
+            .mass(14.51); //kg
 
     public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 1.2, .6);
 
