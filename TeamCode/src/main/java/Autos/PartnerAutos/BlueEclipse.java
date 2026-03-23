@@ -1,4 +1,4 @@
-package Autos.FifteenBalls;
+package Autos.PartnerAutos;
 
 import Autos.AutonTemplate;
 import Constants.EnumConstants;
@@ -11,8 +11,8 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import commands.CommandSequenceBuilder;
 
 
-@Autonomous(name = "ProtoBlue")
-public class ProtoBlue extends AutonTemplate {
+@Autonomous(name = "BlueEclipse")
+public class BlueEclipse extends AutonTemplate {
     public static double maxSpeed = 1;
     private PathChain shootToFirst, firstToShoot, shootToSecond, secondToShoot, shootToThird, shootToFourth, shootToFifth, shootToStop;
 
@@ -45,13 +45,6 @@ public class ProtoBlue extends AutonTemplate {
     private final Pose fourthWaypoint1 = new Pose(14.000, 25.500, Math.toRadians(90));
     private final Pose fourthCurveControl2 = new Pose(7.500, 32.500);
     private final Pose fourthWaypoint2 = new Pose(8.000, 47.500, Math.toRadians(90));
-
-    // Fourth cycle waypoints (Y-10 for first rep)
-    private final Pose fourthPrepPoseShifted = new Pose(39.000, 1.000, Math.toRadians(180));
-    private final Pose fourthCurveControl1Shifted = new Pose(14.000, 0.000);
-    private final Pose fourthWaypoint1Shifted = new Pose(14.000, 15.500, Math.toRadians(90));
-    private final Pose fourthCurveControl2Shifted = new Pose(7.500, 22.500);
-    private final Pose fourthWaypoint2Shifted = new Pose(8.000, 37.500, Math.toRadians(90));
 
     // End pose
     private final Pose stopPose = new Pose(49.000, 22.000, Math.toRadians(135));
@@ -94,17 +87,17 @@ public class ProtoBlue extends AutonTemplate {
                 .setLinearHeadingInterpolation(Math.toRadians(190), Math.toRadians(180))
                 .build();
 
-        // Cycle 4 outbound: fluid collect path (Y-10 shifted)
+        // Cycle 4 outbound: Fourth1+2+3 fluid collect path
         shootToFourth = follower.pathBuilder()
-                .addPath(new BezierLine(shootPose, fourthPrepPoseShifted))
+                .addPath(new BezierLine(shootPose, fourthPrepPose))
                 .setLinearHeadingInterpolation(Math.toRadians(150), Math.toRadians(180))
-                .addPath(new BezierCurve(fourthPrepPoseShifted, fourthCurveControl1Shifted, fourthWaypoint1Shifted))
+                .addPath(new BezierCurve(fourthPrepPose, fourthCurveControl1, fourthWaypoint1))
                 .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(90))
-                .addPath(new BezierCurve(fourthWaypoint1Shifted, fourthCurveControl2Shifted, fourthWaypoint2Shifted))
+                .addPath(new BezierCurve(fourthWaypoint1, fourthCurveControl2, fourthWaypoint2))
                 .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(90))
                 .build();
 
-        // Cycle 5 outbound: normal Fourth path
+        // Cycle 5 outbound: duplicate of cycle 4
         shootToFifth = follower.pathBuilder()
                 .addPath(new BezierLine(shootPose, fourthPrepPose))
                 .setLinearHeadingInterpolation(Math.toRadians(150), Math.toRadians(180))

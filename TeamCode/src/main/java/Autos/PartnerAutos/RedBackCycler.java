@@ -1,4 +1,4 @@
-package Autos.FifteenBalls;
+package Autos.PartnerAutos;
 
 import Autos.AutonTemplate;
 import Constants.EnumConstants;
