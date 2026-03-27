@@ -16,7 +16,6 @@ public class WaitForTurretAlignedCommand extends CommandBase {
     public WaitForTurretAlignedCommand(Turret turret, double timeoutSeconds) {
         this.turret = turret;
         this.timeout = timeoutSeconds;
-        // No addRequirements — just observing, not controlling
     }
 
     @Override

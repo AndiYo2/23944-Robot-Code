@@ -19,7 +19,6 @@ public class TelemetryHelper {
     private Shooter shooter;
     private Turret turret;
     private Spindexer spindexer;
-    private Odometry odometry;
     private Limelight limelight;
     private MecanumDrive mecanumDrive;
     private Intake intake;
@@ -40,12 +39,11 @@ public class TelemetryHelper {
     }
 
     public void setSubsystems(Shooter shooter, Turret turret, Spindexer spindexer,
-                              Odometry odometry, Limelight limelight,
+                              Limelight limelight,
                               MecanumDrive mecanumDrive, Intake intake) {
         this.shooter = shooter;
         this.turret = turret;
         this.spindexer = spindexer;
-        this.odometry = odometry;
         this.limelight = limelight;
         this.mecanumDrive = mecanumDrive;
         this.intake = intake;

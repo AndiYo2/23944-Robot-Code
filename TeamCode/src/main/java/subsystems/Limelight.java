@@ -51,9 +51,6 @@ public class Limelight extends SubsystemBase {
         this.detectedTagId = -1;
     }
 
-    /**
-     * Updates cached Limelight data from the sensor
-     */
     public void updateLimelightData() {
         if (robot.limelight != null) {
             latestResult = robot.limelight.getLatestResult();
@@ -150,15 +147,8 @@ public class Limelight extends SubsystemBase {
 
     /** Cached limelight pose, updated every loop */
     private Pose limelightPose = null;
-
-    /** Debug string from the last relocalization attempt */
     public String lastRelocDebug = "no attempt yet";
 
-    /**
-     * Updates the cached limelight pose from getBotpose() every loop.
-     * Matches Wmatistic's setLimelightPose() approach — continuously poll,
-     * apply on demand via relocalizePinpoint().
-     */
     public void updateLimelightPose() {
         if (robot.limelight == null) return;
 
@@ -190,7 +180,6 @@ public class Limelight extends SubsystemBase {
     }
 
     /**
-     * Performs a hard-snap relocalization of the Pinpoint using the cached limelight pose.
      * @return true if relocalization succeeded, false if no cached pose available
      */
     public boolean relocalizePinpoint() {

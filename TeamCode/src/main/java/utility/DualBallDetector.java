@@ -48,22 +48,17 @@ public class DualBallDetector {
     private final double greenTolerance;
     private final double purpleTolerance;
 
-    // Background thread caching: when enabled, quickCheck() returns the cached
-    // result instead of reading I2C hardware on the calling thread.
     private volatile boolean backgroundMode = false;
     private volatile Result cachedResult = new Result(false, BallColor.None, 0.0);
 
-    // Per-side cached results for round-robin partial updates
     private volatile Result cachedNearResult = new Result(false, BallColor.None, 0.0);
     private volatile Result cachedFarResult = new Result(false, BallColor.None, 0.0);
 
-    // Distance-based detection (REV V3 sensors)
     private DistanceSensor nearDist;
     private DistanceSensor farDist;
     private double nearDistThreshold = 50.0;
     private double farDistThreshold = 50.0;
 
-    // Color burst state machine
     private int colorBurstRemaining = 0;
     private boolean distanceDetected = false;
 
@@ -102,7 +97,6 @@ public class DualBallDetector {
         this.nearDistThreshold = nearDistThreshold;
         this.farDistThreshold = farDistThreshold;
 
-        // Cast to DistanceSensor if supported (REV V3)
         if (sensor1 instanceof DistanceSensor) {
             this.nearDist = (DistanceSensor) sensor1;
         }
@@ -375,7 +369,6 @@ public class DualBallDetector {
         Result instantRead(ColorSensor s) {
             NormalizedRGBA colors = ((NormalizedColorSensor) s).getNormalizedColors();
 
-            // Scale alpha to approximate raw range for threshold compatibility
             double a = colors.alpha * 1024.0;
 
             if (a < minAlpha) {

@@ -9,7 +9,6 @@ import com.pedropathing.geometry.Pose;
 @Configurable
 public class FieldMap {
 
-    // Cached goal position — only recomputed when alliance color changes (never mid-match)
     private static Pose cachedGoalPosition = null;
     private static EnumConstants.AllianceColor cachedAllianceColor = null;
 

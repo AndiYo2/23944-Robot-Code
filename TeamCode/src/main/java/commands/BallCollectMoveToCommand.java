@@ -14,7 +14,7 @@ import utility.RobotHardware;
  */
 public class BallCollectMoveToCommand extends CommandBase {
     private final Follower follower;
-    private final Object collectPath; // Path or PathChain
+    private final Object collectPath;
     private final double maxPower;
 
     public BallCollectMoveToCommand(Follower follower, Path collectPath, double maxPower) {
@@ -52,7 +52,6 @@ public class BallCollectMoveToCommand extends CommandBase {
 
     @Override
     public void end(boolean interrupted) {
-        // Always break so the follower is clean for the next command
         follower.breakFollowing();
     }
 

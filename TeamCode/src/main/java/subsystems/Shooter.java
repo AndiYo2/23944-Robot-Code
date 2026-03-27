@@ -15,13 +15,10 @@ import Constants.ShooterConstants;
 import Constants.ShootingSequenceConstants;
 
 public class Shooter extends SubsystemBase {
-    // Hardware reference
     RobotHardware robot;
 
-    // Turret subsystem reference
     private Turret turret;
 
-    // Flywheel velocity (ticks/sec) - updated each loop based on distance to goal
     private double requiredVelocity = ShooterConstants.DEFAULT_VELOCITY;
 
     private FlickState currentState = FlickState.Idle;
@@ -29,7 +26,6 @@ public class Shooter extends SubsystemBase {
 
 
 
-    // Custom feedforward + PID state
     private ElapsedTime loopTimer = new ElapsedTime();
     private double integralSum = 0;
     private double lastVelocityError = 0;
@@ -37,22 +33,16 @@ public class Shooter extends SubsystemBase {
 
     // Default loop time when dt calculation fails (seconds)
     private static final double DEFAULT_LOOP_TIME = 0.02;
-
-    // Cached velocity (updated once per periodic() call, reused by getters)
     private double cachedVelocity = 0;
-
-    // Telemetry data for tuning
     private double lastFfOutput = 0;
     private double lastPidOutput = 0;
     private double lastTotalPower = 0;
     private double lastError = 0;
     private double lastAcceleration = 0;
 
-    // InterpLUT instances for velocity, hood angle, and time-in-air lookup
     private InterpLUT velocityLUT;
     private InterpLUT hoodLUT;
 
-    // Current required hood angle
     private double requiredHoodAngle = ShooterConstants.HOOD_DEFAULT_ANGLE;
 
     // Lead-compensated state (shared with Turret via getter)
@@ -60,7 +50,6 @@ public class Shooter extends SubsystemBase {
     private double currentTimeInAir = 0.0;
     private double[] futurePose = new double[3]; // {x, y, headingRad}
 
-    // Hood servo dirty flag — only write when position changes
     private double lastHoodServoPosition = -1.0;
     private static final double SERVO_EPSILON = 0.001;
 
@@ -78,8 +67,6 @@ public class Shooter extends SubsystemBase {
     public Shooter() {
         this.robot = RobotHardware.getInstance();
 
-        // Configure motors for EXTERNAL control (RUN_WITHOUT_ENCODER)
-        // We still read the encoder for velocity feedback, but we control power directly
         robot.shooterMotor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         robot.shooterMotor1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         robot.shooterMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
@@ -99,9 +86,6 @@ public class Shooter extends SubsystemBase {
         setHoodAngle(ShooterConstants.HOOD_DEFAULT_ANGLE);
     }
 
-    /**
-     * Initialize InterpLUT instances from ShooterConstants data.
-     */
     private void initializeLUTs() {
         velocityLUT = new InterpLUT();
         for (double[] entry : ShooterConstants.VELOCITY_DATA) {
@@ -137,11 +121,6 @@ public class Shooter extends SubsystemBase {
         return velocityLUT.get(distance);
     }
 
-    /**
-     * Get required hood angle from distance using InterpLUT.
-     * @param distance Distance to goal in inches
-     * @return Hood angle in degrees (0=vertical, 90=horizontal)
-     */
     private double getHoodAngleFromDistance(double distance) {
         double angle = hoodLUT.get(distance);
 
@@ -169,10 +148,6 @@ public class Shooter extends SubsystemBase {
         return position;
     }
 
-    /**
-     * Set the hood to a specific angle, gated behind dirty flag.
-     * @param angleDegrees Target angle (0=vertical, 90=horizontal)
-     */
     public void setHoodAngle(double angleDegrees) {
         angleDegrees = Math.max(ShooterConstants.HOOD_MIN_ANGLE,
                                Math.min(ShooterConstants.HOOD_MAX_ANGLE, angleDegrees));
@@ -185,26 +160,10 @@ public class Shooter extends SubsystemBase {
         requiredHoodAngle = angleDegrees;
     }
 
-    /**
-     * Get current target hood angle.
-     */
     public double getTargetHoodAngle() {
         return requiredHoodAngle;
     }
 
-    /**
-     * Get time-in-air (constant for this robot).
-     * @param distance Distance to goal in inches (unused, kept for API compatibility)
-     * @return Flight time in seconds
-     */
-    public double getTimeInAirFromDistance(double distance) {
-        return ShooterConstants.TIME_IN_AIR;
-    }
-
-    /**
-     * Compute the predicted future robot pose based on current velocity and time-in-air.
-     * Single-pass: getTimeInAirFromDistance() returns a constant, so refinement is unnecessary.
-     */
     private void updateLeadCompensation() {
         double curX = robot.cachedPoseX;
         double curY = robot.cachedPoseY;
@@ -246,10 +205,6 @@ public class Shooter extends SubsystemBase {
         currentTimeInAir = tof;
     }
 
-    /**
-     * Compute turret field position from a hypothetical robot pose.
-     * Uses pre-computed polar offset and returns pre-allocated array.
-     */
     private double[] getTurretFieldPositionFrom(double robotX, double robotY, double robotHeadingRad) {
         double combinedAngle = robotHeadingRad + TURRET_OFFSET_ANGLE;
         turretFieldPosTemp[0] = robotX + TURRET_OFFSET_MAG * Math.sin(combinedAngle);
@@ -257,10 +212,6 @@ public class Shooter extends SubsystemBase {
         return turretFieldPosTemp;
     }
 
-    /**
-     * Get the computed future pose for lead compensation.
-     * @return {x, y, headingRad} of predicted robot position at ball arrival time
-     */
     public double[] getFuturePose() {
         return futurePose;
     }
@@ -323,37 +274,23 @@ public class Shooter extends SubsystemBase {
     }
 
 
-    /**
-     * Clamp a value between min and max.
-     */
     private double clamp(double value, double min, double max) {
         return Math.max(min, Math.min(max, value));
     }
 
-    /**
-     * Check if flywheel is at target velocity (within tolerance).
-     */
     public boolean isAtTargetVelocity() {
         return Math.abs(requiredVelocity - cachedVelocity) < ShooterConstants.VELOCITY_TOLERANCE;
     }
 
-    /**
-     * Get current velocity error for telemetry.
-     */
     public double getVelocityError() {
         return lastError;
     }
 
-    /**
-     * Get current velocity for telemetry.
-     */
+
     public double getCurrentVelocity() {
         return cachedVelocity;
     }
 
-    /**
-     * Get target velocity for telemetry.
-     */
     public double getTargetVelocity() {
         return requiredVelocity;
     }
@@ -364,10 +301,8 @@ public class Shooter extends SubsystemBase {
         double dt = loopTimer.seconds();
         loopTimer.reset();
 
-        // Prevent division by zero on first loop
         if (dt <= 0) dt = DEFAULT_LOOP_TIME;
 
-        // Use manual tuning values when tuning mode is active, otherwise use LUT
         if (ShooterConstants.ShooterTuning.TUNING_MODE) {
             requiredVelocity = ShooterConstants.ShooterTuning.TUNING_VELOCITY;
             requiredHoodAngle = ShooterConstants.ShooterTuning.TUNING_HOOD_ANGLE;
@@ -377,21 +312,17 @@ public class Shooter extends SubsystemBase {
         setHoodAngle(requiredHoodAngle);
         double targetVelocity = requiredVelocity;
 
-        // Motor 1 encoder is dead — read motor 2 only until rebuild
+        //  read motor 2 only until rebuild
         double currentVelocity = robot.shooterMotor2.getVelocity();
         cachedVelocity = currentVelocity;
 
-        // Calculate velocity error
         double velocityError = targetVelocity - currentVelocity;
         lastError = velocityError;
 
-        // Measure actual acceleration from velocity change
         double measuredAcceleration = (currentVelocity - lastVelocity) / dt;
         lastVelocity = currentVelocity;
         lastAcceleration = measuredAcceleration;
 
-        // Calculate desired acceleration (aggressive: close the gap as fast as possible)
-        // Clamp to physical limits
         double desiredAcceleration = velocityError / dt;
         desiredAcceleration = clamp(desiredAcceleration,
             -ShooterConstants.MAX_ACCELERATION,
@@ -405,10 +336,8 @@ public class Shooter extends SubsystemBase {
         lastFfOutput = ffOutput;
 
         // ==================== PID ====================
-        // Proportional
         double pOutput = ShooterConstants.VELOCITY_kP * velocityError;
 
-        // Integral with anti-windup
         integralSum += velocityError * dt;
         integralSum = clamp(integralSum, -ShooterConstants.INTEGRAL_MAX, ShooterConstants.INTEGRAL_MAX);
 
@@ -418,18 +347,16 @@ public class Shooter extends SubsystemBase {
         }
         double iOutput = ShooterConstants.VELOCITY_kI * integralSum;
 
-        // Derivative (on measurement to avoid setpoint kick)
         double dOutput = ShooterConstants.VELOCITY_kD * -measuredAcceleration;
 
         lastVelocityError = velocityError;
 
-        // Combine PID terms
         double pidOutput = pOutput + iOutput + dOutput;
         lastPidOutput = pidOutput;
 
         // ==================== TOTAL OUTPUT ====================
         double totalPower = ffOutput + pidOutput;
-        totalPower = clamp(totalPower, 0, 1.0);  // Motor power range (flywheel only spins one direction)
+        totalPower = clamp(totalPower, 0, 1.0);
 
         // Voltage compensation: scale power up as battery sags below nominal
         if (ShooterConstants.VOLTAGE_COMPENSATION_ENABLED && robot.voltageSensor != null) {
@@ -442,11 +369,9 @@ public class Shooter extends SubsystemBase {
 
         lastTotalPower = totalPower;
 
-        // Apply power to both motors
         robot.shooterMotor1.setPower(totalPower);
         robot.shooterMotor2.setPower(totalPower);
 
-        // Run flipper state machine
         flipperStateMachinePeriodic();
     }
 }

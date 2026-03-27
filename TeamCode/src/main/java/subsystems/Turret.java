@@ -30,21 +30,16 @@ public class Turret extends SubsystemBase {
     private boolean smoothingInitialized = false;
     private double rawTargetDegrees = 0.0;
 
-    // Shooter reference for lead compensation (future pose)
     private Shooter shooter;
 
-    // Cached degrees-to-goal from periodic() — avoids duplicate calculation in telemetry
     private double lastDegreesToGoal = 0.0;
 
-    // Servo dirty flag — only write when position changes by more than epsilon
     private double lastServoPosition = -1.0;
     private static final double SERVO_EPSILON = 0.001;
 
     // Pre-allocated array for getTurretFieldPosition() to avoid GC pressure
     private final double[] turretFieldPos = new double[2];
 
-    // Pre-computed turret offset in polar form (magnitude and angle)
-    // Avoids recomputing sin/cos of offset every call — these never change at runtime
     private static final double TURRET_OFFSET_MAG = Math.sqrt(
             TurretConstants.TURRET_OFFSET_X * TurretConstants.TURRET_OFFSET_X +
             TurretConstants.TURRET_OFFSET_Y * TurretConstants.TURRET_OFFSET_Y);
@@ -76,10 +71,6 @@ public class Turret extends SubsystemBase {
         return position;
     }
 
-
-    /**
-     * Apply the current target position to the servo, gated behind dirty flag.
-     */
     private void applyServoPosition(double turretDegrees) {
         double servoPosition = turretDegreesToServoPosition(turretDegrees);
         if (Math.abs(servoPosition - lastServoPosition) > SERVO_EPSILON) {
@@ -92,10 +83,6 @@ public class Turret extends SubsystemBase {
         this.shooter = shooter;
     }
 
-    /**
-     * Compute turret field position from cached robot pose using pre-computed polar offset.
-     * Returns pre-allocated array — do NOT store the reference across calls.
-     */
     public double[] getTurretFieldPosition() {
         double robotHeading = robot.cachedHeading;
 
@@ -113,10 +100,8 @@ public class Turret extends SubsystemBase {
     public double getDegreesToGoal() {
         Pose goalPosition = FieldMap.getGoalPosition();
 
-        // Get turret field position (accounts for offset from robot center)
         double[] turretPos = getTurretFieldPosition();
 
-        // Vector from turret to goal
         double deltaX = goalPosition.getX() - turretPos[0];
         double deltaY = goalPosition.getY() - turretPos[1];
 
@@ -150,7 +135,7 @@ public class Turret extends SubsystemBase {
 
     /**
      * Calculate the turret angle needed to aim at the goal from a hypothetical robot position.
-     * Useful for pre-aiming the turret before arriving at a position.
+     * Used for pre-aiming the turret before arriving at a position.
      *
      * @param robotX hypothetical robot X position (inches)
      * @param robotY hypothetical robot Y position (inches)
@@ -160,26 +145,21 @@ public class Turret extends SubsystemBase {
     public double getDegreesToGoalFromPosition(double robotX, double robotY, double robotHeadingRad) {
         Pose goalPosition = FieldMap.getGoalPosition();
 
-        // Calculate turret field position using pre-computed polar offset
         double combinedAngle = robotHeadingRad + TURRET_OFFSET_ANGLE;
         double turretX = robotX + TURRET_OFFSET_MAG * Math.sin(combinedAngle);
         double turretY = robotY - TURRET_OFFSET_MAG * Math.cos(combinedAngle);
 
-        // Vector from turret to goal
         double deltaX = goalPosition.getX() - turretX;
         double deltaY = goalPosition.getY() - turretY;
 
-        // Field angle to goal
         double fieldAngleRad = Math.atan2(deltaY, deltaX);
 
-        // Convert to robot-relative
         double turretAngleRad = fieldAngleRad - robotHeadingRad;
 
         // Convert to degrees and normalize
         double turretAngleDeg = Math.toDegrees(turretAngleRad);
         turretAngleDeg = normalizeAngle(turretAngleDeg);
 
-        // Apply calibration offset (alliance-specific)
         turretAngleDeg += (RobotConstants.Robot.allianceColor == EnumConstants.AllianceColor.Blue)
                 ? TurretConstants.BLUE_TURRET_TRACKING_OFFSET
                 : TurretConstants.RED_TURRET_TRACKING_OFFSET;
@@ -198,11 +178,6 @@ public class Turret extends SubsystemBase {
         return turretAngleDeg;
     }
 
-    /**
-     * Get turret angle using lead compensation from the Shooter's predicted future pose.
-     * Falls back to standard getDegreesToGoal() if shoot-while-moving is disabled
-     * or if Shooter reference is unavailable.
-     */
     public double getDegreesToGoalLeadAdjusted() {
         if (!ShooterConstants.SHOOT_WHILE_MOVING_ENABLED || shooter == null) {
             return getDegreesToGoal();
@@ -211,9 +186,6 @@ public class Turret extends SubsystemBase {
         return getDegreesToGoalFromPosition(future[0], future[1], future[2]);
     }
 
-    /**
-     * Normalizes angle to [-180, 180] range using modulo arithmetic (O(1)).
-     */
     private double normalizeAngle(double degrees) {
         degrees = degrees % 360;
         if (degrees > 180) degrees -= 360;
@@ -221,12 +193,6 @@ public class Turret extends SubsystemBase {
         return degrees;
     }
 
-    /**
-     * Set the turret to a target angle.
-     * EMA smoothing is applied for fluid motion; servo is written every frame.
-     *
-     * @param targetAngleTurret Target angle in turret degrees
-     */
     public void setTurretAngle(double targetAngleTurret) {
         targetAngleTurret = Math.max(
             TurretConstants.HARD_STOP_CCW,
@@ -235,7 +201,6 @@ public class Turret extends SubsystemBase {
 
         rawTargetDegrees = targetAngleTurret;
 
-        // Apply EMA smoothing to reduce high-frequency oscillations
         if (!smoothingInitialized) {
             smoothedTargetDegrees = targetAngleTurret;
             smoothingInitialized = true;
@@ -244,7 +209,6 @@ public class Turret extends SubsystemBase {
                                   + (1.0 - TurretConstants.SMOOTHING_ALPHA) * smoothedTargetDegrees;
         }
 
-        // Always update — no deadband gating, so servo tracks continuously
         currentTargetDegrees = smoothedTargetDegrees;
     }
 
@@ -261,7 +225,6 @@ public class Turret extends SubsystemBase {
         return rawTargetDegrees;
     }
 
-    /** Get the cached degrees-to-goal computed in the last periodic() call. */
     public double getLastDegreesToGoal() {
         return lastDegreesToGoal;
     }

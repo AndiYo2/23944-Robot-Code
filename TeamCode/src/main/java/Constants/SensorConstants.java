@@ -4,8 +4,6 @@ import com.bylazar.configurables.annotations.Configurable;
 
 @Configurable
 public class SensorConstants {
-    // Per-pair distance thresholds (mm) — tune via Panels
-    // Set near midpoint of ball-present max and no-ball min readings
     public static double INTAKE_NEAR_DIST_THRESHOLD_MM = 25.0;   // ball max 11.2, none min 36
     public static double INTAKE_FAR_DIST_THRESHOLD_MM = 25.0;    // ball max 11.9, none min 35.5
 

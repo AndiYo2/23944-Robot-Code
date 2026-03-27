@@ -926,7 +926,6 @@ public class CommandSequenceBuilder {
             return this;
         }
 
-        // Turret pre-aim methods
         public ParallelBuilder setTurretAngle(double degrees) {
             parallelCommands.add(new SetTurretAngleCommand(turret, degrees));
             return this;

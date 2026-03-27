@@ -10,7 +10,6 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import pedroPathing.Constants;
 import subsystems.Shooter;
 import subsystems.Turret;
-import subsystems.Odometry;
 import subsystems.Intake;
 import subsystems.Spindexer;
 import Constants.FieldMap;
@@ -35,7 +34,6 @@ public abstract class AutonTemplate extends OpMode {
     protected RobotHardware robotHardware;
     protected Shooter shooter;
     protected Turret turret;
-    protected Odometry odometry;
     protected Intake intake;
     protected Spindexer spindexer;
     protected subsystems.Limelight limelight;
@@ -77,7 +75,6 @@ public abstract class AutonTemplate extends OpMode {
         intake = new Intake();
         shooter = new Shooter();
         turret = new Turret();
-        odometry = new Odometry();
         spindexer = new Spindexer();
         spindexer.resetToEmptyPosition();
         limelight = new subsystems.Limelight();
@@ -94,13 +91,13 @@ public abstract class AutonTemplate extends OpMode {
         turret.setShooter(shooter);
 
         telemetryHelper = new TelemetryHelper();
-        telemetryHelper.setSubsystems(shooter, turret, spindexer, odometry, limelight,
+        telemetryHelper.setSubsystems(shooter, turret, spindexer, limelight,
                 null, intake);
 
         FieldDrawing.init();
 
         // Register subsystems with the command scheduler
-        CommandScheduler.getInstance().registerSubsystem(intake, shooter, turret, odometry, spindexer, limelight);
+        CommandScheduler.getInstance().registerSubsystem(intake, shooter, turret, spindexer, limelight);
 
         buildPaths();
     }

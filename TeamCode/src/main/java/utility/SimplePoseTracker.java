@@ -18,7 +18,6 @@ public class SimplePoseTracker {
     private int count = 0;
     private int head = 0;
 
-    // Pre-allocated output arrays at max size — reused across calls
     private final double[] xOutput = new double[MAX_SIZE];
     private final double[] yOutput = new double[MAX_SIZE];
 

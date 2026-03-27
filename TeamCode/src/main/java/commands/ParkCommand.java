@@ -34,12 +34,10 @@ public class ParkCommand extends CommandBase {
     @Override
     public void execute() {
         if (phase == 0 && timer.seconds() >= 0.5) {
-            // Phase 1: kick out or kick down
             robot.kickServo.setPosition(extended ? DriveConstants.PARK_SERVO_EXTEND : DriveConstants.PARK_SERVO_RETRACT);
             phase = 1;
             timer.reset();
         } else if (phase == 1 && timer.seconds() >= 0.5) {
-            // Phase 2: beam in
             robot.beamServo.setPosition(DriveConstants.BEAM_SERVO_RETRACTED);
             phase = 2;
         }

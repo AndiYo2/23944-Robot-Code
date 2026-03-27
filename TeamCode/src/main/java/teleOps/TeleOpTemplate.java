@@ -37,7 +37,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     protected MecanumDrive mecanumDrive;
     protected Shooter shooter;
     protected Turret turret;
-    protected Odometry odometry;
     protected Intake intake;
     protected Spindexer spindexer;
     protected subsystems.Limelight limelight;
@@ -133,24 +132,21 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         intake = new Intake();
         shooter = new Shooter();
         turret = new Turret();
-        odometry = new Odometry();
         spindexer = new Spindexer();
         limelight = new subsystems.Limelight();
 
-        // Link Turret to Shooter for distance calculations
         shooter.setTurret(turret);
 
-        // Link Shooter to Turret for lead-compensated aiming
         turret.setShooter(shooter);
 
         telemetryHelper = new TelemetryHelper();
-        telemetryHelper.setSubsystems(shooter, turret, spindexer, odometry, limelight,
+        telemetryHelper.setSubsystems(shooter, turret, spindexer, limelight,
                 mecanumDrive, intake);
 
         poseTracker = new SimplePoseTracker();
         FieldDrawing.init();
 
-        register(mecanumDrive, intake, shooter, spindexer, limelight, turret, odometry);
+        register(mecanumDrive, intake, shooter, spindexer, limelight, turret);
     }
 
     protected void configureButtonBindings() {
@@ -251,9 +247,8 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
         ShooterConstants.SHOOT_WHILE_MOVING_ENABLED = false;
 
-        // Update pose FIRST so subsystems get fresh data this loop
-        follower.update();              // Single Pinpoint I2C read (internal to follower)
-        robot.updateCachedPose();       // Cache from that read for all subsystems
+        follower.update();
+        robot.updateCachedPose();
 
         super.run();
 
@@ -295,19 +290,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         return controlsArray;
     }
 
-    /**
-     * Computes a speed multiplier from the left trigger for dynamic slow mode.
-     * No press (below deadband) = 1.0 (full speed), full press = DYNAMIC_SLOW_MIN (0.25).
-     */
-    private double getDynamicSlowMultiplier() {
-        double trigger = gamepad1.left_trigger;
-        if (trigger < DriveConstants.DYNAMIC_SLOW_DEADBAND) {
-            return 1.0;
-        }
-        double normalized = (trigger - DriveConstants.DYNAMIC_SLOW_DEADBAND)
-                / (1.0 - DriveConstants.DYNAMIC_SLOW_DEADBAND);
-        return 1.0 - normalized * (1.0 - DriveConstants.DYNAMIC_SLOW_MIN);
-    }
 
     /**
      * Manual rotation forward with ball pattern update

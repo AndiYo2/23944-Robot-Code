@@ -14,7 +14,6 @@ public class OdometryConstants {
     public static Pose blueStartPoint = new Pose(56.5, 7.5, Math.toRadians(90));
     public static Pose redStartPoint = new Pose(87.5, 7.5, Math.toRadians(90));
 
-    // Default start point (Blue alliance by default)
     public static Pose standardStartPoint = blueStartPoint;
 
     public static double yawScalar = .998148;

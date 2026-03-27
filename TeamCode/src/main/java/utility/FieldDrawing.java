@@ -23,7 +23,6 @@ public class FieldDrawing {
     private static final Style trailStyle = new Style("", "#4CAF50", 0.75);
     private static final Style pathStyle  = new Style("", "#FF9800", 0.5);
 
-    /** Must call once during init to set Pedro field offsets. */
     public static void init() {
         panelsField.setOffsets(PanelsField.INSTANCE.getPresets().getPEDRO_PATHING());
     }

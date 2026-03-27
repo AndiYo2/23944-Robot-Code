@@ -8,13 +8,9 @@ import utility.RobotHardware;
 public class Intake extends SubsystemBase {
     RobotHardware robot;
     private IntakeState currentState = IntakeState.Idle;
-
-    // Timed intake support
     private final ElapsedTime timedIntakeTimer = new ElapsedTime();
     private double timedIntakeDuration = 0;
     private boolean timedIntakeActive = false;
-
-    // Track last written motor powers to skip redundant writes
     private double lastIntakePower = 0;
     private double lastBeltPower = 0;
 

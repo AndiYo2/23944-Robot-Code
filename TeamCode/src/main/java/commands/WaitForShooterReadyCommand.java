@@ -16,7 +16,6 @@ public class WaitForShooterReadyCommand extends CommandBase {
     public WaitForShooterReadyCommand(Shooter shooter, double timeoutSeconds) {
         this.shooter = shooter;
         this.timeout = timeoutSeconds;
-        // Note: No addRequirements - we're just observing, not controlling
     }
 
     @Override

@@ -102,10 +102,6 @@ public class Spindexer extends SubsystemBase {
         }
     }
 
-
-    /**
-     * Reset to empty position (0°) and clear ball tracking.
-     */
     public void resetToEmptyPosition() {
         currentDegrees = EMPTY_RESET_DEGREES;
         SpindexerAndMotifStatus.SpindexerPattern.clearAll();
@@ -116,8 +112,6 @@ public class Spindexer extends SubsystemBase {
     public void triggerFlick() {
         if (currentState == FlickState.Idle) {
             currentState = FlickState.Start;
-            // Automatically remove ball from slot 1 (shooter slot) when flicking
-            // Safe even if slot is empty (sets None to None)
             SpindexerAndMotifStatus.SpindexerPattern.setBallInSlotX(1, EnumConstants.BallColor.None);
         }
     }
