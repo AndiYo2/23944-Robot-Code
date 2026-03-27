@@ -10,6 +10,7 @@ import com.qualcomm.hardware.limelightvision.Limelight3A;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.UnnormalizedAngleUnit;
+import Constants.EnumConstants;
 import Constants.NamingConstants;
 import Constants.OdometryConstants;
 import Constants.SensorConstants;
@@ -47,9 +48,9 @@ public class RobotHardware {
 
     // ******************* COLOR SENSORS ******************* //
     // Intake sensors (2 sensors offset at first spindexer slot to avoid ball holes)
-    public ColorSensor intakeSensor1;
-    public ColorSensor intakeSensor2;
-    public DualBallDetector intakeSensorPair;
+    public ColorSensor spindexerSensor1;
+    public ColorSensor spindexerSensor2;
+    public DualBallDetector spindexerSensorPair;
 
     public ColorSensor rampSensor1;
     public ColorSensor rampSensor2;
@@ -92,6 +93,12 @@ public class RobotHardware {
     // ******************* SMART DISTANCE-BASED POLLING ******************* //
     // Scan order: intake (back-most) → transfer → ramp (front-most)
     private DualBallDetector[] smartScanOrder;
+
+    // ******************* PROGRESSIVE SCAN (AUTO) ******************* //
+    // Scan order: spindexer → transfer → ramp (one pair at a time)
+    private DualBallDetector[] progressiveScanOrder;
+    private EnumConstants.SensorPairState[] progressivePairState;
+    private int progressiveScanIndex = 0;
 
     // ******************* CACHED PINPOINT POSE ******************* //
     public double cachedPoseX;
@@ -181,9 +188,9 @@ public class RobotHardware {
 
         // ******************* COLOR SENSORS ******************* //
         // Intake sensors (2 offset sensors at first spindexer slot to avoid ball holes)
-        intakeSensor1 = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.intakeSensor1);
-        intakeSensor2 = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.intakeSensor2);
-        intakeSensorPair = new DualBallDetector(intakeSensor1, intakeSensor2,
+        spindexerSensor1 = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.spindexerSensor1);
+        spindexerSensor2 = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.spindexerSensor2);
+        spindexerSensorPair = new DualBallDetector(spindexerSensor1, spindexerSensor2,
                 new double[]{0.15, 0.55, 0.30}, new double[]{0.32, 0.22, 0.46},
                 0.15, 0.15, 400, 250,
                 SensorConstants.INTAKE_NEAR_DIST_THRESHOLD_MM,
@@ -208,13 +215,13 @@ public class RobotHardware {
                 SensorConstants.TRANSFER_FAR_DIST_THRESHOLD_MM);
 
         // Set all detectors to background mode for round-robin polling
-        intakeSensorPair.setBackgroundMode(true);
+        spindexerSensorPair.setBackgroundMode(true);
         transferSensorPair.setBackgroundMode(true);
         rampSensorPair.setBackgroundMode(true);
 
         // Round-robin: 6 sensors, cycling near/far across 3 detector pairs
         sensorDetectors = new DualBallDetector[]{
-            intakeSensorPair, intakeSensorPair,
+                spindexerSensorPair, spindexerSensorPair,
             rampSensorPair, rampSensorPair,
             transferSensorPair, transferSensorPair
         };
@@ -222,7 +229,16 @@ public class RobotHardware {
         roundRobinIndex = 0;
 
         // Smart scan: back-most empty first (intake → transfer → ramp)
-        smartScanOrder = new DualBallDetector[]{intakeSensorPair, transferSensorPair, rampSensorPair};
+        smartScanOrder = new DualBallDetector[]{spindexerSensorPair, transferSensorPair, rampSensorPair};
+
+        // Progressive scan order for auto: spindexer → transfer → ramp
+        progressiveScanOrder = new DualBallDetector[]{spindexerSensorPair, transferSensorPair, rampSensorPair};
+        progressivePairState = new EnumConstants.SensorPairState[]{
+                EnumConstants.SensorPairState.UNCHECKED,
+                EnumConstants.SensorPairState.UNCHECKED,
+                EnumConstants.SensorPairState.UNCHECKED
+        };
+        progressiveScanIndex = 0;
 
         // ******************* SPINDEXER ******************* //
         spindexerFlipperServo = hardwareMap.get(Servo.class, NamingConstants.Spindexer.spindexerFlipperServo);
@@ -272,6 +288,9 @@ public class RobotHardware {
                 detector.setDistanceDetected(false);
             }
         }
+
+        // Reset progressive scan state
+        resetProgressiveScan();
     }
 
     /** Clear bulk cache on all hubs. Call once at the top of each loop. */
@@ -293,7 +312,7 @@ public class RobotHardware {
 
     /** Read ALL color sensors every cycle using bulk-cache-safe reads (3 pairs × 2 sensors). */
     public void pollAllSensors() {
-        intakeSensorPair.updateCacheBulkSafe();
+        spindexerSensorPair.updateCacheBulkSafe();
         transferSensorPair.updateCacheBulkSafe();
         rampSensorPair.updateCacheBulkSafe();
     }
@@ -328,6 +347,86 @@ public class RobotHardware {
                 return;
             }
         }
+    }
+
+    // ==================== Progressive Scan (Auto) ====================
+
+    /**
+     * Progressive auto sensor polling. Scans one pair at a time:
+     * spindexer → transfer → ramp. Each pair goes through:
+     * UNCHECKED → (distance check) → COLOR_SCANNING → CONFIRMED.
+     * Stops scanning once all 3 are CONFIRMED.
+     */
+    public void progressivePollAuto() {
+        if (isProgressiveScanComplete()) return;
+
+        // Service any active color burst first
+        for (int i = 0; i < progressiveScanOrder.length; i++) {
+            if (progressivePairState[i] == EnumConstants.SensorPairState.COLOR_SCANNING) {
+                DualBallDetector detector = progressiveScanOrder[i];
+                if (detector.isInColorBurst()) {
+                    detector.colorBurstTick();
+                    return;
+                }
+                // Burst finished — check if color was identified
+                if (detector.quickCheck().color != EnumConstants.BallColor.None) {
+                    progressivePairState[i] = EnumConstants.SensorPairState.CONFIRMED;
+                    // Advance to next unconfirmed pair
+                    advanceProgressiveIndex();
+                } else {
+                    // No color — go back to UNCHECKED to retry
+                    progressivePairState[i] = EnumConstants.SensorPairState.UNCHECKED;
+                }
+                return;
+            }
+        }
+
+        // Check distance on the current pair
+        if (progressiveScanIndex < progressiveScanOrder.length) {
+            DualBallDetector detector = progressiveScanOrder[progressiveScanIndex];
+            if (progressivePairState[progressiveScanIndex] == EnumConstants.SensorPairState.UNCHECKED) {
+                if (detector.checkDistancePresent()) {
+                    // Ball detected — start color burst
+                    detector.setDistanceDetected(true);
+                    detector.startColorBurst(SensorConstants.COLOR_READ_CYCLES);
+                    progressivePairState[progressiveScanIndex] = EnumConstants.SensorPairState.COLOR_SCANNING;
+                }
+            }
+        }
+    }
+
+    /** Reset progressive scan to initial state. Call after shooting. */
+    public void resetProgressiveScan() {
+        if (progressivePairState != null) {
+            for (int i = 0; i < progressivePairState.length; i++) {
+                progressivePairState[i] = EnumConstants.SensorPairState.UNCHECKED;
+            }
+        }
+        progressiveScanIndex = 0;
+        if (progressiveScanOrder != null) {
+            for (DualBallDetector detector : progressiveScanOrder) {
+                detector.setDistanceDetected(false);
+            }
+        }
+    }
+
+    /** Returns true when all 3 sensor pairs have confirmed ball color. */
+    public boolean isProgressiveScanComplete() {
+        if (progressivePairState == null) return false;
+        for (EnumConstants.SensorPairState state : progressivePairState) {
+            if (state != EnumConstants.SensorPairState.CONFIRMED) return false;
+        }
+        return true;
+    }
+
+    private void advanceProgressiveIndex() {
+        for (int i = 0; i < progressivePairState.length; i++) {
+            if (progressivePairState[i] != EnumConstants.SensorPairState.CONFIRMED) {
+                progressiveScanIndex = i;
+                return;
+            }
+        }
+        progressiveScanIndex = progressivePairState.length; // All confirmed
     }
 
     /** Read pinpoint pose/velocities once and cache for the entire loop. */

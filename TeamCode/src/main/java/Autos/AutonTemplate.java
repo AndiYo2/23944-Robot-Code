@@ -125,6 +125,7 @@ public abstract class AutonTemplate extends OpMode {
 
         limelight.resetLimelight();
 
+        robotHardware.resetProgressiveScan();
         loopTimer.reset();
     }
 
@@ -142,8 +143,8 @@ public abstract class AutonTemplate extends OpMode {
         robotHardware.updateCachedPose();
         OdometryConstants.endingAutonPose = follower.getPose();
 
-        // Poll one color sensor per loop (round-robin across 6 sensors)
-        robotHardware.pollNextSensor();
+        // Progressive scan: one sensor pair at a time (spindexer → transfer → ramp)
+        robotHardware.progressivePollAuto();
 
         // Run the command scheduler
         CommandScheduler.getInstance().run();

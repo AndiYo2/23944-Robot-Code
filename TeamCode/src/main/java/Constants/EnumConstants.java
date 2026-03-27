@@ -49,4 +49,10 @@ public class EnumConstants {
         Fast,
         Sorted
     }
+
+    public enum SensorPairState {
+        UNCHECKED,
+        COLOR_SCANNING,
+        CONFIRMED
+    }
 }

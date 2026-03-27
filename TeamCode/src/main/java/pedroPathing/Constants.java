@@ -19,46 +19,13 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 @Configurable
 public class Constants {
     public static FollowerConstants followerConstants = new FollowerConstants()
-            .translationalPIDFCoefficients(new PIDFCoefficients(
-                    0.15,
-                    0,
-                    0.015,
-                    0.02
-            )).secondaryTranslationalPIDFCoefficients(new PIDFCoefficients(
-                    .1,
-                    0,
-                    .01,
-                    .015
-            ))
-            .headingPIDFCoefficients(new PIDFCoefficients(
-                    1,
-                    0,
-                    0.1,
-                    0.01
-            ))
-            .drivePIDFCoefficients(new FilteredPIDFCoefficients(
-                    0.07,
-                    0,
-                    0.0095,
-                    0.6,
-                    0.01))
-            .secondaryDrivePIDFCoefficients(new FilteredPIDFCoefficients(
-                    0.0075,
-                    0,
-                    0.00001,
-                    0.6,
-                    0.001))
-            .lateralZeroPowerAcceleration(-62)
-            .forwardZeroPowerAcceleration(-23.9)
-            .predictiveBrakingCoefficients(new PredictiveBrakingCoefficients(
-                    0.05,
-                    0.1,
-                    0.001
-            ))
-            .translationalIntegral(0);
-//            .mass(14.51); //kg
+            .mass(15)
+            .lateralZeroPowerAcceleration(-70.25)
+            .forwardZeroPowerAcceleration(-23.444)
+            .headingPIDFCoefficients(new PIDFCoefficients(1, 0, 0.1, 0.01))
+            .predictiveBrakingCoefficients(new PredictiveBrakingCoefficients(0.05, 0.1, 0.001));
 
-    public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 1.2, .6);
+    public static PathConstraints pathConstraints = new PathConstraints(0.95, 100, 1, 1);
 
     public static Follower createFollower(HardwareMap hardwareMap) {
         return new FollowerBuilder(followerConstants, hardwareMap)
@@ -69,8 +36,8 @@ public class Constants {
     }
     public static MecanumConstants driveConstants = new MecanumConstants()
             .maxPower(1)
-            .xVelocity(77)
-            .yVelocity(57.7)
+            .xVelocity(86.6)
+            .yVelocity(62.3)
             .rightFrontMotorName("frontRightMotor")
             .rightRearMotorName("backRightMotor")
             .leftRearMotorName("backLeftMotor")
@@ -78,15 +45,12 @@ public class Constants {
             .leftFrontMotorDirection(DcMotorEx.Direction.REVERSE)
             .leftRearMotorDirection(DcMotorEx.Direction.REVERSE)
             .rightFrontMotorDirection(DcMotorEx.Direction.FORWARD)
-            .rightRearMotorDirection(DcMotorEx.Direction.FORWARD)
-            .useBrakeModeInTeleOp(true);
+            .rightRearMotorDirection(DcMotorEx.Direction.FORWARD);
 
     public static PinpointConstants localizerConstants = new PinpointConstants()
-            .forwardPodY(-0.5)
-            .strafePodX(36.5)
-            .distanceUnit(DistanceUnit.MM)
-            .customEncoderResolution(19.65)
-            .yawScalar(0.998148)
+            .forwardPodY(1.839)
+            .strafePodX(0.14)
+            .distanceUnit(DistanceUnit.INCH)
             .forwardEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD)
             .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD);
 

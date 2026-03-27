@@ -195,17 +195,10 @@ abstract public class TeleOpTemplate extends CommandOpMode {
                 .whenPressed(new InstantCommand(intake::reverse))
                 .whenReleased(new InstantCommand(intake::stopIntake));
 
-        // Triangle/Y — catalogue
+        // Triangle/Y — catalogue (always fast with sensor gate in TeleOp)
         new GamepadButton(driverGamepad, GamepadKeys.Button.Y)
                 .whenPressed(() -> {
-                    if (SpindexerConstants.currentMode == EnumConstants.ShootingMode.Sorted) {
-                        EnumConstants.BallColor[] motifPattern = {SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(0), SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(1),SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(2)};
-                        // Order matches physical ball path: spindexer slot (first in) → transfer → ramp (last in)
-                        EnumConstants.BallColor[] intakeColors = {robot.intakeSensorPair.quickCheck().color,robot.transferSensorPair.quickCheck().color,robot.rampSensorPair.quickCheck().color};
-                        schedule(CatalogCommands.catalogSorted(spindexer, intake, motifPattern, intakeColors));
-                    } else {
-                        schedule(CatalogCommands.catalogFast(spindexer, intake));
-                    }
+                    schedule(CatalogCommands.catalogFast(spindexer, intake, robot.spindexerSensorPair));
                 });
 
         // X/A — toggle super slow shooting mode (for endgame sorting accuracy)
@@ -255,15 +248,14 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         telemetryHelper.recordLoop(loopMs);
 
         robot.clearBulkCache();
-        robot.pollNextSensor();
 
         ShooterConstants.SHOOT_WHILE_MOVING_ENABLED = false;
 
-        super.run();
+        // Update pose FIRST so subsystems get fresh data this loop
+        follower.update();              // Single Pinpoint I2C read (internal to follower)
+        robot.updateCachedPose();       // Cache from that read for all subsystems
 
-        robot.pinpoint.update();
-        robot.updateCachedPose();
-        follower.update();
+        super.run();
 
         poseTracker.addPose(robot.cachedPoseX, robot.cachedPoseY);
 

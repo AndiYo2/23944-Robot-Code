@@ -33,7 +33,7 @@ public class WaitForBallsCommand extends CommandBase {
         }
 
         RobotHardware hw = RobotHardware.getInstance();
-        boolean intakeFull = hw.intakeSensorPair.quickCheck().ballPresent;
+        boolean intakeFull = hw.spindexerSensorPair.quickCheck().ballPresent;
         boolean rampFull = hw.rampSensorPair.quickCheck().ballPresent;
         boolean transferFull = hw.transferSensorPair.quickCheck().ballPresent;
 

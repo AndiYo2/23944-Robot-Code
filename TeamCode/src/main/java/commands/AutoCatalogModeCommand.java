@@ -73,7 +73,7 @@ public class AutoCatalogModeCommand extends CommandBase {
                 SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(2)
         };
         EnumConstants.BallColor[] intakeColors = {
-                robot.intakeSensorPair.quickCheck().color,
+                robot.spindexerSensorPair.quickCheck().color,
                 robot.transferSensorPair.quickCheck().color,
                 robot.rampSensorPair.quickCheck().color
         };

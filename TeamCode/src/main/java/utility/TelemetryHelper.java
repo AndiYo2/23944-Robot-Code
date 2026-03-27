@@ -125,40 +125,19 @@ public class TelemetryHelper {
             panels.debug("Motif: Not Detected");
         }
 
-        panels.debug("LL Mode: " + limelight.getCurrentMode());
-
 
         // Position — use cached pose values
         double x = robot.cachedPoseX;
         double y = robot.cachedPoseY;
         double heading = Math.toDegrees(robot.cachedHeading);
         panels.debug("Pose: (" + (int)(x * 10) / 10.0 + ", " + (int)(y * 10) / 10.0 + ") " + (int)(heading * 10) / 10.0 + "°");
-        panels.debug("Spind: " + spindexer.getCurrentDegrees() + "°");
 
-        // Sensors
-        DualBallDetector.Result r1 = robot.intakeSensorPair.quickCheck();
-        DualBallDetector.Result r2 = robot.transferSensorPair.quickCheck();
-        DualBallDetector.Result r3 = robot.rampSensorPair.quickCheck();
-        panels.debug("Intake:   " + (r1.ballPresent ? "BALL" : "----") + " " + r1.color + " " + (int)(r1.confidence * 100) + "%");
-        panels.debug("Transfer: " + (r2.ballPresent ? "BALL" : "----") + " " + r2.color + " " + (int)(r2.confidence * 100) + "%");
-        panels.debug("Ramp:     " + (r3.ballPresent ? "BALL" : "----") + " " + r3.color + " " + (int)(r3.confidence * 100) + "%");
-
-        // Sensor confidence (from cached quickCheck — no I2C reads)
-        panels.addData("Intake Confidence", r1.confidence);
-        panels.addData("Transfer Confidence", r2.confidence);
-        panels.addData("Ramp Confidence", r3.confidence);
-
-        // Graphs
         panels.addData("Shooter Velocity (actual)", currentVel);
         panels.addData("Shooter Velocity (target)", targetVel);
         panels.addData("Velocity Error", shooter.getVelocityError());
         panels.addData("Hood Angle", hoodAngle);
         panels.addData("Distance to Target", distance);
         panels.addData("Turret Target Angle", turretAngle);
-
-        if (robot.voltageSensor != null) {
-            panels.addData("Battery Voltage", robot.voltageSensor.getVoltage());
-        }
 
         panels.update(telemetry);
     }

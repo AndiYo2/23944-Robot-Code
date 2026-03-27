@@ -40,8 +40,8 @@ public class ColorSensorTestOpMode extends LinearOpMode {
     @Override
     public void runOpMode() {
 
-        sensors1[0] = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.intakeSensor1);
-        sensors2[0] = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.intakeSensor2);
+        sensors1[0] = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.spindexerSensor1);
+        sensors2[0] = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.spindexerSensor2);
 
         sensors1[1] = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.rampSensor1);
         sensors2[1] = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.rampSensor2);

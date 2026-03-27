@@ -58,7 +58,7 @@ public class BallCollectMoveToCommand extends CommandBase {
 
     private boolean isFull() {
         RobotHardware hw = RobotHardware.getInstance();
-        return hw.intakeSensorPair.quickCheck().ballPresent
+        return hw.spindexerSensorPair.quickCheck().ballPresent
                 && hw.rampSensorPair.quickCheck().ballPresent
                 && hw.transferSensorPair.quickCheck().ballPresent;
     }

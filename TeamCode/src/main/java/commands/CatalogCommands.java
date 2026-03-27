@@ -8,6 +8,7 @@ import Constants.EnumConstants;
 import subsystems.Intake;
 import subsystems.Spindexer;
 import Constants.SpindexerConstants;
+import utility.DualBallDetector;
 import utility.SpindexerAndMotifStatus;
 
 /**
@@ -29,17 +30,25 @@ public class CatalogCommands {
      * @return a command that catalogs balls in fast mode
      */
     public static Command catalogFast(Spindexer spindexer, Intake intake) {
+        return catalogFast(spindexer, intake, null);
+    }
+
+    /**
+     * Fast catalog with optional sensor gate — IntakeCommand finishes early
+     * when the spindexer distance sensor detects a ball (or timeout).
+     */
+    public static Command catalogFast(Spindexer spindexer, Intake intake, DualBallDetector sensorGate) {
         return new SequentialCommandGroup(
             // Rotate ball 1 from slot 0 to shooter slot (slot 1)
             new RotateCCWCommand(spindexer),
             new WaitCommand((long)(SpindexerConstants.ROTATION_SETTLE_TIME * 1000)),
             // Flick ball 1 out, intake ball 2 into slot 0
             new ExtendSpindexerFlipperCommand(spindexer)
-                .andThen(new RetractSpindexerFlipperCommand(spindexer)).alongWith(new IntakeCommand(intake, SpindexerConstants.TELEOP_FIRST_CATALOG_INTAKE_TIME)),
+                .andThen(new RetractSpindexerFlipperCommand(spindexer)).alongWith(new IntakeCommand(intake, SpindexerConstants.TELEOP_FIRST_CATALOG_INTAKE_TIME, false, sensorGate)),
             // Rotate ball 2 to shooter slot (slot 1)
             new RotateCCWCommand(spindexer),
             // Intake ball 3 into slot 0 (reverse intake to spit extras)
-            new IntakeCommand(intake, SpindexerConstants.TELEOP_REVERSE_CATALOG_INTAKE_TIME, true),
+            new IntakeCommand(intake, SpindexerConstants.TELEOP_REVERSE_CATALOG_INTAKE_TIME, true, sensorGate),
             // Set final pattern: all 3 slots tracked as Purple
             new InstantCommand(() ->
                 SpindexerAndMotifStatus.SpindexerPattern.setBallPattern(

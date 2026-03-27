@@ -129,7 +129,7 @@ public class DemoTeleOp extends CommandOpMode {
                                 SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(2)
                         };
                         EnumConstants.BallColor[] intakeColors = {
-                                robot.intakeSensorPair.quickCheck().color,
+                                robot.spindexerSensorPair.quickCheck().color,
                                 robot.transferSensorPair.quickCheck().color,
                                 robot.rampSensorPair.quickCheck().color
                         };

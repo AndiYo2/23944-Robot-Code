@@ -4,7 +4,6 @@ import com.arcrobotics.ftclib.command.CommandBase;
 import com.arcrobotics.ftclib.command.Command;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import Constants.EnumConstants;
-import Constants.SpindexerConstants;
 import subsystems.Intake;
 import subsystems.Spindexer;
 import utility.RobotHardware;
@@ -98,7 +97,7 @@ public class GuaranteeSortedAutoCatalogCommand extends CommandBase {
 
     private boolean allSensorsReady() {
         RobotHardware robot = RobotHardware.getInstance();
-        return robot.intakeSensorPair.quickCheck().color != EnumConstants.BallColor.None
+        return robot.spindexerSensorPair.quickCheck().color != EnumConstants.BallColor.None
             && robot.transferSensorPair.quickCheck().color != EnumConstants.BallColor.None
             && robot.rampSensorPair.quickCheck().color != EnumConstants.BallColor.None;
     }
@@ -111,7 +110,7 @@ public class GuaranteeSortedAutoCatalogCommand extends CommandBase {
                 SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(2)
         };
         EnumConstants.BallColor[] intakeColors = {
-                robot.intakeSensorPair.quickCheck().color,
+                robot.spindexerSensorPair.quickCheck().color,
                 robot.transferSensorPair.quickCheck().color,
                 robot.rampSensorPair.quickCheck().color
         };

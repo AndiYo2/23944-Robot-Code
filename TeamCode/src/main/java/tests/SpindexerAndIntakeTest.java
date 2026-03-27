@@ -5,7 +5,6 @@ import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import Constants.EnumConstants;
-import Constants.ShooterConstants;
 import Constants.ShootingSequenceConstants;
 import Constants.SpindexerConstants;
 import subsystems.Intake;
@@ -164,7 +163,7 @@ public class SpindexerAndIntakeTest extends CommandOpMode {
 
         // Sensor quick-check
         telemetry.addLine("=== SENSORS ===");
-        telemetry.addData("Intake Sensor", robot.intakeSensorPair.quickCheck().color);
+        telemetry.addData("Intake Sensor", robot.spindexerSensorPair.quickCheck().color);
         telemetry.addData("Ramp Sensor", robot.rampSensorPair.quickCheck().color);
         telemetry.addData("Transfer Sensor", robot.transferSensorPair.quickCheck().color);
         telemetry.addLine();
