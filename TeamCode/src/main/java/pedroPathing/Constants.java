@@ -20,10 +20,10 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 public class Constants {
     public static FollowerConstants followerConstants = new FollowerConstants()
             .mass(15)
-            .lateralZeroPowerAcceleration(-70.25)
-            .forwardZeroPowerAcceleration(-23.444)
+            .lateralZeroPowerAcceleration(-68.55)
+            .forwardZeroPowerAcceleration(-26.123)
             .headingPIDFCoefficients(new PIDFCoefficients(1, 0, 0.1, 0.01))
-            .predictiveBrakingCoefficients(new PredictiveBrakingCoefficients(0.05, 0.1, 0.001));
+            .predictiveBrakingCoefficients(new PredictiveBrakingCoefficients(0.14, 0.1656, 0.0001034753));
 
     public static PathConstraints pathConstraints = new PathConstraints(0.95, 100, 1, 1);
 
@@ -36,8 +36,8 @@ public class Constants {
     }
     public static MecanumConstants driveConstants = new MecanumConstants()
             .maxPower(1)
-            .xVelocity(86.6)
-            .yVelocity(62.3)
+            .xVelocity(77.41)
+            .yVelocity(57.33)
             .rightFrontMotorName("frontRightMotor")
             .rightRearMotorName("backRightMotor")
             .leftRearMotorName("backLeftMotor")
@@ -48,8 +48,8 @@ public class Constants {
             .rightRearMotorDirection(DcMotorEx.Direction.FORWARD);
 
     public static PinpointConstants localizerConstants = new PinpointConstants()
-            .forwardPodY(1.839)
-            .strafePodX(0.14)
+            .forwardPodY(.1)
+            .strafePodX(1.45)
             .distanceUnit(DistanceUnit.INCH)
             .forwardEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD)
             .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD);
