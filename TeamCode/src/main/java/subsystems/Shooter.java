@@ -33,6 +33,7 @@ public class Shooter extends SubsystemBase {
 
     // Default loop time when dt calculation fails (seconds)
     private static final double DEFAULT_LOOP_TIME = 0.02;
+    private double lastLoopDt = DEFAULT_LOOP_TIME;
     private double cachedVelocity = 0;
     private double lastFfOutput = 0;
     private double lastPidOutput = 0;
@@ -45,10 +46,23 @@ public class Shooter extends SubsystemBase {
 
     private double requiredHoodAngle = ShooterConstants.HOOD_DEFAULT_ANGLE;
 
-    // Lead-compensated state (shared with Turret via getter)
-    private double leadAdjustedDistance = ShooterConstants.DEFAULT_DISTANCE;
     private double currentTimeInAir = 0.0;
-    private double[] futurePose = new double[3]; // {x, y, headingRad}
+
+    // Shooting_While_Moving: position-derived velocity and acceleration tracking
+    private double prevPoseX = 0.0;
+    private double prevPoseY = 0.0;
+    private double prevHeading = 0.0;
+    private double prevFieldVelX = 0.0;
+    private double prevFieldVelY = 0.0;
+    private double prevHeadingVel = 0.0;
+    private double filteredAccelX = 0.0;
+    private double filteredAccelY = 0.0;
+    private double filteredAngularAccel = 0.0;
+    private boolean shootingWhileMovingInitialized = false;
+
+    // Shooting_While_Moving output (shared with Turret via getters)
+    private double shootingWhileMovingDistance = ShooterConstants.DEFAULT_DISTANCE;
+    private double[] shootingWhileMovingFuturePose = new double[3]; // {x, y, headingRad}
 
     private double lastHoodServoPosition = -1.0;
     private static final double SERVO_EPSILON = 0.001;
@@ -164,21 +178,87 @@ public class Shooter extends SubsystemBase {
         return requiredHoodAngle;
     }
 
-    private void updateLeadCompensation() {
+    private double[] getTurretFieldPositionFrom(double robotX, double robotY, double robotHeadingRad) {
+        double combinedAngle = robotHeadingRad + TURRET_OFFSET_ANGLE;
+        turretFieldPosTemp[0] = robotX + TURRET_OFFSET_MAG * Math.sin(combinedAngle);
+        turretFieldPosTemp[1] = robotY - TURRET_OFFSET_MAG * Math.cos(combinedAngle);
+        return turretFieldPosTemp;
+    }
+
+    /**
+     * Kinematic prediction with stop-clamp.
+     * Computes pos + vel*t + 0.5*accel*t², but if deceleration would
+     * reverse velocity direction before tof, clamps to the stopping point.
+     */
+    private double clampedPredict(double pos, double vel, double accel, double tof) {
+        if (accel != 0.0 && vel != 0.0 && Math.signum(accel) != Math.signum(vel)) {
+            double tStop = -vel / accel;
+            if (tStop > 0 && tStop < tof) {
+                return pos + vel * tStop + 0.5 * accel * tStop * tStop;
+            }
+        }
+        return pos + vel * tof + 0.5 * accel * tof * tof;
+    }
+
+    /**
+     * Shooting_While_Moving: Full kinematic shoot-while-moving compensation.
+     *
+     * Predicts future robot pose using: pos + vel*t + 0.5*accel*t²
+     * Then computes turret angle, flywheel velocity, and hood angle
+     * as if the robot were already at that predicted future position.
+     *
+     * Acceleration is derived from velocity differences between loops,
+     * then low-pass filtered and deadbanded to reject sensor noise.
+     */
+    private void updateShootingWhileMovingCompensation() {
         double curX = robot.cachedPoseX;
         double curY = robot.cachedPoseY;
         double curH = robot.cachedHeading;
-        double velX = robot.cachedVelX;
-        double velY = robot.cachedVelY;
-        double velH = robot.cachedHeadingVel;
 
-        // Rotate Pinpoint robot-relative velocity into field-relative
-        double cos = Math.cos(curH);
-        double sin = Math.sin(curH);
-        double fieldVelX = velX * cos - velY * sin;
-        double fieldVelY = velX * sin + velY * cos;
+        double dt = lastLoopDt;
 
-        // Zero out noise-level velocities to prevent jitter when stationary
+        // ---- INITIALIZATION ----
+        if (!shootingWhileMovingInitialized) {
+            prevPoseX = curX;
+            prevPoseY = curY;
+            prevHeading = curH;
+            prevFieldVelX = 0.0;
+            prevFieldVelY = 0.0;
+            prevHeadingVel = 0.0;
+            filteredAccelX = 0.0;
+            filteredAccelY = 0.0;
+            filteredAngularAccel = 0.0;
+            shootingWhileMovingInitialized = true;
+
+            shootingWhileMovingFuturePose[0] = curX;
+            shootingWhileMovingFuturePose[1] = curY;
+            shootingWhileMovingFuturePose[2] = curH;
+            double[] futureTurretPos = getTurretFieldPositionFrom(curX, curY, curH);
+            Pose goalPosition = FieldMap.getGoalPosition();
+            double dx = goalPosition.getX() - futureTurretPos[0];
+            double dy = goalPosition.getY() - futureTurretPos[1];
+            shootingWhileMovingDistance = Math.sqrt(dx * dx + dy * dy);
+            currentTimeInAir = ShooterConstants.TIME_IN_AIR;
+            return;
+        }
+
+        // ---- VELOCITY FROM POSITION DELTAS ----
+        // Positions are already field-relative, no rotation needed.
+        double fieldVelX = (curX - prevPoseX) / dt;
+        double fieldVelY = (curY - prevPoseY) / dt;
+        double velH = (curH - prevHeading) / dt;
+
+        // Update previous pose for next loop
+        prevPoseX = curX;
+        prevPoseY = curY;
+        prevHeading = curH;
+
+        // Save raw velocities BEFORE deadband for acceleration computation
+        double rawFieldVelX = fieldVelX;
+        double rawFieldVelY = fieldVelY;
+        double rawVelH = velH;
+
+        // Apply velocity deadbands — only affects the vel*t prediction term
         double speed = Math.sqrt(fieldVelX * fieldVelX + fieldVelY * fieldVelY);
         if (speed < ShooterConstants.LEAD_VELOCITY_DEADBAND) {
             fieldVelX = 0.0;
@@ -188,39 +268,99 @@ public class Shooter extends SubsystemBase {
             velH = 0.0;
         }
 
-        // Single pass: timeInAir is constant, so refinement produces identical results
+        // ---- ACCELERATION COMPUTATION (uses raw velocities) ----
+        {
+            // --- COLLISION SPIKE REJECTION ---
+            // If velocity changed more than physically possible in one loop,
+            // it's a collision. Zero out acceleration but keep velocity intact.
+            // The vel*t term still compensates for ball inheritance correctly.
+            double dvx = rawFieldVelX - prevFieldVelX;
+            double dvy = rawFieldVelY - prevFieldVelY;
+            double dvMag = Math.sqrt(dvx * dvx + dvy * dvy);
+
+            if (dvMag > ShooterConstants.SHOOTING_WHILE_MOVING_MAX_VELOCITY_JUMP) {
+                // Collision detected — don't trust acceleration this loop
+                filteredAccelX = 0.0;
+                filteredAccelY = 0.0;
+                filteredAngularAccel = 0.0;
+            } else {
+                // Normal operation — compute and filter acceleration
+                double rawAccelX = dvx / dt;
+                double rawAccelY = dvy / dt;
+                double rawAngularAccel = (rawVelH - prevHeadingVel) / dt;
+
+                // Low-pass EMA filter
+                double alpha = ShooterConstants.SHOOTING_WHILE_MOVING_ACCEL_FILTER_ALPHA;
+                filteredAccelX = alpha * rawAccelX + (1.0 - alpha) * filteredAccelX;
+                filteredAccelY = alpha * rawAccelY + (1.0 - alpha) * filteredAccelY;
+                filteredAngularAccel = alpha * rawAngularAccel + (1.0 - alpha) * filteredAngularAccel;
+
+                // Deadband: zero out negligible acceleration
+                double accelMag = Math.sqrt(filteredAccelX * filteredAccelX + filteredAccelY * filteredAccelY);
+                if (accelMag < ShooterConstants.SHOOTING_WHILE_MOVING_ACCEL_DEADBAND) {
+                    filteredAccelX = 0.0;
+                    filteredAccelY = 0.0;
+                }
+                if (Math.abs(filteredAngularAccel) < ShooterConstants.SHOOTING_WHILE_MOVING_ANGULAR_ACCEL_DEADBAND) {
+                    filteredAngularAccel = 0.0;
+                }
+            }
+
+            // --- HARD ACCELERATION CAP ---
+            // Even after filtering, clamp to physical robot limits.
+            double accelMag = Math.sqrt(filteredAccelX * filteredAccelX + filteredAccelY * filteredAccelY);
+            if (accelMag > ShooterConstants.SHOOTING_WHILE_MOVING_MAX_ACCEL) {
+                double scale = ShooterConstants.SHOOTING_WHILE_MOVING_MAX_ACCEL / accelMag;
+                filteredAccelX *= scale;
+                filteredAccelY *= scale;
+            }
+            if (Math.abs(filteredAngularAccel) > ShooterConstants.SHOOTING_WHILE_MOVING_MAX_ANGULAR_ACCEL) {
+                filteredAngularAccel = Math.signum(filteredAngularAccel) * ShooterConstants.SHOOTING_WHILE_MOVING_MAX_ANGULAR_ACCEL;
+            }
+
+            // Store raw velocity for next loop's diff (always update, even during collision)
+            prevFieldVelX = rawFieldVelX;
+            prevFieldVelY = rawFieldVelY;
+            prevHeadingVel = rawVelH;
+        }
+
+        // ---- FULL KINEMATIC PREDICTION (clamped to stop point) ----
         double tof = ShooterConstants.TIME_IN_AIR;
 
-        // Predict future pose
-        futurePose[0] = curX + fieldVelX * tof;
-        futurePose[1] = curY + fieldVelY * tof;
-        futurePose[2] = curH + velH * tof;
+        shootingWhileMovingFuturePose[0] = clampedPredict(curX, fieldVelX, filteredAccelX, tof);
+        shootingWhileMovingFuturePose[1] = clampedPredict(curY, fieldVelY, filteredAccelY, tof);
+        shootingWhileMovingFuturePose[2] = clampedPredict(curH, velH, filteredAngularAccel, tof);
 
-        // Compute distance from future turret position using pre-computed polar offset
-        double[] futureTurretPos = getTurretFieldPositionFrom(futurePose[0], futurePose[1], futurePose[2]);
+        // ---- DISTANCE FROM FUTURE TURRET POSITION TO GOAL ----
+        double[] futureTurretPos = getTurretFieldPositionFrom(
+                shootingWhileMovingFuturePose[0], shootingWhileMovingFuturePose[1], shootingWhileMovingFuturePose[2]);
         Pose goalPosition = FieldMap.getGoalPosition();
         double dx = goalPosition.getX() - futureTurretPos[0];
         double dy = goalPosition.getY() - futureTurretPos[1];
-        leadAdjustedDistance = Math.sqrt(dx * dx + dy * dy);
+        shootingWhileMovingDistance = Math.sqrt(dx * dx + dy * dy);
         currentTimeInAir = tof;
     }
 
-    private double[] getTurretFieldPositionFrom(double robotX, double robotY, double robotHeadingRad) {
-        double combinedAngle = robotHeadingRad + TURRET_OFFSET_ANGLE;
-        turretFieldPosTemp[0] = robotX + TURRET_OFFSET_MAG * Math.sin(combinedAngle);
-        turretFieldPosTemp[1] = robotY - TURRET_OFFSET_MAG * Math.cos(combinedAngle);
-        return turretFieldPosTemp;
+    /**
+     * Returns the Shooting_While_Moving predicted future pose {x, y, headingRad}.
+     * Used by Turret to aim from the predicted position.
+     */
+    public double[] getShootingWhileMovingFuturePose() {
+        return shootingWhileMovingFuturePose;
     }
 
-    public double[] getFuturePose() {
-        return futurePose;
+    /**
+     * Returns the Shooting_While_Moving distance from predicted future turret position to goal.
+     */
+    public double getShootingWhileMovingDistance() {
+        return shootingWhileMovingDistance;
     }
 
     private void updateVelocityFromDistance() {
-        if (ShooterConstants.SHOOT_WHILE_MOVING_ENABLED) {
-            updateLeadCompensation();
-            requiredVelocity = getVelocityFromDistance(leadAdjustedDistance);
-            requiredHoodAngle = getHoodAngleFromDistance(leadAdjustedDistance);
+        if (ShooterConstants.SHOOTING_WHILE_MOVING_ENABLED) {
+            updateShootingWhileMovingCompensation();
+            requiredVelocity = getVelocityFromDistance(shootingWhileMovingDistance);
+            requiredHoodAngle = getHoodAngleFromDistance(shootingWhileMovingDistance);
         } else {
             double distance = getDistanceToTarget();
             requiredVelocity = getVelocityFromDistance(distance);
@@ -302,6 +442,7 @@ public class Shooter extends SubsystemBase {
         loopTimer.reset();
 
         if (dt <= 0) dt = DEFAULT_LOOP_TIME;
+        lastLoopDt = dt;
 
         if (ShooterConstants.ShooterTuning.TUNING_MODE) {
             requiredVelocity = ShooterConstants.ShooterTuning.TUNING_VELOCITY;

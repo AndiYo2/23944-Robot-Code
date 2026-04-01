@@ -18,12 +18,37 @@ public class ShooterConstants {
     public static double HOOD_SERVO_AT_MIN_ANGLE = 1;
     public static double HOOD_SERVO_AT_MAX_ANGLE = 0.38;
 
-    public static boolean SHOOT_WHILE_MOVING_ENABLED = false;
+    /** Enable Shooting_While_Moving for shoot-while-moving compensation.
+     *  Uses full kinematic prediction: pos + vel*t + 0.5*accel*t²
+     *  Computes turret angle, flywheel velocity, and hood angle from predicted future pose. */
+    public static boolean SHOOTING_WHILE_MOVING_ENABLED = true;
 
-    /** Minimum robot speed (in/sec) for shoot-while-moving lead compensation to activate in TeleOp */
-    public static double MOVING_WHILE_SHOOTING_VELOCITY_THRESHOLD = 2.0;
+    /** Minimum translational acceleration magnitude (in/s²) to include in prediction.
+     *  Below this threshold, acceleration is zeroed to prevent noise amplification. */
+    public static double SHOOTING_WHILE_MOVING_ACCEL_DEADBAND = 5.0;
 
-    // Lead compensation filtering
+    /** Minimum angular acceleration (rad/s²) to include in heading prediction.
+     *  Below this threshold, angular acceleration is zeroed. */
+    public static double SHOOTING_WHILE_MOVING_ANGULAR_ACCEL_DEADBAND = 0.1;
+
+    /** Low-pass EMA filter alpha for acceleration smoothing (0-1).
+     *  Higher = more responsive but noisier. Lower = smoother but more latent.
+     *  0.3 is a good starting point. */
+    public static double SHOOTING_WHILE_MOVING_ACCEL_FILTER_ALPHA = 0.3;
+
+    /** Maximum velocity change per loop (in/s) before it's considered a collision.
+     *  Anything above this in a single loop is physically impossible from motors alone.
+     *  At 50Hz, 30 in/s per loop = 1500 in/s² — well above any motor-driven acceleration. */
+    public static double SHOOTING_WHILE_MOVING_MAX_VELOCITY_JUMP = 30.0;
+
+    /** Maximum allowed acceleration magnitude (in/s²) for prediction.
+     *  The robot physically cannot accelerate faster than ~120 in/s² under its own power.
+     *  Anything above this is external (collision, getting pushed). */
+    public static double SHOOTING_WHILE_MOVING_MAX_ACCEL = 120.0;
+
+    /** Maximum allowed angular acceleration (rad/s²) for prediction. */
+    public static double SHOOTING_WHILE_MOVING_MAX_ANGULAR_ACCEL = 8.0;
+
     /** Minimum translational speed (in/sec) for lead compensation. Below this, robot is considered stationary. */
     public static double LEAD_VELOCITY_DEADBAND = 3.0;
     /** Minimum heading velocity (rad/sec) for heading lead compensation. Below this, heading is considered stable. */
@@ -34,7 +59,7 @@ public class ShooterConstants {
 
     // Velocity LUT - Distance (inches) -> Velocity (ticks/sec)
     public static double[][] VELOCITY_DATA = {
-        {0, 1660},
+        {0, 1430},
         {40, 1660},
         {50, 1760},
         {60, 1880},
@@ -43,13 +68,13 @@ public class ShooterConstants {
         {90, 2140},
         {100, 2180},
         {114, 2320},
-        {125, 2540},
-        {132, 2620},
-        {140, 2640},
-        {146, 2680},
-        {151, 2760},
-        {158, 2860},
-        {300, 2860}
+        {125, 2580},
+        {132, 2660},
+        {140, 2680},
+        {146, 2720},
+        {151, 2800},
+        {158, 2900},
+        {300, 3200}
     };
 
     // Hood Angle LUT - Distance (inches) -> Hood Angle (degrees, 0=vertical, 90=horizontal)
@@ -69,7 +94,7 @@ public class ShooterConstants {
         {146, 53.25},
         {151, 55},
         {158, 57},
-        {300, 57}
+        {300, 60}
     };
 
     /**

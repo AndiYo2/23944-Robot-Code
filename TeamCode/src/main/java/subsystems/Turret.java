@@ -178,12 +178,22 @@ public class Turret extends SubsystemBase {
         return turretAngleDeg;
     }
 
-    public double getDegreesToGoalLeadAdjusted() {
-        if (!ShooterConstants.SHOOT_WHILE_MOVING_ENABLED || shooter == null) {
+    /**
+     * Shooting_While_Moving turret aiming.
+     * Computes turret angle from the kinematically-predicted future pose
+     * (includes acceleration, not just velocity).
+     */
+    public double getDegreesToGoalShootingWhileMoving() {
+        if (!ShooterConstants.SHOOTING_WHILE_MOVING_ENABLED || shooter == null) {
             return getDegreesToGoal();
         }
-        double[] future = shooter.getFuturePose();
-        return getDegreesToGoalFromPosition(future[0], future[1], future[2]);
+        double[] future = shooter.getShootingWhileMovingFuturePose();
+        // getDegreesToGoalFromPosition subtracts futureH to get the servo angle,
+        // but the servo is on the robot at the CURRENT heading. Correct by adding
+        // back (futureH - curH). When stationary this is zero.
+        double angle = getDegreesToGoalFromPosition(future[0], future[1], future[2]);
+        angle += Math.toDegrees(future[2] - robot.cachedHeading);
+        return angle;
     }
 
     private double normalizeAngle(double degrees) {
@@ -231,7 +241,7 @@ public class Turret extends SubsystemBase {
 
     @Override
     public void periodic() {
-        lastDegreesToGoal = getDegreesToGoalLeadAdjusted();
+        lastDegreesToGoal = getDegreesToGoalShootingWhileMoving();
         setTurretDegree(lastDegreesToGoal);
         applyServoPosition(currentTargetDegrees);
     }

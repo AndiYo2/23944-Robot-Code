@@ -118,8 +118,6 @@ public abstract class AutonTemplate extends OpMode {
             CommandScheduler.getInstance().schedule(autonomousCommand);
         }
 
-        ShooterConstants.SHOOT_WHILE_MOVING_ENABLED = false;
-
         limelight.resetLimelight();
 
         robotHardware.resetProgressiveScan();

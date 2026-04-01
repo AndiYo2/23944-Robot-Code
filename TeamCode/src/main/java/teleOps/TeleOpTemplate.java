@@ -245,8 +245,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
         robot.clearBulkCache();
 
-        ShooterConstants.SHOOT_WHILE_MOVING_ENABLED = false;
-
         follower.update();
         robot.updateCachedPose();
 
