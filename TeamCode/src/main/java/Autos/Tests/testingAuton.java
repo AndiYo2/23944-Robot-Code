@@ -6,8 +6,9 @@ import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import commands.CommandSequenceBuilder;
-
+@Disabled
 @Autonomous(name = "testingAuton", group = "Autonomous")
 public class testingAuton extends AutonTemplate {
     private PathChain path1;

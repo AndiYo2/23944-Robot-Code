@@ -7,8 +7,9 @@ import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import commands.CommandSequenceBuilder;
-
+@Disabled
 @Autonomous(name = "LocalizerTester", group = "Autonomous")
 public class LocalizerTester extends AutonTemplate {
     private PathChain path1, path2, path3, path4, path5, path6;

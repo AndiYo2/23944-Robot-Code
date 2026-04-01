@@ -8,9 +8,10 @@ import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import commands.CommandSequenceBuilder;
 
-
+@Disabled
 @Autonomous(name = "RedExodus")
 public class RedExodus extends AutonTemplate {
     public static double maxSpeed = 1;
