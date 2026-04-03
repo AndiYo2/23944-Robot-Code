@@ -24,6 +24,9 @@ public class OdometryConstants {
     public static double RED_GOAL_X = 140.0;
     public static double RED_GOAL_Y = 140.0;
 
+    public static Pose redGatePose = new Pose(131, 59, Math.toRadians(31.5));
+    public static Pose blueGatePose = new Pose(13, 59, Math.toRadians(148.5));
+
     public static Pose endingAutonPose;
 
     /** Converts a Pedro Pose to FTC Pose2D for the Pinpoint odometry computer. */

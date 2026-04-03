@@ -75,9 +75,11 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         RobotConstants.Robot.allianceColor = allianceColor;
         follower = Constants.createFollower(hardwareMap);
         follower.activateAllPIDFs();
+        Pose gatePose = (allianceColor == EnumConstants.AllianceColor.Red)
+                ? OdometryConstants.redGatePose : OdometryConstants.blueGatePose;
         pathChain = () -> follower.pathBuilder() //Lazy Curve Generation
-                .addPath(new Path(new BezierLine(follower::getPose, new Pose(72,72,Math.toRadians(135)))))
-                .setHeadingInterpolation(HeadingInterpolator.linearFromPoint(follower::getHeading, Math.toRadians(135), 0.8))
+                .addPath(new Path(new BezierLine(follower::getPose, gatePose)))
+                .setHeadingInterpolation(HeadingInterpolator.linearFromPoint(follower::getHeading, gatePose.getHeading(), 0.8))
                 .build();
         initHardware();
         SpindexerConstants.currentMode = EnumConstants.ShootingMode.Fast;

@@ -28,14 +28,15 @@ public class Red21Ball extends AutonTemplate {
     private final Pose endShootPose = new Pose(92.000, 108.000, Math.toRadians(45));
 
     // Spike positions
-    private final Pose firstSpikePose = new Pose(122.500, 81.500, Math.toRadians(0));
-    private final Pose secondSpikePose = new Pose(122.500, 57.750, Math.toRadians(0));
-    private final Pose thirdSpikePose = new Pose(122.500, 33.500, Math.toRadians(0));
+    private final Pose firstSpikePose = new Pose(125.500, 83.00, Math.toRadians(0));
+    private final Pose secondSpikePose = new Pose(129.500, 57.750, Math.toRadians(0));
+    private final Pose thirdSpikePose = new Pose(132.500, 33.500, Math.toRadians(0));
 
     // Gate position
-    private final Pose gatePose = new Pose(132.000, 59.000, Math.toRadians(45));
+    private final Pose gatePose = new Pose(134.000, 59.000, Math.toRadians(31.5)); 
 
     // Control points
+    private final Pose firstShootControl = new Pose(101.000, 101.500);
     private final Pose secondSpikeControl1 = new Pose(92.000, 56.000);
     private final Pose secondSpikeControl2 = new Pose(110.500, 57.500);
     private final Pose thirdSpikeControl1 = new Pose(87.500, 32.000);
@@ -46,7 +47,7 @@ public class Red21Ball extends AutonTemplate {
         follower.setStartingPose(startPose);
 
         startToShoot = follower.pathBuilder()
-                .addPath(new BezierLine(startPose, shootPose))
+                .addPath(new BezierCurve(startPose, firstShootControl, shootPose))
                 .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(45))
                 .build();
 
@@ -108,9 +109,8 @@ public class Red21Ball extends AutonTemplate {
         Constants.RobotConstants.Robot.allianceColor = Constants.EnumConstants.AllianceColor.Red;
 
         autonomousCommand = new CommandSequenceBuilder(follower, intake, spindexer, limelight, shooter, turret)
-                .delay(.5)
                 .setShootWhileMoving(true)
-                .parallel(p -> p.moveTo(startToShoot, maxSpeed, false).shoot())
+                .parallel(p -> p.moveTo(startToShoot, maxSpeed, false).shootAfterDelay(.55))
                 .setShootWhileMoving(false)
                 .intakeStart()
                 .moveTo(shootToSecondSpike, maxSpeed, false)
@@ -118,11 +118,13 @@ public class Red21Ball extends AutonTemplate {
                 .shoot()
                 .intakeStart()
                 .moveTo(shootToGateOne, maxSpeed, false)
+                .delay(1)
                 .parallel(p -> p.moveTo(gateOneToShoot, maxSpeed, false).autoCatalog())
                 .shoot()
                 .intakeStart()
                 .setSpindexerMode(EnumConstants.ShootingMode.Sorted)
                 .moveTo(shootToGateTwo, maxSpeed, false)
+                .delay(1)
                 .parallel(p -> p.moveTo(gateTwoToShoot, maxSpeed, false).guaranteeSortedAutoCatalog())
                 .slowShoot()
                 .intakeStart()
@@ -133,6 +135,7 @@ public class Red21Ball extends AutonTemplate {
                 .moveTo(shootToThirdSpike, maxSpeed, false)
                 .parallel(p -> p.moveTo(thirdSpikeToShootEnd, maxSpeed, false).guaranteeSortedAutoCatalog())
                 .slowShoot()
+                .setShootWhileMoving(true)
                 .build();
     }
 }
