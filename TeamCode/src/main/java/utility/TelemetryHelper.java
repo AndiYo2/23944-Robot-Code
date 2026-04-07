@@ -1,9 +1,21 @@
 package utility;
 
+import Constants.LimelightConstants;
 import Constants.RobotConstants;
 import Constants.SpindexerConstants;
 import com.bylazar.telemetry.TelemetryManager;
+import com.pedropathing.ftc.FTCCoordinates;
+import com.pedropathing.ftc.InvertedFTCCoordinates;
+import com.pedropathing.ftc.PoseConverter;
+import com.pedropathing.geometry.PedroCoordinates;
+import com.pedropathing.geometry.Pose;
+
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
+
 import subsystems.*;
 
 /**
@@ -129,6 +141,13 @@ public class TelemetryHelper {
         double y = robot.cachedPoseY;
         double heading = Math.toDegrees(robot.cachedHeading);
         panels.debug("Pose: (" + (int)(x * 10) / 10.0 + ", " + (int)(y * 10) / 10.0 + ") " + (int)(heading * 10) / 10.0 + "°");
+
+        Pose3D lp = robot.limelight.getLatestResult().getBotpose();
+        double xp = (lp.getPosition().y * LimelightConstants.METERS_TO_INCHES) + 72;
+        double yp = 72 - (lp.getPosition().x * LimelightConstants.METERS_TO_INCHES);
+        Pose p = new Pose(xp, yp, Math.toRadians(lp.getOrientation().getYaw()-90));
+
+        panels.addData("LLPose unfiltered", p);
 
         panels.addData("Shooter Velocity (actual)", currentVel);
         panels.addData("Shooter Velocity (target)", targetVel);
