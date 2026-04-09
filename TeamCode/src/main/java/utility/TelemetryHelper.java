@@ -142,10 +142,11 @@ public class TelemetryHelper {
         double heading = Math.toDegrees(robot.cachedHeading);
         panels.debug("Pose: (" + (int)(x * 10) / 10.0 + ", " + (int)(y * 10) / 10.0 + ") " + (int)(heading * 10) / 10.0 + "°");
 
-        Pose3D lp = robot.limelight.getLatestResult().getBotpose();
+        robot.limelight.updateRobotOrientation(heading + 90);
+        Pose3D lp = robot.limelight.getLatestResult().getBotpose_MT2();
         double xp = (lp.getPosition().y * LimelightConstants.METERS_TO_INCHES) + 72;
         double yp = 72 - (lp.getPosition().x * LimelightConstants.METERS_TO_INCHES);
-        Pose p = new Pose(xp, yp, Math.toRadians(lp.getOrientation().getYaw()-90));
+        Pose p = new Pose(xp, yp, Math.toRadians(lp.getOrientation().getYaw() - 90));
 
         panels.addData("LLPose unfiltered", p);
 
