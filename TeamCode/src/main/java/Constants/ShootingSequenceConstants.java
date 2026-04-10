@@ -12,8 +12,8 @@ public class ShootingSequenceConstants {
     // --- Shooter Flipper ---
     public static double SHOOTER_FLIPPER_EXTENDED = 0.42;
     public static double SHOOTER_FLIPPER_RETRACT = 0.5;
-    public static double SHOOTER_FLICK_TIME = 0.09;//.13
-    public static double SHOOTER_RETRACT_DELAY = 0;//.06
+    public static double SHOOTER_FLICK_TIME = 0.09;
+    public static double SHOOTER_RETRACT_DELAY = 0;
 
     // --- Spindexer Flipper ---
     public static double SPINDEXER_FLIPPER_EXTENDED = 0.41;
@@ -25,7 +25,7 @@ public class ShootingSequenceConstants {
     public static double SHOOTER_EXTEND_HALFWAY = 0;
 
     // --- Spindexer Rotation ---
-    public static double SPINDEXER_ROTATION_TIME = 0.11;//0.14
+    public static double SPINDEXER_ROTATION_TIME = 0.11;
 
     // --- Analog Encoder Tolerances ---
     public static double SHOOTER_FLIPPER_POSITION_TOLERANCE = 0.02;
