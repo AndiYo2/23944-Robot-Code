@@ -11,8 +11,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
  */
 @Configurable
 public class OdometryConstants {
-    public static Pose blueStartPoint = new Pose(56.5, 7.5, Math.toRadians(90)); // Test out (55.5, 6.75)
-    public static Pose redStartPoint = new Pose(87.5, 7.5, Math.toRadians(90)); // Test out (88.5, 6.75,
+    public static Pose blueStartPoint = new Pose(55.5, 6.75, Math.toRadians(90)); // Test out (55.5, 6.75)
+    public static Pose redStartPoint = new Pose(88.5, 6.75, Math.toRadians(90)); // Test out (88.5, 6.75,
 
     public static Pose standardStartPoint = blueStartPoint;
 

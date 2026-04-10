@@ -149,33 +149,36 @@ public class Limelight extends SubsystemBase {
     private Pose limelightPose = null;
     public String lastRelocDebug = "no attempt yet";
 
+    public Pose getLimelightPose() {
+        return limelightPose;
+    }
+
     public void updateLimelightPose() {
         if (robot.limelight == null) return;
 
         // Convert heading from Pedro to InvertedFTC frame (same frame the output uses)
         // Using the Pedro library ensures the round-trip is consistent
-        Pose pedroHeading = new Pose(0, 0, robot.cachedHeading, PedroCoordinates.INSTANCE);
-        double ftcYaw = Math.toDegrees(
-                pedroHeading.getAsCoordinateSystem(InvertedFTCCoordinates.INSTANCE).getHeading());
-        robot.limelight.updateRobotOrientation(ftcYaw);
 
         LLResult result = robot.limelight.getLatestResult();
-        if (result != null && result.isValid()
-                && !result.getFiducialResults().isEmpty()) {
+        if (result != null && result.isValid() && !result.getFiducialResults().isEmpty()) {
             Pose3D botpose = result.getBotpose_MT2();
             if (botpose != null) {
-                double xInches = (botpose.getPosition().x*(72*(1/LimelightConstants.METERS_TO_INCHES))) * LimelightConstants.METERS_TO_INCHES;
-                double yInches = (botpose.getPosition().y*(72*(1/LimelightConstants.METERS_TO_INCHES))) * LimelightConstants.METERS_TO_INCHES;
-                double heading = botpose.getOrientation().getYaw(AngleUnit.RADIANS) + (Math.PI/2);
-
-                limelightPose = new Pose(xInches, yInches, heading);
+                robot.limelight.updateRobotOrientation(Math.toDegrees(robot.cachedHeading) + 90);
+                Pose3D lp = robot.limelight.getLatestResult().getBotpose_MT2();
+                double xp = (lp.getPosition().y * LimelightConstants.METERS_TO_INCHES) + 72;
+                double yp = 72 - (lp.getPosition().x * LimelightConstants.METERS_TO_INCHES);
+                limelightPose = new Pose(xp, yp, Math.toRadians(lp.getOrientation().getYaw() - 90));
 
                 lastRelocDebug = String.format("raw=(%.3fm, %.3fm, %.1f°) -> pedro=(%.1f, %.1f, %.1f°)",
                         botpose.getPosition().x, botpose.getPosition().y,
                         botpose.getOrientation().getYaw(AngleUnit.DEGREES),
                         limelightPose.getX(), limelightPose.getY(),
                         Math.toDegrees(limelightPose.getHeading()));
+            } else {
+                limelightPose = new Pose(robot.cachedPoseX, robot.cachedPoseY, robot.cachedHeading);
             }
+        } else {
+            limelightPose = new Pose(robot.cachedPoseX, robot.cachedPoseY, robot.cachedHeading);
         }
     }
 
@@ -200,6 +203,7 @@ public class Limelight extends SubsystemBase {
             return false;
         }
         robot.pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, limelightPose.getX(), limelightPose.getY(), AngleUnit.RADIANS, limelightPose.getHeading()));
+        robot.pinpoint.update();
         lastRelocDebug = String.format("APPLIED (%.1f, %.1f)",
                 limelightPose.getX(), limelightPose.getY());
         return true;

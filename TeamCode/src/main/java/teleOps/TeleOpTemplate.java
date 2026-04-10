@@ -7,6 +7,7 @@ import Constants.RobotConstants;
 import Constants.ShooterConstants;
 import Constants.SpindexerConstants;
 
+import com.bylazar.field.Style;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.paths.HeadingInterpolator;
@@ -315,6 +316,10 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
         if (RobotConstants.Robot.ENABLE_TELEMETRY) {
             Pose currentPose = new Pose(robot.cachedPoseX, robot.cachedPoseY, robot.cachedHeading);
+            FieldDrawing.drawRobot(
+                    limelight.getLimelightPose(),
+                    new Style("", "#FFFFFF", 0.75)
+            );
             FieldDrawing.drawTeleOpDebug(
                     poseTracker.getXArray(),
                     poseTracker.getYArray(),
