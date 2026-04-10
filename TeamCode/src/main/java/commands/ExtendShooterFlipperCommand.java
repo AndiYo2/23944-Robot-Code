@@ -33,8 +33,7 @@ public class ExtendShooterFlipperCommand extends CommandBase {
 
     @Override
     public boolean isFinished() {
-        return timer.seconds() >= flickTime
-            || shooter.isFlipperAtPosition(ShootingSequenceConstants.SHOOTER_FLIPPER_EXTENDED);
+        return timer.seconds() >= flickTime;
     }
 
     @Override

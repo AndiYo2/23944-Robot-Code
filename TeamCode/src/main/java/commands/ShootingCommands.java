@@ -69,19 +69,18 @@ public class ShootingCommands {
                     .alongWith(new RetractSpindexerFlipperCommand(spindexer))
             );
         } else if (ballCount == 3) {
-            // Ball 1
+            // Ball 1: fire from slot 1
             sequence.addCommands(
                 new ExtendShooterFlipperCommand(shooter, flickTime),
                 new RetractShooterFlipperCommand(shooter)
             );
 
-            // Ball 2 + pipeline transition to ball 3
-            // Spindexer pushes ball 2 up
+            // Ball 2: spindexer pushes ball up
             sequence.addCommands(new ExtendSpindexerFlipperCommand(spindexer));
 
             // Two parallel lanes:
-            //   Shooter:   extend (fires ball 2) → retract
-            //   Spindexer: wait(halfway) → retract → wait(halfway) → rotate CCW
+            //   P1: extend shooter (fires ball 2) → retract shooter
+            //   P2: wait(halfway) → retract spindexer flipper → rotate spindexer
             long shooterHalfwayMs = (long)(ShootingSequenceConstants.SHOOTER_EXTEND_HALFWAY * 1000);
 
             sequence.addCommands(
@@ -89,20 +88,17 @@ public class ShootingCommands {
                     .andThen(new RetractShooterFlipperCommand(shooter))
                     .alongWith(
                         new WaitCommand(shooterHalfwayMs)
-                            .andThen(new InstantCommand(() -> {
-                                spindexer.retractFlipper();
-                                spindexer.rotateCCW();
-                            }, spindexer))
-                            .andThen(new WaitCommand((long)(ShootingSequenceConstants.SPINDEXER_ROTATION_TIME * 1000)))
+                            .andThen(new RetractSpindexerFlipperCommand(spindexer))
+                            .andThen(new RotateCCWCommand(spindexer))
                     )
             );
 
-            // Ball 3
+            // Ball 3: push up, fire, retract spindexer
             sequence.addCommands(
                 new ExtendSpindexerFlipperCommand(spindexer),
                 new ExtendShooterFlipperCommand(shooter, flickTime),
-                new RetractShooterFlipperCommand(shooter)
-                    .alongWith(new RetractSpindexerFlipperCommand(spindexer))
+                new RetractShooterFlipperCommand(shooter),
+                new RetractSpindexerFlipperCommand(spindexer)
             );
         }
 
