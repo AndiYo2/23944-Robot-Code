@@ -47,6 +47,8 @@ public class CatalogCommands {
                 .andThen(new RetractSpindexerFlipperCommand(spindexer)).alongWith(new IntakeCommand(intake, SpindexerConstants.TELEOP_FIRST_CATALOG_INTAKE_TIME, false, sensorGate)),
             // Rotate ball 2 to shooter slot (slot 1)
             new RotateCCWCommand(spindexer),
+            // Wait for ball 2 to clear the sensor zone before checking for ball 3
+            new WaitCommand((long)(SpindexerConstants.ROTATION_SETTLE_TIME * 1000)),
             // Intake ball 3 into slot 0 (reverse intake to spit extras)
             new IntakeCommand(intake, SpindexerConstants.TELEOP_REVERSE_CATALOG_INTAKE_TIME, true, sensorGate),
             // Set final pattern: all 3 slots tracked as Purple

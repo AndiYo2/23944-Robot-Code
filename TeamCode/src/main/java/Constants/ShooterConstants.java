@@ -15,8 +15,8 @@ public class ShooterConstants {
     public static double HOOD_MIN_ANGLE = 30.0;
     public static double HOOD_MAX_ANGLE = 63.0;
     public static double HOOD_DEFAULT_ANGLE = 45.0;
-    public static double HOOD_SERVO_AT_MIN_ANGLE = 1;
-    public static double HOOD_SERVO_AT_MAX_ANGLE = 0.38;
+    public static double HOOD_SERVO_AT_MIN_ANGLE = .95;
+    public static double HOOD_SERVO_AT_MAX_ANGLE = 0.30;
 
     /** Enable Shooting_While_Moving for shoot-while-moving compensation.
      *  Uses full kinematic prediction: pos + vel*t + 0.5*accel*t²
@@ -54,47 +54,48 @@ public class ShooterConstants {
     /** Minimum heading velocity (rad/sec) for heading lead compensation. Below this, heading is considered stable. */
     public static double LEAD_HEADING_VELOCITY_DEADBAND = 0.05;
 
+    /** Flat velocity offset added to every LUT lookup (ticks/sec). Tune via Panels to compensate for SWM distance mismatch. */
+    public static double VELOCITY_ADJUST_HARDCODED = 0.0;
+
     // Time in air (seconds)
     public static double TIME_IN_AIR = 0.675;
 
     // Velocity LUT - Distance (inches) -> Velocity (ticks/sec)
     public static double[][] VELOCITY_DATA = {
-        {0, 1430},
-        {40, 1660},
-        {50, 1760},
-        {60, 1880},
-        {70, 2000},
-        {80, 2100},
-        {90, 2140},
-        {100, 2180},
-        {114, 2320},
-        {125, 2580},
-        {132, 2660},
-        {140, 2680},
-        {146, 2720},
-        {151, 2800},
-        {158, 2900},
-        {300, 3200}
+        {0, 1550},
+        {40, 1550},
+        {50, 1550},
+        {60, 1650},
+        {76, 1750},
+        {90, 1870},
+        {100, 1980},
+        {110, 2020},
+        {123, 2100},
+        {130, 2350},
+        {140.5, 2350},
+        {147, 2370},
+        {153, 2400},
+        {160, 2450},
+        {300, 2450}
     };
 
     // Hood Angle LUT - Distance (inches) -> Hood Angle (degrees, 0=vertical, 90=horizontal)
     public static double[][] HOOD_DATA = {
         {0, 32},
         {40, 32},
-        {50, 37},
-        {60, 41},
-        {70, 43},
-        {80, 45},
-        {90, 46},
-        {100, 47},
-        {114, 49.5},
-        {125, 51.5},
-        {132, 52},
-        {140, 53},
-        {146, 53.25},
-        {151, 55},
-        {158, 57},
-        {300, 60}
+        {50, 35},
+        {60, 40},
+        {76, 45},
+        {90, 48},
+        {100, 49},
+        {110, 49},
+        {123, 50},
+        {130, 56},
+        {140.5, 56},
+        {147, 56},
+        {153, 56},
+        {160, 56},
+        {300, 56}
     };
 
     /**
@@ -108,7 +109,7 @@ public class ShooterConstants {
         public static boolean TUNING_MODE = false;
 
         /** Manual velocity setting (ticks/sec) - only used when TUNING_MODE is true */
-        public static double TUNING_VELOCITY = 2600.0;
+        public static double TUNING_VELOCITY = 2000.0;
 
         /** Manual hood angle setting (degrees) - only used when TUNING_MODE is true */
         public static double TUNING_HOOD_ANGLE = 53.0;

@@ -132,7 +132,7 @@ public class Shooter extends SubsystemBase {
     }
 
     private double getVelocityFromDistance(double distance) {
-        return velocityLUT.get(distance);
+        return velocityLUT.get(distance) + ShooterConstants.VELOCITY_ADJUST_HARDCODED;
     }
 
     private double getHoodAngleFromDistance(double distance) {
@@ -447,6 +447,10 @@ public class Shooter extends SubsystemBase {
         if (ShooterConstants.ShooterTuning.TUNING_MODE) {
             requiredVelocity = ShooterConstants.ShooterTuning.TUNING_VELOCITY;
             requiredHoodAngle = ShooterConstants.ShooterTuning.TUNING_HOOD_ANGLE;
+            // Keep future pose at current pose so turret aims correctly
+            shootingWhileMovingFuturePose[0] = robot.cachedPoseX;
+            shootingWhileMovingFuturePose[1] = robot.cachedPoseY;
+            shootingWhileMovingFuturePose[2] = robot.cachedHeading;
         } else {
             updateVelocityFromDistance();
         }
