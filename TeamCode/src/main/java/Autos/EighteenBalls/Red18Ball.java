@@ -8,110 +8,109 @@ import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import commands.CommandSequenceBuilder;
 
-@Disabled
+
 @Autonomous(name = "Red18Ball")
 public class Red18Ball extends AutonTemplate {
-    public static double maxSpeed = .85;
-    private PathChain StartToShoot, ShootToFirstSpike, FirstSpikeToShoot, ShootToSecondSpike,
-            SecondSpikeToGate, SecondSpikeGateToShoot, ShootToGateOpenForThird,
-            GateOpenForThirdToThird, ThirdToShoot, ShootToGateOpenForFourth,
-            GateOpenForFourthToFourth, FourthToShoot, ShootToFifthSpikePrep,
-            FifthSpikePrepToFifthSpike, FifthSpikeToShoot;
+    public static double maxSpeed = 1;
+    private PathChain startToShoot, shootToSecondSpike, secondSpikeToShoot,
+            shootToGateOne1, shootToGateOne2, gateOneToShoot,
+            shootToGateTwo1, shootToGateTwo2, gateTwoToShoot,
+            shootToFirstSpike, firstSpikeToShoot, shootToThirdSpike, thirdSpikeToShootEnd;
 
-    // Named pose constants
-    private final Pose startPose = new Pose(111.000, 133.500, Math.toRadians(90));
-    private final Pose shootPose = new Pose(120.000, 107.500, Math.toRadians(90));
-    private final Pose firstSpikePose = new Pose(120.000, 90.000, Math.toRadians(270));
-    private final Pose mainShootPose = new Pose(87.500, 81.000, Math.toRadians(30));
-    private final Pose secondSpikeControlPoint = new Pose(116.500, 85.000);
-    private final Pose secondSpikePose = new Pose(120.000, 66.000, Math.toRadians(270));
-    private final Pose gatePose = new Pose(128.000, 65.000, Math.toRadians(0));
-    private final Pose gateInnerControlPoint = new Pose(123.500, 59.000);
-    private final Pose thirdFourthPickupPose = new Pose(133.000, 58.000, Math.toRadians(0));
-    private final Pose fifthSpikePrepPose = new Pose(120.000, 50.000, Math.toRadians(270));
-    private final Pose fifthSpikePose = new Pose(120.000, 41.500, Math.toRadians(270));
-    private final Pose lastShootPose = new Pose(88.000, 110.500, Math.toRadians(30));
+    // Start pose
+    private final Pose startPose = new Pose(128.500, 109.500, Math.toRadians(90));
+
+    // Shoot positions
+    private final Pose shootPose = new Pose(88.500, 81.500, Math.toRadians(45));
+    private final Pose shootPose2 = new Pose(88.500, 76.500, Math.toRadians(0));
+    private final Pose shootPose2Angled = new Pose(88.500, 76.500, Math.toRadians(30));
+    private final Pose endShootPose = new Pose(92.000, 108.000, Math.toRadians(45));
+
+    // Spike positions
+    private final Pose firstSpikePose = new Pose(125.500, 83.00, Math.toRadians(0));
+    private final Pose secondSpikePose = new Pose(129.500, 57.750, Math.toRadians(0));
+    private final Pose thirdSpikePose = new Pose(132.500, 33.500, Math.toRadians(0));
+
+    // Gate positions
+    private final Pose gateWaypointPose = new Pose(125.000, 61.500, Math.toRadians(31.5));
+    private final Pose gatePose = new Pose(132.000, 59.000, Math.toRadians(31.5));
+
+    // Control points
+    private final Pose firstShootControl = new Pose(101.000, 101.500);
+    private final Pose secondSpikeControl1 = new Pose(92.000, 56.000);
+    private final Pose secondSpikeControl2 = new Pose(110.500, 57.500);
+    private final Pose thirdSpikeControl1 = new Pose(87.500, 32.000);
+    private final Pose thirdSpikeControl2 = new Pose(102.000, 33.500);
 
     @Override
     protected void buildPaths() {
         follower.setStartingPose(startPose);
 
-        StartToShoot = follower.pathBuilder()
-                .addPath(new BezierLine(startPose, shootPose))
+        startToShoot = follower.pathBuilder()
+                .addPath(new BezierCurve(startPose, firstShootControl, shootPose))
                 .setLinearHeadingInterpolation(startPose.getHeading(), shootPose.getHeading())
                 .build();
 
-        ShootToFirstSpike = follower.pathBuilder()
-                .addPath(new BezierLine(shootPose, firstSpikePose))
-                .setConstantHeadingInterpolation(firstSpikePose.getHeading())
-                .build();
-
-        FirstSpikeToShoot = follower.pathBuilder()
-                .addPath(new BezierLine(firstSpikePose, mainShootPose))
-                .setLinearHeadingInterpolation(firstSpikePose.getHeading(), mainShootPose.getHeading())
-                .build();
-
-        ShootToSecondSpike = follower.pathBuilder()
-                .addPath(new BezierCurve(mainShootPose, secondSpikeControlPoint, secondSpikePose))
-                .setLinearHeadingInterpolation(mainShootPose.getHeading(), secondSpikePose.getHeading())
-                .build();
-
-        SecondSpikeToGate = follower.pathBuilder()
-                .addPath(new BezierLine(secondSpikePose, gatePose))
+        shootToSecondSpike = follower.pathBuilder()
+                .addPath(new BezierCurve(shootPose, secondSpikeControl1, secondSpikeControl2, secondSpikePose))
                 .setLinearHeadingInterpolation(secondSpikePose.getHeading(), secondSpikePose.getHeading())
                 .build();
 
-        SecondSpikeGateToShoot = follower.pathBuilder()
-                .addPath(new BezierLine(gatePose, mainShootPose))
-                .setLinearHeadingInterpolation(secondSpikePose.getHeading(), mainShootPose.getHeading())
+        secondSpikeToShoot = follower.pathBuilder()
+                .addPath(new BezierLine(secondSpikePose, shootPose2))
+                .setLinearHeadingInterpolation(secondSpikePose.getHeading(), shootPose2.getHeading())
                 .build();
 
-        ShootToGateOpenForThird = follower.pathBuilder()
-                .addPath(new BezierLine(mainShootPose, gatePose))
-                .setLinearHeadingInterpolation(mainShootPose.getHeading(), gatePose.getHeading())
+        shootToGateOne1 = follower.pathBuilder()
+                .addPath(new BezierLine(shootPose2, gateWaypointPose))
+                .setLinearHeadingInterpolation(shootPose2.getHeading(), gateWaypointPose.getHeading())
                 .build();
 
-        GateOpenForThirdToThird = follower.pathBuilder()
-                .addPath(new BezierCurve(gatePose, gateInnerControlPoint, thirdFourthPickupPose))
-                .setLinearHeadingInterpolation(gatePose.getHeading(), thirdFourthPickupPose.getHeading())
+        shootToGateOne2 = follower.pathBuilder()
+                .addPath(new BezierLine(gateWaypointPose, gatePose))
+                .setLinearHeadingInterpolation(gateWaypointPose.getHeading(), gatePose.getHeading())
                 .build();
 
-        ThirdToShoot = follower.pathBuilder()
-                .addPath(new BezierLine(thirdFourthPickupPose, mainShootPose))
-                .setLinearHeadingInterpolation(thirdFourthPickupPose.getHeading(), mainShootPose.getHeading())
+        gateOneToShoot = follower.pathBuilder()
+                .addPath(new BezierLine(gatePose, shootPose2Angled))
+                .setLinearHeadingInterpolation(gatePose.getHeading(), shootPose2Angled.getHeading())
                 .build();
 
-        ShootToGateOpenForFourth = follower.pathBuilder()
-                .addPath(new BezierLine(mainShootPose, gatePose))
-                .setLinearHeadingInterpolation(mainShootPose.getHeading(), gatePose.getHeading())
+        shootToGateTwo1 = follower.pathBuilder()
+                .addPath(new BezierLine(shootPose2Angled, gateWaypointPose))
+                .setLinearHeadingInterpolation(shootPose2Angled.getHeading(), gateWaypointPose.getHeading())
                 .build();
 
-        GateOpenForFourthToFourth = follower.pathBuilder()
-                .addPath(new BezierCurve(gatePose, gateInnerControlPoint, thirdFourthPickupPose))
-                .setLinearHeadingInterpolation(gatePose.getHeading(), thirdFourthPickupPose.getHeading())
+        shootToGateTwo2 = follower.pathBuilder()
+                .addPath(new BezierLine(gateWaypointPose, gatePose))
+                .setLinearHeadingInterpolation(gateWaypointPose.getHeading(), gatePose.getHeading())
                 .build();
 
-        FourthToShoot = follower.pathBuilder()
-                .addPath(new BezierLine(thirdFourthPickupPose, mainShootPose))
-                .setLinearHeadingInterpolation(thirdFourthPickupPose.getHeading(), mainShootPose.getHeading())
+        gateTwoToShoot = follower.pathBuilder()
+                .addPath(new BezierLine(gatePose, shootPose))
+                .setLinearHeadingInterpolation(gatePose.getHeading(), shootPose2Angled.getHeading())
                 .build();
 
-        ShootToFifthSpikePrep = follower.pathBuilder()
-                .addPath(new BezierLine(mainShootPose, fifthSpikePrepPose))
-                .setLinearHeadingInterpolation(mainShootPose.getHeading(), fifthSpikePrepPose.getHeading())
+        shootToFirstSpike = follower.pathBuilder()
+                .addPath(new BezierLine(shootPose, firstSpikePose))
+                .setLinearHeadingInterpolation(firstSpikePose.getHeading(), firstSpikePose.getHeading())
                 .build();
 
-        FifthSpikePrepToFifthSpike = follower.pathBuilder()
-                .addPath(new BezierLine(fifthSpikePrepPose, fifthSpikePose))
-                .setLinearHeadingInterpolation(fifthSpikePrepPose.getHeading(), fifthSpikePose.getHeading())
+        firstSpikeToShoot = follower.pathBuilder()
+                .addPath(new BezierLine(firstSpikePose, shootPose2))
+                .setLinearHeadingInterpolation(firstSpikePose.getHeading(), shootPose2.getHeading())
                 .build();
 
-        FifthSpikeToShoot = follower.pathBuilder()
-                .addPath(new BezierLine(fifthSpikePose, lastShootPose))
-                .setLinearHeadingInterpolation(fifthSpikePose.getHeading(), lastShootPose.getHeading())
+        shootToThirdSpike = follower.pathBuilder()
+                .addPath(new BezierCurve(shootPose2, thirdSpikeControl1, thirdSpikeControl2, thirdSpikePose))
+                .setLinearHeadingInterpolation(shootPose2.getHeading(), thirdSpikePose.getHeading())
+                .build();
+
+        thirdSpikeToShootEnd = follower.pathBuilder()
+                .addPath(new BezierLine(thirdSpikePose, endShootPose))
+                .setLinearHeadingInterpolation(thirdSpikePose.getHeading(), endShootPose.getHeading())
                 .build();
     }
 
@@ -122,45 +121,35 @@ public class Red18Ball extends AutonTemplate {
         Constants.RobotConstants.Robot.allianceColor = Constants.EnumConstants.AllianceColor.Red;
 
         autonomousCommand = new CommandSequenceBuilder(follower, intake, spindexer, limelight, shooter, turret)
-                .delay(.75)
-                .moveTo(StartToShoot, maxSpeed, false)
+                .setShootWhileMoving(true)
+                .parallel(p -> p.moveTo(startToShoot, maxSpeed, false).shootAfterDelay(.55))
+                .setShootWhileMoving(false)
+                .intakeStart()
+                .moveTo(shootToSecondSpike, maxSpeed, false)
+                .parallel(p -> p.moveTo(secondSpikeToShoot, maxSpeed, false).autoCatalog())
                 .shoot()
                 .intakeStart()
-                .moveTo(ShootToFirstSpike, maxSpeed, false)
+                .moveTo(shootToGateOne1, maxSpeed, false)
+                .moveTo(shootToGateOne2, maxSpeed, false)
                 .delay(1)
-                .autoCatalog()
-                .moveTo(FirstSpikeToShoot, maxSpeed, false)
+                .parallel(p -> p.moveTo(gateOneToShoot, maxSpeed, false).autoCatalog())
                 .shoot()
                 .intakeStart()
-                .moveTo(ShootToSecondSpike, maxSpeed, false)
+                .setSpindexerMode(EnumConstants.ShootingMode.Sorted)
+                .moveTo(shootToGateTwo1, maxSpeed, false)
+                .moveTo(shootToGateTwo2, maxSpeed, false)
                 .delay(1)
-                .autoCatalog()
-                .moveTo(SecondSpikeToGate, maxSpeed, false)
-                .moveTo(SecondSpikeGateToShoot, maxSpeed, false)
-                .shoot()
+                .parallel(p -> p.moveTo(gateTwoToShoot, maxSpeed, false).guaranteeSortedAutoCatalog())
+                .slowShoot()
                 .intakeStart()
-                .moveTo(ShootToGateOpenForThird, maxSpeed, false)
-                .delay(.3)
-                .moveTo(GateOpenForThirdToThird, maxSpeed, false)
-                .delay(.3)
-                .autoCatalog()
-                .moveTo(ThirdToShoot, maxSpeed, false)
-                .shoot()
+                .moveTo(shootToFirstSpike, maxSpeed, false)
+                .parallel(p -> p.moveTo(firstSpikeToShoot, maxSpeed, false).guaranteeSortedAutoCatalog())
+                .slowShoot()
                 .intakeStart()
-                .moveTo(ShootToGateOpenForFourth, maxSpeed, false)
-                .delay(.3)
-                .moveTo(GateOpenForFourthToFourth, maxSpeed, false)
-                .delay(.3)
-                .autoCatalog()
-                .moveTo(FourthToShoot, maxSpeed, false)
-                .shoot()
-                .intakeStart()
-                .moveTo(ShootToFifthSpikePrep, maxSpeed, false)
-                .moveTo(FifthSpikePrepToFifthSpike, maxSpeed, false)
-                .delay(1)
-                .autoCatalog()
-                .moveTo(FifthSpikeToShoot, maxSpeed, false)
-                .shoot()
+                .moveTo(shootToThirdSpike, maxSpeed, false)
+                .parallel(p -> p.moveTo(thirdSpikeToShootEnd, maxSpeed, false).guaranteeSortedAutoCatalog())
+                .slowShoot()
+                .setShootWhileMoving(true)
                 .build();
     }
 }
