@@ -225,6 +225,9 @@ public class Limelight extends SubsystemBase {
     @Override
     public void periodic() {
         if (currentMode == EnumConstants.LimelightMode.TagTracking && !motifDetected) {
+            // Re-enforce motif pipeline each loop to prevent updateRobotOrientation()
+            // from the previous GoalTracking cycle holding the Limelight on pipeline 2
+            robot.limelight.pipelineSwitch(LimelightConstants.MOTIF_PIPELINE);
             updateLimelightData();
             scanForMotifTag();
         } else {

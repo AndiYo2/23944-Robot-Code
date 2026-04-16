@@ -67,6 +67,10 @@ public class AutoCatalogModeCommand extends CommandBase {
 
     private void startSortedCatalog() {
         RobotHardware robot = RobotHardware.getInstance();
+        // Force fresh reads so sorting uses current ball colors, not stale cache
+        robot.spindexerSensorPair.updateCacheBulkSafe();
+        robot.transferSensorPair.updateCacheBulkSafe();
+        robot.rampSensorPair.updateCacheBulkSafe();
         EnumConstants.BallColor[] motifPattern = {
                 SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(0),
                 SpindexerAndMotifStatus.MotifPattern.getBallColorInSlotX(1),

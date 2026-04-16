@@ -1,7 +1,6 @@
 package commands;
 
 import com.arcrobotics.ftclib.command.Command;
-import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.SequentialCommandGroup;
 import com.arcrobotics.ftclib.command.WaitCommand;
 
@@ -11,22 +10,17 @@ import subsystems.Spindexer;
 
 /**
  * Factory class for composing shooting command sequences.
- * Uses atomic extend/retract commands with halfway pipelining
- * to overlap spindexer retract/rotate with shooter operations.
+ * All variants use the same physical shoot mechanism (SHOOTER_FLICK_TIME).
+ * Slow variants add delays between shots rather than changing flick timing.
  */
 public class ShootingCommands {
 
-    /**
-     * Shoots 3 balls.
-     * Cataloging always ends at [m2, m1, None], so this uses a fixed sequence.
-     */
     public static Command shootThreeBalls(Shooter shooter, Spindexer spindexer) {
         return shootAllBalls(shooter, spindexer, 3);
     }
 
-
     public static Command shootAllBalls(Shooter shooter, Spindexer spindexer, int ballCount) {
-        return shootAllBallsWithTime(shooter, spindexer, ballCount, ShootingSequenceConstants.SHOOTER_FLICK_TIME);
+        return buildShootSequence(shooter, spindexer, ballCount, 0);
     }
 
     public static Command slowShootThreeBalls(Shooter shooter, Spindexer spindexer) {
@@ -38,15 +32,21 @@ public class ShootingCommands {
     }
 
     public static Command slowShootAllBalls(Shooter shooter, Spindexer spindexer, int ballCount) {
-        return shootAllBallsWithTime(shooter, spindexer, ballCount, 0.375);
+        return buildShootSequence(shooter, spindexer, ballCount, ShootingSequenceConstants.SLOW_SHOOT_DELAY);
     }
 
     public static Command superSlowShootAllBalls(Shooter shooter, Spindexer spindexer, int ballCount) {
-        return shootAllBallsWithTime(shooter, spindexer, ballCount, 0.5);
+        return buildShootSequence(shooter, spindexer, ballCount, ShootingSequenceConstants.SUPER_SLOW_SHOOT_DELAY);
     }
 
-    private static Command shootAllBallsWithTime(Shooter shooter, Spindexer spindexer, int ballCount, double flickTime) {
+    /**
+     * Builds the shoot sequence. All variants use SHOOTER_FLICK_TIME for the actual flick.
+     * Slow variants add a delay between each ball shot.
+     */
+    private static Command buildShootSequence(Shooter shooter, Spindexer spindexer, int ballCount, double delayBetweenShots) {
         SequentialCommandGroup sequence = new SequentialCommandGroup();
+        double flickTime = ShootingSequenceConstants.SHOOTER_FLICK_TIME;
+        long delayMs = (long)(delayBetweenShots * 1000);
 
         if (ballCount <= 0) {
             return sequence;
@@ -58,11 +58,16 @@ public class ShootingCommands {
                 new RetractShooterFlipperCommand(shooter)
             );
         } else if (ballCount == 2) {
+            // Ball 1
             sequence.addCommands(
-                // Ball 1
                 new ExtendShooterFlipperCommand(shooter, flickTime),
-                new RetractShooterFlipperCommand(shooter),
-                // Ball 2
+                new RetractShooterFlipperCommand(shooter)
+            );
+            if (delayMs > 0) {
+                sequence.addCommands(new WaitCommand(delayMs));
+            }
+            // Ball 2
+            sequence.addCommands(
                 new ExtendSpindexerFlipperCommand(spindexer),
                 new ExtendShooterFlipperCommand(shooter, flickTime),
                 new RetractShooterFlipperCommand(shooter)
@@ -74,6 +79,10 @@ public class ShootingCommands {
                 new ExtendShooterFlipperCommand(shooter, flickTime),
                 new RetractShooterFlipperCommand(shooter)
             );
+
+            if (delayMs > 0) {
+                sequence.addCommands(new WaitCommand(delayMs));
+            }
 
             // Ball 2: spindexer pushes ball up
             sequence.addCommands(new ExtendSpindexerFlipperCommand(spindexer));
@@ -92,6 +101,10 @@ public class ShootingCommands {
                             .andThen(new RotateCCWCommand(spindexer))
                     )
             );
+
+            if (delayMs > 0) {
+                sequence.addCommands(new WaitCommand(delayMs));
+            }
 
             // Ball 3: push up, fire, retract spindexer
             sequence.addCommands(

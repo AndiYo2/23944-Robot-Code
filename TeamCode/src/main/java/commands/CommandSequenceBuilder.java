@@ -171,6 +171,24 @@ public class CommandSequenceBuilder {
         return this;
     }
 
+    // ==================== Parametric Speed Methods ====================
+
+    /**
+     * Adds a parametric-speed path command. The speed function maps t-value (0.0-1.0)
+     * to maxPower (0.0-1.0), allowing variable speed along the path.
+     *
+     * @param pathChain     the path chain to follow
+     * @param speedFunction maps parametric progress to power
+     * @param holdEnd       whether to hold position at the end
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder moveToParametric(PathChain pathChain,
+                                                    java.util.function.DoubleUnaryOperator speedFunction,
+                                                    boolean holdEnd) {
+        commands.add(new ParametricSpeedFollowCommand(follower, pathChain, speedFunction, holdEnd));
+        return this;
+    }
+
     // ==================== Ball-Collect-MoveTo Methods ====================
     // Collect phase: follows path until 3 balls or path ends.
     // Then return phase: dynamic straight-line path back to returnPose.

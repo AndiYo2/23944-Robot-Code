@@ -15,8 +15,8 @@ import commands.CommandSequenceBuilder;
 public class Red18Ball extends AutonTemplate {
     public static double maxSpeed = 1;
     private PathChain startToShoot, shootToSecondSpike, secondSpikeToShoot,
-            shootToGateOne1, shootToGateOne2, gateOneToShoot,
-            shootToGateTwo1, shootToGateTwo2, gateTwoToShoot,
+            shootToGateOne, gateOneToShoot,
+            shootToGateTwo, gateTwoToShoot,
             shootToFirstSpike, firstSpikeToShoot, shootToThirdSpike, thirdSpikeToShootEnd;
 
     // Start pose
@@ -24,7 +24,7 @@ public class Red18Ball extends AutonTemplate {
 
     // Shoot positions
     private final Pose shootPose = new Pose(88.500, 81.500, Math.toRadians(45));
-    private final Pose shootPose2 = new Pose(88.500, 76.500, Math.toRadians(0));
+    private final Pose shootPose2 = new Pose(88.500, 76.500, Math.toRadians(30));
     private final Pose shootPose2Angled = new Pose(88.500, 76.500, Math.toRadians(30));
     private final Pose endShootPose = new Pose(92.000, 108.000, Math.toRadians(45));
 
@@ -35,7 +35,7 @@ public class Red18Ball extends AutonTemplate {
 
     // Gate positions
     private final Pose gateWaypointPose = new Pose(125.000, 61.500, Math.toRadians(31.5));
-    private final Pose gatePose = new Pose(132.000, 59.000, Math.toRadians(31.5));
+    private final Pose gatePose = new Pose(133.00, 58.750, Math.toRadians(30));
 
     // Control points
     private final Pose firstShootControl = new Pose(101.000, 101.500);
@@ -50,7 +50,7 @@ public class Red18Ball extends AutonTemplate {
 
         startToShoot = follower.pathBuilder()
                 .addPath(new BezierCurve(startPose, firstShootControl, shootPose))
-                .setLinearHeadingInterpolation(startPose.getHeading(), shootPose.getHeading())
+                .setLinearHeadingInterpolation(startPose.getHeading(), Math.toRadians(90))
                 .build();
 
         shootToSecondSpike = follower.pathBuilder()
@@ -63,14 +63,9 @@ public class Red18Ball extends AutonTemplate {
                 .setLinearHeadingInterpolation(secondSpikePose.getHeading(), shootPose2.getHeading())
                 .build();
 
-        shootToGateOne1 = follower.pathBuilder()
-                .addPath(new BezierLine(shootPose2, gateWaypointPose))
-                .setLinearHeadingInterpolation(shootPose2.getHeading(), gateWaypointPose.getHeading())
-                .build();
-
-        shootToGateOne2 = follower.pathBuilder()
-                .addPath(new BezierLine(gateWaypointPose, gatePose))
-                .setLinearHeadingInterpolation(gateWaypointPose.getHeading(), gatePose.getHeading())
+        shootToGateOne = follower.pathBuilder()
+                .addPath(new BezierCurve(shootPose2, gateWaypointPose, gatePose))
+                .setLinearHeadingInterpolation(shootPose2.getHeading(), gatePose.getHeading())
                 .build();
 
         gateOneToShoot = follower.pathBuilder()
@@ -78,14 +73,9 @@ public class Red18Ball extends AutonTemplate {
                 .setLinearHeadingInterpolation(gatePose.getHeading(), shootPose2Angled.getHeading())
                 .build();
 
-        shootToGateTwo1 = follower.pathBuilder()
-                .addPath(new BezierLine(shootPose2Angled, gateWaypointPose))
-                .setLinearHeadingInterpolation(shootPose2Angled.getHeading(), gateWaypointPose.getHeading())
-                .build();
-
-        shootToGateTwo2 = follower.pathBuilder()
-                .addPath(new BezierLine(gateWaypointPose, gatePose))
-                .setLinearHeadingInterpolation(gateWaypointPose.getHeading(), gatePose.getHeading())
+        shootToGateTwo = follower.pathBuilder()
+                .addPath(new BezierCurve(shootPose2Angled, gateWaypointPose, gatePose))
+                .setLinearHeadingInterpolation(shootPose2Angled.getHeading(), gatePose.getHeading())
                 .build();
 
         gateTwoToShoot = follower.pathBuilder()
@@ -121,23 +111,21 @@ public class Red18Ball extends AutonTemplate {
         Constants.RobotConstants.Robot.allianceColor = Constants.EnumConstants.AllianceColor.Red;
 
         autonomousCommand = new CommandSequenceBuilder(follower, intake, spindexer, limelight, shooter, turret)
-                .setShootWhileMoving(true)
-                .parallel(p -> p.moveTo(startToShoot, maxSpeed, false).shootAfterDelay(.55))
                 .setShootWhileMoving(false)
+                .moveTo(startToShoot, maxSpeed, false)
+                .parallel(p -> p.shoot().limelightScan())
                 .intakeStart()
                 .moveTo(shootToSecondSpike, maxSpeed, false)
                 .parallel(p -> p.moveTo(secondSpikeToShoot, maxSpeed, false).autoCatalog())
                 .shoot()
                 .intakeStart()
-                .moveTo(shootToGateOne1, maxSpeed, false)
-                .moveTo(shootToGateOne2, maxSpeed, false)
+                .moveToParametric(shootToGateOne, t -> t < 0.8 ? maxSpeed : 0.8, false)
                 .delay(1)
                 .parallel(p -> p.moveTo(gateOneToShoot, maxSpeed, false).autoCatalog())
                 .shoot()
                 .intakeStart()
                 .setSpindexerMode(EnumConstants.ShootingMode.Sorted)
-                .moveTo(shootToGateTwo1, maxSpeed, false)
-                .moveTo(shootToGateTwo2, maxSpeed, false)
+                .moveToParametric(shootToGateTwo, t -> t < 0.8 ? maxSpeed : 0.8, false)
                 .delay(1)
                 .parallel(p -> p.moveTo(gateTwoToShoot, maxSpeed, false).guaranteeSortedAutoCatalog())
                 .slowShoot()

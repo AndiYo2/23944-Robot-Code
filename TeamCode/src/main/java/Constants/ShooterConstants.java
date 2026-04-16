@@ -126,16 +126,16 @@ public class ShooterConstants {
     public static double kS = 0.03;
 
     /** Velocity gain */
-    public static double kV = 0.00029;
+    public static double kV = 0.000305590469;
 
     /** Acceleration gain */
-    public static double kA = 0.00001;
+    public static double kA = 0.0005;
 
     /** Proportional gain */
-    public static double VELOCITY_kP = 0.002;
+    public static double VELOCITY_kP = 0.01;
 
     /** Integral gain */
-    public static double VELOCITY_kI = 0.00001;
+    public static double VELOCITY_kI = 0;
 
     /** Derivative gain */
     public static double VELOCITY_kD = 0.0;
@@ -145,5 +145,5 @@ public class ShooterConstants {
     public static double MAX_ACCELERATION = 15000.0;
 
     /** Velocity tolerance */
-    public static double VELOCITY_TOLERANCE = 20.0;
+    public static double VELOCITY_TOLERANCE = 10.0;
 }
