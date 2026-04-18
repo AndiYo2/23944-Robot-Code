@@ -444,10 +444,15 @@ public class Shooter extends SubsystemBase {
         if (dt <= 0) dt = DEFAULT_LOOP_TIME;
         lastLoopDt = dt;
 
-        if (ShooterConstants.ShooterTuning.TUNING_MODE) {
+        if (ShooterConstants.MANUAL_OVERRIDE) {
+            requiredVelocity = ShooterConstants.MANUAL_OVERRIDE_VELOCITY;
+            requiredHoodAngle = ShooterConstants.MANUAL_OVERRIDE_HOOD;
+            shootingWhileMovingFuturePose[0] = robot.cachedPoseX;
+            shootingWhileMovingFuturePose[1] = robot.cachedPoseY;
+            shootingWhileMovingFuturePose[2] = robot.cachedHeading;
+        } else if (ShooterConstants.ShooterTuning.TUNING_MODE) {
             requiredVelocity = ShooterConstants.ShooterTuning.TUNING_VELOCITY;
             requiredHoodAngle = ShooterConstants.ShooterTuning.TUNING_HOOD_ANGLE;
-            // Keep future pose at current pose so turret aims correctly
             shootingWhileMovingFuturePose[0] = robot.cachedPoseX;
             shootingWhileMovingFuturePose[1] = robot.cachedPoseY;
             shootingWhileMovingFuturePose[2] = robot.cachedHeading;

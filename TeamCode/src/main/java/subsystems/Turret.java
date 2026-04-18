@@ -241,8 +241,12 @@ public class Turret extends SubsystemBase {
 
     @Override
     public void periodic() {
-        lastDegreesToGoal = getDegreesToGoalShootingWhileMoving();
-        setTurretDegree(lastDegreesToGoal);
+        if (ShooterConstants.MANUAL_OVERRIDE) {
+            setTurretDegree(CENTER);
+        } else {
+            lastDegreesToGoal = getDegreesToGoalShootingWhileMoving();
+            setTurretDegree(lastDegreesToGoal);
+        }
         applyServoPosition(currentTargetDegrees);
     }
 }

@@ -1,11 +1,11 @@
 package teleOps;
 
-import Constants.DriveConstants;
 import Constants.EnumConstants;
 import Constants.OdometryConstants;
 import Constants.RobotConstants;
 import Constants.ShooterConstants;
 import Constants.SpindexerConstants;
+import Constants.TurretConstants;
 
 import com.bylazar.field.Style;
 import com.pedropathing.follower.Follower;
@@ -41,7 +41,8 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     protected Intake intake;
     protected Spindexer spindexer;
     protected subsystems.Limelight limelight;
-    protected GamepadEx driverGamepad;
+    protected GamepadEx mainController;
+    protected GamepadEx secondaryController;
     private final RobotHardware robot = RobotHardware.getInstance();
 
     private TelemetryHelper telemetryHelper;
@@ -103,8 +104,9 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     }
 
     protected void initHardware() {
-        driverGamepad = new GamepadEx(gamepad1);
-        robot.init(hardwareMap, driverGamepad);
+        mainController = new GamepadEx(gamepad1);
+        secondaryController = new GamepadEx(gamepad2);
+        robot.init(hardwareMap, mainController);
 
         // Set starting position for TeleOp
         // If we have an ending auton pose, use it; otherwise use standard start point
@@ -162,75 +164,104 @@ abstract public class TeleOpTemplate extends CommandOpMode {
                 }, mecanumDrive)
         );
 
-        // Right bumper — rotate CW spindexer
-        new GamepadButton(driverGamepad, GamepadKeys.Button.RIGHT_BUMPER)
-                .whenPressed(new InstantCommand(this::manualRotateCW));
+        // ============ MAIN CONTROLLER (gamepad1) ============
 
-        // Right trigger — shoot
-        new Trigger(() -> gamepad1.right_trigger > RobotConstants.Controls.TRIGGER_THRESHOLD)
-                .whenActive(() -> {
-                    schedule(!endGame ?
-                            ShootingCommands.shootThreeBalls(shooter, spindexer) :
-                            ShootingCommands.superSlowShootThreeBalls(shooter, spindexer));
-                });
-
-        // Left trigger — intake
-        new Trigger(() -> gamepad1.left_trigger > RobotConstants.Controls.TRIGGER_THRESHOLD)
-                .whenActive(new InstantCommand(() -> intake.runIntake()))
-                .whenInactive(new InstantCommand(() -> intake.stopIntake()));
-
-        // Left bumper — rotate CCW spindexer
-        new GamepadButton(driverGamepad, GamepadKeys.Button.LEFT_BUMPER)
-                .whenPressed(new InstantCommand(this::manualRotateCCW));
-
-        // Dpad Up — reset limelight
-        new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_UP)
-                .whenPressed(new InstantCommand(limelight::resetLimelight));
-        // Dpad Left — relocalize
-        new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_LEFT)
-                .whenPressed(new RelocalizePinpointCommand(limelight));
-        // Dpad Right — invert intake (hold)
-        new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_RIGHT)
-                .whenPressed(new InstantCommand(intake::reverse))
+        // Dpad Up — intake (hold)
+        new GamepadButton(mainController, GamepadKeys.Button.DPAD_UP)
+                .whenPressed(new InstantCommand(intake::runIntake))
                 .whenReleased(new InstantCommand(intake::stopIntake));
 
-        // Triangle/Y — catalogue (always fast with sensor gate in TeleOp)
-        new GamepadButton(driverGamepad, GamepadKeys.Button.Y)
-                .whenPressed(() -> {
-                    schedule(CatalogCommands.catalogFast(spindexer, intake, robot.spindexerSensorPair));
-                });
+        // Dpad Down — catalogue
+        new GamepadButton(mainController, GamepadKeys.Button.DPAD_DOWN)
+                .whenPressed(() -> schedule(CatalogCommands.catalogFast(spindexer, intake, robot.spindexerSensorPair)));
 
-        // X/A — toggle super slow shooting mode (for endgame sorting accuracy)
-        new GamepadButton(driverGamepad, GamepadKeys.Button.A)
-                .whenPressed(() -> {
-                    endGame = !endGame;
-                });
+        // Left bumper — rotate CCW spindexer
+        new GamepadButton(mainController, GamepadKeys.Button.LEFT_BUMPER)
+                .whenPressed(new InstantCommand(this::manualRotateCCW));
 
-        // Square/X — manual spindexer flipper
-        new GamepadButton(driverGamepad, GamepadKeys.Button.X)
-                .whenPressed(new InstantCommand(spindexer::triggerFlick));
+        // Right bumper — rotate CW spindexer
+        new GamepadButton(mainController, GamepadKeys.Button.RIGHT_BUMPER)
+                .whenPressed(new InstantCommand(this::manualRotateCW));
 
-        // Circle/B — toggle slow mode
-        new GamepadButton(driverGamepad, GamepadKeys.Button.B)
-                .whenPressed(new InstantCommand(mecanumDrive::toggleSlowMode));
-
-        // Options/Start — reset IMU/yaw
-        new GamepadButton(driverGamepad, GamepadKeys.Button.START)
-                .whenPressed(new InstantCommand(mecanumDrive::resetYaw));
-
-        // Share/Back — deploy park mechanism
-        new GamepadButton(driverGamepad, GamepadKeys.Button.BACK)
-                .whenPressed(new ParkCommand());
-
-        new GamepadButton(driverGamepad, GamepadKeys.Button.RIGHT_STICK_BUTTON)
-                .whenPressed(new InstantCommand(() -> {
+        // Left trigger — auto gate pathing (hold)
+        new Trigger(() -> gamepad1.left_trigger > RobotConstants.Controls.TRIGGER_THRESHOLD)
+                .whenActive(new InstantCommand(() -> {
                     autoDrive = true;
                     follower.followPath(pathChain.get());
                 }))
-                .whenReleased(new InstantCommand(() -> {
+                .whenInactive(new InstantCommand(() -> {
                     follower.breakFollowing();
                     autoDrive = false;
                 }));
+
+        // Right trigger — shoot
+        new Trigger(() -> gamepad1.right_trigger > RobotConstants.Controls.TRIGGER_THRESHOLD)
+                .whenActive(() -> schedule(!endGame ?
+                        ShootingCommands.shootThreeBalls(shooter, spindexer) :
+                        ShootingCommands.superSlowShootThreeBalls(shooter, spindexer)));
+
+        // Triangle/Y — relocalize
+        new GamepadButton(mainController, GamepadKeys.Button.Y)
+                .whenPressed(new RelocalizePinpointCommand(limelight));
+
+        // Square/X — spindexer flipper
+        new GamepadButton(mainController, GamepadKeys.Button.X)
+                .whenPressed(new InstantCommand(spindexer::triggerFlick));
+
+        // X/A (down) — toggle slow shooting mode
+        new GamepadButton(mainController, GamepadKeys.Button.A)
+                .whenPressed(() -> endGame = !endGame);
+
+        // Circle/B — toggle slow driving mode
+        new GamepadButton(mainController, GamepadKeys.Button.B)
+                .whenPressed(new InstantCommand(mecanumDrive::toggleSlowMode));
+
+        // Options/Start — IMU reset
+        new GamepadButton(mainController, GamepadKeys.Button.START)
+                .whenPressed(new InstantCommand(mecanumDrive::resetYaw));
+
+        // ============ SECONDARY CONTROLLER (gamepad2) ============
+
+        // Dpad Up — increase velocity offset by 20
+        new GamepadButton(secondaryController, GamepadKeys.Button.DPAD_UP)
+                .whenPressed(new InstantCommand(() -> ShooterConstants.VELOCITY_ADJUST_HARDCODED += 20));
+
+        // Dpad Down — decrease velocity offset by 20
+        new GamepadButton(secondaryController, GamepadKeys.Button.DPAD_DOWN)
+                .whenPressed(new InstantCommand(() -> ShooterConstants.VELOCITY_ADJUST_HARDCODED -= 20));
+
+        // Left bumper — aim turret left (decrease tracking offset)
+        new GamepadButton(secondaryController, GamepadKeys.Button.LEFT_BUMPER)
+                .whenPressed(new InstantCommand(() -> {
+                    if (RobotConstants.Robot.allianceColor == EnumConstants.AllianceColor.Blue)
+                        TurretConstants.BLUE_TURRET_TRACKING_OFFSET -= 0.5;
+                    else
+                        TurretConstants.RED_TURRET_TRACKING_OFFSET -= 0.5;
+                }));
+
+        // Right bumper — aim turret right (increase tracking offset)
+        new GamepadButton(secondaryController, GamepadKeys.Button.RIGHT_BUMPER)
+                .whenPressed(new InstantCommand(() -> {
+                    if (RobotConstants.Robot.allianceColor == EnumConstants.AllianceColor.Blue)
+                        TurretConstants.BLUE_TURRET_TRACKING_OFFSET += 0.5;
+                    else
+                        TurretConstants.RED_TURRET_TRACKING_OFFSET += 0.5;
+                }));
+
+        // Options/Start — park
+        new GamepadButton(secondaryController, GamepadKeys.Button.START)
+                .whenPressed(new ParkCommand());
+
+        // X/A (down) — toggle moving while shooting
+        new GamepadButton(secondaryController, GamepadKeys.Button.A)
+                .whenPressed(new InstantCommand(() ->
+                        ShooterConstants.SHOOTING_WHILE_MOVING_ENABLED =
+                                !ShooterConstants.SHOOTING_WHILE_MOVING_ENABLED));
+
+        // Circle/B — toggle manual override (turret center, velocity 2000, hood 53)
+        new GamepadButton(secondaryController, GamepadKeys.Button.B)
+                .whenPressed(new InstantCommand(() ->
+                        ShooterConstants.MANUAL_OVERRIDE = !ShooterConstants.MANUAL_OVERRIDE));
     }
 
     @Override

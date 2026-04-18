@@ -57,6 +57,11 @@ public class ShooterConstants {
     /** Flat velocity offset added to every LUT lookup (ticks/sec). Tune via Panels to compensate for SWM distance mismatch. */
     public static double VELOCITY_ADJUST_HARDCODED = 0.0;
 
+    /** Competition-time manual override. When true: turret centers, velocity/hood use fixed values below. */
+    public static boolean MANUAL_OVERRIDE = false;
+    public static double MANUAL_OVERRIDE_VELOCITY = 2000.0;
+    public static double MANUAL_OVERRIDE_HOOD = 53.0;
+
     // Time in air (seconds)
     public static double TIME_IN_AIR = 0.675;
 
@@ -106,7 +111,7 @@ public class ShooterConstants {
     @Configurable
     public static class ShooterTuning {
         /** Enable to override automatic velocity/hood angle with manual values */
-        public static boolean TUNING_MODE = false;
+        public static boolean TUNING_MODE = true;
 
         /** Manual velocity setting (ticks/sec) - only used when TUNING_MODE is true */
         public static double TUNING_VELOCITY = 2000.0;
@@ -116,7 +121,7 @@ public class ShooterConstants {
     }
 
     /** Enable battery voltage compensation to maintain consistent flywheel speed as voltage sags */
-    public static boolean VOLTAGE_COMPENSATION_ENABLED = false;
+    public static boolean VOLTAGE_COMPENSATION_ENABLED = true;
     /** Nominal battery voltage used as the reference for compensation (volts) */
     public static double NOMINAL_VOLTAGE = 13.0;
 

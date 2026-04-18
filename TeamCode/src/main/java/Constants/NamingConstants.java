@@ -61,4 +61,8 @@ public class NamingConstants {
     public static class Pinpoint {
         public static String pinpoint = "pinpoint"; // E I2C 3
     }
+
+    public static class Camera {
+        public static String autonVisionCamera = "AutonVisionCamera";
+    }
 }

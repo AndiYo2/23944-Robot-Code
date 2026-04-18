@@ -6,7 +6,11 @@ import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.hardware.*;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
+import com.bylazar.camerastream.PanelsCameraStream;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
+import android.util.Size;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.UnnormalizedAngleUnit;
@@ -45,6 +49,10 @@ public class RobotHardware {
 
     // ******************* LIMELIGHT ******************* //
     public Limelight3A limelight;
+
+    // ******************* WEBCAM ******************* //
+    public WebcamName autonVisionCamera;
+    public VisionPortal visionPortal;
 
     // ******************* COLOR SENSORS ******************* //
     // Intake sensors (2 sensors offset at first spindexer slot to avoid ball holes)
@@ -261,6 +269,17 @@ public class RobotHardware {
         limelight.setPollRateHz(30);
         limelight.pipelineSwitch(2);
         limelight.start();
+
+        // ******************* WEBCAM (AutonVisionCamera) ******************* //
+        autonVisionCamera = hardwareMap.get(WebcamName.class, NamingConstants.Camera.autonVisionCamera);
+        visionPortal = new VisionPortal.Builder()
+                .setCamera(autonVisionCamera)
+                .setCameraResolution(new Size(640, 480))
+                .enableLiveView(true)
+                .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
+                .build();
+
+        PanelsCameraStream.INSTANCE.startStream(visionPortal, 75);
 
         // ******************* VOLTAGE SENSOR ******************* //
         if (hardwareMap.voltageSensor.iterator().hasNext()) {
