@@ -52,43 +52,37 @@ public class LaneSelector {
     /** Debug string from the last scan — read from telemetry via VisionCollectCommand.lastScanResult */
     public static String lastScanDebug = "No scan yet";
 
+    /** Stored frames from a pre-scan at a different heading. Merged into the next selectPath call. */
+    private static final List<List<FieldBall>> storedFrames = new ArrayList<>();
+
     /**
-     * Runs a full scan: enables processors, captures NUM_SCAN_FRAMES frames,
-     * clusters detections, assigns lanes, and returns the chosen path.
-     * Blocks the calling thread for ~500ms total.
-     *
-     * @param detector  the ArtifactDetector (processors will be enabled/disabled automatically)
-     * @param robotPose robot pose at scan time (field frame, heading in radians)
-     * @return the chosen path based on ball distribution
+     * Captures frames at the current heading and stores them for the next selectPath call.
+     * Call this before rotating, then call selectPath after rotating — both scans
+     * are merged for better lane coverage.
+     * Blocks ~500ms.
+     */
+    public static void captureAndStore(ArtifactDetector detector, Pose robotPose) {
+        try {
+            captureFrames(detector, robotPose, storedFrames);
+        } catch (Exception e) {
+            // Don't crash — just skip the pre-scan
+        }
+    }
+
+    /**
+     * Runs a full scan, merges with any stored pre-scan frames, and returns the chosen path.
+     * Blocks ~500ms.
      */
     public static ChosenPath selectPath(ArtifactDetector detector, Pose robotPose) {
         try {
-            detector.enable();
+            // Start with any stored frames from a pre-scan
+            List<List<FieldBall>> allFrames = new ArrayList<>(storedFrames);
+            storedFrames.clear();
 
-            // Wait for processors to start and first frame to arrive (~300ms at 7fps)
-            sleep(300);
+            // Capture fresh frames at current heading
+            captureFrames(detector, robotPose, allFrames);
 
-            // Capture detections across multiple frames
-            List<List<FieldBall>> allFrames = new ArrayList<>();
-            for (int i = 0; i < VisionConstants.NUM_SCAN_FRAMES; i++) {
-                List<Detection> rawDetections = detector.scanOnce();
-                if (rawDetections == null) rawDetections = new ArrayList<>();
-                List<FieldBall> fieldBalls = new ArrayList<>();
-                for (Detection d : rawDetections) {
-                    if (d != null) {
-                        fieldBalls.add(BallLocalizer.toFieldFrame(d, robotPose));
-                    }
-                }
-                allFrames.add(fieldBalls);
-
-                if (i < VisionConstants.NUM_SCAN_FRAMES - 1) {
-                    sleep(250); // wait for next distinct frame at low FPS
-                }
-            }
-
-            detector.disable();
-
-            // Merge detections across frames and decide
+            // Merge detections across all frames and decide
             List<FieldBall> mergedBalls = clusterDetections(allFrames);
 
             // Count raw detections per frame for debug
@@ -184,18 +178,33 @@ public class LaneSelector {
 
         lastLaneDebug = "L1:" + l1 + " L2:" + l2 + " L3:" + l3 + " OOB:" + outOfBounds + " " + posDebug;
 
-        // Decision ladder: prefer lanes with more balls, break ties by lane number
-        if (l1 >= 3) return ChosenPath.PATH_1;
-        if (l2 >= 3) return ChosenPath.PATH_2;
-        if (l3 >= 3) return ChosenPath.PATH_3;
-        if (l1 >= 2) return ChosenPath.PATH_1;
-        if (l2 >= 2) return ChosenPath.PATH_2;
-        if (l3 >= 2) return ChosenPath.PATH_3;
-        if (l1 >= 1) return ChosenPath.PATH_1;
-        if (l2 >= 1) return ChosenPath.PATH_2;
-        if (l3 >= 1) return ChosenPath.PATH_3;
+        // Pick lane with the most balls. Ties favor L1.
+        if (l1 == 0 && l2 == 0 && l3 == 0) return VisionConstants.NO_DETECTION_FALLBACK;
+        if (l1 >= l2 && l1 >= l3) return ChosenPath.PATH_1;
+        if (l2 > l1 && l2 >= l3) return ChosenPath.PATH_2;
+        return ChosenPath.PATH_3;
+    }
 
-        return VisionConstants.NO_DETECTION_FALLBACK;
+    /**
+     * Captures NUM_SCAN_FRAMES frames and appends field-frame detections to the provided list.
+     */
+    private static void captureFrames(ArtifactDetector detector, Pose robotPose,
+                                       List<List<FieldBall>> outFrames) {
+        for (int i = 0; i < VisionConstants.NUM_SCAN_FRAMES; i++) {
+            List<Detection> rawDetections = detector.scanOnce();
+            if (rawDetections == null) rawDetections = new ArrayList<>();
+            List<FieldBall> fieldBalls = new ArrayList<>();
+            for (Detection d : rawDetections) {
+                if (d != null) {
+                    fieldBalls.add(BallLocalizer.toFieldFrame(d, robotPose));
+                }
+            }
+            outFrames.add(fieldBalls);
+
+            if (i < VisionConstants.NUM_SCAN_FRAMES - 1) {
+                sleep(250);
+            }
+        }
     }
 
     private static void sleep(long ms) {

@@ -257,6 +257,20 @@ public class CommandSequenceBuilder {
         return this;
     }
 
+    // ==================== Vision Pre-Scan ====================
+
+    /**
+     * Captures vision frames at the current heading and stores them.
+     * Call before rotating to scan heading — the stored frames are merged
+     * into the next visionCollectAndCatalog call for better lane coverage.
+     * Blocks ~500ms.
+     */
+    public CommandSequenceBuilder visionPreScan(ArtifactDetector detector) {
+        commands.add(new InstantCommand(() ->
+                vision.LaneSelector.captureAndStore(detector, follower.getPose())));
+        return this;
+    }
+
     // ==================== Vision-Collect-MoveTo Methods ====================
     // Scans for balls with vision, picks the best lane, follows the chosen path
     // until 3 balls or path end, then returns to returnPose while cataloging.

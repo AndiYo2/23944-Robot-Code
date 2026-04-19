@@ -14,7 +14,7 @@ import vision.ArtifactDetector;
 @Autonomous(name = "RedVisionAuto")
 public class RedVisionAuto extends AutonTemplate {
     public static double maxSpeed = 1;
-    private PathChain shootToFirst, firstToShoot, shootToSecond, secondToShoot, shootToScan;
+    private PathChain shootToFirst, firstToShoot, shootToSecond, secondToShoot, shootToScan, shootToStop;
     private PathChain[] visionGoToPaths;
     private ArtifactDetector detector;
 
@@ -51,6 +51,8 @@ public class RedVisionAuto extends AutonTemplate {
     private final Pose lane3MidPose = new Pose(106.000, 40.500, Math.toRadians(0));
     private final Pose lane3Pickup = new Pose(132.000, 40.500, Math.toRadians(0));
 
+    private final Pose stopPose = new Pose(94.500, 20.500, Math.toRadians(30));
+
     @Override
     protected void buildPaths() {
         follower.setStartingPose(startPose);
@@ -85,6 +87,11 @@ public class RedVisionAuto extends AutonTemplate {
         shootToScan = follower.pathBuilder()
                 .addPath(new BezierLine(shootPose, scanPose))
                 .setLinearHeadingInterpolation(shootPose.getHeading(), scanPose.getHeading())
+                .build();
+
+        shootToStop = follower.pathBuilder()
+                .addPath(new BezierLine(shootPose, stopPose))
+                .setLinearHeadingInterpolation(shootPose.getHeading(), stopPose.getHeading())
                 .build();
 
         // Vision collection paths (outbound only — return is dynamic)
@@ -138,36 +145,25 @@ public class RedVisionAuto extends AutonTemplate {
                 .delay(.15)
                 .parallel(p -> p.moveTo(secondToShoot, maxSpeed, false).autoCatalog())
                 .shoot()
-                // Rotate to scan heading
+                // Cycle 3 (vision — dual scan: 30 deg then 0 deg)
+                .visionPreScan(detector)
                 .moveTo(shootToScan, maxSpeed, false)
-                // Cycle 3 (vision)
                 .intakeStart()
                 .visionCollectAndCatalog(detector, visionGoToPaths, shootPose, maxSpeed, false, .3)
                 .shoot()
-                // Rotate to scan heading
-                .moveTo(shootToScan, maxSpeed, false)
                 // Cycle 4 (vision)
+                .visionPreScan(detector)
+                .moveTo(shootToScan, maxSpeed, false)
                 .intakeStart()
                 .visionCollectAndCatalog(detector, visionGoToPaths, shootPose, maxSpeed, false, .3)
                 .shoot()
-                // Rotate to scan heading
-                .moveTo(shootToScan, maxSpeed, false)
                 // Cycle 5 (vision)
-                .intakeStart()
-                .visionCollectAndCatalog(detector, visionGoToPaths, shootPose, maxSpeed, false, .3)
-                .shoot()
-                // Rotate to scan heading
+                .visionPreScan(detector)
                 .moveTo(shootToScan, maxSpeed, false)
-                // Cycle 6 (vision)
                 .intakeStart()
                 .visionCollectAndCatalog(detector, visionGoToPaths, shootPose, maxSpeed, false, .3)
                 .shoot()
-                // Rotate to scan heading
-                .moveTo(shootToScan, maxSpeed, false)
-                // Cycle 7 (vision)
-                .intakeStart()
-                .visionCollectAndCatalog(detector, visionGoToPaths, shootPose, maxSpeed, false, .3)
-                .shoot()
+                .moveTo(shootToStop)
                 .build();
     }
 
