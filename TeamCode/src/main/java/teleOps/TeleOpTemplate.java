@@ -224,28 +224,34 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
         // Dpad Up — increase velocity offset by 20
         new GamepadButton(secondaryController, GamepadKeys.Button.DPAD_UP)
-                .whenPressed(new InstantCommand(() -> ShooterConstants.VELOCITY_ADJUST_HARDCODED += 20));
+                .whenPressed(new InstantCommand(() -> Shooter.runtimeVelocityOffset += 20));
 
         // Dpad Down — decrease velocity offset by 20
         new GamepadButton(secondaryController, GamepadKeys.Button.DPAD_DOWN)
-                .whenPressed(new InstantCommand(() -> ShooterConstants.VELOCITY_ADJUST_HARDCODED -= 20));
+                .whenPressed(new InstantCommand(() -> Shooter.runtimeVelocityOffset -= 20));
 
-        // Left bumper — aim turret left (decrease tracking offset)
+        // Left bumper — aim turret left (increase tracking offset)
         new GamepadButton(secondaryController, GamepadKeys.Button.LEFT_BUMPER)
                 .whenPressed(new InstantCommand(() -> {
                     if (RobotConstants.Robot.allianceColor == EnumConstants.AllianceColor.Blue)
-                        TurretConstants.BLUE_TURRET_TRACKING_OFFSET -= 0.5;
+                        TurretConstants.BLUE_TURRET_TRACKING_OFFSET += 1;
                     else
-                        TurretConstants.RED_TURRET_TRACKING_OFFSET -= 0.5;
+                    {
+                        TurretConstants.RED_FRONT_TURRET_TRACKING_OFFSET += 1;
+                        TurretConstants.RED_BACK_TURRET_TRACKING_OFFSET += 1;
+                    }
                 }));
 
-        // Right bumper — aim turret right (increase tracking offset)
+        // Right bumper — aim turret right (decrease tracking offset)
         new GamepadButton(secondaryController, GamepadKeys.Button.RIGHT_BUMPER)
                 .whenPressed(new InstantCommand(() -> {
                     if (RobotConstants.Robot.allianceColor == EnumConstants.AllianceColor.Blue)
-                        TurretConstants.BLUE_TURRET_TRACKING_OFFSET += 0.5;
+                        TurretConstants.BLUE_TURRET_TRACKING_OFFSET -= 1;
                     else
-                        TurretConstants.RED_TURRET_TRACKING_OFFSET += 0.5;
+                    {
+                        TurretConstants.RED_FRONT_TURRET_TRACKING_OFFSET -= 1;
+                        TurretConstants.RED_BACK_TURRET_TRACKING_OFFSET -= 1;
+                    }
                 }));
 
         // Options/Start — park
@@ -262,6 +268,15 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         new GamepadButton(secondaryController, GamepadKeys.Button.B)
                 .whenPressed(new InstantCommand(() ->
                         ShooterConstants.MANUAL_OVERRIDE = !ShooterConstants.MANUAL_OVERRIDE));
+
+        // Triangle/Y — reset all manual offsets to defaults
+        new GamepadButton(secondaryController, GamepadKeys.Button.Y)
+                .whenPressed(new InstantCommand(() -> {
+                    Shooter.runtimeVelocityOffset = 0;
+                    TurretConstants.BLUE_TURRET_TRACKING_OFFSET = 0;
+                    TurretConstants.RED_FRONT_TURRET_TRACKING_OFFSET = 3.0;
+                    TurretConstants.RED_BACK_TURRET_TRACKING_OFFSET = 3.0;
+                }));
     }
 
     @Override

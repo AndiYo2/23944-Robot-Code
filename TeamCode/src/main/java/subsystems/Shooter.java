@@ -19,6 +19,9 @@ public class Shooter extends SubsystemBase {
 
     private Turret turret;
 
+    /** Runtime velocity offset from gamepad Dpad. Stored here (not in @Configurable ShooterConstants) so Panels can't overwrite it. */
+    public static double runtimeVelocityOffset = 0;
+
     private double requiredVelocity = ShooterConstants.DEFAULT_VELOCITY;
 
     private FlickState currentState = FlickState.Idle;
@@ -132,10 +135,12 @@ public class Shooter extends SubsystemBase {
     }
 
     private double getVelocityFromDistance(double distance) {
-        return velocityLUT.get(distance) + ShooterConstants.VELOCITY_ADJUST_HARDCODED;
+        distance = Math.max(0, Math.min(ShooterConstants.LUT_MAX_DISTANCE, distance));
+        return velocityLUT.get(distance) + ShooterConstants.VELOCITY_ADJUST_HARDCODED + runtimeVelocityOffset;
     }
 
     private double getHoodAngleFromDistance(double distance) {
+        distance = Math.max(0, Math.min(ShooterConstants.LUT_MAX_DISTANCE, distance));
         double angle = hoodLUT.get(distance);
 
         return Math.max(ShooterConstants.HOOD_MIN_ANGLE,
@@ -362,6 +367,7 @@ public class Shooter extends SubsystemBase {
             requiredVelocity = getVelocityFromDistance(shootingWhileMovingDistance);
             requiredHoodAngle = getHoodAngleFromDistance(shootingWhileMovingDistance);
         } else {
+            shootingWhileMovingInitialized = false;
             double distance = getDistanceToTarget();
             requiredVelocity = getVelocityFromDistance(distance);
             requiredHoodAngle = getHoodAngleFromDistance(distance);
@@ -445,7 +451,7 @@ public class Shooter extends SubsystemBase {
         lastLoopDt = dt;
 
         if (ShooterConstants.MANUAL_OVERRIDE) {
-            requiredVelocity = ShooterConstants.MANUAL_OVERRIDE_VELOCITY;
+            requiredVelocity = ShooterConstants.MANUAL_OVERRIDE_VELOCITY + ShooterConstants.VELOCITY_ADJUST_HARDCODED + runtimeVelocityOffset;
             requiredHoodAngle = ShooterConstants.MANUAL_OVERRIDE_HOOD;
             shootingWhileMovingFuturePose[0] = robot.cachedPoseX;
             shootingWhileMovingFuturePose[1] = robot.cachedPoseY;

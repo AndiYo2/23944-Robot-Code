@@ -11,6 +11,9 @@ public class ShooterConstants {
     public static double DEFAULT_VELOCITY = 2200.0;
     public static double DEFAULT_DISTANCE = 100.0;
 
+    /** Maximum distance covered by the velocity/hood LUTs (inches). Values beyond this are clamped. */
+    public static double LUT_MAX_DISTANCE = 300.0;
+
     // Hood angle: 0 = vertical, 90 = horizontal. Usable range: 30-63 degrees
     public static double HOOD_MIN_ANGLE = 30.0;
     public static double HOOD_MAX_ANGLE = 63.0;
@@ -21,7 +24,7 @@ public class ShooterConstants {
     /** Enable Shooting_While_Moving for shoot-while-moving compensation.
      *  Uses full kinematic prediction: pos + vel*t + 0.5*accel*t²
      *  Computes turret angle, flywheel velocity, and hood angle from predicted future pose. */
-    public static boolean SHOOTING_WHILE_MOVING_ENABLED = true;
+    public static boolean SHOOTING_WHILE_MOVING_ENABLED = false;
 
     /** Minimum translational acceleration magnitude (in/s²) to include in prediction.
      *  Below this threshold, acceleration is zeroed to prevent noise amplification. */
@@ -67,40 +70,40 @@ public class ShooterConstants {
 
     // Velocity LUT - Distance (inches) -> Velocity (ticks/sec)
     public static double[][] VELOCITY_DATA = {
-        {0, 1550},
-        {40, 1550},
-        {50, 1550},
-        {60, 1650},
-        {76, 1750},
-        {90, 1870},
-        {100, 1980},
+        {0, 1380},
+        {40, 1380},
+        {50, 1400},
+        {60, 1500},
+        {70, 1600},
+        {80, 1760},
+        {90, 1880},
+        {100, 1960},
         {110, 2020},
-        {123, 2100},
-        {130, 2350},
-        {140.5, 2350},
-        {147, 2370},
-        {153, 2400},
-        {160, 2450},
-        {300, 2450}
+        {130, 2280},
+        {140, 2375},
+        {148, 2420},
+        {157, 2450},
+        {163, 2530},
+        {300, 2530}
     };
 
     // Hood Angle LUT - Distance (inches) -> Hood Angle (degrees, 0=vertical, 90=horizontal)
     public static double[][] HOOD_DATA = {
-        {0, 32},
-        {40, 32},
-        {50, 35},
-        {60, 40},
-        {76, 45},
-        {90, 48},
-        {100, 49},
-        {110, 49},
-        {123, 50},
-        {130, 56},
-        {140.5, 56},
-        {147, 56},
-        {153, 56},
-        {160, 56},
-        {300, 56}
+        {0, 30},
+        {40, 30},
+        {50, 34},
+        {60, 37},
+        {70, 40},
+        {80, 44},
+        {90, 47},
+        {100, 50.5},
+        {110, 51},
+        {130, 56.5},
+        {140, 57},
+        {148, 57},
+        {157, 57},
+        {163, 57},
+        {300, 57}
     };
 
     /**
@@ -111,7 +114,7 @@ public class ShooterConstants {
     @Configurable
     public static class ShooterTuning {
         /** Enable to override automatic velocity/hood angle with manual values */
-        public static boolean TUNING_MODE = true;
+        public static boolean TUNING_MODE = false;
 
         /** Manual velocity setting (ticks/sec) - only used when TUNING_MODE is true */
         public static double TUNING_VELOCITY = 2000.0;

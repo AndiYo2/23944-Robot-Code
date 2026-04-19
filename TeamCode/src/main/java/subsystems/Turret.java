@@ -83,6 +83,12 @@ public class Turret extends SubsystemBase {
         this.shooter = shooter;
     }
 
+    private double getRedTrackingOffset(double robotY) {
+        return (robotY <= TurretConstants.RED_OFFSET_Y_THRESHOLD)
+                ? TurretConstants.RED_FRONT_TURRET_TRACKING_OFFSET
+                : TurretConstants.RED_BACK_TURRET_TRACKING_OFFSET;
+    }
+
     public double[] getTurretFieldPosition() {
         double robotHeading = robot.cachedHeading;
 
@@ -117,7 +123,7 @@ public class Turret extends SubsystemBase {
 
         turretAngleDeg += (RobotConstants.Robot.allianceColor == EnumConstants.AllianceColor.Blue)
                 ? TurretConstants.BLUE_TURRET_TRACKING_OFFSET
-                : TurretConstants.RED_TURRET_TRACKING_OFFSET;
+                : getRedTrackingOffset(robot.cachedPoseY);
 
         if (turretAngleDeg > TurretConstants.HARD_STOP_CW) {
             targetOutOfRange = true;
@@ -162,7 +168,7 @@ public class Turret extends SubsystemBase {
 
         turretAngleDeg += (RobotConstants.Robot.allianceColor == EnumConstants.AllianceColor.Blue)
                 ? TurretConstants.BLUE_TURRET_TRACKING_OFFSET
-                : TurretConstants.RED_TURRET_TRACKING_OFFSET;
+                : getRedTrackingOffset(robotY);
 
         if (turretAngleDeg > TurretConstants.HARD_STOP_CW) {
             targetOutOfRange = true;
@@ -242,7 +248,10 @@ public class Turret extends SubsystemBase {
     @Override
     public void periodic() {
         if (ShooterConstants.MANUAL_OVERRIDE) {
-            setTurretDegree(CENTER);
+            double manualAngle = CENTER + ((RobotConstants.Robot.allianceColor == EnumConstants.AllianceColor.Blue)
+                ? TurretConstants.BLUE_TURRET_TRACKING_OFFSET
+                : getRedTrackingOffset(robot.cachedPoseY));
+            setTurretDegree(manualAngle);
         } else {
             lastDegreesToGoal = getDegreesToGoalShootingWhileMoving();
             setTurretDegree(lastDegreesToGoal);

@@ -32,6 +32,7 @@ public class Spindexer extends SubsystemBase {
     private final ElapsedTime flickerTimer = new ElapsedTime();
 
     private final ElapsedTime rotationCooldown = new ElapsedTime();
+    private boolean isDoubleRotation = false;
 
     private int currentDegrees = EMPTY_RESET_DEGREES;
 
@@ -69,6 +70,9 @@ public class Spindexer extends SubsystemBase {
 
         if (newDegrees > MAX_SERVO_DEGREES) {
             newDegrees = CW_WRAP_TO_DEG;  // 180°
+            isDoubleRotation = true;      // servo travels 120° instead of 60°
+        } else {
+            isDoubleRotation = false;
         }
 
         currentDegrees = newDegrees;
@@ -81,6 +85,9 @@ public class Spindexer extends SubsystemBase {
 
         if (newDegrees < 0) {
             newDegrees = CCW_WRAP_TO_DEG;  // 120°
+            isDoubleRotation = true;       // servo travels 120° instead of 60°
+        } else {
+            isDoubleRotation = false;
         }
 
         currentDegrees = newDegrees;
@@ -128,7 +135,10 @@ public class Spindexer extends SubsystemBase {
     // ==================== STATE QUERIES ====================
 
     public boolean isRotationIdle() {
-        return rotationCooldown.seconds() > ShootingSequenceConstants.SPINDEXER_ROTATION_TIME;
+        double requiredTime = isDoubleRotation
+                ? 0.28
+                : ShootingSequenceConstants.SPINDEXER_ROTATION_TIME;
+        return rotationCooldown.seconds() > requiredTime;
     }
 
     public boolean isFlipperAtPosition(double targetPosition) {

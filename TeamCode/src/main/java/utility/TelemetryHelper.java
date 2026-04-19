@@ -2,6 +2,7 @@ package utility;
 
 import Constants.LimelightConstants;
 import Constants.RobotConstants;
+import Constants.ShooterConstants;
 import Constants.SpindexerConstants;
 import com.bylazar.telemetry.TelemetryManager;
 import com.pedropathing.ftc.FTCCoordinates;
@@ -148,6 +149,9 @@ public class TelemetryHelper {
         panels.addData("Hood Angle", hoodAngle);
         panels.addData("Distance to Target", distance);
         panels.addData("Turret Target Angle", turretAngle);
+        panels.addData("Velocity Offset (Dpad)", Shooter.runtimeVelocityOffset);
+        panels.debug("Manual Override: " + (ShooterConstants.MANUAL_OVERRIDE ? "ON" : "OFF")
+                + " | Dpad Vel Offset: " + Shooter.runtimeVelocityOffset);
 
         panels.update(telemetry);
     }
