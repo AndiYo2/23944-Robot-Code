@@ -1,113 +1,121 @@
-# Shooter Feedforward Tuning Guide
+# Shooter Velocity Controller Tuning Guide
 
 ## Overview
-The shooter uses a custom feedforward + PID controller for velocity control.
-All constants are in `ShooterConstants.java` and can be tuned live via panels.
+The shooter uses a **dual-zone controller** for flywheel velocity:
+- **RECOVERY mode**: Bang-bang (full power) — fastest possible spin-up after shots
+- **MAINTAIN mode**: Feedforward + Proportional — accurate steady-state hold (±10-20 ticks)
 
-**Goal:** Fastest possible velocity recovery after shooting (target: <200ms, achievable: 50-150ms)
+All constants are in `ShooterConstants.java` and can be tuned live via Panels.
 
-## The Control Equation
+## How It Works
+
 ```
-output = kS * sign(v) + kV * targetVelocity + kA * acceleration + PID_correction
+if (error > RECOVERY_THRESHOLD):
+    RECOVERY: output = 1.0   (full power until near setpoint)
+else:
+    MAINTAIN: output = kS * sign(v) + kV * target + kP * error
 ```
 
-- **kS**: Overcomes static friction
-- **kV**: Steady-state velocity mapping
-- **kA**: Acceleration compensation (the key to fast recovery)
-- **PID**: Corrects remaining error
+- **kS**: Overcomes static friction (constant offset)
+- **kV**: Maps target velocity to steady-state power (carries ~97% of the load)
+- **kP**: Corrects residual error from kV miscalibration, voltage drift, temperature
+- **RECOVERY_THRESHOLD**: Error boundary between full-power recovery and fine control
+- **RECOVERY_VELOCITY_BOOST**: Overshoot buffer during recovery (high MOI absorbs it)
 
-## Tuning Order (IMPORTANT)
+### Why Not PID?
+After a shot, the velocity drops ~600 ticks. Any PID controller saturates at power = 1.0
+during recovery (the old PIDFKSVA computed ~14.2 before clamping). PID gains are irrelevant
+when the output is clamped. Bang-bang gives the same maximum power with zero tuning
+complexity. The P-term only acts in MAINTAIN mode where errors are small and it provides
+real value: steady-state accuracy across all voltages and velocities.
 
-### Step 1: Find kV (Most Important)
-kV determines the steady-state power for any velocity.
+## Tuning Order
 
-1. Set all gains to 0: `kS=0, kV=0, kA=0, VELOCITY_kP=0, VELOCITY_kI=0, VELOCITY_kD=0`
-2. Set `kS=0.05` (rough static friction estimate)
-3. Run the flywheel at power = 1.0
-4. Measure the max velocity (should be ~2800 ticks/sec)
-5. Calculate: `kV = 1.0 / maxVelocity`
+### Step 1: Calibrate kV (Most Important)
+kV determines the steady-state power for any velocity. Get this right first.
 
-**Example:** If max velocity = 2800 ticks/sec, then `kV = 0.000357`
+1. Set `kS = 0`, `VELOCITY_kP = 0` (isolate kV)
+2. Run the flywheel at power = 1.0 (use TUNING_MODE)
+3. Measure the max velocity at full battery (~13V)
+4. Calculate: `kV = 1.0 / maxVelocity`
 
-### Step 2: Verify Steady-State
-1. Set a target velocity (e.g., 2200 ticks/sec)
-2. The flywheel should spin up and hold near target
-3. If velocity is low, slightly increase kV
-4. If velocity is high, slightly decrease kV
+**Example:** Max velocity = 2800 ticks/sec → `kV = 0.000357`
 
-### Step 3: Find kS (Static Friction)
-kS is the minimum power to overcome friction.
+5. Set a target velocity (e.g., 2200 ticks/sec)
+6. Verify steady-state holds within ~50 ticks (kV alone won't be perfect)
+7. If consistently low, increase kV slightly. If high, decrease.
 
-1. With kV set, slowly decrease target velocity toward 0
-2. Watch when the flywheel stops responding
-3. Adjust kS so very low velocities still work
-4. Typical value: 0.03 - 0.08
+### Step 2: Set kS (Static Friction)
+1. With kV set, try very low target velocities (~500 ticks/sec)
+2. If the flywheel struggles to start, increase kS
+3. Typical value: 0.03 - 0.08
+4. kS should be just enough to overcome static friction
 
-### Step 4: Tune kA (Acceleration - Key for Recovery)
-kA enables fast recovery after shooting.
+### Step 3: Add kP (Steady-State Accuracy)
+kP corrects for kV imperfections across different velocities, temperatures, and voltages.
 
-1. Run flywheel at target velocity (2200 ticks/sec)
-2. Trigger a shot and watch recovery time
-3. If recovery is slow (>200ms), increase kA
-4. If you see overshoot, decrease kA
-5. Start at `kA = 0.00001`, increase by 2x until fast
+1. Start with `VELOCITY_kP = 0.005`
+2. Set a target velocity and observe steady-state error on Panels
+3. If error is > ±20 ticks, double kP
+4. If you see oscillation (velocity wobbling around target), halve kP
+5. Target: ±10-20 ticks at all LUT velocities (1380-2530 range)
 
-**Target:** Recovery in 50-150ms without overshoot
+**Math check:** With kP = 0.01, a 5% kV error at 2200 ticks/sec produces only
+3.5 ticks of steady-state error. You likely don't need kP > 0.01.
 
-### Step 5: Add VELOCITY_kP (Fine Correction)
-Only if steady-state error persists after feedforward tuning.
+### Step 4: Tune RECOVERY_THRESHOLD
+This is the error boundary between RECOVERY (full power) and MAINTAIN (FF+P).
 
-1. Start with `VELOCITY_kP = 0.0001`
-2. Small increments (0.00005) if needed
-3. Too high = oscillation
+1. Default: `RECOVERY_THRESHOLD = 50.0` ticks/sec
+2. Shoot and watch the `Flywheel Mode` field on Panels
+3. If it toggles rapidly between RECOVERY/MAINTAIN near setpoint → increase threshold
+4. If recovery is fast but you see a "bump" when transitioning to MAINTAIN → threshold is fine
+5. Must be > `VELOCITY_TOLERANCE` (currently 10) to avoid chatter
 
-### Step 6: Add VELOCITY_kI (Steady-State Error)
-Only if there's consistent steady-state error that kP can't fix.
+### Step 5: Tune RECOVERY_VELOCITY_BOOST (Optional)
+This keeps the motor at full power slightly past the real setpoint during recovery.
+The flywheel's high MOI (from the 2x 0.5lb weights) absorbs the slight overshoot.
 
-1. Start with `VELOCITY_kI = 0.0001`
-2. Very small increments
-3. Too high = overshoot and slow oscillation
-
-### Step 7: VELOCITY_kD (Usually Not Needed)
-Derivative dampens oscillation but is rarely needed for velocity control.
-
-1. Usually leave at 0
-2. Only add if you see oscillation that kP reduction doesn't fix
+1. Start at `RECOVERY_VELOCITY_BOOST = 0` (no boost)
+2. Measure recovery time after a shot
+3. Increase by 25 ticks/sec increments
+4. Watch for velocity ringing (overshooting then undershooting)
+5. Stop at the value where recovery time plateaus without ringing
+6. Typical range: 0-100 ticks/sec
 
 ## Telemetry Values to Monitor
 
-Use these methods in your TeleOp for tuning:
 ```java
-shooter.getCurrentVelocity()    // Actual flywheel velocity
-shooter.getTargetVelocity()     // Desired velocity
-shooter.getVelocityError()      // Target - Actual
-shooter.isAtTargetVelocity()    // Within tolerance?
-
-// Detailed breakdown:
-double[] outputs = shooter.getControllerOutputs();
-// outputs[0] = ffOutput (feedforward contribution)
-// outputs[1] = pidOutput (PID contribution)
-// outputs[2] = totalPower (final motor power)
-// outputs[3] = acceleration (measured acceleration)
+shooter.getCurrentVelocity()       // Actual flywheel velocity
+shooter.getTargetVelocity()        // Desired velocity (from LUT)
+shooter.getVelocityError()         // Target - Actual
+shooter.isAtTargetVelocity()       // Within VELOCITY_TOLERANCE?
+shooter.getFlywheelControlMode()   // RECOVERY or MAINTAIN
 ```
+
+On Panels, watch:
+- `Shooter Velocity (actual)` vs `(target)` — should track closely in MAINTAIN
+- `Velocity Error` — should be < ±20 in steady-state
+- `Flywheel Mode` — MAINTAIN in steady-state, RECOVERY after shots
 
 ## Constants Reference
 
 ```java
-// Feedforward
-kS = 0.05;          // Static friction
-kV = 0.00035;       // Velocity gain
-kA = 0.00001;       // Acceleration gain (CRITICAL FOR FAST RECOVERY)
+// Feedforward (steady-state)
+kS = 0.03;                    // Static friction compensation
+kV = 0.000305590469;          // Velocity gain (1 / max_velocity_at_nominal_voltage)
 
-// PID
-VELOCITY_kP = 0.0001;
-VELOCITY_kI = 0.0002;
-VELOCITY_kD = 0.0;
+// Proportional (MAINTAIN mode only)
+VELOCITY_kP = 0.01;           // Steady-state error correction
 
-// Limits
-INTEGRAL_MAX = 0.3;           // Anti-windup
-MAX_ACCELERATION = 15000.0;   // Physical limit (ticks/sec^2)
-VELOCITY_TOLERANCE = 50.0;    // "At target" threshold
+// Recovery tuning
+RECOVERY_THRESHOLD = 50.0;    // Error threshold for RECOVERY mode (ticks/sec)
+RECOVERY_VELOCITY_BOOST = 0.0; // Overshoot buffer during recovery (ticks/sec)
+
+// Other
+VELOCITY_TOLERANCE = 10.0;    // "At target" threshold for isAtTargetVelocity()
+VOLTAGE_COMPENSATION_ENABLED = true;
+NOMINAL_VOLTAGE = 13.0;       // Reference voltage for compensation
 ```
 
 ## Troubleshooting
@@ -115,33 +123,34 @@ VELOCITY_TOLERANCE = 50.0;    // "At target" threshold
 | Problem | Likely Cause | Fix |
 |---------|--------------|-----|
 | Flywheel won't spin | kS too low | Increase kS |
-| Velocity too low | kV too low | Increase kV |
-| Velocity too high | kV too high | Decrease kV |
-| Slow recovery | kA too low | Increase kA |
-| Overshoot after shot | kA too high or kI too high | Decrease kA, reset integral |
-| Oscillation | kP or kI too high | Decrease gains |
-| Steady-state error | kV wrong or needs kI | Tune kV first, then add small kI |
+| Steady-state velocity too low | kV too low | Recalibrate kV (Step 1) |
+| Steady-state velocity too high | kV too high | Recalibrate kV (Step 1) |
+| Steady-state error > ±20 ticks | kP too low or kV way off | Fix kV first, then increase kP |
+| Oscillation at steady-state | kP too high | Decrease kP |
+| Slow recovery after shot | Physics-limited (MOI + motor torque) | Reduce flywheel weights or increase RECOVERY_VELOCITY_BOOST |
+| RECOVERY/MAINTAIN toggling | RECOVERY_THRESHOLD too low | Increase RECOVERY_THRESHOLD |
+| Velocity ringing after recovery | RECOVERY_VELOCITY_BOOST too high | Decrease boost |
+| Inconsistent across battery levels | Voltage compensation issue | Verify NOMINAL_VOLTAGE matches fresh battery |
 
 ## Physical Limits
 
-Your recovery speed is ultimately limited by:
-- Motor torque
-- Flywheel moment of inertia
-- Available voltage headroom (battery state)
+Recovery speed is ultimately limited by:
+- **Motor torque at operating speed** (~0.006 N·m available at 4700 RPM with 2 motors)
+- **Flywheel moment of inertia** (increased ~3-4x by the 2x 0.5lb weights)
+- **Available voltage headroom** (back-EMF consumes ~78% of voltage at operating speed)
 
-With proper feedforward, you should be limited by physics, not software.
-Typical well-tuned flywheel: **50-150ms recovery** for a ~300 ticks/sec drop.
+No software controller can exceed maximum motor torque. Bang-bang guarantees you are
+always at that maximum during recovery. If recovery is still too slow, the solution is
+mechanical: reduce flywheel weight or move weights to a smaller radius (MOI ∝ r²).
 
 ## Quick Start Values
 
 If starting from scratch:
 ```java
-kS = 0.05
-kV = 0.000357  // Assuming 2800 max velocity
-kA = 0.00002
-VELOCITY_kP = 0.0001
-VELOCITY_kI = 0.0001
-VELOCITY_kD = 0
+kS = 0.03
+kV = 0.000357       // Recalibrate with Step 1!
+VELOCITY_kP = 0.01
+RECOVERY_THRESHOLD = 50.0
+RECOVERY_VELOCITY_BOOST = 0.0
+VELOCITY_TOLERANCE = 10.0
 ```
-
-Then tune kA aggressively for fastest recovery without overshoot.

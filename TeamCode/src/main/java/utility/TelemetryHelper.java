@@ -146,7 +146,9 @@ public class TelemetryHelper {
         panels.addData("Shooter Velocity (actual)", currentVel);
         panels.addData("Shooter Velocity (target)", targetVel);
         panels.addData("Velocity Error", shooter.getVelocityError());
+        panels.addData("Flywheel Mode", shooter.getFlywheelControlMode().name());
         panels.addData("Hood Angle", hoodAngle);
+        panels.addData("Hood Shot Offset", shooter.getShotHoodCompensation());
         panels.addData("Distance to Target", distance);
         panels.addData("Turret Target Angle", turretAngle);
         panels.addData("Velocity Offset (Dpad)", Shooter.runtimeVelocityOffset);

@@ -107,9 +107,9 @@ public class ShooterConstants {
     };
 
     /**
-     * Shooter tuning mode for manual control of velocity and hood angle.
-     * Enable TUNING_MODE to override automatic distance-based calculations.
-     * Use Panels to adjust values in real-time and record them for the LUT.
+     * All shooter controller tuning: feedforward, bang-bang recovery, hood compensation,
+     * voltage compensation, and manual override values.
+     * Use Panels to adjust values in real-time.
      */
     @Configurable
     public static class ShooterTuning {
@@ -121,37 +121,53 @@ public class ShooterConstants {
 
         /** Manual hood angle setting (degrees) - only used when TUNING_MODE is true */
         public static double TUNING_HOOD_ANGLE = 53.0;
+
+        // ==================== VOLTAGE COMPENSATION ====================
+
+        /** Enable battery voltage compensation to maintain consistent flywheel speed as voltage sags */
+        public static boolean VOLTAGE_COMPENSATION_ENABLED = true;
+        /** Nominal battery voltage used as the reference for compensation (volts) */
+        public static double NOMINAL_VOLTAGE = 13.0;
+
+        // ==================== FEEDFORWARD ====================
+
+        /** Static friction compensation */
+        public static double kS = 0.03;
+
+        /** Velocity gain */
+        public static double kV = 3.2557046977E-4;
+
+        // === LEGACY PID CONSTANTS (replaced by bang-bang + FF+P) ===
+        // public static double kA = 0.0005;
+        // public static double VELOCITY_kI = 0;
+        // public static double VELOCITY_kD = 0.0;
+        // public static double INTEGRAL_MAX = 0.3;
+        // public static double MAX_ACCELERATION = 15000.0;
+        // === END LEGACY ===
+
+        // ==================== BANG-BANG RECOVERY ====================
+
+        /** Proportional gain — used in MAINTAIN mode for steady-state accuracy */
+        public static double VELOCITY_kP = 0.001;
+
+        /** Velocity tolerance for isAtTargetVelocity() */
+        public static double VELOCITY_TOLERANCE = 20.0;
+
+        /** Error threshold (ticks/sec) above which controller uses RECOVERY mode (full power).
+         *  Below this, uses MAINTAIN mode (FF + P). Must be > VELOCITY_TOLERANCE to avoid chatter. */
+        public static double RECOVERY_THRESHOLD = 50.0;
+
+        /** Extra velocity (ticks/sec) added to effective setpoint during RECOVERY mode.
+         *  Keeps motor at full power slightly past the real setpoint; the flywheel's high MOI
+         *  absorbs the overshoot. Start at 0, increase by 25 until recovery time is minimized
+         *  without velocity ringing. */
+        public static double RECOVERY_VELOCITY_BOOST = 200.0;
+
+        // ==================== HOOD COMPENSATION ====================
+
+        /** Hood angle adjustment per shot (degrees). Applied cumulatively during a shooting sequence
+         *  to compensate for flywheel velocity drop. Negative = lower trajectory.
+         *  Reset automatically at the end of each shooting sequence. */
+        public static double SHOT_HOOD_COMPENSATION_STEP = -0.25;
     }
-
-    /** Enable battery voltage compensation to maintain consistent flywheel speed as voltage sags */
-    public static boolean VOLTAGE_COMPENSATION_ENABLED = true;
-    /** Nominal battery voltage used as the reference for compensation (volts) */
-    public static double NOMINAL_VOLTAGE = 13.0;
-
-    // Feedforward + PID velocity control
-
-    /** Static friction compensation */
-    public static double kS = 0.03;
-
-    /** Velocity gain */
-    public static double kV = 0.000305590469;
-
-    /** Acceleration gain */
-    public static double kA = 0.0005;
-
-    /** Proportional gain */
-    public static double VELOCITY_kP = 0.01;
-
-    /** Integral gain */
-    public static double VELOCITY_kI = 0;
-
-    /** Derivative gain */
-    public static double VELOCITY_kD = 0.0;
-
-    /** Maximum integral accumulation */
-    public static double INTEGRAL_MAX = 0.3;
-    public static double MAX_ACCELERATION = 15000.0;
-
-    /** Velocity tolerance */
-    public static double VELOCITY_TOLERANCE = 10.0;
 }

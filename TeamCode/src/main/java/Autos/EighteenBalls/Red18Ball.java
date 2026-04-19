@@ -30,16 +30,16 @@ public class Red18Ball extends AutonTemplate {
 
     // Spike positions
     private final Pose firstSpikePose = new Pose(125.500, 83.00, Math.toRadians(0));
-    private final Pose secondSpikePose = new Pose(129.500, 57.750, Math.toRadians(0));
+    private final Pose secondSpikePose = new Pose(129.500, 57.0, Math.toRadians(0));
     private final Pose thirdSpikePose = new Pose(132.500, 33.500, Math.toRadians(0));
 
     // Gate positions
     private final Pose gateWaypointPose = new Pose(125.000, 61.500, Math.toRadians(31.5));
-    private final Pose gatePose = new Pose(133.00, 58.750, Math.toRadians(30));
+    private final Pose gatePose = new Pose(131.00, 59.125, Math.toRadians(25));
 
     // Control points
     private final Pose firstShootControl = new Pose(101.000, 101.500);
-    private final Pose secondSpikeControl1 = new Pose(92.000, 56.000);
+    private final Pose secondSpikeControl1 = new Pose(92.000, 55.000);
     private final Pose secondSpikeControl2 = new Pose(110.500, 57.500);
     private final Pose thirdSpikeControl1 = new Pose(87.500, 32.000);
     private final Pose thirdSpikeControl2 = new Pose(102.000, 33.500);
@@ -111,22 +111,23 @@ public class Red18Ball extends AutonTemplate {
         Constants.RobotConstants.Robot.allianceColor = Constants.EnumConstants.AllianceColor.Red;
 
         autonomousCommand = new CommandSequenceBuilder(follower, intake, spindexer, limelight, shooter, turret)
+                .setShootWhileMoving(true)
+                .parallel(p -> p.moveTo(startToShoot, maxSpeed, false).shootAfterDelay(.5))
                 .setShootWhileMoving(false)
-                .moveTo(startToShoot, maxSpeed, false)
-                .parallel(p -> p.shoot().limelightScan())
+                .limelightScan()
                 .intakeStart()
                 .moveTo(shootToSecondSpike, maxSpeed, false)
                 .parallel(p -> p.moveTo(secondSpikeToShoot, maxSpeed, false).autoCatalog())
                 .shoot()
                 .intakeStart()
                 .moveToParametric(shootToGateOne, t -> t < 0.8 ? maxSpeed : 0.8, false)
-                .delay(1)
+                .delay(1.5)
                 .parallel(p -> p.moveTo(gateOneToShoot, maxSpeed, false).autoCatalog())
                 .shoot()
                 .intakeStart()
                 .setSpindexerMode(EnumConstants.ShootingMode.Sorted)
-                .moveToParametric(shootToGateTwo, t -> t < 0.8 ? maxSpeed : 0.8, false)
-                .delay(1)
+                .moveToParametric(shootToGateTwo, t -> t < 0.8 ? maxSpeed : 0.5, false)
+                .delay(1.5)
                 .parallel(p -> p.moveTo(gateTwoToShoot, maxSpeed, false).guaranteeSortedAutoCatalog())
                 .slowShoot()
                 .intakeStart()
@@ -137,7 +138,7 @@ public class Red18Ball extends AutonTemplate {
                 .moveTo(shootToThirdSpike, maxSpeed, false)
                 .parallel(p -> p.moveTo(thirdSpikeToShootEnd, maxSpeed, false).guaranteeSortedAutoCatalog())
                 .slowShoot()
-                .setShootWhileMoving(true)
+                .setShootWhileMoving(false)
                 .build();
     }
 }

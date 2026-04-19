@@ -50,6 +50,11 @@ public class EnumConstants {
         Sorted
     }
 
+    public enum FlywheelControlMode {
+        RECOVERY,
+        MAINTAIN
+    }
+
     public enum SensorPairState {
         UNCHECKED,
         COLOR_SCANNING,

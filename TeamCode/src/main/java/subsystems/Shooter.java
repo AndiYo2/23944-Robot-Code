@@ -8,6 +8,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import Constants.EnumConstants.FlickState;
+import Constants.EnumConstants.FlywheelControlMode;
 import Constants.FieldMap;
 import Constants.TurretConstants;
 import utility.RobotHardware;
@@ -30,19 +31,16 @@ public class Shooter extends SubsystemBase {
 
 
     private ElapsedTime loopTimer = new ElapsedTime();
-    private double integralSum = 0;
-    private double lastVelocityError = 0;
-    private double lastVelocity = 0;
 
     // Default loop time when dt calculation fails (seconds)
     private static final double DEFAULT_LOOP_TIME = 0.02;
     private double lastLoopDt = DEFAULT_LOOP_TIME;
     private double cachedVelocity = 0;
     private double lastFfOutput = 0;
-    private double lastPidOutput = 0;
     private double lastTotalPower = 0;
     private double lastError = 0;
-    private double lastAcceleration = 0;
+
+    private FlywheelControlMode currentControlMode = FlywheelControlMode.MAINTAIN;
 
     private InterpLUT velocityLUT;
     private InterpLUT hoodLUT;
@@ -69,6 +67,9 @@ public class Shooter extends SubsystemBase {
 
     private double lastHoodServoPosition = -1.0;
     private static final double SERVO_EPSILON = 0.001;
+
+    // Cumulative hood compensation during shooting sequences
+    private double shotHoodCompensation = 0.0;
 
     // Pre-allocated array for getTurretFieldPositionFrom() to avoid GC pressure
     private final double[] turretFieldPosTemp = new double[2];
@@ -404,6 +405,11 @@ public class Shooter extends SubsystemBase {
 
     public void extendFlipper() {
         robot.shooterFlipper.setPosition(ShootingSequenceConstants.SHOOTER_FLIPPER_EXTENDED);
+        shotHoodCompensation += ShooterConstants.ShooterTuning.SHOT_HOOD_COMPENSATION_STEP;
+    }
+
+    public void resetHoodCompensation() {
+        shotHoodCompensation = 0.0;
     }
 
     public void retractFlipper() {
@@ -425,11 +431,19 @@ public class Shooter extends SubsystemBase {
     }
 
     public boolean isAtTargetVelocity() {
-        return Math.abs(requiredVelocity - cachedVelocity) < ShooterConstants.VELOCITY_TOLERANCE;
+        return Math.abs(requiredVelocity - cachedVelocity) < ShooterConstants.ShooterTuning.VELOCITY_TOLERANCE;
     }
 
     public double getVelocityError() {
         return lastError;
+    }
+
+    public double getShotHoodCompensation() {
+        return shotHoodCompensation;
+    }
+
+    public FlywheelControlMode getFlywheelControlMode() {
+        return currentControlMode;
     }
 
 
@@ -465,7 +479,7 @@ public class Shooter extends SubsystemBase {
         } else {
             updateVelocityFromDistance();
         }
-        setHoodAngle(requiredHoodAngle);
+        setHoodAngle(requiredHoodAngle + shotHoodCompensation);
         double targetVelocity = requiredVelocity;
 
         //  read motor 2 only until rebuild
@@ -475,50 +489,40 @@ public class Shooter extends SubsystemBase {
         double velocityError = targetVelocity - currentVelocity;
         lastError = velocityError;
 
-        double measuredAcceleration = (currentVelocity - lastVelocity) / dt;
-        lastVelocity = currentVelocity;
-        lastAcceleration = measuredAcceleration;
+        // ==================== BANG-BANG RECOVERY + FF+P MAINTAIN ====================
+        double totalPower;
 
-        double desiredAcceleration = velocityError / dt;
-        desiredAcceleration = clamp(desiredAcceleration,
-            -ShooterConstants.MAX_ACCELERATION,
-            ShooterConstants.MAX_ACCELERATION);
+        if (velocityError > ShooterConstants.ShooterTuning.RECOVERY_THRESHOLD) {
+            // --- RECOVERY MODE: full power for fastest possible spin-up ---
+            currentControlMode = FlywheelControlMode.RECOVERY;
+            double effectiveTarget = targetVelocity + ShooterConstants.ShooterTuning.RECOVERY_VELOCITY_BOOST;
 
-        // ==================== FEEDFORWARD ====================
-        // Full equation: kS * sign(v) + kV * targetVel + kA * acceleration
-        double ffOutput = ShooterConstants.kS * Math.signum(targetVelocity)
-                        + ShooterConstants.kV * targetVelocity
-                        + ShooterConstants.kA * desiredAcceleration;
-        lastFfOutput = ffOutput;
-
-        // ==================== PID ====================
-        double pOutput = ShooterConstants.VELOCITY_kP * velocityError;
-
-        integralSum += velocityError * dt;
-        integralSum = clamp(integralSum, -ShooterConstants.INTEGRAL_MAX, ShooterConstants.INTEGRAL_MAX);
-
-        // Zero-crossing reset prevents overshoot
-        if (lastVelocityError != 0 && Math.signum(velocityError) != Math.signum(lastVelocityError)) {
-            integralSum = 0;
+            if (currentVelocity < effectiveTarget) {
+                totalPower = 1.0;
+            } else {
+                // Boost pushed us past effective target — use feedforward
+                double ff = ShooterConstants.ShooterTuning.kS * Math.signum(targetVelocity)
+                          + ShooterConstants.ShooterTuning.kV * targetVelocity;
+                totalPower = ff;
+            }
+            lastFfOutput = totalPower;
+        } else {
+            // --- MAINTAIN MODE: feedforward + proportional for steady-state accuracy ---
+            currentControlMode = FlywheelControlMode.MAINTAIN;
+            double ff = ShooterConstants.ShooterTuning.kS * Math.signum(targetVelocity)
+                      + ShooterConstants.ShooterTuning.kV * targetVelocity;
+            double pCorrection = ShooterConstants.ShooterTuning.VELOCITY_kP * velocityError;
+            totalPower = ff + pCorrection;
+            lastFfOutput = ff;
         }
-        double iOutput = ShooterConstants.VELOCITY_kI * integralSum;
 
-        double dOutput = ShooterConstants.VELOCITY_kD * -measuredAcceleration;
-
-        lastVelocityError = velocityError;
-
-        double pidOutput = pOutput + iOutput + dOutput;
-        lastPidOutput = pidOutput;
-
-        // ==================== TOTAL OUTPUT ====================
-        double totalPower = ffOutput + pidOutput;
         totalPower = clamp(totalPower, 0, 1.0);
 
         // Voltage compensation: scale power up as battery sags below nominal
-        if (ShooterConstants.VOLTAGE_COMPENSATION_ENABLED && robot.voltageSensor != null) {
+        if (ShooterConstants.ShooterTuning.VOLTAGE_COMPENSATION_ENABLED && robot.voltageSensor != null) {
             double batteryVoltage = robot.voltageSensor.getVoltage();
             if (batteryVoltage > 0) {
-                totalPower *= ShooterConstants.NOMINAL_VOLTAGE / batteryVoltage;
+                totalPower *= ShooterConstants.ShooterTuning.NOMINAL_VOLTAGE / batteryVoltage;
                 totalPower = clamp(totalPower, 0, 1.0);
             }
         }

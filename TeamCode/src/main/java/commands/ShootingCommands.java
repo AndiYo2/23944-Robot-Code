@@ -1,6 +1,7 @@
 package commands;
 
 import com.arcrobotics.ftclib.command.Command;
+import com.arcrobotics.ftclib.command.InstantCommand;
 import com.arcrobotics.ftclib.command.SequentialCommandGroup;
 import com.arcrobotics.ftclib.command.WaitCommand;
 
@@ -115,7 +116,10 @@ public class ShootingCommands {
             );
         }
 
-        sequence.addCommands(new SpindexerResetCommand(spindexer));
+        sequence.addCommands(
+            new SpindexerResetCommand(spindexer),
+            new InstantCommand(shooter::resetHoodCompensation)
+        );
         return sequence;
     }
 
