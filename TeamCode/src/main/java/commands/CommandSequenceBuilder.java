@@ -25,6 +25,7 @@ import subsystems.Limelight;
 import subsystems.Shooter;
 import subsystems.Spindexer;
 import subsystems.Turret;
+import vision.ArtifactDetector;
 
 
 /**
@@ -247,6 +248,58 @@ public class CommandSequenceBuilder {
     public CommandSequenceBuilder ballCollectMoveToAndCatalog(PathChain collectPath, Pose returnPose, double maxPower, boolean holdEnd, double delaySec) {
         commands.add(new SequentialCommandGroup(
                 new BallCollectMoveToCommand(follower, collectPath, maxPower),
+                new WaitCommand((long)(delaySec * 1000)),
+                new ParallelCommandGroup(
+                        new DynamicReturnPathCommand(follower, returnPose, maxPower, holdEnd),
+                        new AutoCatalogModeCommand(spindexer, intake)
+                )
+        ));
+        return this;
+    }
+
+    // ==================== Vision-Collect-MoveTo Methods ====================
+    // Scans for balls with vision, picks the best lane, follows the chosen path
+    // until 3 balls or path end, then returns to returnPose while cataloging.
+
+    /**
+     * Vision-guided ball collection cycle.
+     * Scans with camera, picks lane, follows chosen path (stops on 3 balls or path end),
+     * then returns to returnPose while running autoCatalog in parallel.
+     *
+     * @param detector   the ArtifactDetector
+     * @param goToPaths  array of 3 PathChains indexed by ChosenPath ordinal [PATH_1, PATH_2, PATH_3]
+     * @param returnPose the pose to return to after collection (typically shoot pose)
+     * @param maxPower   maximum drive power
+     * @param holdEnd    whether to hold position at the return pose
+     */
+    public CommandSequenceBuilder visionCollectAndCatalog(
+            ArtifactDetector detector, PathChain[] goToPaths,
+            Pose returnPose, double maxPower, boolean holdEnd) {
+        commands.add(new SequentialCommandGroup(
+                new VisionCollectCommand(detector, follower, goToPaths, maxPower),
+                new ParallelCommandGroup(
+                        new DynamicReturnPathCommand(follower, returnPose, maxPower, holdEnd),
+                        new AutoCatalogModeCommand(spindexer, intake)
+                )
+        ));
+        return this;
+    }
+
+    /**
+     * Vision-guided ball collection cycle with a delay before return.
+     *
+     * @param detector   the ArtifactDetector
+     * @param goToPaths  array of 3 PathChains indexed by ChosenPath ordinal
+     * @param returnPose the pose to return to after collection
+     * @param maxPower   maximum drive power
+     * @param holdEnd    whether to hold position at the return pose
+     * @param delaySec   seconds to wait after collection before returning
+     */
+    public CommandSequenceBuilder visionCollectAndCatalog(
+            ArtifactDetector detector, PathChain[] goToPaths,
+            Pose returnPose, double maxPower, boolean holdEnd, double delaySec) {
+        commands.add(new SequentialCommandGroup(
+                new VisionCollectCommand(detector, follower, goToPaths, maxPower),
                 new WaitCommand((long)(delaySec * 1000)),
                 new ParallelCommandGroup(
                         new DynamicReturnPathCommand(follower, returnPose, maxPower, holdEnd),
@@ -805,6 +858,34 @@ public class CommandSequenceBuilder {
         public ParallelBuilder ballCollectMoveToAndCatalog(PathChain collectPath, Pose returnPose, double maxPower, boolean holdEnd, double delaySec) {
             parallelCommands.add(new SequentialCommandGroup(
                     new BallCollectMoveToCommand(follower, collectPath, maxPower),
+                    new WaitCommand((long)(delaySec * 1000)),
+                    new ParallelCommandGroup(
+                            new DynamicReturnPathCommand(follower, returnPose, maxPower, holdEnd),
+                            new AutoCatalogModeCommand(spindexer, intake)
+                    )
+            ));
+            return this;
+        }
+
+        // Vision-collect methods
+        public ParallelBuilder visionCollectAndCatalog(
+                ArtifactDetector detector, PathChain[] goToPaths,
+                Pose returnPose, double maxPower, boolean holdEnd) {
+            parallelCommands.add(new SequentialCommandGroup(
+                    new VisionCollectCommand(detector, follower, goToPaths, maxPower),
+                    new ParallelCommandGroup(
+                            new DynamicReturnPathCommand(follower, returnPose, maxPower, holdEnd),
+                            new AutoCatalogModeCommand(spindexer, intake)
+                    )
+            ));
+            return this;
+        }
+
+        public ParallelBuilder visionCollectAndCatalog(
+                ArtifactDetector detector, PathChain[] goToPaths,
+                Pose returnPose, double maxPower, boolean holdEnd, double delaySec) {
+            parallelCommands.add(new SequentialCommandGroup(
+                    new VisionCollectCommand(detector, follower, goToPaths, maxPower),
                     new WaitCommand((long)(delaySec * 1000)),
                     new ParallelCommandGroup(
                             new DynamicReturnPathCommand(follower, returnPose, maxPower, holdEnd),

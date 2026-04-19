@@ -43,8 +43,3 @@ public class TurretConstants {
     public static double RED_BACK_TURRET_TRACKING_OFFSET = 3.0;
     public static double RED_OFFSET_Y_THRESHOLD = 48.0;
 }
-//Red gate: (127,62, 0)
-//Red intake: (132, 41, 55)
-
-//Blue Gate: (18, 65, 180)
-//Blue intake: (13, 44.5, 125)

@@ -61,6 +61,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     // Pedro in Teleop
     private Follower follower;
     private Supplier<PathChain> pathChain;
+    private Supplier<PathChain> intakePathChain;
     private boolean autoDrive = false;
 
 
@@ -79,9 +80,15 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         follower.activateAllPIDFs();
         Pose gatePose = (allianceColor == EnumConstants.AllianceColor.Red)
                 ? OdometryConstants.redGatePose : OdometryConstants.blueGatePose;
+        Pose intakePose = (allianceColor == EnumConstants.AllianceColor.Red)
+                ? OdometryConstants.redIntakePose : OdometryConstants.blueIntakePose;
         pathChain = () -> follower.pathBuilder() //Lazy Curve Generation
                 .addPath(new Path(new BezierLine(follower::getPose, gatePose)))
                 .setHeadingInterpolation(HeadingInterpolator.linearFromPoint(follower::getHeading, gatePose.getHeading(), 0.8))
+                .build();
+        intakePathChain = () -> follower.pathBuilder()
+                .addPath(new Path(new BezierLine(follower::getPose, intakePose)))
+                .setHeadingInterpolation(HeadingInterpolator.linearFromPoint(follower::getHeading, intakePose.getHeading(), 0.8))
                 .build();
         initHardware();
         SpindexerConstants.currentMode = EnumConstants.ShootingMode.Fast;
@@ -184,10 +191,12 @@ abstract public class TeleOpTemplate extends CommandOpMode {
                 .whenPressed(new InstantCommand(this::manualRotateCW));
 
         // Left trigger — auto gate pathing (hold)
+        // Left trigger + left stick down — auto gate intake point pathing (hold)
         new Trigger(() -> gamepad1.left_trigger > RobotConstants.Controls.TRIGGER_THRESHOLD)
                 .whenActive(new InstantCommand(() -> {
                     autoDrive = true;
-                    follower.followPath(pathChain.get());
+                    boolean stickDown = gamepad1.left_stick_y > RobotConstants.Controls.TRIGGER_THRESHOLD;
+                    follower.followPath(stickDown ? intakePathChain.get() : pathChain.get(), false);
                 }))
                 .whenInactive(new InstantCommand(() -> {
                     follower.breakFollowing();
@@ -296,6 +305,11 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
         follower.update();
         robot.updateCachedPose();
+
+        // Release auto-drive once the follower finishes the path
+        if (autoDrive && !follower.isBusy()) {
+            autoDrive = false;
+        }
 
         super.run();
 

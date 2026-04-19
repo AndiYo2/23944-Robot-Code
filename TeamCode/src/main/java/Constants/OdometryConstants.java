@@ -24,8 +24,11 @@ public class OdometryConstants {
     public static double RED_GOAL_X = 140.0;
     public static double RED_GOAL_Y = 140.0;
 
-    public static Pose redGatePose = new Pose(131, 59, Math.toRadians(31.5));
-    public static Pose blueGatePose = new Pose(13, 59, Math.toRadians(148.5));
+    public static Pose redGatePose = new Pose(127, 62, Math.toRadians(0));
+    public static Pose blueGatePose = new Pose(18, 65, Math.toRadians(180));
+
+    public static Pose redIntakePose = new Pose(132, 41, Math.toRadians(55));
+    public static Pose blueIntakePose = new Pose(13, 44.5, Math.toRadians(125));
 
     public static Pose endingAutonPose;
 

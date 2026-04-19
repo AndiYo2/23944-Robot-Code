@@ -152,6 +152,8 @@ public abstract class AutonTemplate extends OpMode {
             if (autonomousCommand != null) {
                 telemetry.addData("Auto Status", autonomousCommand.isFinished() ? "Finished" : "Running");
                 telemetry.addData("Follower Busy", follower.isBusy());
+                telemetry.addData("Vision Scan", commands.VisionCollectCommand.lastScanResult);
+                telemetry.addData("Vision Lanes", vision.LaneSelector.lastLaneDebug);
 
                 telemetry.addLine("--- POSITION DEBUG ---");
                 telemetry.addData("Follower Pose", "X:%.1f Y:%.1f H:%.1f",

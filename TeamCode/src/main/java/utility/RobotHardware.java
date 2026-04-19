@@ -11,6 +11,12 @@ import com.qualcomm.hardware.limelightvision.Limelight3A;
 import android.util.Size;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.vision.VisionPortal;
+import org.firstinspires.ftc.vision.opencv.ColorBlobLocatorProcessor;
+import org.firstinspires.ftc.vision.opencv.ColorRange;
+import org.firstinspires.ftc.vision.opencv.ColorSpace;
+import org.firstinspires.ftc.vision.opencv.ImageRegion;
+import org.opencv.core.Scalar;
+import vision.VisionConstants;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.UnnormalizedAngleUnit;
@@ -53,6 +59,8 @@ public class RobotHardware {
     // ******************* WEBCAM ******************* //
     public WebcamName autonVisionCamera;
     public VisionPortal visionPortal;
+    public ColorBlobLocatorProcessor greenBlobProcessor;
+    public ColorBlobLocatorProcessor purpleBlobProcessor;
 
     // ******************* COLOR SENSORS ******************* //
     // Intake sensors (2 sensors offset at first spindexer slot to avoid ball holes)
@@ -272,11 +280,43 @@ public class RobotHardware {
 
         // ******************* WEBCAM (AutonVisionCamera) ******************* //
         autonVisionCamera = hardwareMap.get(WebcamName.class, NamingConstants.Camera.autonVisionCamera);
+
+        // Custom HSV color ranges — tuned at venue, more reliable than SDK defaults
+        ColorRange greenRange = new ColorRange(
+                ColorSpace.HSV,
+                new Scalar(VisionConstants.HSV_GREEN_H_LO, VisionConstants.HSV_GREEN_S_LO, VisionConstants.HSV_GREEN_V_LO),
+                new Scalar(VisionConstants.HSV_GREEN_H_HI, VisionConstants.HSV_GREEN_S_HI, VisionConstants.HSV_GREEN_V_HI));
+
+        ColorRange purpleRange = new ColorRange(
+                ColorSpace.HSV,
+                new Scalar(VisionConstants.HSV_PURPLE_H_LO, VisionConstants.HSV_PURPLE_S_LO, VisionConstants.HSV_PURPLE_V_LO),
+                new Scalar(VisionConstants.HSV_PURPLE_H_HI, VisionConstants.HSV_PURPLE_S_HI, VisionConstants.HSV_PURPLE_V_HI));
+
+        greenBlobProcessor = new ColorBlobLocatorProcessor.Builder()
+                .setTargetColorRange(greenRange)
+                .setContourMode(ColorBlobLocatorProcessor.ContourMode.EXTERNAL_ONLY)
+                .setRoi(ImageRegion.asUnityCenterCoordinates(-1, 0.2, 1, -1))
+                .setDrawContours(false)
+                .setBlurSize(9)
+                .build();
+
+        purpleBlobProcessor = new ColorBlobLocatorProcessor.Builder()
+                .setTargetColorRange(purpleRange)
+                .setContourMode(ColorBlobLocatorProcessor.ContourMode.EXTERNAL_ONLY)
+                .setRoi(ImageRegion.asUnityCenterCoordinates(-1, 0.2, 1, -1))
+                .setDrawContours(false)
+                .setBlurSize(9)
+                .build();
+
         visionPortal = new VisionPortal.Builder()
                 .setCamera(autonVisionCamera)
-                .setCameraResolution(new Size(640, 480))
+                .setCameraResolution(new Size(
+                        VisionConstants.VISION_PORTAL_WIDTH,
+                        VisionConstants.VISION_PORTAL_HEIGHT))
                 .enableLiveView(true)
                 .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
+                .addProcessor(greenBlobProcessor)
+                .addProcessor(purpleBlobProcessor)
                 .build();
 
         PanelsCameraStream.INSTANCE.startStream(visionPortal, 75);
