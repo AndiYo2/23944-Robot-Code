@@ -21,6 +21,9 @@ public class ShootingSequenceConstants {
     public static double SPINDEXER_FLICK_TIME = 0.1;
     public static double SPINDEXER_RETRACT_DELAY = 0.02;
 
+    // --- Equalization delay (seconds) before Ball 2 to match Ball 2→3 interval ---
+    public static double SHOT_EQUALIZATION_DELAY = 0.04;
+
     // --- Slow Shoot Delays (seconds between each ball) ---
     public static double SLOW_SHOOT_DELAY = 0.1;
     public static double SUPER_SLOW_SHOOT_DELAY = 0.5;

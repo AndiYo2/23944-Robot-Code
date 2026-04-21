@@ -81,8 +81,12 @@ public class ShootingCommands {
                 new RetractShooterFlipperCommand(shooter)
             );
 
+            // Equalization delay: makes Ball 1→2 interval match Ball 2→3 interval
+            long equalizationMs = (long)(ShootingSequenceConstants.SHOT_EQUALIZATION_DELAY * 1000);
             if (delayMs > 0) {
-                sequence.addCommands(new WaitCommand(delayMs));
+                sequence.addCommands(new WaitCommand(Math.max(delayMs, equalizationMs)));
+            } else if (equalizationMs > 0) {
+                sequence.addCommands(new WaitCommand(equalizationMs));
             }
 
             // Ball 2: spindexer pushes ball up
