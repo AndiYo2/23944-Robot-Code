@@ -81,24 +81,21 @@ public class ShootingCommands {
                 new RetractShooterFlipperCommand(shooter)
             );
 
-            // Equalization delay: makes Ball 1→2 interval match Ball 2→3 interval
-            long equalizationMs = (long)(ShootingSequenceConstants.SHOT_EQUALIZATION_DELAY * 1000);
-            if (delayMs > 0) {
-                sequence.addCommands(new WaitCommand(Math.max(delayMs, equalizationMs)));
-            } else if (equalizationMs > 0) {
-                sequence.addCommands(new WaitCommand(equalizationMs));
-            }
-
-            // Ball 2: spindexer pushes ball up
+            // Ball 2: spindexer flipper lifts ball 2 up to the shooter
             sequence.addCommands(new ExtendSpindexerFlipperCommand(spindexer));
 
-            // Two parallel lanes:
-            //   P1: extend shooter (fires ball 2) → retract shooter
-            //   P2: wait(halfway) → retract spindexer flipper → rotate spindexer
+            // Parallel:
+            //   Lane A: [equalization wait] → extend shooter → retract shooter (fires ball 2)
+            //   Lane B: [halfway wait] → retract spindexer flipper → rotate CCW (ball 3 prep)
+            // Equalization wait lives INSIDE Lane A so it only delays ball 2's shot,
+            // not ball 3. Sized to fit within Lane B so total parallel duration is unchanged.
+            long equalizationMs = (long)(ShootingSequenceConstants.SHOT_EQUALIZATION_DELAY * 1000);
+            long laneAPreFireWait = Math.max(delayMs, equalizationMs);
             long shooterHalfwayMs = (long)(ShootingSequenceConstants.SHOOTER_EXTEND_HALFWAY * 1000);
 
             sequence.addCommands(
-                new ExtendShooterFlipperCommand(shooter, flickTime)
+                new WaitCommand(laneAPreFireWait)
+                    .andThen(new ExtendShooterFlipperCommand(shooter, flickTime))
                     .andThen(new RetractShooterFlipperCommand(shooter))
                     .alongWith(
                         new WaitCommand(shooterHalfwayMs)
