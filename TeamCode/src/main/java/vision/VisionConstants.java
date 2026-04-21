@@ -60,6 +60,7 @@ public class VisionConstants {
     public static final int    MIN_FRAMES_FOR_VALID      = 2;   // must appear in both frames
     public static final long   FRAME_CAPTURE_TIMEOUT_MS  = 1000; // max wait per frame
     public static final long   INTER_FRAME_SLEEP_MS      = 50;  // 33ms = 1 frame at 30fps, 50ms for margin
+    public static final long   PROCESSOR_WARMUP_MS       = 100; // time for processors to produce valid frame after enable
 
     // ============ Preferred VisionPortal resolution ============
     // 640x480 for best FPS on Control Hub with two blob processors.

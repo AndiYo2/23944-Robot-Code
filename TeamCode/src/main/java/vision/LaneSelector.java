@@ -59,10 +59,19 @@ public class LaneSelector {
     private static final List<List<FieldBall>> storedFrames = new ArrayList<>();
 
     /**
+     * Stores pre-captured frames for merging into the next selectPath call.
+     * Called by VisionPreScanCommand.end() after non-blocking capture completes.
+     */
+    public static void storeFrames(List<List<FieldBall>> frames) {
+        storedFrames.clear();
+        storedFrames.addAll(frames);
+    }
+
+    /**
      * Captures frames at the current heading and stores them for the next selectPath call.
      * Call this before rotating, then call selectPath after rotating — both scans
      * are merged for better lane coverage.
-     * Blocks ~200ms (warmup + 2 frames).
+     * BLOCKING — prefer VisionPreScanCommand for non-blocking capture.
      */
     public static void captureAndStore(ArtifactDetector detector, Pose robotPose) {
         try {
@@ -77,8 +86,32 @@ public class LaneSelector {
     }
 
     /**
+     * Non-blocking path selection from pre-captured frames.
+     * Merges provided frames with any stored pre-scan frames, clusters, and decides.
+     * Called by VisionCollectCommand after it captures frames across scheduler loops.
+     */
+    public static ChosenPath selectFromFrames(List<List<FieldBall>> freshFrames, ArtifactDetector detector) {
+        List<List<FieldBall>> allFrames = new ArrayList<>(storedFrames);
+        storedFrames.clear();
+        allFrames.addAll(freshFrames);
+
+        List<FieldBall> mergedBalls = clusterDetections(allFrames);
+
+        int totalRaw = 0;
+        for (List<FieldBall> frame : allFrames) totalRaw += frame.size();
+
+        ChosenPath result = decidePath(mergedBalls);
+        lastScanDebug = result
+                + " | merged:" + mergedBalls.size()
+                + " | raw:" + totalRaw + "/" + allFrames.size() + "f"
+                + " | blobs G:" + detector.lastGreenBlobCount + " P:" + detector.lastPurpleBlobCount
+                + (detector.lastScanError.isEmpty() ? "" : " | ERR:" + detector.lastScanError);
+        return result;
+    }
+
+    /**
      * Runs a full scan, merges with any stored pre-scan frames, and returns the chosen path.
-     * Blocks ~200ms (warmup + 2 frames).
+     * BLOCKING — prefer VisionCollectCommand for non-blocking scan + drive.
      */
     public static ChosenPath selectPath(ArtifactDetector detector, Pose robotPose) {
         try {

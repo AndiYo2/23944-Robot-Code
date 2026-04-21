@@ -267,8 +267,7 @@ public class CommandSequenceBuilder {
      * Blocks ~500ms.
      */
     public CommandSequenceBuilder visionPreScan(ArtifactDetector detector) {
-        commands.add(new InstantCommand(() ->
-                vision.LaneSelector.captureAndStore(detector, follower.getPose())));
+        commands.add(new VisionPreScanCommand(detector, follower));
         return this;
     }
 
@@ -558,6 +557,18 @@ public class CommandSequenceBuilder {
      */
     public CommandSequenceBuilder rampScan(double timeout) {
         commands.add(new RampScanCommand(limelight, timeout));
+        return this;
+    }
+
+    /**
+     * Shifts MotifPattern by rampCount % 3 so the sorted catalog uses the correct
+     * shooting order. Saves the original motif on first call (from limelightScan).
+     * Call after rampScan() and before guaranteeSortedAutoCatalog().
+     *
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder shiftMotif() {
+        commands.add(new InstantCommand(() -> SpindexerAndMotifStatus.RampTracker.shiftMotifForRamp()));
         return this;
     }
 
@@ -1045,6 +1056,11 @@ public class CommandSequenceBuilder {
             return this;
         }
 
+        public ParallelBuilder shiftMotif() {
+            parallelCommands.add(new InstantCommand(() -> SpindexerAndMotifStatus.RampTracker.shiftMotifForRamp()));
+            return this;
+        }
+
         public ParallelBuilder preload() {
             parallelCommands.add(new PreloadCommand());
             return this;
@@ -1107,8 +1123,7 @@ public class CommandSequenceBuilder {
         }
 
         public ParallelBuilder visionPreScan(ArtifactDetector detector) {
-            parallelCommands.add(new InstantCommand(() ->
-                    vision.LaneSelector.captureAndStore(detector, follower.getPose())));
+            parallelCommands.add(new VisionPreScanCommand(detector, follower));
             return this;
         }
 
