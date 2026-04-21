@@ -14,6 +14,14 @@ import commands.CommandSequenceBuilder;
 @Autonomous(name = "RedGuaranteeSorted15Ball")
 public class RedGuaranteeSorted15Ball extends AutonTemplate {
     public static double maxSpeed = 1;
+
+    // Per-auton pipeline settle delays (seconds). Tune here — this auton
+    // owns its own pipeline scheduling; the Limelight subsystem no longer
+    // auto-switches pipelines.
+    public static double MOTIF_SETTLE = 0.30;   // pipeline 5 (AprilTag) warmup
+    public static double RAMP_SETTLE = 0.35;    // pipeline 6 (Python SnapScript) warmup
+    public static double LOCAL_SETTLE = 0.20;   // pipeline 2 (localization) warmup
+
     private PathChain startToShoot, shootToSecondSpike, secondSpikeToShoot,
             shootToGateOne, gateTwoToShoot,
             shootToFirstSpike, firstSpikeToShoot,
@@ -107,7 +115,7 @@ public class RedGuaranteeSorted15Ball extends AutonTemplate {
                 .rampClear()
                 // Cycle 1: Preloaded shoot-while-moving (fast) — 3 balls
                 .setShootWhileMoving(true)
-                .parallel(p -> p.moveTo(startToShoot, maxSpeed, false).shootAfterDelay(.5))
+                .parallel(p -> p.moveTo(startToShoot, maxSpeed, false).shootAfterDelay(.7))
                 .setShootWhileMoving(false)
                 .limelightScan()
                 // Cycle 2: Second spike (fast) — 6 balls
@@ -115,13 +123,16 @@ public class RedGuaranteeSorted15Ball extends AutonTemplate {
                 .moveTo(shootToSecondSpike, maxSpeed, false)
                 .parallel(p -> p.moveTo(secondSpikeToShoot, maxSpeed, false).autoCatalog())
                 .shoot()
+                .switchPipeline(6)
                 // Switch to sorted for remaining 3 cycles
                 .setSpindexerMode(EnumConstants.ShootingMode.Sorted)
                 // Cycle 3: Gate (sorted) — 9 balls
                 .intakeStart()
                 .moveToParametric(shootToGateOne, t -> t < 0.8 ? maxSpeed : 0.8, false)
                 .delay(1.5)
+                .intakeStop()
                 .moveTo(gateTwoToShoot, maxSpeed, false)
+                .delay(1)
                 .rampScan()
                 .shiftMotif()
                 .guaranteeSortedAutoCatalog()
@@ -129,7 +140,9 @@ public class RedGuaranteeSorted15Ball extends AutonTemplate {
                 // Cycle 4: First spike (sorted) — 12 balls
                 .intakeStart()
                 .moveTo(shootToFirstSpike, maxSpeed, false)
+                .intakeStop()
                 .moveTo(firstSpikeToShoot, maxSpeed, false)
+                .delay(1)
                 .rampScan()
                 .shiftMotif()
                 .guaranteeSortedAutoCatalog()
@@ -137,7 +150,9 @@ public class RedGuaranteeSorted15Ball extends AutonTemplate {
                 // Cycle 5: Third spike (sorted) — 15 balls
                 .intakeStart()
                 .moveTo(shootToThirdSpike, maxSpeed, false)
+                .intakeStop()
                 .moveTo(thirdSpikeToShootEnd, maxSpeed, false)
+                .delay(1)
                 .rampScan()
                 .shiftMotif()
                 .guaranteeSortedAutoCatalog()

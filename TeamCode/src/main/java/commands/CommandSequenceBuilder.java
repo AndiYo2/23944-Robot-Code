@@ -560,6 +560,32 @@ public class CommandSequenceBuilder {
         return this;
     }
 
+    // ==================== Pipeline Switching ====================
+
+    /** Switches the Limelight to the ramp-scan pipeline (pipeline 6). Fire-and-forget; follow with .delay() to let it settle. */
+    public CommandSequenceBuilder switchPipelineRampScan() {
+        commands.add(SetLimelightPipelineCommand.rampScan(limelight));
+        return this;
+    }
+
+    /** Switches the Limelight to the localization pipeline (pipeline 2). Fire-and-forget; follow with .delay() to let it settle. */
+    public CommandSequenceBuilder switchPipelineLocalization() {
+        commands.add(SetLimelightPipelineCommand.localization(limelight));
+        return this;
+    }
+
+    /** Switches the Limelight to the motif-tag pipeline (pipeline 5). Fire-and-forget; follow with .delay() to let it settle. */
+    public CommandSequenceBuilder switchPipelineMotif() {
+        commands.add(SetLimelightPipelineCommand.motif(limelight));
+        return this;
+    }
+
+    /** Switches the Limelight to an explicit pipeline index. Fire-and-forget; follow with .delay() to let it settle. */
+    public CommandSequenceBuilder switchPipeline(int index) {
+        commands.add(new SetLimelightPipelineCommand(limelight, index));
+        return this;
+    }
+
     /**
      * Shifts MotifPattern by rampCount % 3 so the sorted catalog uses the correct
      * shooting order. Saves the original motif on first call (from limelightScan).
@@ -1048,6 +1074,26 @@ public class CommandSequenceBuilder {
 
         public ParallelBuilder rampScan(double timeout) {
             parallelCommands.add(new RampScanCommand(limelight, timeout));
+            return this;
+        }
+
+        public ParallelBuilder switchPipelineRampScan() {
+            parallelCommands.add(SetLimelightPipelineCommand.rampScan(limelight));
+            return this;
+        }
+
+        public ParallelBuilder switchPipelineLocalization() {
+            parallelCommands.add(SetLimelightPipelineCommand.localization(limelight));
+            return this;
+        }
+
+        public ParallelBuilder switchPipelineMotif() {
+            parallelCommands.add(SetLimelightPipelineCommand.motif(limelight));
+            return this;
+        }
+
+        public ParallelBuilder switchPipeline(int index) {
+            parallelCommands.add(new SetLimelightPipelineCommand(limelight, index));
             return this;
         }
 

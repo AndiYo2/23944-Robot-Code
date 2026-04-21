@@ -174,6 +174,10 @@ public abstract class AutonTemplate extends OpMode {
 
                 telemetry.addData("Limelight Mode", limelight.getCurrentMode());
                 telemetry.addData("Motif Detected", limelight.isMotifDetected());
+                telemetry.addData("Ramp Scan", commands.RampScanCommand.lastScanDebug);
+                telemetry.addData("Ramp Read", limelight.lastRampReadDebug);
+                telemetry.addData("Balls In Ramp", SpindexerAndMotifStatus.RampTracker.getBallsInRamp());
+                telemetry.addData("Motif Shift", SpindexerAndMotifStatus.RampTracker.lastShiftDebug);
 
                 telemetry.addLine("--- SPINDEXER DEBUG ---");
                 telemetry.addData("Spindexer Degrees", "%d°", spindexer.getTargetPosition());

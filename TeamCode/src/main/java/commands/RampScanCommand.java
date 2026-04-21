@@ -8,10 +8,15 @@ import utility.RobotHardware;
 import utility.SpindexerAndMotifStatus;
 
 /**
- * Scans the classifier ramp via Limelight pipeline 6 (Python SnapScript).
- * Reads getPythonOutput() to count non-zero entries (balls in ramp).
- * Updates RampTracker with the scan result. If scan fails (timeout),
- * RampTracker keeps its existing manual counter value.
+ * Reads the classifier-ramp ball count from the Limelight's Python output
+ * (pipeline 6) and commits it to RampTracker.
+ *
+ * This command does NOT switch pipelines — the caller is responsible for
+ * sequencing a pipeline switch + settle delay before this command, and
+ * switching back afterwards. See SetLimelightPipelineCommand and the
+ * builder's .switchPipelineRampScan() / .switchPipelineLocalization().
+ *
+ * On timeout, RampTracker keeps its existing value.
  */
 public class RampScanCommand extends CommandBase {
     private final Limelight limelight;
@@ -20,7 +25,6 @@ public class RampScanCommand extends CommandBase {
     private boolean scanComplete;
 
     public static final double DEFAULT_TIMEOUT = 1.0;
-    private static final double PIPELINE_SETTLE_SECONDS = 0.15;
 
     public static String lastScanDebug = "no scan yet";
 
@@ -43,13 +47,10 @@ public class RampScanCommand extends CommandBase {
         if (!RobotHardware.getInstance().limelight.isRunning()) {
             RobotHardware.getInstance().limelight.start();
         }
-        limelight.switchToRampScanPipeline();
     }
 
     @Override
     public void execute() {
-        if (timer.seconds() < PIPELINE_SETTLE_SECONDS) return;
-
         int count = limelight.readRampBallCount();
         if (count >= 0) {
             int oldCount = SpindexerAndMotifStatus.RampTracker.getBallsInRamp();
@@ -70,6 +71,5 @@ public class RampScanCommand extends CommandBase {
             lastScanDebug = String.format("Scan TIMEOUT (%.1fs), keeping counter at %d",
                     timeoutSeconds, SpindexerAndMotifStatus.RampTracker.getBallsInRamp());
         }
-        limelight.switchToLocalizationPipeline();
     }
 }

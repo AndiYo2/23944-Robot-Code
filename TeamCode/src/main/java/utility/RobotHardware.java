@@ -324,9 +324,9 @@ public class RobotHardware {
                 .addProcessor(purpleBlobProcessor)
                 .build();
 
-        // Disable processors immediately — only enable during active scans
-        greenBlobProcessor.setEnabled(false);
-        purpleBlobProcessor.setEnabled(false);
+        // Disable processors immediately — only enabl`24e during active scans
+        visionPortal.setProcessorEnabled(greenBlobProcessor, false);
+        visionPortal.setProcessorEnabled(purpleBlobProcessor, false);
 
         // ******************* VOLTAGE SENSOR ******************* //
         if (hardwareMap.voltageSensor.iterator().hasNext()) {
@@ -341,7 +341,7 @@ public class RobotHardware {
     /** Stop the auton vision portal and camera stream. Call from TeleOp init. */
     public void stopVisionPortal() {
         if (visionPortal != null) {
-            PanelsCameraStream.INSTANCE.stopStream();
+            try { PanelsCameraStream.INSTANCE.stopStream(); } catch (Exception ignored) {}
             visionPortal.close();
             visionPortal = null;
             greenBlobProcessor = null;

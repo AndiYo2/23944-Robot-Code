@@ -60,14 +60,14 @@ public class ArtifactDetector {
 
     /** Enable both processors for active scanning. Call before captureFrames. */
     public void enable() {
-        greenProcessor.setEnabled(true);
-        purpleProcessor.setEnabled(true);
+        portal.setProcessorEnabled(greenProcessor, true);
+        portal.setProcessorEnabled(purpleProcessor, true);
     }
 
     /** Disable both processors to free CPU when not scanning. */
     public void disable() {
-        greenProcessor.setEnabled(false);
-        purpleProcessor.setEnabled(false);
+        portal.setProcessorEnabled(greenProcessor, false);
+        portal.setProcessorEnabled(purpleProcessor, false);
     }
 
     /**

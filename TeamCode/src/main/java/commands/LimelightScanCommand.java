@@ -10,6 +10,10 @@ import utility.RobotHardware;
 /**
  * Command that toggles the limelight to scanning mode and waits for motif detection.
  * Completes when the limelight has detected a motif OR timeout is reached.
+ *
+ * This command DOES auto-switch pipelines: motif pipeline on start, localization
+ * on end. Contrast with RampScanCommand, which is pipeline-agnostic — callers
+ * sequence ramp-pipeline switches manually via SetLimelightPipelineCommand.
  */
 public class LimelightScanCommand extends CommandBase {
     private final Limelight limelight;
