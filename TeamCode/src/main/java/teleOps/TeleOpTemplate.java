@@ -77,7 +77,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         // Set alliance color BEFORE initHardware so it can use the correct settings
         RobotConstants.Robot.allianceColor = allianceColor;
         follower = Constants.createFollower(hardwareMap);
-        follower.activateAllPIDFs();
         Pose gatePose = (allianceColor == EnumConstants.AllianceColor.Red)
                 ? OdometryConstants.redGatePose : OdometryConstants.blueGatePose;
         Pose intakePose = (allianceColor == EnumConstants.AllianceColor.Red)
@@ -100,6 +99,8 @@ abstract public class TeleOpTemplate extends CommandOpMode {
             robot.pinpoint.update();
             follower.update();
         }
+
+        follower.startTeleopDrive();
 
         configureButtonBindings();
 
@@ -159,6 +160,9 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         FieldDrawing.init();
 
         register(mecanumDrive, intake, shooter, spindexer, limelight, turret);
+
+        // Auton vision camera is not needed in TeleOp — stop it to save loop time
+        robot.stopVisionPortal();
     }
 
     protected void configureButtonBindings() {
@@ -191,15 +195,14 @@ abstract public class TeleOpTemplate extends CommandOpMode {
                 .whenPressed(new InstantCommand(this::manualRotateCW));
 
         // Left trigger — auto gate pathing (hold)
-        // Left trigger + left stick down — auto gate intake point pathing (hold)
         new Trigger(() -> gamepad1.left_trigger > RobotConstants.Controls.TRIGGER_THRESHOLD)
                 .whenActive(new InstantCommand(() -> {
                     autoDrive = true;
-                    boolean stickDown = gamepad1.left_stick_y > RobotConstants.Controls.TRIGGER_THRESHOLD;
-                    follower.followPath(stickDown ? intakePathChain.get() : pathChain.get(), false);
+                    follower.followPath(pathChain.get(), false);
                 }))
                 .whenInactive(new InstantCommand(() -> {
                     follower.breakFollowing();
+                    follower.startTeleopDrive();
                     autoDrive = false;
                 }));
 
@@ -308,6 +311,8 @@ abstract public class TeleOpTemplate extends CommandOpMode {
 
         // Release auto-drive once the follower finishes the path
         if (autoDrive && !follower.isBusy()) {
+            follower.breakFollowing();
+            follower.startTeleopDrive();
             autoDrive = false;
         }
 

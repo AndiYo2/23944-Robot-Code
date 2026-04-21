@@ -131,7 +131,7 @@ public class RedVisionAuto extends AutonTemplate {
         detector = new ArtifactDetector();
 
         autonomousCommand = new CommandSequenceBuilder(follower, intake, spindexer, limelight, shooter, turret)
-                .delay(.35)
+                .delay(.6)
                 .shoot()
                 // Cycle 1 (corner balls)
                 .intakeStart()

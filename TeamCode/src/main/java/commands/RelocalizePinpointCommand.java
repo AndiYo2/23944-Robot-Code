@@ -20,8 +20,11 @@ public class RelocalizePinpointCommand extends CommandBase {
 
     @Override
     public void initialize() {
-        RobotHardware.getInstance().relocalizationPending = true;
-        limelight.relocalizePinpointApriltag();
+        // Fetch the pose now (not cached every loop) then apply if valid
+        if (limelight.fetchPoseForRelocalization()) {
+            RobotHardware.getInstance().relocalizationPending = true;
+            limelight.relocalizePinpointApriltag();
+        }
     }
 
     @Override

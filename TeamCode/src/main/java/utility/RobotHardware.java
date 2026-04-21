@@ -167,6 +167,11 @@ public class RobotHardware {
         frontLeft.setDirection(DcMotorEx.Direction.REVERSE);
         backLeft.setDirection(DcMotorEx.Direction.REVERSE);
 
+        frontLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        backLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        backRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        frontRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
         // ******************* PARK ******************* //
         kickServo = hardwareMap.get(Servo.class, NamingConstants.Drivetrain.kickServo);
         beamServo = hardwareMap.get(Servo.class, NamingConstants.Drivetrain.beamServo);
@@ -329,6 +334,17 @@ public class RobotHardware {
         }
 
         resetCachedState();
+    }
+
+    /** Stop the auton vision portal and camera stream. Call from TeleOp init. */
+    public void stopVisionPortal() {
+        if (visionPortal != null) {
+            PanelsCameraStream.INSTANCE.stopStream();
+            visionPortal.close();
+            visionPortal = null;
+            greenBlobProcessor = null;
+            purpleBlobProcessor = null;
+        }
     }
 
     public void resetCachedState() {

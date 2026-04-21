@@ -88,6 +88,48 @@ public class SpindexerAndMotifStatus {
     }
 
     /**
+     * Tracks the number of balls deposited into the classifier ramp.
+     * Used by scan-based sorted shooting to determine the correct motif-shifted
+     * shooting order. Maintains a manual counter that can be corrected by
+     * Limelight ramp scans.
+     *
+     * All methods are static and synchronized for cross-OpMode persistence.
+     */
+    public static class RampTracker {
+        private static int ballsInRamp = 0;
+
+        /** Gets the current ball count in the ramp. */
+        public static synchronized int getBallsInRamp() { return ballsInRamp; }
+
+        /** Sets the ball count (used by Limelight scan correction). */
+        public static synchronized void setBallsInRamp(int count) { ballsInRamp = count; }
+
+        /** Increments the counter after shooting. */
+        public static synchronized void addShotBalls(int count) { ballsInRamp += count; }
+
+        /** Resets the counter to 0. */
+        public static synchronized void clear() { ballsInRamp = 0; }
+
+        /**
+         * Returns the motif-shifted desired shooting order based on current ramp count.
+         * If ramp has N balls, the next 3 should be motif[N%3], motif[(N+1)%3], motif[(N+2)%3].
+         */
+        public static EnumConstants.BallColor[] getDesiredShootOrder() {
+            int shift = ballsInRamp % 3;
+            EnumConstants.BallColor[] motif = {
+                MotifPattern.getBallColorInSlotX(0),
+                MotifPattern.getBallColorInSlotX(1),
+                MotifPattern.getBallColorInSlotX(2)
+            };
+            return new EnumConstants.BallColor[]{
+                motif[shift],
+                motif[(shift + 1) % 3],
+                motif[(shift + 2) % 3]
+            };
+        }
+    }
+
+    /**
      * Tracks the detected motif ball pattern from Limelight.
      *
      * All methods are static - use the class directly (MotifPattern.getBallColorInSlotX(0))

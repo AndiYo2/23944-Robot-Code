@@ -19,6 +19,7 @@ import commands.*;
 import Constants.EnumConstants.BallColor;
 import Constants.EnumConstants.ShootingMode;
 import Constants.SpindexerConstants;
+import utility.SpindexerAndMotifStatus;
 import pedroPathing.Constants;
 import subsystems.Intake;
 import subsystems.Limelight;
@@ -535,6 +536,41 @@ public class CommandSequenceBuilder {
         return this;
     }
 
+    // ==================== Ramp Scan Methods ====================
+
+    /**
+     * Scans the classifier ramp via Limelight pipeline 6 (Python SnapScript).
+     * Counts non-zero entries in getPythonOutput() and updates RampTracker.
+     * Falls back to manual counter if scan times out.
+     *
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder rampScan() {
+        commands.add(new RampScanCommand(limelight));
+        return this;
+    }
+
+    /**
+     * Scans the classifier ramp with a custom timeout.
+     *
+     * @param timeout timeout in seconds
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder rampScan(double timeout) {
+        commands.add(new RampScanCommand(limelight, timeout));
+        return this;
+    }
+
+    /**
+     * Resets the ramp ball counter to 0.
+     *
+     * @return this builder for chaining
+     */
+    public CommandSequenceBuilder rampClear() {
+        commands.add(new InstantCommand(() -> SpindexerAndMotifStatus.RampTracker.clear()));
+        return this;
+    }
+
     /**
      * Sets the initial spindexer ball pattern using the default preload.
      *
@@ -991,6 +1027,21 @@ public class CommandSequenceBuilder {
 
         public ParallelBuilder guaranteeSortedAutoCatalog() {
             parallelCommands.add(new GuaranteeSortedAutoCatalogCommand(spindexer, intake));
+            return this;
+        }
+
+        public ParallelBuilder rampScan() {
+            parallelCommands.add(new RampScanCommand(limelight));
+            return this;
+        }
+
+        public ParallelBuilder rampScan(double timeout) {
+            parallelCommands.add(new RampScanCommand(limelight, timeout));
+            return this;
+        }
+
+        public ParallelBuilder rampClear() {
+            parallelCommands.add(new InstantCommand(() -> SpindexerAndMotifStatus.RampTracker.clear()));
             return this;
         }
 

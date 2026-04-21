@@ -153,33 +153,44 @@ public class Limelight extends SubsystemBase {
         return limelightPose;
     }
 
-    public void updateLimelightPose() {
+    /**
+     * Pushes the current robot heading to the Limelight so MT2 stays accurate.
+     * Cheap — just sends one number. Called every loop in periodic().
+     */
+    public void pushHeadingToLimelight() {
         if (robot.limelight == null) return;
+        robot.limelight.updateRobotOrientation(Math.toDegrees(robot.cachedHeading) + 90);
+    }
 
-        // Convert heading from Pedro to InvertedFTC frame (same frame the output uses)
-        // Using the Pedro library ensures the round-trip is consistent
+    /**
+     * Fetches the latest Limelight MT2 pose on demand.
+     * Call this only when relocalization is actually requested (not every loop).
+     * Heading must already be pushed via periodic() for MT2 accuracy.
+     *
+     * @return true if a valid AprilTag-based pose was obtained
+     */
+    public boolean fetchPoseForRelocalization() {
+        if (robot.limelight == null) return false;
 
         LLResult result = robot.limelight.getLatestResult();
         if (result != null && result.isValid() && !result.getFiducialResults().isEmpty()) {
             Pose3D botpose = result.getBotpose_MT2();
             if (botpose != null) {
-                robot.limelight.updateRobotOrientation(Math.toDegrees(robot.cachedHeading) + 90);
-                Pose3D lp = robot.limelight.getLatestResult().getBotpose_MT2();
-                double xp = (lp.getPosition().y * LimelightConstants.METERS_TO_INCHES) + 72;
-                double yp = 72 - (lp.getPosition().x * LimelightConstants.METERS_TO_INCHES);
-                limelightPose = new Pose(xp, yp, Math.toRadians(lp.getOrientation().getYaw() - 90));
+                double xp = (botpose.getPosition().y * LimelightConstants.METERS_TO_INCHES) + 72;
+                double yp = 72 - (botpose.getPosition().x * LimelightConstants.METERS_TO_INCHES);
+                limelightPose = new Pose(xp, yp, Math.toRadians(botpose.getOrientation().getYaw() - 90));
 
                 lastRelocDebug = String.format("raw=(%.3fm, %.3fm, %.1f°) -> pedro=(%.1f, %.1f, %.1f°)",
                         botpose.getPosition().x, botpose.getPosition().y,
                         botpose.getOrientation().getYaw(AngleUnit.DEGREES),
                         limelightPose.getX(), limelightPose.getY(),
                         Math.toDegrees(limelightPose.getHeading()));
-            } else {
-                limelightPose = new Pose(robot.cachedPoseX, robot.cachedPoseY, robot.cachedHeading);
+                return true;
             }
-        } else {
-            limelightPose = new Pose(robot.cachedPoseX, robot.cachedPoseY, robot.cachedHeading);
         }
+
+        lastRelocDebug = "no valid AprilTag pose";
+        return false;
     }
 
     /**
@@ -208,6 +219,33 @@ public class Limelight extends SubsystemBase {
                 limelightPose.getX(), limelightPose.getY());
         return true;
     }
+    // ==================== RAMP SCANNING ====================
+
+    public void switchToRampScanPipeline() {
+        if (robot.limelight != null) {
+            robot.limelight.pipelineSwitch(LimelightConstants.RAMP_SCAN_PIPELINE);
+        }
+    }
+
+    /**
+     * Reads getPythonOutput() from the latest result and counts non-zero entries.
+     * Each entry represents a ramp slot: 0=empty, 1=green, 2=purple.
+     *
+     * @return ball count (0-8), or -1 if no valid result available
+     */
+    public int readRampBallCount() {
+        if (robot.limelight == null) return -1;
+        LLResult result = robot.limelight.getLatestResult();
+        if (result == null || !result.isValid()) return -1;
+        double[] output = result.getPythonOutput();
+        if (output == null) return -1;
+        int count = 0;
+        for (double val : output) {
+            if (val != 0) count++;
+        }
+        return count;
+    }
+
     // ==================== PIPELINE SWITCHING ====================
 
     public void switchToLocalizationPipeline() {
@@ -231,7 +269,8 @@ public class Limelight extends SubsystemBase {
             updateLimelightData();
             scanForMotifTag();
         } else {
-            updateLimelightPose();
+            // Just push heading so MT2 stays accurate for on-demand relocalization
+            pushHeadingToLimelight();
         }
     }
 }
