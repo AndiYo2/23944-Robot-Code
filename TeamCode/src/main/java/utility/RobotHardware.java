@@ -318,13 +318,15 @@ public class RobotHardware {
                 .setCameraResolution(new Size(
                         VisionConstants.VISION_PORTAL_WIDTH,
                         VisionConstants.VISION_PORTAL_HEIGHT))
-                .enableLiveView(true)
-                .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
+                .enableLiveView(false)
+                .setStreamFormat(VisionPortal.StreamFormat.YUY2)
                 .addProcessor(greenBlobProcessor)
                 .addProcessor(purpleBlobProcessor)
                 .build();
 
-        PanelsCameraStream.INSTANCE.startStream(visionPortal, 75);
+        // Disable processors immediately — only enable during active scans
+        greenBlobProcessor.setEnabled(false);
+        purpleBlobProcessor.setEnabled(false);
 
         // ******************* VOLTAGE SENSOR ******************* //
         if (hardwareMap.voltageSensor.iterator().hasNext()) {

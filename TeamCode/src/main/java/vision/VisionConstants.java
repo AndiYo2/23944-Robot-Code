@@ -55,10 +55,11 @@ public class VisionConstants {
     public static final double MIN_BALL_PIXEL_DIAMETER = 5.0;
 
     // ============ Multi-frame merge ============
-    public static final int    NUM_SCAN_FRAMES           = 3;
+    public static final int    NUM_SCAN_FRAMES           = 2;
     public static final double MERGE_CLUSTER_RADIUS_INCHES = 6.0;
-    public static final int    MIN_FRAMES_FOR_VALID      = 2;   // 2 of 3 frames
+    public static final int    MIN_FRAMES_FOR_VALID      = 2;   // must appear in both frames
     public static final long   FRAME_CAPTURE_TIMEOUT_MS  = 1000; // max wait per frame
+    public static final long   INTER_FRAME_SLEEP_MS      = 50;  // 33ms = 1 frame at 30fps, 50ms for margin
 
     // ============ Preferred VisionPortal resolution ============
     // 640x480 for best FPS on Control Hub with two blob processors.

@@ -49,6 +49,9 @@ public class LaneSelector {
 
     private LaneSelector() {} // static utility
 
+    /** Time to let processors warm up after enabling, so first frame is valid. */
+    private static final long PROCESSOR_WARMUP_MS = 100;
+
     /** Debug string from the last scan — read from telemetry via VisionCollectCommand.lastScanResult */
     public static String lastScanDebug = "No scan yet";
 
@@ -59,19 +62,23 @@ public class LaneSelector {
      * Captures frames at the current heading and stores them for the next selectPath call.
      * Call this before rotating, then call selectPath after rotating — both scans
      * are merged for better lane coverage.
-     * Blocks ~500ms.
+     * Blocks ~200ms (warmup + 2 frames).
      */
     public static void captureAndStore(ArtifactDetector detector, Pose robotPose) {
         try {
+            detector.enable();
+            sleep(PROCESSOR_WARMUP_MS);
             captureFrames(detector, robotPose, storedFrames);
+            detector.disable();
         } catch (Exception e) {
             // Don't crash — just skip the pre-scan
+            try { detector.disable(); } catch (Exception ignored) {}
         }
     }
 
     /**
      * Runs a full scan, merges with any stored pre-scan frames, and returns the chosen path.
-     * Blocks ~500ms.
+     * Blocks ~200ms (warmup + 2 frames).
      */
     public static ChosenPath selectPath(ArtifactDetector detector, Pose robotPose) {
         try {
@@ -79,8 +86,11 @@ public class LaneSelector {
             List<List<FieldBall>> allFrames = new ArrayList<>(storedFrames);
             storedFrames.clear();
 
-            // Capture fresh frames at current heading
+            // Enable processors, warm up, capture, then disable
+            detector.enable();
+            sleep(PROCESSOR_WARMUP_MS);
             captureFrames(detector, robotPose, allFrames);
+            detector.disable();
 
             // Merge detections across all frames and decide
             List<FieldBall> mergedBalls = clusterDetections(allFrames);
@@ -202,7 +212,7 @@ public class LaneSelector {
             outFrames.add(fieldBalls);
 
             if (i < VisionConstants.NUM_SCAN_FRAMES - 1) {
-                sleep(250);
+                sleep(VisionConstants.INTER_FRAME_SLEEP_MS);
             }
         }
     }

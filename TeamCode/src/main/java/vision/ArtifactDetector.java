@@ -58,12 +58,16 @@ public class ArtifactDetector {
         scaledMaxArea = VisionConstants.MAX_CONTOUR_AREA * areaScale;
     }
 
-    /** No-op — processors stay enabled to avoid onDrawFrame null race condition in the SDK. */
+    /** Enable both processors for active scanning. Call before captureFrames. */
     public void enable() {
+        greenProcessor.setEnabled(true);
+        purpleProcessor.setEnabled(true);
     }
 
-    /** No-op — processors stay enabled to avoid onDrawFrame null race condition in the SDK. */
+    /** Disable both processors to free CPU when not scanning. */
     public void disable() {
+        greenProcessor.setEnabled(false);
+        purpleProcessor.setEnabled(false);
     }
 
     /**

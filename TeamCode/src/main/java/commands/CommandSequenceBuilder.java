@@ -1106,6 +1106,12 @@ public class CommandSequenceBuilder {
             return this;
         }
 
+        public ParallelBuilder visionPreScan(ArtifactDetector detector) {
+            parallelCommands.add(new InstantCommand(() ->
+                    vision.LaneSelector.captureAndStore(detector, follower.getPose())));
+            return this;
+        }
+
         public ParallelBuilder addCommand(Command command) {
             parallelCommands.add(command);
             return this;

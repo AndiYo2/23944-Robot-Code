@@ -25,6 +25,9 @@ public class ShootingSequenceConstants {
     public static double SLOW_SHOOT_DELAY = 0.1;
     public static double SUPER_SLOW_SHOOT_DELAY = 0.5;
 
+    // --- Equalization delay (seconds) before Ball 2 to match Ball 2→3 interval ---
+    public static double SHOT_EQUALIZATION_DELAY = 0.04;
+
     // --- Pipelining ---
     public static double SHOOTER_EXTEND_HALFWAY = 0;
 
