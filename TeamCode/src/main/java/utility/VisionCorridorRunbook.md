@@ -341,12 +341,12 @@ All in `TeamCode/src/main/java/vision/VisionConstants.java`. Marked non-final so
 | `WB_KELVIN` | 4500 | White balance temperature in Kelvin (2000–6500) |
 | `PANELS_STREAM_FPS` | 15 | Panels camera stream rate; 0 disables |
 | `CORRIDOR_HALF_WIDTH_IN` | 8 | Half of the 16" intake width |
-| `CORRIDOR_MAX_TRAVEL_IN` | 40 | Cap on corridor length |
-| `CORRIDOR_HEADING_RANGE_DEG` | 45 | Max heading sweep ± from current |
+| `CORRIDOR_MAX_TRAVEL_IN` | 100 | Cap on corridor length; covers 6 ft forward + diagonal reach |
+| `CORRIDOR_HEADING_RANGE_DEG` | 75 | Max heading sweep ± from current |
 | `CORRIDOR_HEADING_STEP_DEG` | 1 | Resolution of the heading sweep |
 | `CORRIDOR_MAX_BALLS` | 3 | Max balls in one corridor |
 | `CORRIDOR_K_TURN` | 0.5 | Score penalty per 90° of turning |
-| `CORRIDOR_K_LENGTH` | 0.005 | Score penalty per inch of corridor length |
+| `CORRIDOR_K_LENGTH` | 0.003 | Score penalty per inch of corridor length |
 | `CORRIDOR_MIN_SCORE` | 0.3 | Minimum score to accept the corridor; below → no-plan |
 | `CAM_PITCH_DEG` | 20.0 | Camera downward tilt (documentation / future use; not in current math) |
 | `CAM_OFFSET_Z` | 3.0 | Camera lens-center height above field (inches) |

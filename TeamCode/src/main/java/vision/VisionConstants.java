@@ -70,13 +70,13 @@ public class VisionConstants {
 
     // ============ Corridor planner ============
     public static double CORRIDOR_HALF_WIDTH_IN     = 8.0;   // 16" intake / 2
-    public static double CORRIDOR_MAX_TRAVEL_IN     = 40.0;  // cap forward sweep
-    public static double CORRIDOR_HEADING_RANGE_DEG = 45.0;  // ± from current heading
+    public static double CORRIDOR_MAX_TRAVEL_IN     = 100.0; // covers 6ft forward reach + diagonal margin (raised from 40 which was cutting off any ball past ~3.3 ft)
+    public static double CORRIDOR_HEADING_RANGE_DEG = 75.0;  // ± from current heading (raised from 45 for 6x6 ft reachable box)
     public static double CORRIDOR_HEADING_STEP_DEG  = 1.0;   // sweep resolution
     public static int    CORRIDOR_MAX_BALLS         = 3;
     public static double CORRIDOR_K_TURN            = 0.5;   // per 90° turn
-    public static double CORRIDOR_K_LENGTH          = 0.005; // per inch travel (lowered: old 0.02 auto-rejected single balls past ~30")
-    public static double CORRIDOR_MIN_SCORE         = 0.3;   // below → no-plan (lowered from 0.5 so a single confident ball at range still plans)
+    public static double CORRIDOR_K_LENGTH          = 0.003; // per inch travel (lowered from 0.005 so far balls have headroom above MIN_SCORE)
+    public static double CORRIDOR_MIN_SCORE         = 0.3;   // below → no-plan
     public static double CORRIDOR_APPROACH_EXTRA_IN = 4.0;   // path endpoint: last ball + this
     public static double CORRIDOR_FINISH_BUFFER_IN  = 2.0;   // geometric cut-short: end when robot center passes last ball by this many inches
 
