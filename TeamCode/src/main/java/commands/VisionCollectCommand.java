@@ -84,27 +84,24 @@ public class VisionCollectCommand extends CommandBase {
     }
 
     /**
-     * Cut short as soon as we've picked up enough balls. "Enough" =
-     * 2-of-3 sensors currently see a ball (means intake has processed at
-     * least 2 balls — they can't be the same ball, the sensors are
-     * spatially separated along the transfer path). The old all-3-of-3
-     * check fires way too late because the third ball hasn't reached the
-     * transfer sensor until we've already over-driven.
+     * Spindexer is full: all three sensors (spindexer + ramp + transfer)
+     * see a ball simultaneously. Strict 3-of-3 — we want every ball we can
+     * get. Missing a 3rd ball is lost points.
      */
     private boolean isFull() {
         RobotHardware hw = RobotHardware.getInstance();
-        boolean sp = hw.spindexerSensorPair.quickCheck().ballPresent;
-        boolean ra = hw.rampSensorPair.quickCheck().ballPresent;
-        boolean tr = hw.transferSensorPair.quickCheck().ballPresent;
-        int count = (sp ? 1 : 0) + (ra ? 1 : 0) + (tr ? 1 : 0);
-        return count >= 2;
+        return hw.spindexerSensorPair.quickCheck().ballPresent
+                && hw.rampSensorPair.quickCheck().ballPresent
+                && hw.transferSensorPair.quickCheck().ballPresent;
     }
 
     /**
-     * Geometric early-exit: once the robot's center has driven past the
-     * last targeted ball (along the corridor axis) by CORRIDOR_FINISH_BUFFER_IN,
-     * the intake (~8" forward of center) has cleared all targeted balls.
-     * Prevents overshoot even if sensors are late.
+     * Geometric safety-net: only triggers if we've driven the full corridor
+     * past the last targeted ball by CORRIDOR_FINISH_BUFFER_IN. This is the
+     * "sensors are late but we've literally run out of corridor" bail-out,
+     * not an early-stop mechanism. Raising CORRIDOR_FINISH_BUFFER_IN makes
+     * the robot more willing to wait for slow sensor reads at the cost of
+     * potential overshoot.
      */
     private boolean passedLastBall() {
         if (sweep == null || sweep.captured == null || sweep.captured.isEmpty()) return false;
