@@ -40,7 +40,7 @@ public class VisionConstants {
     // affects WHERE the ball appears in the image, not the silhouette width.
     // Exposed as a tunable for future ground-plane-projection work and for
     // documentation of the physical mount. Measure with a digital level.
-    public static double CAM_PITCH_DEG = 22.0;
+    public static double CAM_PITCH_DEG = 20.0;
 
     // ============ Detection filtering (640x480 native) ============
     // Area thresholds scaled down from old 1920x1080 values by pixel-count ratio (÷ 9).

@@ -36,8 +36,9 @@ Do these FIRST. They are the highest-leverage fixes if wrong and they cost nothi
 2. **Cable strain relief**: verify the cable is not pulling on the connector and cannot catch on anything during a match.
 3. **Camera mount solidity**: grab the camera, try to wiggle it. Any play means the calibration is wrong — camera pose must stay fixed relative to the intake.
 4. **Lens clean**: microfiber cloth, no smudges or fingerprints.
-5. **Camera tilted down 22°** (new, per 2026-04-22 update). Measure with a digital level. The mount must be RIGID — any flex during a match craters accuracy. Reasoning: 22° down gives a near edge ~3" from the lens and a far edge ~67" from the lens (just past 5 ft), which matches the 4-5 ft ask with margin. Adjustable in `VisionConstants.CAM_PITCH_DEG` — update the constant if you end up at a different angle.
+5. **Camera tilted down 20°** (as of 2026-04-22). Measure with a digital level. The mount must be RIGID — any flex during a match craters accuracy. Adjustable in `VisionConstants.CAM_PITCH_DEG` — update the constant if you end up at a different angle.
    - NOTE: the current horizontal-width distance math does NOT use `CAM_PITCH_DEG` — tilting is purely a field-of-view decision to keep balls IN the image at your working range. The constant is there for documentation and future ground-plane-projection work.
+   - At 20° down with a 3" lens height, the far edge of the image is ~75" from the lens and the near edge is ~3.5" from the lens — covers your 4-5 ft working range with margin. Because the tilt puts the whole image on the field (no horizon, no audience), the vertical ROI clip is also gone — ROI is now the full frame.
 
 If any of these are wrong, fix them before anything else. Nothing below will work if the camera drops out mid-match.
 
@@ -347,7 +348,7 @@ All in `TeamCode/src/main/java/vision/VisionConstants.java`. Marked non-final so
 | `CORRIDOR_K_TURN` | 0.5 | Score penalty per 90° of turning |
 | `CORRIDOR_K_LENGTH` | 0.005 | Score penalty per inch of corridor length |
 | `CORRIDOR_MIN_SCORE` | 0.3 | Minimum score to accept the corridor; below → no-plan |
-| `CAM_PITCH_DEG` | 22.0 | Camera downward tilt (documentation / future use; not in current math) |
+| `CAM_PITCH_DEG` | 20.0 | Camera downward tilt (documentation / future use; not in current math) |
 | `CAM_OFFSET_Z` | 3.0 | Camera lens-center height above field (inches) |
 | `CORRIDOR_APPROACH_EXTRA_IN` | 4 | Path endpoint = last ball + this many inches |
 | `CORRIDOR_FINISH_BUFFER_IN` | 2 | Geometric safety: end path when robot center passes last ball by this |

@@ -296,9 +296,10 @@ public class RobotHardware {
         ColorRange greenRange  = ColorRange.ARTIFACT_GREEN;
         ColorRange purpleRange = ColorRange.ARTIFACT_PURPLE;
 
-        // ROI keeps bottom 75% of the image (widened from Main's 60% so far balls
-        // at scan range aren't clipped).
-        ImageRegion ballRoi = ImageRegion.asUnityCenterCoordinates(-1, 0.5, 1, -1);
+        // ROI is the full frame. With the camera tilted down 20° the image
+        // sees only the field itself — no horizon, no audience — so we no
+        // longer need a vertical clip.
+        ImageRegion ballRoi = ImageRegion.asUnityCenterCoordinates(-1, 1, 1, -1);
 
         // drawContours(true) overlays blob outlines on the Panels stream so
         // drivers can see what the camera is detecting. Cost lives on the
