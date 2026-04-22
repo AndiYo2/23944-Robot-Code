@@ -353,7 +353,7 @@ All in `TeamCode/src/main/java/vision/VisionConstants.java`. Marked non-final so
 | `CAM_OFFSET_Z` | 3.0 | Camera lens-center height above field (inches) |
 | `INTAKE_OFFSET_X` | 7.98 | Intake forward offset from robot center (inches); planner drives intake, not center |
 | `INTAKE_OFFSET_Y` | 5.81 | Intake left offset from robot center (inches); tune if physical intake differs from camera XY |
-| `CORRIDOR_APPROACH_EXTRA_IN` | 4 | Path endpoint = last ball + this many inches |
+| `CORRIDOR_APPROACH_EXTRA_IN` | 4 | DEPRECATED — planner now drives the full corridor to the X boundary; kept for API compat |
 | `CORRIDOR_FINISH_BUFFER_IN` | 2 | Geometric safety: end path when robot center passes last ball by this |
 
 ---

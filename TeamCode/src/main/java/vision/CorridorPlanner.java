@@ -133,8 +133,13 @@ public class CorridorPlanner {
             double score = confSum - turnPenalty - lengthPenalty;
 
             if (score > best.score) {
-                // Clamp end distance so we don't overshoot the field X boundary.
-                double endDist = Math.min(maxAlong + approachExtra, effectiveMaxTravel);
+                // Drive the FULL corridor length (all the way to the field X
+                // boundary). The isFull() sensor check ends the path early
+                // when all 3 balls are in; otherwise we use every inch of
+                // corridor to scoop any un-detected balls along the way.
+                // approachExtra is kept as a param for API compatibility but
+                // is no longer used in endDist.
+                double endDist = effectiveMaxTravel;
                 double endX = robotPose.getX() + ax * endDist;
                 double endY = robotPose.getY() + ay * endDist;
                 best = new Sweep(phi, new Pose(endX, endY, phi), captured, score);
