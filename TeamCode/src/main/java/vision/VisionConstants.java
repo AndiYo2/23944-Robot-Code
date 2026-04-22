@@ -35,6 +35,15 @@ public class VisionConstants {
     public static final double CAM_OFFSET_Z = 3.0;    // camera lens-center height above field (inches)
     public static final double CAM_OFFSET_HEADING_DEG = 0.0;
 
+    // ============ Intake mouth offset (robot frame at 0 deg heading) ============
+    // Where the intake physically catches balls. Defaults match the camera
+    // (camera is mounted directly above the intake), but these are decoupled
+    // in case the mount geometry differs. The corridor planner drives the
+    // INTAKE through the balls, not the robot center, so these are the
+    // critical numbers for pickup accuracy.
+    public static double INTAKE_OFFSET_X = 7.98;
+    public static double INTAKE_OFFSET_Y = 5.81;
+
     // Camera downward tilt from horizontal, in degrees. The current distance
     // model (horizontal pixel width) does NOT use this value — pitch only
     // affects WHERE the ball appears in the image, not the silhouette width.

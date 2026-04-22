@@ -10,8 +10,8 @@ import com.bylazar.configurables.annotations.Configurable;
 @Configurable
 public class ShootingSequenceConstants {
     // --- Shooter Flipper ---
-    public static double SHOOTER_FLIPPER_EXTENDED = 0.42;
-    public static double SHOOTER_FLIPPER_RETRACT = 0.505;
+    public static double SHOOTER_FLIPPER_EXTENDED = 0.44;
+    public static double SHOOTER_FLIPPER_RETRACT = 0.514;
     public static double SHOOTER_FLICK_TIME = 0.09;
     public static double SHOOTER_RETRACT_DELAY = 0;
 

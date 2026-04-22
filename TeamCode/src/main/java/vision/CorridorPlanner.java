@@ -79,10 +79,22 @@ public class CorridorPlanner {
             final double ax =  Math.cos(phi), ay = Math.sin(phi);  // forward axis
             final double px = -Math.sin(phi), py = Math.cos(phi);  // perpendicular
 
-            // Clamp max travel so the end pose never crosses the field X
-            // boundary. Only applies when the candidate heading has a
-            // forward-X component; headings pointing backwards or purely
-            // sideways in X don't need the clamp.
+            // Intake position in field frame at this candidate heading.
+            // The robot CENTER trajectory is a straight line, but the INTAKE
+            // is offset from center by (INTAKE_OFFSET_X, INTAKE_OFFSET_Y) in
+            // robot frame — which rotates into field frame by R(phi).
+            // Balls must be captured by the intake, not the center, so the
+            // corridor math is done from the intake's start position.
+            double iox = VisionConstants.INTAKE_OFFSET_X;
+            double ioy = VisionConstants.INTAKE_OFFSET_Y;
+            double intakeFx = iox * ax - ioy * ay;   // R(phi) · (iox, ioy) — x component
+            double intakeFy = iox * ay + ioy * ax;   // R(phi) · (iox, ioy) — y component
+            double intakeStartX = robotPose.getX() + intakeFx;
+            double intakeStartY = robotPose.getY() + intakeFy;
+
+            // Clamp max travel so the ROBOT CENTER's end pose doesn't cross
+            // the field X boundary. The intake may end up past fieldXLimit
+            // but that's expected (intake is already forward of center).
             double effectiveMaxTravel = maxTravel;
             if (ax > 1e-6) {
                 double distToXLimit = (fieldXLimit - robotPose.getX()) / ax;
@@ -92,8 +104,9 @@ public class CorridorPlanner {
 
             List<Candidate> inCorridor = new ArrayList<>();
             for (FieldBall ball : balls) {
-                double rx = ball.fieldX - robotPose.getX();
-                double ry = ball.fieldY - robotPose.getY();
+                // Relative to the INTAKE's start position, not the robot center.
+                double rx = ball.fieldX - intakeStartX;
+                double ry = ball.fieldY - intakeStartY;
                 double along = rx * ax + ry * ay;
                 double cross = rx * px + ry * py;
                 if (along <= 0 || along > effectiveMaxTravel) continue;

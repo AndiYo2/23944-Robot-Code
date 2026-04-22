@@ -351,6 +351,8 @@ All in `TeamCode/src/main/java/vision/VisionConstants.java`. Marked non-final so
 | `CORRIDOR_MIN_SCORE` | 0.3 | Minimum score to accept the corridor; below → no-plan |
 | `CAM_PITCH_DEG` | 20.0 | Camera downward tilt (documentation / future use; not in current math) |
 | `CAM_OFFSET_Z` | 3.0 | Camera lens-center height above field (inches) |
+| `INTAKE_OFFSET_X` | 7.98 | Intake forward offset from robot center (inches); planner drives intake, not center |
+| `INTAKE_OFFSET_Y` | 5.81 | Intake left offset from robot center (inches); tune if physical intake differs from camera XY |
 | `CORRIDOR_APPROACH_EXTRA_IN` | 4 | Path endpoint = last ball + this many inches |
 | `CORRIDOR_FINISH_BUFFER_IN` | 2 | Geometric safety: end path when robot center passes last ball by this |
 
