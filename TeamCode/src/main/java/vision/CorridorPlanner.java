@@ -51,6 +51,7 @@ public class CorridorPlanner {
         return plan(robotPose, balls,
                 VisionConstants.CORRIDOR_MAX_BALLS,
                 VisionConstants.CORRIDOR_MAX_TRAVEL_IN,
+                VisionConstants.CORRIDOR_FIELD_X_LIMIT,
                 VisionConstants.CORRIDOR_HALF_WIDTH_IN,
                 Math.toRadians(VisionConstants.CORRIDOR_HEADING_RANGE_DEG),
                 Math.toRadians(VisionConstants.CORRIDOR_HEADING_STEP_DEG),
@@ -61,7 +62,8 @@ public class CorridorPlanner {
 
     /** Parametric entry point for unit tests. */
     public static Sweep plan(Pose robotPose, List<FieldBall> balls,
-                             int maxBalls, double maxTravel, double halfWidth,
+                             int maxBalls, double maxTravel, double fieldXLimit,
+                             double halfWidth,
                              double halfRangeRad, double stepRad,
                              double kTurn, double kLength,
                              double approachExtra) {
@@ -77,14 +79,25 @@ public class CorridorPlanner {
             final double ax =  Math.cos(phi), ay = Math.sin(phi);  // forward axis
             final double px = -Math.sin(phi), py = Math.cos(phi);  // perpendicular
 
+            // Clamp max travel so the end pose never crosses the field X
+            // boundary. Only applies when the candidate heading has a
+            // forward-X component; headings pointing backwards or purely
+            // sideways in X don't need the clamp.
+            double effectiveMaxTravel = maxTravel;
+            if (ax > 1e-6) {
+                double distToXLimit = (fieldXLimit - robotPose.getX()) / ax;
+                if (distToXLimit <= 0) continue;  // already at/past the boundary
+                effectiveMaxTravel = Math.min(maxTravel, distToXLimit);
+            }
+
             List<Candidate> inCorridor = new ArrayList<>();
             for (FieldBall ball : balls) {
                 double rx = ball.fieldX - robotPose.getX();
                 double ry = ball.fieldY - robotPose.getY();
                 double along = rx * ax + ry * ay;
                 double cross = rx * px + ry * py;
-                if (along <= 0 || along > maxTravel) continue;
-                if (Math.abs(cross) > halfWidth)    continue;
+                if (along <= 0 || along > effectiveMaxTravel) continue;
+                if (Math.abs(cross) > halfWidth)              continue;
                 inCorridor.add(new Candidate(ball, along));
             }
             if (inCorridor.isEmpty()) continue;
@@ -107,7 +120,8 @@ public class CorridorPlanner {
             double score = confSum - turnPenalty - lengthPenalty;
 
             if (score > best.score) {
-                double endDist = maxAlong + approachExtra;
+                // Clamp end distance so we don't overshoot the field X boundary.
+                double endDist = Math.min(maxAlong + approachExtra, effectiveMaxTravel);
                 double endX = robotPose.getX() + ax * endDist;
                 double endY = robotPose.getY() + ay * endDist;
                 best = new Sweep(phi, new Pose(endX, endY, phi), captured, score);
