@@ -353,6 +353,10 @@ All in `TeamCode/src/main/java/vision/VisionConstants.java`. Marked non-final so
 | `CAM_OFFSET_Z` | 3.0 | Camera lens-center height above field (inches) |
 | `INTAKE_OFFSET_X` | 7.98 | Intake forward offset from robot center (inches); planner drives intake, not center |
 | `INTAKE_OFFSET_Y` | 5.81 | Intake left offset from robot center (inches); tune if physical intake differs from camera XY |
+| `NUM_SCAN_FRAMES` | 5 | Frames per scan (was 3) |
+| `MERGE_CLUSTER_RADIUS_INCHES` | 2.0 | Tight — moving balls drift out of cluster and get rejected (was 6.0) |
+| `MIN_FRAMES_FOR_VALID` | 4 | Stationarity gate: ball must cluster in 4-of-5 frames (was 2-of-3) |
+| `INTER_FRAME_SLEEP_MS` | 40 | Wait between scan frames; was hardcoded 250 |
 | `CORRIDOR_APPROACH_EXTRA_IN` | 4 | DEPRECATED — planner now drives the full corridor to the X boundary; kept for API compat |
 | `CORRIDOR_FINISH_BUFFER_IN` | 2 | Geometric safety: end path when robot center passes last ball by this |
 

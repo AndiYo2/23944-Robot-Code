@@ -142,7 +142,7 @@ public class CorridorSelector {
                 if (d != null) fieldBalls.add(BallLocalizer.toFieldFrame(d, robotPose));
             }
             outFrames.add(fieldBalls);
-            if (i < VisionConstants.NUM_SCAN_FRAMES - 1) sleep(250);
+            if (i < VisionConstants.NUM_SCAN_FRAMES - 1) sleep(VisionConstants.INTER_FRAME_SLEEP_MS);
         }
     }
 

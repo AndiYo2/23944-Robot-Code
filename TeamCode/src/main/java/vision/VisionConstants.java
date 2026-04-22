@@ -61,10 +61,15 @@ public class VisionConstants {
     public static final double MIN_BALL_PIXEL_DIAMETER = 5.0;
 
     // ============ Multi-frame merge ============
-    public static final int    NUM_SCAN_FRAMES             = 3;
-    public static final double MERGE_CLUSTER_RADIUS_INCHES = 6.0;
-    public static final int    MIN_FRAMES_FOR_VALID        = 2;    // 2 of 3 frames
-    public static final long   FRAME_CAPTURE_TIMEOUT_MS    = 1000; // max wait per frame
+    // Tuned 2026-04-22 for fast scanning + motion rejection. With 5 frames
+    // at 40ms apart, the total scan window is ~160ms and a ball moving faster
+    // than ~12 in/sec drifts outside the 2" cluster radius and gets rejected.
+    // Stationary balls cluster in all 5 frames and survive the 4-of-5 gate.
+    public static int    NUM_SCAN_FRAMES             = 5;      // was 3
+    public static double MERGE_CLUSTER_RADIUS_INCHES = 2.0;    // was 6.0 — tight so moving balls break clustering
+    public static int    MIN_FRAMES_FOR_VALID        = 4;      // was 2 — strict stationarity gate
+    public static long   INTER_FRAME_SLEEP_MS        = 40L;    // new tunable; was hardcoded 250ms
+    public static final long FRAME_CAPTURE_TIMEOUT_MS = 1000;  // max wait per frame
 
     // ============ VisionPortal resolution ============
     public static final int VISION_PORTAL_WIDTH  = 640;
