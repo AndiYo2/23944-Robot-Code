@@ -1,0 +1,13 @@
+{
+  "sessionId": 1643151756969,
+  "timestampMs": 1643151824610,
+  "kind": "single",
+  "pose": { "x": 0.000, "y": 0.000, "headingRad": 0.000 },
+  "portal": { "width": 640, "height": 480 },
+  "pipeline": "HSV",
+  "frameMs": { "last": 0.116, "avg": 2.225 },
+  "rawBlobs": { "green": 0, "purple": 0 },
+  "groundTruth": { "green": 1, "purple": 1 },
+  "detections": [
+  ]
+}

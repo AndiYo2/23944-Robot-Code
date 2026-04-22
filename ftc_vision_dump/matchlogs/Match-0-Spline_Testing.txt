@@ -1,0 +1,67 @@
+--------- beginning of main
+08-31 23:36:51.031   987  1227 I I2C     : Automatically initializing I2C device RevColorSensorV3 (USB (embedded); module 173; bus 0; addr7=0x52)
+08-31 23:36:51.032   987  1227 V BroadcomColorSensorImpl: internalInitialize()...
+08-31 23:36:51.040   987  1227 V RobotCore: addr=false data=true arb=false clock=false
+08-31 23:36:51.040   987  1227 E BroadcomColorSensor: readStatusQuery: cbExpected=1 cbRead=0
+08-31 23:36:51.041   987  1227 E BroadcomColorSensorImpl: unexpected Broadcom color sensor chipid: found=0 expected=-62
+08-31 23:36:51.041   987  1227 V BroadcomColorSensorImpl: ...internalInitialize()
+08-31 23:36:51.042   987  1227 E RobotCore: Marking I2C device RevColorSensorV3 USB (embedded); module 173; bus 0; addr7=0x52 as unhealthy because initialization failed
+08-31 23:36:51.109   987  1162 V Robocol : received command: CMD_SET_MATCH_NUMBER(10934) 0
+08-31 23:36:51.112   987  1162 V Robocol : received command: CMD_INIT_OP_MODE(10935) Spline Testing
+08-31 23:36:51.139   987  1227 V RobotCore: thread: ...terminating 'OpModeThread'
+08-31 23:36:51.144   987  1197 I RobotCore: Attempting to switch to OpMode Spline Testing
+08-31 23:36:51.147   987  1197 I RobotCore: ******************** START - OPMODE Spline Testing ********************
+08-31 23:36:51.348   987  1197 D HardwareMap: Clearing which device instances have been retrieved
+08-31 23:36:52.322   987  1242 V RobotCore: thread: 'OpModeThread' starting...
+08-31 23:36:52.325   987  1242 V BNO055  : Suppressing I2C warnings while we check for a BNO055 IMU
+08-31 23:36:52.326   987  1167 V Robocol : sending CMD_NOTIFY_INIT_OP_MODE(1023), attempt: 0
+08-31 23:36:52.331   987  1242 V BNO055  : Found BNO055 IMU
+08-31 23:36:52.772   987  1242 V BNO055IMU: Now polling until IMU comes out of reset. It is normal to see I2C failures below
+08-31 23:36:52.777   987  1242 V RobotCore: addr=false data=true arb=false clock=false
+08-31 23:36:52.778   987  1242 E LynxI2cDeviceSynch: readStatusQuery: cbExpected=1 cbRead=0
+08-31 23:36:52.778   987  1242 E LynxI2cDeviceSynch: placeholder: readStatusQuery
+08-31 23:36:52.845   987  1242 V RobotCore: addr=false data=true arb=false clock=false
+08-31 23:36:52.845   987  1242 E LynxI2cDeviceSynch: readStatusQuery: cbExpected=1 cbRead=0
+08-31 23:36:53.013   987  1242 V BNO055IMU: IMU has come out of reset. No more I2C failures should occur.
+08-31 23:36:53.129   987  1242 V BNO055  : Suppressing I2C warnings while we check for a BNO055 IMU
+08-31 23:36:53.134   987  1242 V BNO055  : Found BNO055 IMU
+08-31 23:36:53.577   987  1242 V BNO055IMU: Now polling until IMU comes out of reset. It is normal to see I2C failures below
+08-31 23:36:53.683   987  1242 V BNO055IMU: IMU has come out of reset. No more I2C failures should occur.
+08-31 23:36:53.752   987  1242 I I2C     : Automatically initializing I2C device Rev2mDistanceSensor (USB (embedded); module 173; bus 1; addr7=0x29)
+08-31 23:36:53.753   987  1242 D STMicroVL53L0X: : Checking to see if it's really a VL53L0X sensor...
+08-31 23:36:53.757   987  1242 D STMicroVL53L0X: : Reg 0xC0 = ee (should be 0xEE)
+08-31 23:36:53.761   987  1242 D STMicroVL53L0X: : Reg 0xC1 = aa (should be 0xAA)
+08-31 23:36:53.765   987  1242 D STMicroVL53L0X: : Reg 0xC2 = 10 (should be 0x10)
+08-31 23:36:53.770   987  1242 D STMicroVL53L0X: : Reg 0x51 = 0 (should be 0x0099)
+08-31 23:36:53.774   987  1242 D STMicroVL53L0X: : Reg 0x61 = 0 (should be 0x0000)
+08-31 23:36:53.797   987  1242 D STMicroVL53L0X: : initial sig rate lim (MCPS) 0.250000
+08-31 23:36:53.802   987  1242 D STMicroVL53L0X: : adjusted sig rate lim (MCPS) 0.250000
+08-31 23:36:54.051   987  1242 I I2C     : Automatically initializing I2C device Rev2mDistanceSensor (USB (embedded); module 2; bus 1; addr7=0x29)
+08-31 23:36:54.052   987  1242 D STMicroVL53L0X: : Checking to see if it's really a VL53L0X sensor...
+08-31 23:36:54.057   987  1242 D STMicroVL53L0X: : Reg 0xC0 = ee (should be 0xEE)
+08-31 23:36:54.062   987  1242 D STMicroVL53L0X: : Reg 0xC1 = aa (should be 0xAA)
+08-31 23:36:54.067   987  1242 D STMicroVL53L0X: : Reg 0xC2 = 10 (should be 0x10)
+08-31 23:36:54.072   987  1242 D STMicroVL53L0X: : Reg 0x51 = 0 (should be 0x0099)
+08-31 23:36:54.077   987  1242 D STMicroVL53L0X: : Reg 0x61 = 0 (should be 0x0000)
+08-31 23:36:54.114   987  1242 D STMicroVL53L0X: : initial sig rate lim (MCPS) 0.250000
+08-31 23:36:54.122   987  1242 D STMicroVL53L0X: : adjusted sig rate lim (MCPS) 0.250000
+08-31 23:36:54.571   987  1242 V BNO055  : Suppressing I2C warnings while we check for a BNO055 IMU
+08-31 23:36:54.577   987  1242 V BNO055  : Found BNO055 IMU
+08-31 23:36:55.018   987  1242 V BNO055IMU: Now polling until IMU comes out of reset. It is normal to see I2C failures below
+08-31 23:36:55.024   987  1242 V RobotCore: addr=false data=true arb=false clock=false
+08-31 23:36:55.025   987  1242 E LynxI2cDeviceSynch: readStatusQuery: cbExpected=1 cbRead=0
+08-31 23:36:55.025   987  1242 E LynxI2cDeviceSynch: placeholder: readStatusQuery
+08-31 23:36:55.092   987  1242 V RobotCore: addr=false data=true arb=false clock=false
+08-31 23:36:55.092   987  1242 E LynxI2cDeviceSynch: readStatusQuery: cbExpected=1 cbRead=0
+08-31 23:36:55.259   987  1242 V BNO055IMU: IMU has come out of reset. No more I2C failures should occur.
+08-31 23:36:56.707   987  1162 V Robocol : received command: CMD_RUN_OP_MODE(11001) Spline Testing
+08-31 23:36:56.727   987  1167 V Robocol : sending CMD_NOTIFY_RUN_OP_MODE(1071), attempt: 0
+08-31 23:37:04.964   987  1242 D RobotCore: User runOpModeMethod exited
+08-31 23:37:04.965   987  1242 V RobotCore: thread: ...terminating 'OpModeThread'
+08-31 23:37:04.967   987  1197 I FtcEventLoop: auto-stopping OpMode 'Spline Testing'
+08-31 23:37:04.994   987  1197 I RobotCore: ******************** STOP - OPMODE /storage/emulated/0/FIRST/matchlogs/Match-0-Spline_Testing.txt ********************
+08-31 23:37:05.005   987  1197 I RobotCore: Pruning old match logs: deleting Match-0-Long_Red_Distance_Sensor_BS_.txt
+08-31 23:37:05.008   987  1246 I RobotCore: saving match logcat to /storage/emulated/0/FIRST/matchlogs/Match-0-Spline_Testing.txt
+08-31 23:37:05.008   987  1246 I RobotCore: logging command line: exec logcat -d -T '8-31 23:36:51.000' -f '/storage/emulated/0/FIRST/matchlogs/Match-0-Spline_Testing.txt' -n4 -v threadtime UsbRequestJNI:S UsbRequest:S art:W ThreadPool:W System:W ExtendedExtractor:W OMXClient:W MediaPlayer:W dalvikvm:W  *:V
+08-31 23:37:05.023   987  1197 I RobotCore: Attempting to switch to OpMode $Stop$Robot$
+08-31 23:37:05.024   987  1197 D HardwareMap: Clearing which device instances have been retrieved

@@ -1,0 +1,82 @@
+--------- beginning of main
+09-01 07:28:40.101  3105  3259 I I2C     : Automatically initializing I2C device RevColorSensorV3 (USB (embedded); module 173; bus 0; addr7=0x52)
+09-01 07:28:40.102  3105  3259 V BroadcomColorSensorImpl: internalInitialize()...
+09-01 07:28:40.112  3105  3259 V RobotCore: addr=false data=true arb=false clock=false
+09-01 07:28:40.113  3105  3259 E BroadcomColorSensor: readStatusQuery: cbExpected=1 cbRead=0
+09-01 07:28:40.113  3105  3259 E BroadcomColorSensorImpl: unexpected Broadcom color sensor chipid: found=0 expected=-62
+09-01 07:28:40.113  3105  3259 V BroadcomColorSensorImpl: ...internalInitialize()
+09-01 07:28:40.114  3105  3259 E RobotCore: Marking I2C device RevColorSensorV3 USB (embedded); module 173; bus 0; addr7=0x52 as unhealthy because initialization failed
+09-01 07:28:40.226  3105  3259 I I2C     : Automatically initializing I2C device RevColorSensorV3 (USB (embedded); module 173; bus 0; addr7=0x52)
+09-01 07:28:40.226  3105  3259 V BroadcomColorSensorImpl: internalInitialize()...
+09-01 07:28:40.230  3105  3259 V RobotCore: addr=false data=true arb=false clock=false
+09-01 07:28:40.231  3105  3259 E BroadcomColorSensor: readStatusQuery: cbExpected=1 cbRead=0
+09-01 07:28:40.231  3105  3259 E BroadcomColorSensorImpl: unexpected Broadcom color sensor chipid: found=0 expected=-62
+09-01 07:28:40.231  3105  3259 V BroadcomColorSensorImpl: ...internalInitialize()
+09-01 07:28:40.232  3105  3259 E RobotCore: Marking I2C device RevColorSensorV3 USB (embedded); module 173; bus 0; addr7=0x52 as unhealthy because initialization failed
+09-01 07:28:40.343  3105  3259 I I2C     : Automatically initializing I2C device RevColorSensorV3 (USB (embedded); module 173; bus 0; addr7=0x52)
+09-01 07:28:40.344  3105  3259 V BroadcomColorSensorImpl: internalInitialize()...
+09-01 07:28:40.350  3105  3259 V RobotCore: addr=false data=true arb=false clock=false
+09-01 07:28:40.350  3105  3259 E BroadcomColorSensor: readStatusQuery: cbExpected=1 cbRead=0
+09-01 07:28:40.351  3105  3259 E BroadcomColorSensorImpl: unexpected Broadcom color sensor chipid: found=0 expected=-62
+09-01 07:28:40.351  3105  3259 V BroadcomColorSensorImpl: ...internalInitialize()
+09-01 07:28:40.352  3105  3259 E RobotCore: Marking I2C device RevColorSensorV3 USB (embedded); module 173; bus 0; addr7=0x52 as unhealthy because initialization failed
+09-01 07:28:40.464  3105  3259 I I2C     : Automatically initializing I2C device RevColorSensorV3 (USB (embedded); module 173; bus 0; addr7=0x52)
+09-01 07:28:40.464  3105  3259 V BroadcomColorSensorImpl: internalInitialize()...
+09-01 07:28:40.470  3105  3259 V RobotCore: addr=false data=true arb=false clock=false
+09-01 07:28:40.471  3105  3259 E BroadcomColorSensor: readStatusQuery: cbExpected=1 cbRead=0
+09-01 07:28:40.471  3105  3259 E BroadcomColorSensorImpl: unexpected Broadcom color sensor chipid: found=0 expected=-62
+09-01 07:28:40.472  3105  3259 V BroadcomColorSensorImpl: ...internalInitialize()
+09-01 07:28:40.472  3105  3259 E RobotCore: Marking I2C device RevColorSensorV3 USB (embedded); module 173; bus 0; addr7=0x52 as unhealthy because initialization failed
+09-01 07:28:40.585  3105  3259 I I2C     : Automatically initializing I2C device RevColorSensorV3 (USB (embedded); module 173; bus 0; addr7=0x52)
+09-01 07:28:40.585  3105  3259 V BroadcomColorSensorImpl: internalInitialize()...
+09-01 07:28:40.590  3105  3259 V RobotCore: addr=false data=true arb=false clock=false
+09-01 07:28:40.590  3105  3259 E BroadcomColorSensor: readStatusQuery: cbExpected=1 cbRead=0
+09-01 07:28:40.591  3105  3259 E BroadcomColorSensorImpl: unexpected Broadcom color sensor chipid: found=0 expected=-62
+09-01 07:28:40.591  3105  3259 V BroadcomColorSensorImpl: ...internalInitialize()
+09-01 07:28:40.592  3105  3259 E RobotCore: Marking I2C device RevColorSensorV3 USB (embedded); module 173; bus 0; addr7=0x52 as unhealthy because initialization failed
+09-01 07:28:40.604  3105  3200 V Robocol : received command: CMD_SET_MATCH_NUMBER(10414) 0
+09-01 07:28:40.605  3105  3200 V Robocol : received command: CMD_INIT_OP_MODE(10415) OuttakePIDTuner
+09-01 07:28:40.642  3105  3259 V RobotCore: thread: ...terminating 'OpModeThread'
+09-01 07:28:40.644  3105  3237 I RobotCore: Attempting to switch to OpMode OuttakePIDTuner
+09-01 07:28:40.650  3105  3237 I RobotCore: ******************** START - OPMODE OuttakePIDTuner ********************
+09-01 07:28:41.810  3105  3237 D HardwareMap: Clearing which device instances have been retrieved
+09-01 07:28:41.811  3105  3266 V RobotCore: thread: 'OpModeThread' starting...
+09-01 07:28:41.814  3105  3266 V BNO055  : Suppressing I2C warnings while we check for a BNO055 IMU
+09-01 07:28:41.818  3105  3266 V BNO055  : Found BNO055 IMU
+09-01 07:28:41.821  3105  3204 V Robocol : sending CMD_NOTIFY_INIT_OP_MODE(500), attempt: 0
+09-01 07:28:42.258  3105  3266 V BNO055IMU: Now polling until IMU comes out of reset. It is normal to see I2C failures below
+09-01 07:28:42.264  3105  3266 V RobotCore: addr=false data=true arb=false clock=false
+09-01 07:28:42.264  3105  3266 E LynxI2cDeviceSynch: readStatusQuery: cbExpected=1 cbRead=0
+09-01 07:28:42.265  3105  3266 E LynxI2cDeviceSynch: placeholder: readStatusQuery
+09-01 07:28:42.331  3105  3266 V RobotCore: addr=false data=true arb=false clock=false
+09-01 07:28:42.332  3105  3266 E LynxI2cDeviceSynch: readStatusQuery: cbExpected=1 cbRead=0
+09-01 07:28:42.499  3105  3266 V BNO055IMU: IMU has come out of reset. No more I2C failures should occur.
+09-01 07:28:42.612  3105  3266 V BNO055  : Suppressing I2C warnings while we check for a BNO055 IMU
+09-01 07:28:42.617  3105  3266 V BNO055  : Found BNO055 IMU
+09-01 07:28:43.056  3105  3266 V BNO055IMU: Now polling until IMU comes out of reset. It is normal to see I2C failures below
+09-01 07:28:43.162  3105  3266 V BNO055IMU: IMU has come out of reset. No more I2C failures should occur.
+09-01 07:28:43.231  3105  3266 I I2C     : Automatically initializing I2C device Rev2mDistanceSensor (USB (embedded); module 173; bus 1; addr7=0x29)
+09-01 07:28:43.231  3105  3266 D STMicroVL53L0X: : Checking to see if it's really a VL53L0X sensor...
+09-01 07:28:43.236  3105  3266 D STMicroVL53L0X: : Reg 0xC0 = ee (should be 0xEE)
+09-01 07:28:43.240  3105  3266 D STMicroVL53L0X: : Reg 0xC1 = aa (should be 0xAA)
+09-01 07:28:43.244  3105  3266 D STMicroVL53L0X: : Reg 0xC2 = 10 (should be 0x10)
+09-01 07:28:43.248  3105  3266 D STMicroVL53L0X: : Reg 0x51 = 0 (should be 0x0099)
+09-01 07:28:43.251  3105  3266 D STMicroVL53L0X: : Reg 0x61 = 0 (should be 0x0000)
+09-01 07:28:43.272  3105  3266 D STMicroVL53L0X: : initial sig rate lim (MCPS) 0.250000
+09-01 07:28:43.277  3105  3266 D STMicroVL53L0X: : adjusted sig rate lim (MCPS) 0.250000
+09-01 07:28:43.519  3105  3266 I I2C     : Automatically initializing I2C device Rev2mDistanceSensor (USB (embedded); module 2; bus 1; addr7=0x29)
+09-01 07:28:43.519  3105  3266 D STMicroVL53L0X: : Checking to see if it's really a VL53L0X sensor...
+09-01 07:28:43.524  3105  3266 D STMicroVL53L0X: : Reg 0xC0 = ee (should be 0xEE)
+09-01 07:28:43.529  3105  3266 D STMicroVL53L0X: : Reg 0xC1 = aa (should be 0xAA)
+09-01 07:28:43.534  3105  3266 D STMicroVL53L0X: : Reg 0xC2 = 10 (should be 0x10)
+09-01 07:28:43.538  3105  3266 D STMicroVL53L0X: : Reg 0x51 = 0 (should be 0x0099)
+09-01 07:28:43.543  3105  3266 D STMicroVL53L0X: : Reg 0x61 = 0 (should be 0x0000)
+09-01 07:28:43.574  3105  3266 D STMicroVL53L0X: : initial sig rate lim (MCPS) 0.250000
+09-01 07:28:43.581  3105  3266 D STMicroVL53L0X: : adjusted sig rate lim (MCPS) 0.250000
+09-01 07:29:02.661  3105  3204 V Robocol : sending CMD_NOTIFY_RUN_OP_MODE(776), attempt: 0
+09-01 07:29:10.203  3105  3237 I FtcEventLoop: auto-stopping OpMode 'OuttakePIDTuner'
+09-01 07:29:10.223  3105  3266 V RobotCore: thread: ...terminating 'OpModeThread'
+09-01 07:29:10.239  3105  3237 I RobotCore: ******************** STOP - OPMODE /storage/emulated/0/FIRST/matchlogs/Match-0-OuttakePIDTuner.txt ********************
+09-01 07:29:10.247  3105  3274 I RobotCore: saving match logcat to /storage/emulated/0/FIRST/matchlogs/Match-0-OuttakePIDTuner.txt
+09-01 07:29:10.247  3105  3274 I RobotCore: logging command line: exec logcat -d -T '9-1 7:28:40.000' -f '/storage/emulated/0/FIRST/matchlogs/Match-0-OuttakePIDTuner.txt' -n4 -v threadtime UsbRequestJNI:S UsbRequest:S art:W ThreadPool:W System:W ExtendedExtractor:W OMXClient:W MediaPlayer:W dalvikvm:W  *:V
+09-01 07:29:10.262  3105  3237 I RobotCore: Attempting to switch to OpMode $Stop$Robot$

@@ -1,0 +1,49 @@
+--------- beginning of main
+09-08 06:03:54.047  5592  5881 I I2C     : Automatically initializing I2C device RevColorSensorV3 (USB (embedded); module 173; bus 0; addr7=0x52)
+09-08 06:03:54.048  5592  5881 V BroadcomColorSensorImpl: internalInitialize()...
+09-08 06:03:54.053  5592  5881 V RobotCore: addr=false data=true arb=false clock=false
+09-08 06:03:54.054  5592  5881 E BroadcomColorSensor: readStatusQuery: cbExpected=1 cbRead=0
+09-08 06:03:54.054  5592  5881 E BroadcomColorSensorImpl: unexpected Broadcom color sensor chipid: found=0 expected=-62
+09-08 06:03:54.054  5592  5881 V BroadcomColorSensorImpl: ...internalInitialize()
+09-08 06:03:54.055  5592  5881 E RobotCore: Marking I2C device RevColorSensorV3 USB (embedded); module 173; bus 0; addr7=0x52 as unhealthy because initialization failed
+09-08 06:03:54.167  5592  5881 I I2C     : Automatically initializing I2C device RevColorSensorV3 (USB (embedded); module 173; bus 0; addr7=0x52)
+09-08 06:03:54.168  5592  5881 V BroadcomColorSensorImpl: internalInitialize()...
+09-08 06:03:54.174  5592  5881 V RobotCore: addr=false data=true arb=false clock=false
+09-08 06:03:54.175  5592  5881 E BroadcomColorSensor: readStatusQuery: cbExpected=1 cbRead=0
+09-08 06:03:54.175  5592  5881 E BroadcomColorSensorImpl: unexpected Broadcom color sensor chipid: found=0 expected=-62
+09-08 06:03:54.175  5592  5881 V BroadcomColorSensorImpl: ...internalInitialize()
+09-08 06:03:54.176  5592  5881 E RobotCore: Marking I2C device RevColorSensorV3 USB (embedded); module 173; bus 0; addr7=0x52 as unhealthy because initialization failed
+09-08 06:03:54.293  5592  5881 I I2C     : Automatically initializing I2C device RevColorSensorV3 (USB (embedded); module 173; bus 0; addr7=0x52)
+09-08 06:03:54.294  5592  5881 V BroadcomColorSensorImpl: internalInitialize()...
+09-08 06:03:54.302  5592  5881 V RobotCore: addr=false data=true arb=false clock=false
+09-08 06:03:54.302  5592  5881 E BroadcomColorSensor: readStatusQuery: cbExpected=1 cbRead=0
+09-08 06:03:54.303  5592  5881 E BroadcomColorSensorImpl: unexpected Broadcom color sensor chipid: found=0 expected=-62
+09-08 06:03:54.303  5592  5881 V BroadcomColorSensorImpl: ...internalInitialize()
+09-08 06:03:54.303  5592  5881 E RobotCore: Marking I2C device RevColorSensorV3 USB (embedded); module 173; bus 0; addr7=0x52 as unhealthy because initialization failed
+09-08 06:03:54.307  5592  5881 V RobotCore: thread: ...terminating 'OpModeThread'
+09-08 06:03:54.314  5592  5870 I RobotCore: Attempting to switch to OpMode SplineTest
+09-08 06:03:54.317  5592  5870 I RobotCore: ******************** START - OPMODE SplineTest ********************
+09-08 06:03:54.523  5592  5870 D HardwareMap: Clearing which device instances have been retrieved
+09-08 06:03:55.646  5592  5984 V RobotCore: thread: 'OpModeThread' starting...
+09-08 06:03:55.657  5592  5984 I I2C     : Automatically initializing I2C device LynxEmbeddedIMU (USB (embedded); module 2; bus 0; addr7=0x28)
+09-08 06:03:55.658  5592  5984 V BNO055  : Suppressing I2C warnings while we check for a BNO055 IMU
+09-08 06:03:55.663  5592  5984 V BNO055  : Found BNO055 IMU
+09-08 06:03:55.665  5592  5841 V Robocol : sending CMD_NOTIFY_INIT_OP_MODE(1154), attempt: 0
+09-08 06:03:56.103  5592  5984 V BNO055IMU: Now polling until IMU comes out of reset. It is normal to see I2C failures below
+09-08 06:03:56.131  5592  5984 V RobotCore: addr=false data=true arb=false clock=false
+09-08 06:03:56.131  5592  5984 E LynxI2cDeviceSynch: readStatusQuery: cbExpected=1 cbRead=0
+09-08 06:03:56.131  5592  5984 E LynxI2cDeviceSynch: placeholder: readStatusQuery
+09-08 06:03:56.197  5592  5984 V RobotCore: addr=false data=true arb=false clock=false
+09-08 06:03:56.197  5592  5984 E LynxI2cDeviceSynch: readStatusQuery: cbExpected=1 cbRead=0
+09-08 06:03:56.364  5592  5984 V BNO055IMU: IMU has come out of reset. No more I2C failures should occur.
+09-08 06:03:58.586  5592  5841 V Robocol : sending CMD_NOTIFY_RUN_OP_MODE(1183), attempt: 0
+09-08 06:04:05.179  5592  5984 D RobotCore: User runOpModeMethod exited
+09-08 06:04:05.179  5592  5984 V RobotCore: thread: ...terminating 'OpModeThread'
+09-08 06:04:05.182  5592  5870 I FtcEventLoop: auto-stopping OpMode 'SplineTest'
+09-08 06:04:05.306  5592  5870 I RobotCore: ******************** STOP - OPMODE /storage/emulated/0/FIRST/matchlogs/Match-0-SplineTest.txt ********************
+09-08 06:04:05.314  5592  6106 I RobotCore: saving match logcat to /storage/emulated/0/FIRST/matchlogs/Match-0-SplineTest.txt
+09-08 06:04:05.314  5592  6106 I RobotCore: logging command line: exec logcat -d -T '9-8 6:3:54.000' -f '/storage/emulated/0/FIRST/matchlogs/Match-0-SplineTest.txt' -n4 -v threadtime UsbRequestJNI:S UsbRequest:S art:W ThreadPool:W System:W ExtendedExtractor:W OMXClient:W MediaPlayer:W dalvikvm:W  *:V
+09-08 06:04:05.332  5592  5870 I RobotCore: Attempting to switch to OpMode $Stop$Robot$
+09-08 06:04:05.325  6107  6107 I sh      : type=1400 audit(0.0:477): avc: denied { read } for name="/" dev="rootfs" ino=1 scontext=u:r:untrusted_app:s0:c512,c768 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1
+09-08 06:04:05.333  5592  5870 D HardwareMap: Clearing which device instances have been retrieved
+09-08 06:04:05.325  6107  6107 I sh      : type=1400 audit(0.0:478): avc: denied { open } for path="/" dev="rootfs" ino=1 scontext=u:r:untrusted_app:s0:c512,c768 tcontext=u:object_r:rootfs:s0 tclass=dir permissive=1

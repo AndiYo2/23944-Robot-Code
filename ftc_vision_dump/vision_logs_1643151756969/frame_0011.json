@@ -1,0 +1,15 @@
+{
+  "sessionId": 1643151756969,
+  "timestampMs": 1643151923250,
+  "kind": "single",
+  "pose": { "x": 0.000, "y": 0.000, "headingRad": 0.000 },
+  "portal": { "width": 640, "height": 480 },
+  "pipeline": "HSV",
+  "frameMs": { "last": 1.851, "avg": 2.250 },
+  "rawBlobs": { "green": 5, "purple": 1 },
+  "groundTruth": { "green": 1, "purple": 3 },
+  "detections": [
+    { "color": "Green", "px": 464.000, "py": 314.500, "pr": 27.281, "zCam": 43.177, "xCam": 13.541, "conf": 0.570 },
+    { "color": "Green", "px": 418.023, "py": 306.506, "pr": 29.592, "zCam": 39.806, "xCam": 8.599, "conf": 0.568 }
+  ]
+}
