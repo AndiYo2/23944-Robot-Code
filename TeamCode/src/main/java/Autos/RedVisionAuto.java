@@ -15,6 +15,7 @@ import vision.ArtifactDetector;
 public class RedVisionAuto extends AutonTemplate {
     public static double maxSpeed = 1;
     private PathChain shootToFirst, firstToShoot, shootToSecond, secondToShoot, shootToScan, shootToStop;
+    private PathChain scanToCornerFallback;
     private ArtifactDetector detector;
 
     // Start pose
@@ -29,8 +30,10 @@ public class RedVisionAuto extends AutonTemplate {
     // Shoot position
     private final Pose shootPose = new Pose(88.500, 14.500, Math.toRadians(30));
 
-    // Scan position (slightly forward, heading 0 deg for camera FOV)
-    private final Pose scanPose = new Pose(90.500, 14.500, Math.toRadians(0));
+    // Scan position — new default per 2026-04-22 venue tuning.
+    // Robot stops here facing 0° to scan the field. If no balls are found
+    // at 0°, the auto rotates in place to +30° and re-scans.
+    private final Pose scanPose = new Pose(88.500, 10.000, Math.toRadians(0));
 
     // Cycle 2 (third spike — fluid two-segment path)
     private final Pose thirdSpikeCurveControl = new Pose(91.500, 29.500);
@@ -83,8 +86,18 @@ public class RedVisionAuto extends AutonTemplate {
                 .setLinearHeadingInterpolation(shootPose.getHeading(), stopPose.getHeading())
                 .build();
 
-        // Vision collection path is now built at runtime inside VisionCollectCommand
-        // based on the detected corridor. No pre-built lane paths needed.
+        // Fallback drive for vision cycles: if BOTH the 0° scan and the
+        // rotated +30° re-scan are empty, drive from scanPose to the corner
+        // ball pickup pose (same destination as cycle 1). Starts at scanPose,
+        // not shootPose, so the geometry is different from shootToFirst.
+        scanToCornerFallback = follower.pathBuilder()
+                .addPath(new BezierLine(scanPose, cornerBallsPickupPose))
+                .setLinearHeadingInterpolation(scanPose.getHeading(), cornerBallsPickupPose.getHeading())
+                .build();
+
+        // Vision collection path (the corridor drive itself) is built at
+        // runtime inside VisionCollectWithFallbacksCommand from the detected
+        // corridor. No pre-built lane paths needed.
     }
 
     @Override
@@ -114,19 +127,19 @@ public class RedVisionAuto extends AutonTemplate {
                 .visionPreScan(detector)
                 .moveTo(shootToScan, maxSpeed, false)
                 .intakeStart()
-                .visionCollectAndCatalog(detector, shootPose, maxSpeed, false, .3)
+                .visionCollectWithFallbacksAndCatalog(detector, Math.toRadians(30), scanToCornerFallback, shootPose, maxSpeed, false, .3)
                 .shoot()
                 // Cycle 4 (vision)
                 .visionPreScan(detector)
                 .moveTo(shootToScan, maxSpeed, false)
                 .intakeStart()
-                .visionCollectAndCatalog(detector, shootPose, maxSpeed, false, .3)
+                .visionCollectWithFallbacksAndCatalog(detector, Math.toRadians(30), scanToCornerFallback, shootPose, maxSpeed, false, .3)
                 .shoot()
                 // Cycle 5 (vision)
                 .visionPreScan(detector)
                 .moveTo(shootToScan, maxSpeed, false)
                 .intakeStart()
-                .visionCollectAndCatalog(detector, shootPose, maxSpeed, false, .3)
+                .visionCollectWithFallbacksAndCatalog(detector, Math.toRadians(30), scanToCornerFallback, shootPose, maxSpeed, false, .3)
                 .shoot()
                 .moveTo(shootToStop)
                 .build();

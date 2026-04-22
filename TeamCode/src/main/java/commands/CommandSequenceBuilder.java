@@ -325,6 +325,45 @@ public class CommandSequenceBuilder {
         return this;
     }
 
+    /**
+     * Vision-guided ball collection with two-stage scan + fallback.
+     *
+     * Flow:
+     *   1. Scan at the current pose. If a corridor is found → drive it.
+     *   2. Else rotate in place to secondaryHeadingRad and re-scan.
+     *   3. If the re-scan finds a corridor → drive it.
+     *   4. Else drive fallbackPath (e.g., cycle-1's corner pickup).
+     *   5. Return to returnPose while running autoCatalog in parallel.
+     *
+     * @param detector              the ArtifactDetector
+     * @param secondaryHeadingRad   heading to rotate to if first scan is empty (e.g., Math.toRadians(30))
+     * @param fallbackPath          path to drive if BOTH scans are empty
+     * @param returnPose            pose to return to after collection
+     * @param maxPower              maximum drive power
+     * @param holdEnd               whether to hold position at the return pose
+     * @param delaySec              seconds to wait after collection before returning
+     */
+    public CommandSequenceBuilder visionCollectWithFallbacksAndCatalog(
+            ArtifactDetector detector,
+            double secondaryHeadingRad,
+            PathChain fallbackPath,
+            Pose returnPose,
+            double maxPower,
+            boolean holdEnd,
+            double delaySec) {
+        commands.add(new SequentialCommandGroup(
+                new VisionCollectWithFallbacksCommand(
+                        detector, follower, maxPower,
+                        secondaryHeadingRad, fallbackPath),
+                new WaitCommand((long)(delaySec * 1000)),
+                new ParallelCommandGroup(
+                        new DynamicReturnPathCommand(follower, returnPose, maxPower, holdEnd),
+                        new AutoCatalogModeCommand(spindexer, intake)
+                )
+        ));
+        return this;
+    }
+
     // ==================== Move-To-Until-Full Path Methods ====================
     // Races FollowPathCommand against WaitForBallsCommand — stops path early when 3 balls detected.
 
