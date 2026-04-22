@@ -1,80 +1,74 @@
 package vision;
 
 /**
- * Constants for the vision-based ball detection and lane selection system.
- * Camera intrinsics calibrated at 1920x1080 (john.yml); scaled at runtime
- * to match the actual VisionPortal resolution.
+ * Constants for the vision-based ball detection and corridor planner.
+ *
+ * Camera intrinsics are the SDK's built-in Robert-Atkinson C920 calibration at
+ * the actual 640x480 runtime resolution — no cross-aspect-ratio scaling.
+ *
+ * Runtime-tunable fields (non-final) are adjusted via VisionTuningTeleOp and
+ * persisted to /sdcard/FIRST/vision_tuning.json.
  */
 public class VisionConstants {
     // ============ Ball physical ============
     public static final double BALL_DIAMETER_INCHES = 5.0;
-    public static final double INTAKE_WIDTH_INCHES = 16.0;
+    public static final double INTAKE_WIDTH_INCHES  = 16.0;
 
-    // ============ Lane definitions (FIELD coordinates) ============
-    public static final double LANE_1_CENTER_Y = 8.5;
-    public static final double LANE_2_CENTER_Y = 24.5;
-    public static final double LANE_3_CENTER_Y = 40.5;
-
-    public static final double LANE_1_Y_MIN = 0.0,  LANE_1_Y_MAX = 16.5;
-    public static final double LANE_2_Y_MIN = 16.5, LANE_2_Y_MAX = 32.5;
-    public static final double LANE_3_Y_MIN = 32.5, LANE_3_Y_MAX = 48.0;
-
-    public static final double LANE_X_MIN = 92.0;    // robot scan X
-    public static final double LANE_X_MAX = 144.0;   // field boundary
-
-    // ============ Camera intrinsics (john.yml, 1920x1080) ============
-    // If VisionPortal runs at a lower resolution, scale at runtime:
-    //   fx_used = FX * (actual_width  / CALIBRATION_WIDTH)
-    //   fy_used = FY * (actual_height / CALIBRATION_HEIGHT)
-    //   cx_used = CX * (actual_width  / CALIBRATION_WIDTH)
-    //   cy_used = CY * (actual_height / CALIBRATION_HEIGHT)
-    public static final int    CALIBRATION_WIDTH  = 1920;
-    public static final int    CALIBRATION_HEIGHT = 1080;
-    public static final double FX = 1413.5039;
-    public static final double FY = 1420.5480;
-    public static final double CX = 948.7182;
-    public static final double CY = 514.3207;
+    // ============ Camera intrinsics (SDK built-in C920 @ 640x480) ============
+    // Source: FTC SDK teamwebcamcalibrations.xml (Robert Atkinson / 3DF Zephyr).
+    // Calibrated AT the runtime resolution — scaleX/scaleY in ArtifactDetector
+    // become 1.0 (no-op), which is correct.
+    public static final int    CALIBRATION_WIDTH  = 640;
+    public static final int    CALIBRATION_HEIGHT = 480;
+    public static final double FX = 622.001;
+    public static final double FY = 622.001;
+    public static final double CX = 319.803;
+    public static final double CY = 241.251;
     public static final double[] DIST_COEFFS = {
-        0.07513051, -0.42239558, -0.00324586, 0.00130418, 0.68654984
+        0.1208, -0.2616, 0.0, 0.0, 0.103
     };
 
     // ============ Camera mount offset (robot frame at 0 deg heading) ============
     // +X_robot = forward, +Y_robot = left
-    public static final double CAM_OFFSET_X = 7.98;  // 202.7mm forward of robot center
-    public static final double CAM_OFFSET_Y = 5.81;  // 147.66mm left of robot center
-    public static final double CAM_OFFSET_Z = 0.0;   // TODO: camera height above field (not critical for v1)
-    public static final double CAM_OFFSET_HEADING_DEG = 0.0;  // camera points straight forward relative to robot
+    public static final double CAM_OFFSET_X = 7.98;   // 202.7mm forward of robot center
+    public static final double CAM_OFFSET_Y = 5.81;   // 147.66mm left of robot center
+    public static final double CAM_OFFSET_Z = 0.0;    // camera height above field (not used in pinhole-by-diameter)
+    public static final double CAM_OFFSET_HEADING_DEG = 0.0;
 
-    // ============ Detection filtering (ported from Python, calibrated at 1920x1080) ============
-    // Area thresholds are scaled at runtime based on actual resolution.
-    public static final double MIN_CONTOUR_AREA = 3000;
-    public static final double MAX_CONTOUR_AREA = 500000;
-    public static final double MIN_CIRCULARITY  = 0.35;
-    public static final double MAX_ASPECT_RATIO = 1.8;
-    public static final double MIN_CONFIDENCE   = 0.4;
+    // ============ Detection filtering (640x480 native) ============
+    // Area thresholds scaled down from old 1920x1080 values by pixel-count ratio (÷ 9).
+    public static final double MIN_CONTOUR_AREA        = 333;    // ≈ 3000 / 9
+    public static final double MAX_CONTOUR_AREA        = 55555;  // ≈ 500000 / 9
+    public static final double MIN_CIRCULARITY         = 0.35;
+    public static final double MAX_ASPECT_RATIO        = 1.8;
+    public static final double MIN_CONFIDENCE          = 0.4;
     public static final double MIN_BALL_PIXEL_DIAMETER = 5.0;
 
     // ============ Multi-frame merge ============
-    public static final int    NUM_SCAN_FRAMES           = 3;
+    public static final int    NUM_SCAN_FRAMES             = 3;
     public static final double MERGE_CLUSTER_RADIUS_INCHES = 6.0;
-    public static final int    MIN_FRAMES_FOR_VALID      = 2;   // 2 of 3 frames
-    public static final long   FRAME_CAPTURE_TIMEOUT_MS  = 1000; // max wait per frame
+    public static final int    MIN_FRAMES_FOR_VALID        = 2;    // 2 of 3 frames
+    public static final long   FRAME_CAPTURE_TIMEOUT_MS    = 1000; // max wait per frame
 
-    // ============ Preferred VisionPortal resolution ============
-    // 640x480 for best FPS on Control Hub with two blob processors.
-    // Note: 4:3 aspect vs 16:9 calibration — intrinsic scaling is approximate
-    // but acceptable for lane-level decisions.
+    // ============ VisionPortal resolution ============
     public static final int VISION_PORTAL_WIDTH  = 640;
     public static final int VISION_PORTAL_HEIGHT = 480;
 
-    // ============ HSV fallback (tuned at venue, not used by default) ============
-    // SDK's ColorRange.ARTIFACT_GREEN/PURPLE uses YCrCb and is preferred.
-    // Keep these in case we need to override with a custom HSV processor.
-    public static final int HSV_GREEN_H_LO = 87,  HSV_GREEN_S_LO = 78,  HSV_GREEN_V_LO = 54;
-    public static final int HSV_GREEN_H_HI = 94,  HSV_GREEN_S_HI = 255, HSV_GREEN_V_HI = 255;
-    public static final int HSV_PURPLE_H_LO = 123, HSV_PURPLE_S_LO = 61, HSV_PURPLE_V_LO = 96;
-    public static final int HSV_PURPLE_H_HI = 143, HSV_PURPLE_S_HI = 255, HSV_PURPLE_V_HI = 255;
+    // ============ Camera controls (runtime-tunable via VisionTuningTeleOp) ============
+    // Baselines from FIRST's ConceptAprilTagOptimizeExposure sample: 5ms exposure,
+    // max gain. WB is folk-knowledge default for mixed gym LED+fluorescent.
+    public static long EXPOSURE_MS = 5L;   // [0..204]
+    public static int  GAIN        = 255;  // [0..255]
+    public static int  WB_KELVIN   = 4500; // [2000..6500]
 
-    // ============ Fallback ============
-    public static final ChosenPath NO_DETECTION_FALLBACK = ChosenPath.PATH_1;
+    // ============ Corridor planner ============
+    public static double CORRIDOR_HALF_WIDTH_IN     = 8.0;   // 16" intake / 2
+    public static double CORRIDOR_MAX_TRAVEL_IN     = 40.0;  // cap forward sweep
+    public static double CORRIDOR_HEADING_RANGE_DEG = 45.0;  // ± from current heading
+    public static double CORRIDOR_HEADING_STEP_DEG  = 1.0;   // sweep resolution
+    public static int    CORRIDOR_MAX_BALLS         = 3;
+    public static double CORRIDOR_K_TURN            = 0.5;   // per 90° turn
+    public static double CORRIDOR_K_LENGTH          = 0.02;  // per inch travel
+    public static double CORRIDOR_MIN_SCORE         = 0.5;   // below → no-plan
+    public static double CORRIDOR_APPROACH_EXTRA_IN = 4.0;   // overshoot past last ball
 }

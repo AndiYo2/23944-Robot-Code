@@ -140,9 +140,11 @@ public class ArtifactDetector {
     }
 
     /**
-     * Suppress inner detections: balls visible through holes of a closer ball.
-     * Sort by radius descending, drop any detection whose center lies inside
-     * a larger kept detection's enclosing circle.
+     * Suppress inner detections only when they look like the same object seen
+     * twice: the smaller detection must be WELL inside the larger one (center
+     * within 0.6 × larger radius) AND similar size (radius ratio > 0.6). Two
+     * adjacent equal-sized balls now both survive — the old rule wrongly ate
+     * one of them.
      */
     private void suppressInnerBlobs(List<Detection> detections) {
         detections.sort(Comparator.comparingDouble((Detection d) -> d.pixelRadius).reversed());
@@ -153,8 +155,11 @@ public class ArtifactDetector {
             for (Detection k : kept) {
                 double dx = det.pixelCenterX - k.pixelCenterX;
                 double dy = det.pixelCenterY - k.pixelCenterY;
-                double dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < k.pixelRadius) {
+                double centerDist = Math.sqrt(dx * dx + dy * dy);
+                boolean inside = centerDist < 0.6 * k.pixelRadius;
+                double radiusRatio = det.pixelRadius / Math.max(k.pixelRadius, 1.0);
+                boolean similarSize = radiusRatio > 0.6;
+                if (inside && similarSize) {
                     suppressed = true;
                     break;
                 }
@@ -166,7 +171,6 @@ public class ArtifactDetector {
 
         detections.clear();
         detections.addAll(kept);
-        // Sort by confidence descending (matches Python output)
         detections.sort(Comparator.comparingDouble((Detection d) -> d.confidence).reversed());
     }
 }

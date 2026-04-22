@@ -15,7 +15,6 @@ import vision.ArtifactDetector;
 public class RedVisionAuto extends AutonTemplate {
     public static double maxSpeed = 1;
     private PathChain shootToFirst, firstToShoot, shootToSecond, secondToShoot, shootToScan, shootToStop;
-    private PathChain[] visionGoToPaths;
     private ArtifactDetector detector;
 
     // Start pose
@@ -38,18 +37,8 @@ public class RedVisionAuto extends AutonTemplate {
     private final Pose thirdSpikeMidPose = new Pose(102.000, 35.000, Math.toRadians(0));
     private final Pose thirdSpikePickupPose = new Pose(131.000, 35.000, Math.toRadians(0));
 
-    // Vision lane 1 (fluid: line + line)
-    private final Pose lane1MidPose = new Pose(102.000, 8.500, Math.toRadians(0));
-    private final Pose lane1Pickup = new Pose(132.000, 8.500, Math.toRadians(0));
-
-    // Vision lane 2 (single curve)
-    private final Pose lane2Control = new Pose(105.500, 26.000);
-    private final Pose lane2Pickup = new Pose(132.000, 24.500, Math.toRadians(0));
-
-    // Vision lane 3 (fluid: curve + line)
-    private final Pose lane3CurveControl = new Pose(91.500, 32.500);
-    private final Pose lane3MidPose = new Pose(106.000, 40.500, Math.toRadians(0));
-    private final Pose lane3Pickup = new Pose(132.000, 40.500, Math.toRadians(0));
+    // Vision lane paths are gone — CorridorSelector builds the path at runtime
+    // from the live ball positions.
 
     private final Pose stopPose = new Pose(94.500, 20.500, Math.toRadians(30));
 
@@ -94,32 +83,8 @@ public class RedVisionAuto extends AutonTemplate {
                 .setLinearHeadingInterpolation(shootPose.getHeading(), stopPose.getHeading())
                 .build();
 
-        // Vision collection paths (outbound only — return is dynamic)
-
-        // Lane 1 (fluid: line + line)
-        PathChain visionPath1 = follower.pathBuilder()
-                .addPath(new BezierLine(shootPose, lane1MidPose))
-                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
-                .addPath(new BezierLine(lane1MidPose, lane1Pickup))
-                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
-                .build();
-
-        // Lane 2 (single curve)
-        PathChain visionPath2 = follower.pathBuilder()
-                .addPath(new BezierCurve(shootPose, lane2Control, lane2Pickup))
-                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
-                .build();
-
-        // Lane 3 (fluid: curve + line)
-        PathChain visionPath3 = follower.pathBuilder()
-                .addPath(new BezierCurve(shootPose, lane3CurveControl, lane3MidPose))
-                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
-                .addPath(new BezierLine(lane3MidPose, lane3Pickup))
-                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
-                .build();
-
-        // Indexed by ChosenPath ordinal: PATH_1=0, PATH_2=1, PATH_3=2
-        visionGoToPaths = new PathChain[]{ visionPath1, visionPath2, visionPath3 };
+        // Vision collection path is now built at runtime inside VisionCollectCommand
+        // based on the detected corridor. No pre-built lane paths needed.
     }
 
     @Override
@@ -149,19 +114,19 @@ public class RedVisionAuto extends AutonTemplate {
                 .visionPreScan(detector)
                 .moveTo(shootToScan, maxSpeed, false)
                 .intakeStart()
-                .visionCollectAndCatalog(detector, visionGoToPaths, shootPose, maxSpeed, false, .3)
+                .visionCollectAndCatalog(detector, shootPose, maxSpeed, false, .3)
                 .shoot()
                 // Cycle 4 (vision)
                 .visionPreScan(detector)
                 .moveTo(shootToScan, maxSpeed, false)
                 .intakeStart()
-                .visionCollectAndCatalog(detector, visionGoToPaths, shootPose, maxSpeed, false, .3)
+                .visionCollectAndCatalog(detector, shootPose, maxSpeed, false, .3)
                 .shoot()
                 // Cycle 5 (vision)
                 .visionPreScan(detector)
                 .moveTo(shootToScan, maxSpeed, false)
                 .intakeStart()
-                .visionCollectAndCatalog(detector, visionGoToPaths, shootPose, maxSpeed, false, .3)
+                .visionCollectAndCatalog(detector, shootPose, maxSpeed, false, .3)
                 .shoot()
                 .moveTo(shootToStop)
                 .build();

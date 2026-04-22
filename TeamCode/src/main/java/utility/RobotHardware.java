@@ -10,6 +10,9 @@ import com.bylazar.camerastream.PanelsCameraStream;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import android.util.Size;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.ExposureControl;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.GainControl;
+import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.WhiteBalanceControl;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.opencv.ColorBlobLocatorProcessor;
 import org.firstinspires.ftc.vision.opencv.ColorRange;
@@ -20,6 +23,7 @@ import vision.VisionConstants;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.UnnormalizedAngleUnit;
+import java.util.concurrent.TimeUnit;
 import Constants.EnumConstants;
 import Constants.NamingConstants;
 import Constants.OdometryConstants;
@@ -286,31 +290,34 @@ public class RobotHardware {
         // ******************* WEBCAM (AutonVisionCamera) ******************* //
         autonVisionCamera = hardwareMap.get(WebcamName.class, NamingConstants.Camera.autonVisionCamera);
 
-        // Custom HSV color ranges — tuned at venue, more reliable than SDK defaults
-        ColorRange greenRange = new ColorRange(
-                ColorSpace.HSV,
-                new Scalar(VisionConstants.HSV_GREEN_H_LO, VisionConstants.HSV_GREEN_S_LO, VisionConstants.HSV_GREEN_V_LO),
-                new Scalar(VisionConstants.HSV_GREEN_H_HI, VisionConstants.HSV_GREEN_S_HI, VisionConstants.HSV_GREEN_V_HI));
+        // SDK YCrCb presets tuned by FIRST for the 5" DECODE artifacts. YCrCb
+        // decouples chroma from luma, so thresholds survive lighting shifts
+        // that wreck HSV.
+        ColorRange greenRange  = ColorRange.ARTIFACT_GREEN;
+        ColorRange purpleRange = ColorRange.ARTIFACT_PURPLE;
 
-        ColorRange purpleRange = new ColorRange(
-                ColorSpace.HSV,
-                new Scalar(VisionConstants.HSV_PURPLE_H_LO, VisionConstants.HSV_PURPLE_S_LO, VisionConstants.HSV_PURPLE_V_LO),
-                new Scalar(VisionConstants.HSV_PURPLE_H_HI, VisionConstants.HSV_PURPLE_S_HI, VisionConstants.HSV_PURPLE_V_HI));
+        // ROI keeps bottom 75% of the image (widened from Main's 60% so far balls
+        // at scan range aren't clipped).
+        ImageRegion ballRoi = ImageRegion.asUnityCenterCoordinates(-1, 0.5, 1, -1);
 
         greenBlobProcessor = new ColorBlobLocatorProcessor.Builder()
                 .setTargetColorRange(greenRange)
                 .setContourMode(ColorBlobLocatorProcessor.ContourMode.EXTERNAL_ONLY)
-                .setRoi(ImageRegion.asUnityCenterCoordinates(-1, 0.2, 1, -1))
+                .setRoi(ballRoi)
                 .setDrawContours(false)
                 .setBlurSize(9)
+                .setErodeSize(15)
+                .setDilateSize(15)
                 .build();
 
         purpleBlobProcessor = new ColorBlobLocatorProcessor.Builder()
                 .setTargetColorRange(purpleRange)
                 .setContourMode(ColorBlobLocatorProcessor.ContourMode.EXTERNAL_ONLY)
-                .setRoi(ImageRegion.asUnityCenterCoordinates(-1, 0.2, 1, -1))
+                .setRoi(ballRoi)
                 .setDrawContours(false)
                 .setBlurSize(9)
+                .setErodeSize(15)
+                .setDilateSize(15)
                 .build();
 
         visionPortal = new VisionPortal.Builder()
@@ -318,13 +325,18 @@ public class RobotHardware {
                 .setCameraResolution(new Size(
                         VisionConstants.VISION_PORTAL_WIDTH,
                         VisionConstants.VISION_PORTAL_HEIGHT))
-                .enableLiveView(true)
+                .enableLiveView(false)
                 .setStreamFormat(VisionPortal.StreamFormat.MJPEG)
                 .addProcessor(greenBlobProcessor)
                 .addProcessor(purpleBlobProcessor)
                 .build();
 
-        PanelsCameraStream.INSTANCE.startStream(visionPortal, 75);
+        // Note: processors intentionally LEFT ENABLED after construction.
+        // Main's ArtifactDetector comment warns toggling processor state races
+        // with onDrawFrame and can NPE. The big speed wins come from
+        // disabling live view + Panels stream above; continuous processor
+        // execution is the normal FTC pattern.
+        lockCameraControls();
 
         // ******************* VOLTAGE SENSOR ******************* //
         if (hardwareMap.voltageSensor.iterator().hasNext()) {
@@ -336,15 +348,62 @@ public class RobotHardware {
         resetCachedState();
     }
 
-    /** Stop the auton vision portal and camera stream. Call from TeleOp init. */
+    /** Stop the auton vision portal. Call from TeleOp init. */
     public void stopVisionPortal() {
         if (visionPortal != null) {
-            PanelsCameraStream.INSTANCE.stopStream();
             visionPortal.close();
             visionPortal = null;
             greenBlobProcessor = null;
             purpleBlobProcessor = null;
         }
+    }
+
+    /**
+     * Lock the C920's exposure, gain, and white-balance to manual. Reads values
+     * from VisionConstants (tunable at runtime via VisionTuningTeleOp). Pacing
+     * mirrors FIRST's ConceptAprilTagOptimizeExposure sample.
+     */
+    private void lockCameraControls() {
+        if (visionPortal == null) return;
+        long waitStart = System.currentTimeMillis();
+        while (visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING
+               && System.currentTimeMillis() - waitStart < 3000) {
+            try { Thread.sleep(20); }
+            catch (InterruptedException e) { Thread.currentThread().interrupt(); return; }
+        }
+        if (visionPortal.getCameraState() != VisionPortal.CameraState.STREAMING) return;
+
+        try {
+            ExposureControl exp = visionPortal.getCameraControl(ExposureControl.class);
+            if (exp != null) {
+                if (exp.getMode() != ExposureControl.Mode.Manual) {
+                    exp.setMode(ExposureControl.Mode.Manual);
+                    Thread.sleep(50);
+                }
+                exp.setExposure(VisionConstants.EXPOSURE_MS, TimeUnit.MILLISECONDS);
+                Thread.sleep(20);
+            }
+
+            GainControl gain = visionPortal.getCameraControl(GainControl.class);
+            if (gain != null) {
+                gain.setGain(VisionConstants.GAIN);
+                Thread.sleep(20);
+            }
+
+            WhiteBalanceControl wb = visionPortal.getCameraControl(WhiteBalanceControl.class);
+            if (wb != null) {
+                wb.setMode(WhiteBalanceControl.Mode.MANUAL);
+                Thread.sleep(50);
+                wb.setWhiteBalanceTemperature(VisionConstants.WB_KELVIN);
+            }
+        } catch (Exception e) {
+            // Don't crash init if a control isn't supported — continue.
+        }
+    }
+
+    /** Re-apply current VisionConstants camera values. Callable from TuningTeleOp. */
+    public void applyCameraControls() {
+        lockCameraControls();
     }
 
     public void resetCachedState() {
