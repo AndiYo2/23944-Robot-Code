@@ -300,11 +300,14 @@ public class RobotHardware {
         // at scan range aren't clipped).
         ImageRegion ballRoi = ImageRegion.asUnityCenterCoordinates(-1, 0.5, 1, -1);
 
+        // drawContours(true) overlays blob outlines on the Panels stream so
+        // drivers can see what the camera is detecting. Cost lives on the
+        // camera thread, not the scheduler loop.
         greenBlobProcessor = new ColorBlobLocatorProcessor.Builder()
                 .setTargetColorRange(greenRange)
                 .setContourMode(ColorBlobLocatorProcessor.ContourMode.EXTERNAL_ONLY)
                 .setRoi(ballRoi)
-                .setDrawContours(false)
+                .setDrawContours(true)
                 .setBlurSize(9)
                 .setErodeSize(15)
                 .setDilateSize(15)
@@ -314,7 +317,7 @@ public class RobotHardware {
                 .setTargetColorRange(purpleRange)
                 .setContourMode(ColorBlobLocatorProcessor.ContourMode.EXTERNAL_ONLY)
                 .setRoi(ballRoi)
-                .setDrawContours(false)
+                .setDrawContours(true)
                 .setBlurSize(9)
                 .setErodeSize(15)
                 .setDilateSize(15)
@@ -333,10 +336,21 @@ public class RobotHardware {
 
         // Note: processors intentionally LEFT ENABLED after construction.
         // Main's ArtifactDetector comment warns toggling processor state races
-        // with onDrawFrame and can NPE. The big speed wins come from
-        // disabling live view + Panels stream above; continuous processor
-        // execution is the normal FTC pattern.
+        // with onDrawFrame and can NPE. Continuous processor execution is the
+        // normal FTC pattern.
         lockCameraControls();
+
+        // Panels camera preview at a low frame rate. Lets drivers see what the
+        // camera is detecting during auto. Zero TeleOp impact: TeleOpTemplate
+        // calls stopVisionPortal() at end of init, which calls stopStream().
+        if (VisionConstants.PANELS_STREAM_FPS > 0) {
+            try {
+                PanelsCameraStream.INSTANCE.startStream(visionPortal,
+                        VisionConstants.PANELS_STREAM_FPS);
+            } catch (Exception ignored) {
+                // If Panels is unavailable, don't fail init.
+            }
+        }
 
         // ******************* VOLTAGE SENSOR ******************* //
         if (hardwareMap.voltageSensor.iterator().hasNext()) {
@@ -348,9 +362,10 @@ public class RobotHardware {
         resetCachedState();
     }
 
-    /** Stop the auton vision portal. Call from TeleOp init. */
+    /** Stop the auton vision portal AND the Panels camera stream. Call from TeleOp init. */
     public void stopVisionPortal() {
         if (visionPortal != null) {
+            try { PanelsCameraStream.INSTANCE.stopStream(); } catch (Exception ignored) {}
             visionPortal.close();
             visionPortal = null;
             greenBlobProcessor = null;

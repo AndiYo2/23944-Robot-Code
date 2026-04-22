@@ -21,7 +21,6 @@ import utility.RobotHardware;
 import vision.ArtifactDetector;
 import vision.CorridorPlanner;
 import vision.CorridorSelector;
-import vision.Detection;
 import vision.FieldBall;
 import vision.VisionConstants;
 
@@ -55,7 +54,6 @@ public class VisionTuningTeleOp extends OpMode {
 
     private String scanReport = "(press START to scan)";
     private CorridorPlanner.Sweep lastSweep = CorridorPlanner.Sweep.EMPTY;
-    private List<FieldBall> lastFieldBalls = null;
 
     private final ElapsedTime loopTimer = new ElapsedTime();
     private double avgLoopMs = 0.0;
@@ -132,13 +130,13 @@ public class VisionTuningTeleOp extends OpMode {
         telemetry.addLine();
         telemetry.addData("Green blobs (raw)",  detector.lastGreenBlobCount);
         telemetry.addData("Purple blobs (raw)", detector.lastPurpleBlobCount);
-        if (lastFieldBalls != null) {
-            telemetry.addData("Merged balls", lastFieldBalls.size());
-            for (int i = 0; i < lastFieldBalls.size(); i++) {
-                FieldBall b = lastFieldBalls.get(i);
-                telemetry.addData("  [" + i + "] " + b.color,
-                        "x=%.1f y=%.1f conf=%.2f", b.fieldX, b.fieldY, b.confidence);
-            }
+        List<FieldBall> merged = CorridorSelector.lastMergedBalls;
+        telemetry.addData("Merged balls", merged.size());
+        for (int i = 0; i < merged.size(); i++) {
+            FieldBall b = merged.get(i);
+            boolean inCorridor = lastSweep.captured.contains(b);
+            telemetry.addData("  [" + i + "] " + b.color + (inCorridor ? " ✓" : ""),
+                    "x=%.1f y=%.1f conf=%.2f", b.fieldX, b.fieldY, b.confidence);
         }
         telemetry.addLine();
         telemetry.addData("Corridor", lastSweep.isEmpty() ? "EMPTY"
@@ -149,15 +147,15 @@ public class VisionTuningTeleOp extends OpMode {
         telemetry.addData("Report", scanReport);
     }
 
-    /** Run the full detect → cluster → corridor pipeline using current pose (0,0,0 if no follower). */
+    /**
+     * Run the full detect → cluster → corridor pipeline using a zero pose
+     * (the origin is the camera's current forward axis). The merged ball
+     * list is read from CorridorSelector.lastMergedBalls — exactly what
+     * the planner saw.
+     */
     private void runScan() {
         Pose fakePose = new Pose(0, 0, 0);
-        // One scan's worth of detections, transformed via the selector's frame capture + clustering.
-        CorridorPlanner.Sweep sweep = CorridorSelector.selectCorridor(detector, fakePose);
-        lastSweep = sweep;
-        // Also pull a single-frame raw detection list for the per-ball printout.
-        List<Detection> raw = detector.scanOnce();
-        lastFieldBalls = CorridorSelectorDebug.toFieldBalls(raw, fakePose);
+        lastSweep  = CorridorSelector.selectCorridor(detector, fakePose);
         scanReport = CorridorSelector.lastScanDebug;
     }
 
@@ -201,16 +199,4 @@ public class VisionTuningTeleOp extends OpMode {
     }
 
     private static boolean risingEdge(boolean now, boolean prev) { return now && !prev; }
-
-    /** Tiny helper kept inline to avoid adding a production dep. */
-    private static class CorridorSelectorDebug {
-        static List<FieldBall> toFieldBalls(List<Detection> raw, Pose pose) {
-            java.util.List<FieldBall> out = new java.util.ArrayList<>();
-            if (raw == null) return out;
-            for (Detection d : raw) {
-                if (d != null) out.add(vision.BallLocalizer.toFieldFrame(d, pose));
-            }
-            return out;
-        }
-    }
 }

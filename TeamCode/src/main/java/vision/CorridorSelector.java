@@ -31,6 +31,13 @@ public class CorridorSelector {
     /** How many raw detections were merged into the last Sweep (for telemetry). */
     public static int lastMergedBallCount = 0;
 
+    /**
+     * The merged FieldBalls from the last scan — the exact list the corridor
+     * planner saw. Read-only snapshot for telemetry/visualization. Written
+     * only during selectCorridor; zero cost outside auto scans.
+     */
+    public static volatile List<FieldBall> lastMergedBalls = new ArrayList<>();
+
     /** Stored frames from a pre-scan at a different heading. Merged into the next selectCorridor call. */
     private static final List<List<FieldBall>> storedFrames = new ArrayList<>();
 
@@ -62,6 +69,7 @@ public class CorridorSelector {
 
             List<FieldBall> mergedBalls = clusterDetections(allFrames);
             lastMergedBallCount = mergedBalls.size();
+            lastMergedBalls = mergedBalls;
 
             int totalRaw = 0;
             for (List<FieldBall> frame : allFrames) totalRaw += frame.size();
@@ -77,6 +85,7 @@ public class CorridorSelector {
             return sweep;
         } catch (Exception e) {
             lastScanDebug = "VISION ERROR: " + e.getClass().getSimpleName() + " " + e.getMessage();
+            lastMergedBalls = new ArrayList<>();
             android.util.Log.e("CorridorSelector", "selectCorridor failed", e);
             return CorridorPlanner.Sweep.EMPTY;
         }

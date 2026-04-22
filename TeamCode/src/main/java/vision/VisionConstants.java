@@ -70,5 +70,11 @@ public class VisionConstants {
     public static double CORRIDOR_K_TURN            = 0.5;   // per 90° turn
     public static double CORRIDOR_K_LENGTH          = 0.02;  // per inch travel
     public static double CORRIDOR_MIN_SCORE         = 0.5;   // below → no-plan
-    public static double CORRIDOR_APPROACH_EXTRA_IN = 4.0;   // overshoot past last ball
+    public static double CORRIDOR_APPROACH_EXTRA_IN = 4.0;   // path endpoint: last ball + this
+    public static double CORRIDOR_FINISH_BUFFER_IN  = 2.0;   // geometric cut-short: end when robot center passes last ball by this many inches
+
+    // ============ Panels camera preview (AUTO only; TeleOp calls stopVisionPortal) ============
+    // 15 fps costs ~3-5ms/frame on the camera thread (NOT scheduler loop).
+    // 0 disables the Panels stream entirely.
+    public static int PANELS_STREAM_FPS = 15;
 }
