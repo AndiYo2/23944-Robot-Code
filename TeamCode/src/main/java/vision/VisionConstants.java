@@ -32,8 +32,15 @@ public class VisionConstants {
     // +X_robot = forward, +Y_robot = left
     public static final double CAM_OFFSET_X = 7.98;   // 202.7mm forward of robot center
     public static final double CAM_OFFSET_Y = 5.81;   // 147.66mm left of robot center
-    public static final double CAM_OFFSET_Z = 0.0;    // camera height above field (not used in pinhole-by-diameter)
+    public static final double CAM_OFFSET_Z = 3.0;    // camera lens-center height above field (inches)
     public static final double CAM_OFFSET_HEADING_DEG = 0.0;
+
+    // Camera downward tilt from horizontal, in degrees. The current distance
+    // model (horizontal pixel width) does NOT use this value — pitch only
+    // affects WHERE the ball appears in the image, not the silhouette width.
+    // Exposed as a tunable for future ground-plane-projection work and for
+    // documentation of the physical mount. Measure with a digital level.
+    public static double CAM_PITCH_DEG = 22.0;
 
     // ============ Detection filtering (640x480 native) ============
     // Area thresholds scaled down from old 1920x1080 values by pixel-count ratio (÷ 9).
@@ -68,8 +75,8 @@ public class VisionConstants {
     public static double CORRIDOR_HEADING_STEP_DEG  = 1.0;   // sweep resolution
     public static int    CORRIDOR_MAX_BALLS         = 3;
     public static double CORRIDOR_K_TURN            = 0.5;   // per 90° turn
-    public static double CORRIDOR_K_LENGTH          = 0.02;  // per inch travel
-    public static double CORRIDOR_MIN_SCORE         = 0.5;   // below → no-plan
+    public static double CORRIDOR_K_LENGTH          = 0.005; // per inch travel (lowered: old 0.02 auto-rejected single balls past ~30")
+    public static double CORRIDOR_MIN_SCORE         = 0.3;   // below → no-plan (lowered from 0.5 so a single confident ball at range still plans)
     public static double CORRIDOR_APPROACH_EXTRA_IN = 4.0;   // path endpoint: last ball + this
     public static double CORRIDOR_FINISH_BUFFER_IN  = 2.0;   // geometric cut-short: end when robot center passes last ball by this many inches
 

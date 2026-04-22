@@ -36,6 +36,8 @@ Do these FIRST. They are the highest-leverage fixes if wrong and they cost nothi
 2. **Cable strain relief**: verify the cable is not pulling on the connector and cannot catch on anything during a match.
 3. **Camera mount solidity**: grab the camera, try to wiggle it. Any play means the calibration is wrong — camera pose must stay fixed relative to the intake.
 4. **Lens clean**: microfiber cloth, no smudges or fingerprints.
+5. **Camera tilted down 22°** (new, per 2026-04-22 update). Measure with a digital level. The mount must be RIGID — any flex during a match craters accuracy. Reasoning: 22° down gives a near edge ~3" from the lens and a far edge ~67" from the lens (just past 5 ft), which matches the 4-5 ft ask with margin. Adjustable in `VisionConstants.CAM_PITCH_DEG` — update the constant if you end up at a different angle.
+   - NOTE: the current horizontal-width distance math does NOT use `CAM_PITCH_DEG` — tilting is purely a field-of-view decision to keep balls IN the image at your working range. The constant is there for documentation and future ground-plane-projection work.
 
 If any of these are wrong, fix them before anything else. Nothing below will work if the camera drops out mid-match.
 
@@ -180,6 +182,11 @@ Wait — why x=55.98? Because the TeleOp uses a zero robot pose, and the camera 
 Acceptance: field-frame value should match the tape-measured distance within **±2"**. If it's off by more:
 - Check the calibration constants in `VisionConstants.java` (FX, FY, CX, CY) match the SDK's built-in C920 @ 640×480 values (622.001, 622.001, 319.803, 241.251)
 - Check `CAM_OFFSET_X` and `CAM_OFFSET_Y` match where the camera is physically mounted (measure with tape from robot center)
+
+**Note on distance math (changed 2026-04-22)**: distance is now computed from the ball's HORIZONTAL silhouette width, not the `minEnclosingCircle` diameter. This fixes the systematic overestimate at close/far range caused by the top/bottom of the ball being shadowed (missing contour pixels). The ball's left/right edges are the silhouette tangent points — they stay crisp even with asymmetric top/bottom shading. If distances are still off:
+- Verify the ball's horizontal extent in the Panels camera preview (blob outline should hug the left and right edges of the ball)
+- If the contour is consistently narrower than the ball (erosion eating too deep), lower `erodeSize` from 15 to 11 in `RobotHardware.java`
+- Check `FX` in `VisionConstants.java` — if it's wrong, all distances are off by a constant ratio
 
 ### 4.4 Corridor behavior check
 
@@ -338,8 +345,10 @@ All in `TeamCode/src/main/java/vision/VisionConstants.java`. Marked non-final so
 | `CORRIDOR_HEADING_STEP_DEG` | 1 | Resolution of the heading sweep |
 | `CORRIDOR_MAX_BALLS` | 3 | Max balls in one corridor |
 | `CORRIDOR_K_TURN` | 0.5 | Score penalty per 90° of turning |
-| `CORRIDOR_K_LENGTH` | 0.02 | Score penalty per inch of corridor length |
-| `CORRIDOR_MIN_SCORE` | 0.5 | Minimum score to accept the corridor; below → no-plan |
+| `CORRIDOR_K_LENGTH` | 0.005 | Score penalty per inch of corridor length |
+| `CORRIDOR_MIN_SCORE` | 0.3 | Minimum score to accept the corridor; below → no-plan |
+| `CAM_PITCH_DEG` | 22.0 | Camera downward tilt (documentation / future use; not in current math) |
+| `CAM_OFFSET_Z` | 3.0 | Camera lens-center height above field (inches) |
 | `CORRIDOR_APPROACH_EXTRA_IN` | 4 | Path endpoint = last ball + this many inches |
 | `CORRIDOR_FINISH_BUFFER_IN` | 2 | Geometric safety: end path when robot center passes last ball by this |
 
