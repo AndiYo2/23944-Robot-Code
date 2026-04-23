@@ -20,9 +20,9 @@ public class RampScanCommand extends CommandBase {
     private boolean scanComplete;
 
     public static final double DEFAULT_TIMEOUT = 1.0;
-    private static final double PIPELINE_SETTLE_SECONDS = 0.15;
 
     public static String lastScanDebug = "no scan yet";
+    public static String lastRampReadDebug = "no read yet";
 
     public RampScanCommand(Limelight limelight) {
         this(limelight, DEFAULT_TIMEOUT);
@@ -43,14 +43,12 @@ public class RampScanCommand extends CommandBase {
         if (!RobotHardware.getInstance().limelight.isRunning()) {
             RobotHardware.getInstance().limelight.start();
         }
-        limelight.switchToRampScanPipeline();
     }
 
     @Override
     public void execute() {
-        if (timer.seconds() < PIPELINE_SETTLE_SECONDS) return;
-
         int count = limelight.readRampBallCount();
+        lastRampReadDebug = limelight.lastRampReadDebug;
         if (count >= 0) {
             int oldCount = SpindexerAndMotifStatus.RampTracker.getBallsInRamp();
             SpindexerAndMotifStatus.RampTracker.setBallsInRamp(count);
@@ -70,6 +68,5 @@ public class RampScanCommand extends CommandBase {
             lastScanDebug = String.format("Scan TIMEOUT (%.1fs), keeping counter at %d",
                     timeoutSeconds, SpindexerAndMotifStatus.RampTracker.getBallsInRamp());
         }
-        limelight.switchToLocalizationPipeline();
     }
 }

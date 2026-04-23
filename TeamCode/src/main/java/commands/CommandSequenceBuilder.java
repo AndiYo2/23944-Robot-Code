@@ -612,6 +612,43 @@ public class CommandSequenceBuilder {
     }
 
     /**
+     * Switches the Limelight to an explicit pipeline index. Fires instantly —
+     * follow with .delay() to let the pipeline settle before the next scan.
+     */
+    public CommandSequenceBuilder switchPipeline(int pipelineIndex) {
+        commands.add(new SetLimelightPipelineCommand(limelight, pipelineIndex));
+        return this;
+    }
+
+    /** Switches the Limelight to the ramp-scan pipeline (6). */
+    public CommandSequenceBuilder switchPipelineRampScan() {
+        commands.add(SetLimelightPipelineCommand.rampScan(limelight));
+        return this;
+    }
+
+    /** Switches the Limelight to the localization pipeline (2). */
+    public CommandSequenceBuilder switchPipelineLocalization() {
+        commands.add(SetLimelightPipelineCommand.localization(limelight));
+        return this;
+    }
+
+    /** Switches the Limelight to the motif-detection pipeline (5). */
+    public CommandSequenceBuilder switchPipelineMotif() {
+        commands.add(SetLimelightPipelineCommand.motif(limelight));
+        return this;
+    }
+
+    /**
+     * Shifts the motif pattern by (rampBallCount % 3) so the next 3 shots
+     * line up with the current ramp contents. On first call, snapshots the
+     * MotifPattern (call AFTER limelightScan() detected the tag).
+     */
+    public CommandSequenceBuilder shiftMotif() {
+        commands.add(new InstantCommand(() -> SpindexerAndMotifStatus.RampTracker.shiftMotifForRamp()));
+        return this;
+    }
+
+    /**
      * Sets the initial spindexer ball pattern using the default preload.
      *
      * @return this builder for chaining
@@ -1082,6 +1119,31 @@ public class CommandSequenceBuilder {
 
         public ParallelBuilder rampClear() {
             parallelCommands.add(new InstantCommand(() -> SpindexerAndMotifStatus.RampTracker.clear()));
+            return this;
+        }
+
+        public ParallelBuilder switchPipeline(int pipelineIndex) {
+            parallelCommands.add(new SetLimelightPipelineCommand(limelight, pipelineIndex));
+            return this;
+        }
+
+        public ParallelBuilder switchPipelineRampScan() {
+            parallelCommands.add(SetLimelightPipelineCommand.rampScan(limelight));
+            return this;
+        }
+
+        public ParallelBuilder switchPipelineLocalization() {
+            parallelCommands.add(SetLimelightPipelineCommand.localization(limelight));
+            return this;
+        }
+
+        public ParallelBuilder switchPipelineMotif() {
+            parallelCommands.add(SetLimelightPipelineCommand.motif(limelight));
+            return this;
+        }
+
+        public ParallelBuilder shiftMotif() {
+            parallelCommands.add(new InstantCommand(() -> SpindexerAndMotifStatus.RampTracker.shiftMotifForRamp()));
             return this;
         }
 
