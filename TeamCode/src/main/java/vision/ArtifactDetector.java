@@ -3,7 +3,7 @@ package vision;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.opencv.ColorBlobLocatorProcessor;
 import org.opencv.core.MatOfPoint2f;
-import org.opencv.core.Point;
+import org.opencv.core.Rect;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
@@ -110,39 +110,57 @@ public class ArtifactDetector {
 
             if (blob.getAspectRatio() > VisionConstants.MAX_ASPECT_RATIO) continue;
 
-            // SDK computes circularity internally (4*PI*area / perimeter^2)
+            // SDK computes circularity internally (4*PI*area / perimeter^2).
+            // We still keep this as a shape sanity check even though it's
+            // biased low when the top/bottom of the ball is shadowed — any
+            // vaguely round blob still passes the 0.35 threshold.
             double circularity = blob.getCircularity();
             if (circularity < VisionConstants.MIN_CIRCULARITY) continue;
 
-            // Get min enclosing circle from the contour
-            // getContourAsFloat() returns MatOfPoint2f directly — no conversion needed
+            // Horizontal-only silhouette measurement. The bottom of the ball
+            // is often shadowed and the top has a specular highlight, so the
+            // contour's vertical extent is unreliable. The horizontal extent
+            // (leftmost to rightmost pixel) is where the ball's surface is
+            // tangent to the camera's line of sight, reflectance is stable
+            // from both lighting directions, and the silhouette edge stays
+            // crisp. Bounding rect is axis-aligned (NOT minAreaRect).
             MatOfPoint2f contour2f = blob.getContourAsFloat();
-            Point center = new Point();
-            float[] radius = new float[1];
-            Imgproc.minEnclosingCircle(contour2f, center, radius);
+            Rect box = Imgproc.boundingRect(contour2f);
+            double pixelWidth = box.width;
+            double midX       = box.x + box.width  / 2.0;
+            double midY       = box.y + box.height / 2.0;
 
-            double dPixels = 2.0 * radius[0];
-            if (dPixels < VisionConstants.MIN_BALL_PIXEL_DIAMETER) continue;
+            if (pixelWidth < VisionConstants.MIN_BALL_PIXEL_DIAMETER) continue;
 
-            // Confidence = average of circularity and fill ratio
-            double enclosingArea = Math.PI * radius[0] * radius[0];
-            double fillRatio = (double) area / Math.max(enclosingArea, 1);
+            // Confidence uses the axis-aligned bounding box area as the
+            // reference instead of minEnclosingCircle's area. Fill ratio is
+            // higher for a well-formed ball silhouette, lower for noisy
+            // ring/arc artifacts.
+            double boxArea   = (double) box.width * box.height;
+            double fillRatio = (double) area / Math.max(boxArea, 1);
             double confidence = 0.5 * circularity + 0.5 * fillRatio;
             if (confidence < VisionConstants.MIN_CONFIDENCE) continue;
 
-            // Pinhole model: camera-frame position (inches)
-            double zCam = scaledFx * VisionConstants.BALL_DIAMETER_INCHES / dPixels;
-            double xCam = (center.x - scaledCx) * zCam / scaledFx;
+            // Pinhole model using horizontal diameter ONLY.
+            //   zCam = fx * BALL_DIAMETER / pixelWidth           (forward distance)
+            //   xCam = (midX - cx) * zCam / fx                   (lateral offset)
+            double zCam = scaledFx * VisionConstants.BALL_DIAMETER_INCHES / pixelWidth;
+            double xCam = (midX - scaledCx) * zCam / scaledFx;
 
-            out.add(new Detection(color, center.x, center.y, radius[0],
+            // pixelRadius is stored as half the horizontal width so NMS uses
+            // the same metric as the distance calculation.
+            double pixelRadius = pixelWidth / 2.0;
+            out.add(new Detection(color, midX, midY, pixelRadius,
                     zCam, xCam, confidence));
         }
     }
 
     /**
-     * Suppress inner detections: balls visible through holes of a closer ball.
-     * Sort by radius descending, drop any detection whose center lies inside
-     * a larger kept detection's enclosing circle.
+     * Suppress inner detections only when they look like the same object seen
+     * twice: the smaller detection must be WELL inside the larger one (center
+     * within 0.6 × larger radius) AND similar size (radius ratio > 0.6). Two
+     * adjacent equal-sized balls now both survive — the old rule wrongly ate
+     * one of them.
      */
     private void suppressInnerBlobs(List<Detection> detections) {
         detections.sort(Comparator.comparingDouble((Detection d) -> d.pixelRadius).reversed());
@@ -153,8 +171,11 @@ public class ArtifactDetector {
             for (Detection k : kept) {
                 double dx = det.pixelCenterX - k.pixelCenterX;
                 double dy = det.pixelCenterY - k.pixelCenterY;
-                double dist = Math.sqrt(dx * dx + dy * dy);
-                if (dist < k.pixelRadius) {
+                double centerDist = Math.sqrt(dx * dx + dy * dy);
+                boolean inside = centerDist < 0.6 * k.pixelRadius;
+                double radiusRatio = det.pixelRadius / Math.max(k.pixelRadius, 1.0);
+                boolean similarSize = radiusRatio > 0.6;
+                if (inside && similarSize) {
                     suppressed = true;
                     break;
                 }
@@ -166,7 +187,6 @@ public class ArtifactDetector {
 
         detections.clear();
         detections.addAll(kept);
-        // Sort by confidence descending (matches Python output)
         detections.sort(Comparator.comparingDouble((Detection d) -> d.confidence).reversed());
     }
 }

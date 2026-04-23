@@ -15,7 +15,7 @@ import vision.ArtifactDetector;
 public class RedVisionAuto extends AutonTemplate {
     public static double maxSpeed = 1;
     private PathChain shootToFirst, firstToShoot, shootToSecond, secondToShoot, shootToScan, shootToStop;
-    private PathChain[] visionGoToPaths;
+    private PathChain scanToCornerFallback;
     private ArtifactDetector detector;
 
     // Start pose
@@ -30,26 +30,18 @@ public class RedVisionAuto extends AutonTemplate {
     // Shoot position
     private final Pose shootPose = new Pose(88.500, 14.500, Math.toRadians(30));
 
-    // Scan position (slightly forward, heading 0 deg for camera FOV)
-    private final Pose scanPose = new Pose(90.500, 14.500, Math.toRadians(0));
+    // Scan position — new default per 2026-04-22 venue tuning.
+    // Robot stops here facing 0° to scan the field. If no balls are found
+    // at 0°, the auto rotates in place to +30° and re-scans.
+    private final Pose scanPose = new Pose(88.500, 10.000, Math.toRadians(0));
 
     // Cycle 2 (third spike — fluid two-segment path)
     private final Pose thirdSpikeCurveControl = new Pose(91.500, 29.500);
     private final Pose thirdSpikeMidPose = new Pose(102.000, 35.000, Math.toRadians(0));
     private final Pose thirdSpikePickupPose = new Pose(131.000, 35.000, Math.toRadians(0));
 
-    // Vision lane 1 (fluid: line + line)
-    private final Pose lane1MidPose = new Pose(102.000, 8.500, Math.toRadians(0));
-    private final Pose lane1Pickup = new Pose(132.000, 8.500, Math.toRadians(0));
-
-    // Vision lane 2 (single curve)
-    private final Pose lane2Control = new Pose(105.500, 26.000);
-    private final Pose lane2Pickup = new Pose(132.000, 24.500, Math.toRadians(0));
-
-    // Vision lane 3 (fluid: curve + line)
-    private final Pose lane3CurveControl = new Pose(91.500, 32.500);
-    private final Pose lane3MidPose = new Pose(106.000, 40.500, Math.toRadians(0));
-    private final Pose lane3Pickup = new Pose(132.000, 40.500, Math.toRadians(0));
+    // Vision lane paths are gone — CorridorSelector builds the path at runtime
+    // from the live ball positions.
 
     private final Pose stopPose = new Pose(94.500, 20.500, Math.toRadians(30));
 
@@ -94,32 +86,18 @@ public class RedVisionAuto extends AutonTemplate {
                 .setLinearHeadingInterpolation(shootPose.getHeading(), stopPose.getHeading())
                 .build();
 
-        // Vision collection paths (outbound only — return is dynamic)
-
-        // Lane 1 (fluid: line + line)
-        PathChain visionPath1 = follower.pathBuilder()
-                .addPath(new BezierLine(shootPose, lane1MidPose))
-                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
-                .addPath(new BezierLine(lane1MidPose, lane1Pickup))
-                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
+        // Fallback drive for vision cycles: if BOTH the 0° scan and the
+        // rotated +30° re-scan are empty, drive from scanPose to the corner
+        // ball pickup pose (same destination as cycle 1). Starts at scanPose,
+        // not shootPose, so the geometry is different from shootToFirst.
+        scanToCornerFallback = follower.pathBuilder()
+                .addPath(new BezierLine(scanPose, cornerBallsPickupPose))
+                .setLinearHeadingInterpolation(scanPose.getHeading(), cornerBallsPickupPose.getHeading())
                 .build();
 
-        // Lane 2 (single curve)
-        PathChain visionPath2 = follower.pathBuilder()
-                .addPath(new BezierCurve(shootPose, lane2Control, lane2Pickup))
-                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
-                .build();
-
-        // Lane 3 (fluid: curve + line)
-        PathChain visionPath3 = follower.pathBuilder()
-                .addPath(new BezierCurve(shootPose, lane3CurveControl, lane3MidPose))
-                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
-                .addPath(new BezierLine(lane3MidPose, lane3Pickup))
-                .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
-                .build();
-
-        // Indexed by ChosenPath ordinal: PATH_1=0, PATH_2=1, PATH_3=2
-        visionGoToPaths = new PathChain[]{ visionPath1, visionPath2, visionPath3 };
+        // Vision collection path (the corridor drive itself) is built at
+        // runtime inside VisionCollectWithFallbacksCommand from the detected
+        // corridor. No pre-built lane paths needed.
     }
 
     @Override
@@ -146,22 +124,19 @@ public class RedVisionAuto extends AutonTemplate {
                 .parallel(p -> p.moveTo(secondToShoot, maxSpeed, false).autoCatalog())
                 .shoot()
                 // Cycle 3 (vision — dual scan: 30 deg then 0 deg)
-                .visionPreScan(detector)
                 .moveTo(shootToScan, maxSpeed, false)
                 .intakeStart()
-                .visionCollectAndCatalog(detector, visionGoToPaths, shootPose, maxSpeed, false, .3)
+                .visionCollectWithFallbacksAndCatalog(detector, Math.toRadians(30), scanToCornerFallback, shootPose, maxSpeed, false, .3)
                 .shoot()
                 // Cycle 4 (vision)
-                .visionPreScan(detector)
                 .moveTo(shootToScan, maxSpeed, false)
                 .intakeStart()
-                .visionCollectAndCatalog(detector, visionGoToPaths, shootPose, maxSpeed, false, .3)
+                .visionCollectWithFallbacksAndCatalog(detector, Math.toRadians(30), scanToCornerFallback, shootPose, maxSpeed, false, .3)
                 .shoot()
                 // Cycle 5 (vision)
-                .visionPreScan(detector)
                 .moveTo(shootToScan, maxSpeed, false)
                 .intakeStart()
-                .visionCollectAndCatalog(detector, visionGoToPaths, shootPose, maxSpeed, false, .3)
+                .visionCollectWithFallbacksAndCatalog(detector, Math.toRadians(30), scanToCornerFallback, shootPose, maxSpeed, false, .3)
                 .shoot()
                 .moveTo(shootToStop)
                 .build();
