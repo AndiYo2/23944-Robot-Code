@@ -95,10 +95,10 @@ public class MecanumDrive extends SubsystemBase {
 
         if (currentState == DriveState.Locked) {
             setMotorModes(DcMotor.ZeroPowerBehavior.BRAKE);
-            robot.frontLeft.setPower(DriveConstants.XLOCK_POWER);
-            robot.backRight.setPower(DriveConstants.XLOCK_POWER);
+            robot.frontLeft.setPower(-DriveConstants.XLOCK_POWER);
             robot.frontRight.setPower(-DriveConstants.XLOCK_POWER);
-            robot.backLeft.setPower(-DriveConstants.XLOCK_POWER);
+            robot.backLeft.setPower(DriveConstants.XLOCK_POWER);
+            robot.backRight.setPower(DriveConstants.XLOCK_POWER);
             return;
         }
 
