@@ -155,7 +155,7 @@ public class ShooterConstants {
 
         /** Error threshold (ticks/sec) above which controller uses RECOVERY mode (full power).
          *  Below this, uses MAINTAIN mode (FF + P). Must be > VELOCITY_TOLERANCE to avoid chatter. */
-        public static double RECOVERY_THRESHOLD = 50.0;
+        public static double RECOVERY_THRESHOLD = 15.0;
 
         /** Extra velocity (ticks/sec) added to effective setpoint during RECOVERY mode.
          *  Keeps motor at full power slightly past the real setpoint; the flywheel's high MOI
@@ -165,9 +165,18 @@ public class ShooterConstants {
 
         // ==================== HOOD COMPENSATION ====================
 
-        /** Hood angle adjustment per shot (degrees). Applied cumulatively during a shooting sequence
-         *  to compensate for flywheel velocity drop. Negative = lower trajectory.
-         *  Reset automatically at the end of each shooting sequence. */
-        public static double SHOT_HOOD_COMPENSATION_STEP = -0.25;
+        /** Robot Y threshold (inches) separating back-zone from front-zone shots for per-shot hood
+         *  compensation. When cachedPoseY ≤ this value, SHOT_HOOD_COMPENSATION_STEP_BACK is applied
+         *  per shot; otherwise SHOT_HOOD_COMPENSATION_STEP_FRONT. */
+        public static double SHOT_HOOD_COMPENSATION_Y_THRESHOLD = 52.0;
+
+        /** Hood compensation step applied per shot when robot Y is in the back zone (0–52").
+         *  Empirically found — long-range shots show consistent flywheel velocity drop that this
+         *  step compensates for. */
+        public static double SHOT_HOOD_COMPENSATION_STEP_BACK = -0.6;
+
+        /** Hood compensation step applied per shot when robot Y > threshold (front zone). Close-range
+         *  shots have enough flywheel energy margin that no per-shot hood drop is needed. */
+        public static double SHOT_HOOD_COMPENSATION_STEP_FRONT = 0.0;
     }
 }

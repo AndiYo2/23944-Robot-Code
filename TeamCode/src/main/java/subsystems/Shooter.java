@@ -405,7 +405,14 @@ public class Shooter extends SubsystemBase {
 
     public void extendFlipper() {
         robot.shooterFlipper.setPosition(ShootingSequenceConstants.SHOOTER_FLIPPER_EXTENDED);
-        shotHoodCompensation += ShooterConstants.ShooterTuning.SHOT_HOOD_COMPENSATION_STEP;
+
+        // Per-shot hood step is zone-dependent on robot Y. Back-zone (long) shots use a larger
+        // negative step because the flywheel loses more velocity per shot at high setpoints;
+        // front-zone (short) shots have enough energy margin that no per-shot drop is needed.
+        double step = (robot.cachedPoseY <= ShooterConstants.ShooterTuning.SHOT_HOOD_COMPENSATION_Y_THRESHOLD)
+                ? ShooterConstants.ShooterTuning.SHOT_HOOD_COMPENSATION_STEP_BACK
+                : ShooterConstants.ShooterTuning.SHOT_HOOD_COMPENSATION_STEP_FRONT;
+        shotHoodCompensation += step;
     }
 
     public void resetHoodCompensation() {
