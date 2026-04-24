@@ -13,6 +13,8 @@ public class DriveConstants {
     public static double DYNAMIC_SLOW_DEADBAND = 0.15;
     public static double DYNAMIC_SLOW_MIN = 0.25;
 
+    public static double XLOCK_POWER = 0.3;
+
     public static double PARK_SERVO_EXTEND = 0.62;
     public static double PARK_SERVO_RETRACT = 0.32;
 

@@ -231,18 +231,30 @@ public class Limelight extends SubsystemBase {
      * Reads getPythonOutput() from the latest result and counts non-zero entries.
      * Each entry represents a ramp slot: 0=empty, 1=green, 2=purple.
      *
-     * @return ball count (0-8), or -1 if no valid result available
+     * NOTE: We intentionally do NOT gate on result.isValid(). For Limelight 3A
+     * Python/SnapScript pipelines, isValid() reflects the `tv` (target valid)
+     * flag, which our ramp SnapScript does not set. The presence of a non-null
+     * getPythonOutput() array is the correct readiness signal for Python pipes.
+     *
+     * @return ball count (0-8), or -1 if no pipeline output available
      */
+    public String lastRampReadDebug = "no read yet";
+
     public int readRampBallCount() {
-        if (robot.limelight == null) return -1;
+        if (robot.limelight == null) { lastRampReadDebug = "limelight null"; return -1; }
         LLResult result = robot.limelight.getLatestResult();
-        if (result == null || !result.isValid()) return -1;
+        if (result == null) { lastRampReadDebug = "result null"; return -1; }
         double[] output = result.getPythonOutput();
-        if (output == null) return -1;
+        if (output == null) { lastRampReadDebug = "pyOut null (valid=" + result.isValid() + ")"; return -1; }
+        if (output.length == 0) { lastRampReadDebug = "pyOut empty (valid=" + result.isValid() + ")"; return -1; }
         int count = 0;
-        for (double val : output) {
-            if (val != 0) count++;
+        StringBuilder slots = new StringBuilder();
+        for (int i = 0; i < output.length; i++) {
+            if (output[i] != 0) count++;
+            if (i > 0) slots.append(",");
+            slots.append((int) output[i]);
         }
+        lastRampReadDebug = "pyOut=[" + slots + "] count=" + count + " valid=" + result.isValid();
         return count;
     }
 
@@ -269,7 +281,9 @@ public class Limelight extends SubsystemBase {
             updateLimelightData();
             scanForMotifTag();
         } else {
-            // Just push heading so MT2 stays accurate for on-demand relocalization
+            // Just push heading so MT2 stays accurate for on-demand relocalization.
+            // NOTE: ramp-scan pipeline (6) is driven manually by the auton — periodic()
+            // does NOT touch pipelines here, so manual switches survive.
             pushHeadingToLimelight();
         }
     }

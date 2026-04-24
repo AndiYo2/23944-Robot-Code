@@ -33,6 +33,9 @@ import commands.ShootingCommands;
 import commands.CatalogCommands;
 import commands.ParkCommand;
 import commands.RelocalizePinpointCommand;
+import commands.AggressiveReturnCommand;
+import com.arcrobotics.ftclib.command.Command;
+import Constants.EnumConstants.DriveState;
 
 abstract public class TeleOpTemplate extends CommandOpMode {
     protected MecanumDrive mecanumDrive;
@@ -63,6 +66,18 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     private Supplier<PathChain> pathChain;
     private Supplier<PathChain> intakePathChain;
     private boolean autoDrive = false;
+
+    // Defense anchor (LT): snapshot pose on press, while held X-Lock when close
+    // to anchor, otherwise follow an aggressive return path back to it.
+    private static final double DEFENSE_AT_ANCHOR_DIST = 0.3;
+    private static final double DEFENSE_BRAKE_START = 0.15;
+    private static final double DEFENSE_BRAKE_STRENGTH = 2.0;
+    private static final double DEFENSE_RETURN_MAX_POWER = 1.0;
+    private static final double LT_ENGAGE_THRESHOLD = 0.5;
+    private static final double LT_RELEASE_THRESHOLD = 0.15;
+    private Pose anchorPose;
+    private boolean ltEngaged = false;
+    private Command activeReturnCommand;
 
 
     /**
@@ -194,17 +209,8 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         new GamepadButton(mainController, GamepadKeys.Button.RIGHT_BUMPER)
                 .whenPressed(new InstantCommand(this::manualRotateCW));
 
-        // Left trigger — auto gate pathing (hold)
-        new Trigger(() -> gamepad1.left_trigger > RobotConstants.Controls.TRIGGER_THRESHOLD)
-                .whenActive(new InstantCommand(() -> {
-                    autoDrive = true;
-                    follower.followPath(pathChain.get(), false);
-                }))
-                .whenInactive(new InstantCommand(() -> {
-                    follower.breakFollowing();
-                    follower.startTeleopDrive();
-                    autoDrive = false;
-                }));
+        // Left trigger — defense anchor. Handled per-loop in run() so the
+        // Schmitt trigger / distance check / path rebuild can all run continuously.
 
         // Right trigger — shoot
         new Trigger(() -> gamepad1.right_trigger > RobotConstants.Controls.TRIGGER_THRESHOLD)
@@ -309,12 +315,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         follower.update();
         robot.updateCachedPose();
 
-        // Release auto-drive once the follower finishes the path
-        if (autoDrive && !follower.isBusy()) {
-            follower.breakFollowing();
-            follower.startTeleopDrive();
-            autoDrive = false;
-        }
+        updateDefenseAnchor();
 
         super.run();
 
@@ -326,6 +327,77 @@ abstract public class TeleOpTemplate extends CommandOpMode {
             updateTelemetry();
         }
     }
+    /**
+     * Per-loop defense-anchor logic bound to LEFT_TRIGGER.
+     * On rising edge: snapshot current pose. While held: if within
+     * DEFENSE_AT_ANCHOR_DIST → X-Lock; otherwise schedule an AggressiveReturnCommand
+     * at max power back to the anchor. On falling edge: cancel + resume teleop drive.
+     */
+    private void updateDefenseAnchor() {
+        double lt = gamepad1.left_trigger;
+        boolean wasEngaged = ltEngaged;
+        if (!ltEngaged && lt > LT_ENGAGE_THRESHOLD) ltEngaged = true;
+        else if (ltEngaged && lt < LT_RELEASE_THRESHOLD) ltEngaged = false;
+
+        // Rising edge: snapshot anchor pose.
+        if (ltEngaged && !wasEngaged) {
+            anchorPose = follower.getPose();
+        }
+
+        // Falling edge: cancel return, drop X-Lock, resume teleop driving.
+        if (!ltEngaged && wasEngaged) {
+            if (activeReturnCommand != null) {
+                if (!activeReturnCommand.isFinished()) activeReturnCommand.cancel();
+                activeReturnCommand = null;
+            }
+            if (mecanumDrive.getCurrentState() == DriveState.Locked) {
+                mecanumDrive.setXLock(false);
+            }
+            if (mecanumDrive.getCurrentState() == DriveState.AutoDriving) {
+                mecanumDrive.setAutoDriving(false);
+            }
+            follower.breakFollowing();
+            follower.startTeleopDrive();
+            autoDrive = false;
+            return;
+        }
+
+        if (!ltEngaged || anchorPose == null) return;
+
+        Pose current = follower.getPose();
+        double dx = current.getX() - anchorPose.getX();
+        double dy = current.getY() - anchorPose.getY();
+        double distance = Math.hypot(dx, dy);
+
+        if (distance < DEFENSE_AT_ANCHOR_DIST) {
+            // Close → cancel any running path, engage X-Lock, let drive() write the pattern.
+            if (activeReturnCommand != null) {
+                if (!activeReturnCommand.isFinished()) activeReturnCommand.cancel();
+                activeReturnCommand = null;
+            }
+            if (mecanumDrive.getCurrentState() == DriveState.AutoDriving) {
+                mecanumDrive.setAutoDriving(false);
+            }
+            autoDrive = false;
+            if (mecanumDrive.getCurrentState() != DriveState.Locked) {
+                mecanumDrive.setXLock(true);
+            }
+        } else {
+            // Away → release X-Lock, ensure an aggressive return path is running.
+            if (mecanumDrive.getCurrentState() == DriveState.Locked) {
+                mecanumDrive.setXLock(false);
+            }
+            if (activeReturnCommand == null || activeReturnCommand.isFinished()) {
+                activeReturnCommand = new AggressiveReturnCommand(
+                        follower, anchorPose, DEFENSE_RETURN_MAX_POWER,
+                        DEFENSE_BRAKE_START, DEFENSE_BRAKE_STRENGTH);
+                mecanumDrive.setAutoDriving(true);
+                autoDrive = true;
+                schedule(activeReturnCommand);
+            }
+        }
+    }
+
     /**
      * Applies alliance-specific control mapping transformations.
      * Blue alliance uses standard field coordinates.

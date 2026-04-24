@@ -97,6 +97,8 @@ public class SpindexerAndMotifStatus {
      */
     public static class RampTracker {
         private static int ballsInRamp = 0;
+        private static EnumConstants.BallColor[] originalMotif = null;
+        public static String lastShiftDebug = "";
 
         /** Gets the current ball count in the ramp. */
         public static synchronized int getBallsInRamp() { return ballsInRamp; }
@@ -107,25 +109,38 @@ public class SpindexerAndMotifStatus {
         /** Increments the counter after shooting. */
         public static synchronized void addShotBalls(int count) { ballsInRamp += count; }
 
-        /** Resets the counter to 0. */
-        public static synchronized void clear() { ballsInRamp = 0; }
+        /** Resets the counter and saved original motif. */
+        public static synchronized void clear() {
+            ballsInRamp = 0;
+            originalMotif = null;
+        }
 
         /**
-         * Returns the motif-shifted desired shooting order based on current ramp count.
-         * If ramp has N balls, the next 3 should be motif[N%3], motif[(N+1)%3], motif[(N+2)%3].
+         * Shifts the motif pattern based on current ramp count.
+         * On first call, saves the current MotifPattern as the original
+         * (should be called after limelightScan() has detected the tag).
+         * Sets MotifPattern to originalMotif rotated by (rampCount % 3).
          */
-        public static EnumConstants.BallColor[] getDesiredShootOrder() {
+        public static synchronized void shiftMotifForRamp() {
+            if (originalMotif == null) {
+                originalMotif = new EnumConstants.BallColor[]{
+                    MotifPattern.getBallColorInSlotX(0),
+                    MotifPattern.getBallColorInSlotX(1),
+                    MotifPattern.getBallColorInSlotX(2)
+                };
+            }
             int shift = ballsInRamp % 3;
-            EnumConstants.BallColor[] motif = {
+            MotifPattern.setBallPattern(
+                originalMotif[shift],
+                originalMotif[(shift + 1) % 3],
+                originalMotif[(shift + 2) % 3]
+            );
+            lastShiftDebug = String.format("Ramp=%d shift=%d orig=[%s,%s,%s] -> [%s,%s,%s]",
+                ballsInRamp, shift,
+                originalMotif[0], originalMotif[1], originalMotif[2],
                 MotifPattern.getBallColorInSlotX(0),
                 MotifPattern.getBallColorInSlotX(1),
-                MotifPattern.getBallColorInSlotX(2)
-            };
-            return new EnumConstants.BallColor[]{
-                motif[shift],
-                motif[(shift + 1) % 3],
-                motif[(shift + 2) % 3]
-            };
+                MotifPattern.getBallColorInSlotX(2));
         }
     }
 

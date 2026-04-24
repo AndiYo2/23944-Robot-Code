@@ -38,6 +38,23 @@ public class MecanumDrive extends SubsystemBase {
         }
     }
 
+    public void setXLock(boolean locked) {
+        if (locked) {
+            currentState = DriveState.Locked;
+            setMotorModes(DcMotor.ZeroPowerBehavior.BRAKE);
+        } else if (currentState == DriveState.Locked) {
+            currentState = DriveState.FieldRelative;
+        }
+    }
+
+    public void setAutoDriving(boolean autoDriving) {
+        if (autoDriving) {
+            currentState = DriveState.AutoDriving;
+        } else if (currentState == DriveState.AutoDriving) {
+            currentState = DriveState.FieldRelative;
+        }
+    }
+
     public void setDynamicSpeedMultiplier(double multiplier) {
         this.dynamicSpeedMultiplier = multiplier;
     }
@@ -76,7 +93,16 @@ public class MecanumDrive extends SubsystemBase {
             currentState = DriveState.FieldRelative;
         }
 
-        if (currentState == DriveState.AutoDriving || currentState == DriveState.Parking || currentState == DriveState.Locked) {
+        if (currentState == DriveState.Locked) {
+            setMotorModes(DcMotor.ZeroPowerBehavior.BRAKE);
+            robot.frontLeft.setPower(-DriveConstants.XLOCK_POWER);
+            robot.frontRight.setPower(-DriveConstants.XLOCK_POWER);
+            robot.backLeft.setPower(DriveConstants.XLOCK_POWER);
+            robot.backRight.setPower(DriveConstants.XLOCK_POWER);
+            return;
+        }
+
+        if (currentState == DriveState.AutoDriving || currentState == DriveState.Parking) {
             setMotorModes(DcMotor.ZeroPowerBehavior.BRAKE);
             return;
         }
@@ -123,6 +149,8 @@ public class MecanumDrive extends SubsystemBase {
                 }
                 break;
             case Parking:
+                break;
+            case Locked:
                 break;
         }
     }
