@@ -16,7 +16,7 @@ public class TestSorted15Ball extends AutonTemplate {
     public static double maxSpeed = 1;
 
     private PathChain startToShoot, shootToSecondSpike, secondSpikeToShoot,
-            shootToGateOne, gateTwoGrab, grabToGateHold, gateToShoot,
+            shootToGateOne, gateTwoGrab, gateGrabToShoot,
             shootToFirstSpike, firstSpikeToShoot,
             shootToThirdSpike, thirdSpikeToShootEnd;
 
@@ -35,8 +35,8 @@ public class TestSorted15Ball extends AutonTemplate {
 
     // Gate positions
     private final Pose gateOnePose = new Pose(129.500, 60.000, Math.toRadians(20));
-    private final Pose gateGrabPose = new Pose(133.000, 58.000, Math.toRadians(0));
-    private final Pose gateHoldPose = new Pose(126.000, 65.000, Math.toRadians(0));
+    private final Pose gateGrabPose = new Pose(132.000, 50.000, Math.toRadians(20));
+    private final Pose gateGrabMidPose = new Pose(113.500, 53.000, Math.toRadians(20));
 
     // End pose
     private final Pose endPose = new Pose(92.000, 108.000, Math.toRadians(45));
@@ -45,9 +45,7 @@ public class TestSorted15Ball extends AutonTemplate {
     private final Pose startShootControl = new Pose(101.000, 101.500);
     private final Pose secondSpikeControl1 = new Pose(92.000, 55.000);
     private final Pose secondSpikeControl2 = new Pose(110.500, 57.500);
-    private final Pose gateGrabControl = new Pose(129.500, 57.000);
-    private final Pose gateHoldControl = new Pose(121.000, 58.000);
-    private final Pose gateToShootControl = new Pose(100.000, 67.500);
+    private final Pose gateToShootControl = new Pose(89.000, 58.000);
     private final Pose thirdSpikeControl = new Pose(88.500, 40.000);
 
     @Override
@@ -75,18 +73,15 @@ public class TestSorted15Ball extends AutonTemplate {
                 .build();
 
         gateTwoGrab = follower.pathBuilder()
-                .addPath(new BezierCurve(gateOnePose, gateGrabControl, gateGrabPose))
+                .addPath(new BezierLine(gateOnePose, gateGrabPose))
                 .setLinearHeadingInterpolation(gateOnePose.getHeading(), gateGrabPose.getHeading())
                 .build();
 
-        grabToGateHold = follower.pathBuilder()
-                .addPath(new BezierCurve(gateGrabPose, gateHoldControl, gateHoldPose))
-                .setLinearHeadingInterpolation(gateGrabPose.getHeading(), gateHoldPose.getHeading())
-                .build();
-
-        gateToShoot = follower.pathBuilder()
-                .addPath(new BezierCurve(gateHoldPose, gateToShootControl, shootPose))
-                .setLinearHeadingInterpolation(gateHoldPose.getHeading(), Math.toRadians(30))
+        gateGrabToShoot = follower.pathBuilder()
+                .addPath(new BezierLine(gateGrabPose, gateGrabMidPose))
+                .setLinearHeadingInterpolation(gateGrabPose.getHeading(), gateGrabMidPose.getHeading())
+                .addPath(new BezierCurve(gateGrabMidPose, gateToShootControl, shootPose))
+                .setLinearHeadingInterpolation(gateGrabMidPose.getHeading(), Math.toRadians(30))
                 .build();
 
         shootToFirstSpike = follower.pathBuilder()
@@ -122,10 +117,12 @@ public class TestSorted15Ball extends AutonTemplate {
                 .setShootWhileMoving(false)
                 .rampClear()
                 .moveTo(startToShoot, maxSpeed, false)
+                .delay(0.2)
                 .parallel(p -> p.shoot().limelightScan())
                 .intakeStart()
                 .moveTo(shootToSecondSpike, maxSpeed, false)
                 .parallel(p -> p.moveTo(secondSpikeToShoot, maxSpeed, false).autoCatalog())
+                .delay(0.2)
                 .shoot()
                 .setSpindexerMode(EnumConstants.ShootingMode.Sorted)
                 .intakeStart()
@@ -133,19 +130,18 @@ public class TestSorted15Ball extends AutonTemplate {
                 .delay(0.5)
                 .moveTo(gateTwoGrab, maxSpeed, false)
                 .delay(0.5)
-                .intakeStop()
-                .moveTo(grabToGateHold, maxSpeed, false)
-                .delay(0.5)
-                .moveTo(gateToShoot, maxSpeed, false)
-                .parallel(p -> p.moveTo(gateToShoot, maxSpeed, false).guaranteeSortedAutoCatalog())
+                .parallel(p -> p.moveTo(gateGrabToShoot, maxSpeed, false).guaranteeSortedAutoCatalog())
+                .delay(0.2)
                 .slowShoot()
                 .intakeStart()
                 .moveTo(shootToFirstSpike, maxSpeed, false)
                 .parallel(p -> p.moveTo(firstSpikeToShoot, maxSpeed, false).guaranteeSortedAutoCatalog())
+                .delay(0.2)
                 .slowShoot()
                 .intakeStart()
                 .moveTo(shootToThirdSpike, maxSpeed, false)
                 .parallel(p -> p.moveTo(thirdSpikeToShootEnd, maxSpeed, false).guaranteeSortedAutoCatalog())
+                .delay(0.2)
                 .slowShoot()
                 .build();
     }
