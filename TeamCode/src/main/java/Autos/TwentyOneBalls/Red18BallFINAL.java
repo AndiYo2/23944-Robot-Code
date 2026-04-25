@@ -1,6 +1,7 @@
 package Autos.TwentyOneBalls;
 
 import Autos.AutonTemplate;
+import Constants.EnumConstants;
 import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
@@ -10,15 +11,14 @@ import commands.CommandSequenceBuilder;
 
 
 @Autonomous(name = "Red21Ball")
-public class Red21Ball extends AutonTemplate {
+public class Red18BallFINAL extends AutonTemplate {
     public static double maxSpeed = 1;
 
     private PathChain startToThirdSpike, thirdSpikeToShoot,
             shootToCorner, cornerToShoot,
             shootToSecond, secondToGate, gateToShoot,
-            shootToFirst, firstSpikeToGate, firstSpikeGateToShoot,
+            shootToFirst, firstToShoot,
             shootToCornerCycleOne, cornerToShootCycleOne,
-            shootToCornerCycleTwo, cornerCycleTwoToShoot,
             shootToEnd;
 
     // Start pose
@@ -27,7 +27,7 @@ public class Red21Ball extends AutonTemplate {
     // Shoot positions
     private final Pose shootPose = new Pose(89.500, 14.000, Math.toRadians(45));
     private final Pose shootPose30 = new Pose(89.500, 14.000, Math.toRadians(30));
-    private final Pose upperShootPose = new Pose(91.500, 83.000, Math.toRadians(0));
+    private final Pose upperShootPose = new Pose(91.500, 80.000, Math.toRadians(0));
     private final Pose gateShootPose = new Pose(86.500, 74.000, Math.toRadians(0));
 
     // Third spike
@@ -36,29 +36,27 @@ public class Red21Ball extends AutonTemplate {
 
     // Corner positions
     private final Pose cornerPrepPose = new Pose(119.500, 8.500, Math.toRadians(0));
-    private final Pose cornerPose = new Pose(131.000, 8.500, Math.toRadians(0));
+    private final Pose cornerPose = new Pose(133.000, 8.500, Math.toRadians(0));
     private final Pose cornerCycleOnePose = new Pose(130.000, 13.000, Math.toRadians(0));
 
     // Second spike
     private final Pose secondPrepPose = new Pose(106.500, 45.500, Math.toRadians(45));
-    private final Pose secondPose = new Pose(122.500, 51.500, Math.toRadians(45));
+    private final Pose secondPose = new Pose(122.500, 49.500, Math.toRadians(45));
 
     // Gate
-    private final Pose gatePose = new Pose(126.500, 63.000, Math.toRadians(0));
+    private final Pose gatePose = new Pose(127.500, 62.000, Math.toRadians(0));
 
     // First spike & gate
-    private final Pose firstSpikeMidPose = new Pose(126.000, 83.000, Math.toRadians(0));
-    private final Pose firstSpikeGatePose = new Pose(126.500, 72.500, Math.toRadians(0));
+    private final Pose firstSpikePose = new Pose(128.000, 80.000, Math.toRadians(0));
 
     // End pose
     private final Pose endPose = new Pose(95.000, 17.500, Math.toRadians(45));
 
     // Control points
     private final Pose thirdSpikeControl = new Pose(112.000, 27.500);
-    private final Pose secondControl = new Pose(112.000, 51.500);
+    private final Pose secondControl = new Pose(112.000, 49.500);
     private final Pose secondToGateControl = new Pose(122.000, 58.000);
     private final Pose gateToShootControl = new Pose(96.000, 66.500);
-    private final Pose firstSpikeGateControl = new Pose(119.000, 78.000);
 
     @Override
     protected void buildPaths() {
@@ -106,18 +104,14 @@ public class Red21Ball extends AutonTemplate {
                 .build();
 
         shootToFirst = follower.pathBuilder()
-                .addPath(new BezierLine(upperShootPose, firstSpikeMidPose))
-                .setLinearHeadingInterpolation(upperShootPose.getHeading(), firstSpikeMidPose.getHeading())
+                .addPath(new BezierLine(upperShootPose, firstSpikePose))
+                .setLinearHeadingInterpolation(upperShootPose.getHeading(), firstSpikePose.getHeading())
                 .build();
 
-        firstSpikeToGate = follower.pathBuilder()
-                .addPath(new BezierCurve(firstSpikeMidPose, firstSpikeGateControl, firstSpikeGatePose))
-                .setLinearHeadingInterpolation(firstSpikeMidPose.getHeading(), firstSpikeGatePose.getHeading())
-                .build();
 
-        firstSpikeGateToShoot = follower.pathBuilder()
-                .addPath(new BezierLine(firstSpikeGatePose, gateShootPose))
-                .setLinearHeadingInterpolation(firstSpikeGatePose.getHeading(), gateShootPose.getHeading())
+        firstToShoot = follower.pathBuilder()
+                .addPath(new BezierLine(firstSpikePose, gateShootPose))
+                .setLinearHeadingInterpolation(firstSpikePose.getHeading(), gateShootPose.getHeading())
                 .build();
 
         shootToCornerCycleOne = follower.pathBuilder()
@@ -130,18 +124,6 @@ public class Red21Ball extends AutonTemplate {
                 .setLinearHeadingInterpolation(cornerCycleOnePose.getHeading(), shootPose30.getHeading())
                 .build();
 
-        shootToCornerCycleTwo = follower.pathBuilder()
-                .addPath(new BezierLine(shootPose30, cornerPrepPose))
-                .setLinearHeadingInterpolation(shootPose30.getHeading(), cornerPrepPose.getHeading())
-                .addPath(new BezierLine(cornerPrepPose, cornerPose))
-                .setLinearHeadingInterpolation(cornerPrepPose.getHeading(), cornerPose.getHeading())
-                .build();
-
-        cornerCycleTwoToShoot = follower.pathBuilder()
-                .addPath(new BezierLine(cornerPose, shootPose30))
-                .setLinearHeadingInterpolation(cornerPose.getHeading(), shootPose30.getHeading())
-                .build();
-
         shootToEnd = follower.pathBuilder()
                 .addPath(new BezierLine(shootPose30, endPose))
                 .setTangentHeadingInterpolation()
@@ -152,39 +134,37 @@ public class Red21Ball extends AutonTemplate {
     public void init() {
         super.init();
         Constants.RobotConstants.Robot.allianceColor = Constants.EnumConstants.AllianceColor.Red;
+        Constants.SpindexerConstants.currentMode = EnumConstants.ShootingMode.Fast;
 
         autonomousCommand = new CommandSequenceBuilder(follower, intake, spindexer, limelight, shooter, turret)
-                .parallel(p -> p.delay(.5).limelightScan())
+                .parallel(p -> p.delay(.7).limelightScan())
                 .shoot()
                 .intakeStart()
                 .moveTo(startToThirdSpike, maxSpeed, false)
-                .delay(.3)
                 .parallel(p -> p.moveTo(thirdSpikeToShoot, maxSpeed, false).autoCatalog())
                 .shoot()
                 .intakeStart()
                 .moveTo(shootToCorner, maxSpeed, false)
+                .delay(.4)
                 .parallel(p -> p.moveTo(cornerToShoot, maxSpeed, false).autoCatalog())
                 .shoot()
+                .setSpindexerMode(EnumConstants.ShootingMode.Sorted)
                 .intakeStart()
                 .moveTo(shootToSecond, maxSpeed, false)
                 .moveTo(secondToGate, maxSpeed, false)
-                .autoCatalog()
-                .moveTo(gateToShoot, maxSpeed, false)
-                .shoot()
+                .intakeStop()
+                .delay(1)
+                .parallel(p -> p.moveTo(gateToShoot, maxSpeed, false).guaranteeSortedAutoCatalog())
+                .slowShoot()
                 .intakeStart()
                 .moveTo(shootToFirst, maxSpeed, false)
-                .moveTo(firstSpikeToGate, maxSpeed, false)
-                .delay(.3)
-                .parallel(p -> p.moveTo(firstSpikeGateToShoot, maxSpeed, false).autoCatalog())
-                .shoot()
+                .parallel(p -> p.moveTo(firstToShoot, maxSpeed, false).guaranteeSortedAutoCatalog())
+                .slowShoot()
                 .intakeStart()
                 .moveTo(shootToCornerCycleOne, maxSpeed, false)
-                .moveTo(cornerToShootCycleOne, maxSpeed, false)
-                .shoot()
-                .intakeStart()
-                .moveTo(shootToCornerCycleTwo, maxSpeed, false)
-                .parallel(p -> p.moveTo(cornerCycleTwoToShoot, maxSpeed, false).autoCatalog())
-                .shoot()
+                .delay(.5)
+                .parallel(p -> p.moveTo(cornerToShootCycleOne, maxSpeed, false).guaranteeSortedAutoCatalog())
+                .slowShoot()
                 .moveTo(shootToEnd, maxSpeed, false)
                 .build();
     }

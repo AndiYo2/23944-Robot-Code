@@ -68,11 +68,14 @@ public class Limelight extends SubsystemBase {
      * @return tag ID if detected (21-23), -1 if not detected
      */
     public int scanForMotifTag() {
-        if (latestResult == null || !latestResult.isValid()) {
+        if (latestResult == null) {
             return -1;
         }
 
         List<LLResultTypes.FiducialResult> fiducialResults = latestResult.getFiducialResults();
+        if (fiducialResults == null || fiducialResults.isEmpty()) {
+            return -1;
+        }
 
         for (int tagId = 21; tagId <= 23; tagId++) {
             for (LLResultTypes.FiducialResult fr : fiducialResults) {
@@ -137,6 +140,11 @@ public class Limelight extends SubsystemBase {
 
     public boolean isMotifDetected() {
         return motifDetected;
+    }
+
+    public void resetMotifDetection() {
+        motifDetected = false;
+        detectedTagId = -1;
     }
 
     public int getDetectedTagId() {
