@@ -196,6 +196,63 @@ public class CommandSequenceBuilder {
     // Then return phase: dynamic straight-line path back to returnPose.
     // AndCatalog variants run autoCatalog in parallel with the return drive.
 
+    /**
+     * Sensor-aware collect-only move. Follows the path; exits as soon as all 3
+     * distance sensors detect a ball, or shortly after the path completes.
+     * Caller is responsible for queueing the return path.
+     */
+    public CommandSequenceBuilder moveToAndCollect(Path collectPath, double maxPower) {
+        commands.add(new BallCollectMoveToCommand(follower, collectPath, maxPower));
+        return this;
+    }
+
+    public CommandSequenceBuilder moveToAndCollect(PathChain collectPath, double maxPower) {
+        commands.add(new BallCollectMoveToCommand(follower, collectPath, maxPower));
+        return this;
+    }
+
+    public CommandSequenceBuilder moveToAndCollect(Path collectPath, double maxPower, double maxWaitAfterPathSec) {
+        commands.add(new BallCollectMoveToCommand(follower, collectPath, maxPower, maxWaitAfterPathSec));
+        return this;
+    }
+
+    public CommandSequenceBuilder moveToAndCollect(PathChain collectPath, double maxPower, double maxWaitAfterPathSec) {
+        commands.add(new BallCollectMoveToCommand(follower, collectPath, maxPower, maxWaitAfterPathSec));
+        return this;
+    }
+
+    /**
+     * Sensor-aware collect-only move with late-taper deceleration.
+     * Holds maxPower until decelStartT (path progress 0.0-1.0), then linearly
+     * ramps down to endPower by path end. Use when the path ends near a ball
+     * cluster and you don't want to ram into them.
+     */
+    public CommandSequenceBuilder moveToAndCollect(Path collectPath, double maxPower,
+                                                    double decelStartT, double endPower) {
+        commands.add(new BallCollectMoveToCommand(follower, collectPath, maxPower, decelStartT, endPower));
+        return this;
+    }
+
+    public CommandSequenceBuilder moveToAndCollect(PathChain collectPath, double maxPower,
+                                                    double decelStartT, double endPower) {
+        commands.add(new BallCollectMoveToCommand(follower, collectPath, maxPower, decelStartT, endPower));
+        return this;
+    }
+
+    public CommandSequenceBuilder moveToAndCollect(Path collectPath, double maxPower,
+                                                    double decelStartT, double endPower,
+                                                    double maxWaitAfterPathSec) {
+        commands.add(new BallCollectMoveToCommand(follower, collectPath, maxPower, decelStartT, endPower, maxWaitAfterPathSec));
+        return this;
+    }
+
+    public CommandSequenceBuilder moveToAndCollect(PathChain collectPath, double maxPower,
+                                                    double decelStartT, double endPower,
+                                                    double maxWaitAfterPathSec) {
+        commands.add(new BallCollectMoveToCommand(follower, collectPath, maxPower, decelStartT, endPower, maxWaitAfterPathSec));
+        return this;
+    }
+
     public CommandSequenceBuilder ballCollectMoveTo(Path collectPath, Pose returnPose, double maxPower, boolean holdEnd) {
         commands.add(new SequentialCommandGroup(
                 new BallCollectMoveToCommand(follower, collectPath, maxPower),

@@ -38,18 +38,18 @@ public class Red18Ball extends AutonTemplate {
     private final Pose cornerPrepPose = new Pose(119.500, 8.500, Math.toRadians(0));
     private final Pose cornerPose = new Pose(133.000, 8.500, Math.toRadians(0));
     private final Pose cornerCyclePose = new Pose(133.000, 9.500, Math.toRadians(0));
-    private final Pose cornerCycleMidPose = new Pose(109.000, 19.000, Math.toRadians(0));
-    private final Pose cornerCycleControl = new Pose(120.000, 11.000);
+    private final Pose cornerCycleMidPose = new Pose(101.000, 28.500, Math.toRadians(0));
+    private final Pose cornerCycleControl = new Pose(104.500, 10.000);
 
     // Second spike
     private final Pose secondPrepPose = new Pose(106.500, 45.500, Math.toRadians(45));
     private final Pose secondPose = new Pose(124.500, 49.500, Math.toRadians(45));
 
     // Gate
-    private final Pose gatePose = new Pose(126.500, 62.000, Math.toRadians(0));
+    private final Pose gatePose = new Pose(127.000, 64.000, Math.toRadians(0));
 
     // First spike & gate
-    private final Pose firstSpikePose = new Pose(128.000, 80.000, Math.toRadians(0));
+    private final Pose firstSpikePose = new Pose(126.500, 80.000, Math.toRadians(0));
 
     // End pose
     private final Pose endPose = new Pose(95.000, 17.500, Math.toRadians(45));
@@ -97,7 +97,7 @@ public class Red18Ball extends AutonTemplate {
 
         secondToGate = follower.pathBuilder()
                 .addPath(new BezierCurve(secondPose, secondToGateControl, gatePose))
-                .setLinearHeadingInterpolation(secondPose.getHeading(), gatePose.getHeading())
+                .setConstantHeadingInterpolation(Math.toRadians(0))
                 .build();
 
         gateToShoot = follower.pathBuilder()
@@ -155,7 +155,7 @@ public class Red18Ball extends AutonTemplate {
                 .setSpindexerMode(EnumConstants.ShootingMode.Sorted)
                 .intakeStart()
                 .moveTo(shootToSecond, maxSpeed, false)
-                .moveTo(secondToGate, maxSpeed, false)
+                .moveTo(secondToGate, .8, false)
                 .intakeStop()
                 .delay(1)
                 .parallel(p -> p.moveTo(gateToShoot, maxSpeed, false).guaranteeSortedAutoCatalog())

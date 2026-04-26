@@ -41,6 +41,6 @@ public class TurretConstants {
     // Position-dependent Red offsets: front (Y <= threshold) vs back (Y > threshold).
     // The Y threshold is alliance-neutral — same field split works for both.
     public static double RED_FRONT_TURRET_TRACKING_OFFSET = 0;
-    public static double RED_BACK_TURRET_TRACKING_OFFSET = 0;
+    public static double RED_BACK_TURRET_TRACKING_OFFSET = -3;
     public static double TURRET_OFFSET_Y_THRESHOLD = 48.0;
 }

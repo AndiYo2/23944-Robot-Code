@@ -184,6 +184,7 @@ public abstract class AutonTemplate extends OpMode {
                 telemetry.addData("Flick State", spindexer.getCurrentState());
                 telemetry.addData("Shooting Mode", SpindexerConstants.currentMode);
                 telemetry.addData("Catalog Debug", GuaranteeSortedAutoCatalogCommand.lastCatalogDebug);
+                telemetry.addData("BallCollect Debug", commands.BallCollectMoveToCommand.lastDebug);
             }
 
             // Panels telemetry (graph + debug) and field drawing

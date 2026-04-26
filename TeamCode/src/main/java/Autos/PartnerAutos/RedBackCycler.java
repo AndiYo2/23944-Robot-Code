@@ -16,28 +16,32 @@ public class RedBackCycler extends AutonTemplate {
     public static double maxSpeed = 1;
 
     private PathChain startToThirdSpike, thirdSpikeToShoot,
-            cycleGo, cycleReturn,
+            cycle1Go, cycle1Return,
+            cycle2Go, cycle2Return,
             shootToEnd;
 
     // Start pose
     private final Pose startPose = new Pose(88.500, 6.750, Math.toRadians(90));
 
     // Shoot positions
-    private final Pose shootPose = new Pose(90.000, 10.500, Math.toRadians(45));
-    private final Pose shootPose30 = new Pose(90.000, 10.500, Math.toRadians(30));
+    private final Pose shootPose = new Pose(90.000, 11.500, Math.toRadians(45));
+    private final Pose shootPose30 = new Pose(90.000, 11.500, Math.toRadians(30));
 
     // Third spike
     private final Pose thirdSpikePrepPose = new Pose(106.500, 21.500, Math.toRadians(45));
     private final Pose thirdSpikePose = new Pose(122.500, 27.500, Math.toRadians(45));
 
-    // Cycle corner
-    private final Pose cyclePose = new Pose(133.000, 9.000, Math.toRadians(0));
+    // Cycle corners
+    private final Pose cycle1Pose = new Pose(133.000, 9.000, Math.toRadians(0));
+    private final Pose cycle2Pose = new Pose(133.000, 22.500, Math.toRadians(0));
 
     // End pose
     private final Pose endPose = new Pose(98.500, 15.500, Math.toRadians(30));
 
     // Control points
     private final Pose thirdSpikeControl = new Pose(112.000, 27.500);
+    private final Pose cycle1GoControl = new Pose(111.500, 11.000);
+    private final Pose cycle1ReturnControl = new Pose(110.500, 13.000);
 
     @Override
     protected void buildPaths() {
@@ -55,14 +59,24 @@ public class RedBackCycler extends AutonTemplate {
                 .setLinearHeadingInterpolation(thirdSpikePose.getHeading(), shootPose.getHeading())
                 .build();
 
-        cycleGo = follower.pathBuilder()
-                .addPath(new BezierLine(shootPose, cyclePose))
+        cycle1Go = follower.pathBuilder()
+                .addPath(new BezierCurve(shootPose, cycle1GoControl, cycle1Pose))
                 .setConstantHeadingInterpolation(Math.toRadians(0))
                 .build();
 
-        cycleReturn = follower.pathBuilder()
-                .addPath(new BezierLine(cyclePose, shootPose30))
-                .setLinearHeadingInterpolation(cyclePose.getHeading(), shootPose30.getHeading())
+        cycle1Return = follower.pathBuilder()
+                .addPath(new BezierCurve(cycle1Pose, cycle1ReturnControl, shootPose30))
+                .setLinearHeadingInterpolation(cycle1Pose.getHeading(), shootPose30.getHeading())
+                .build();
+
+        cycle2Go = follower.pathBuilder()
+                .addPath(new BezierLine(shootPose, cycle2Pose))
+                .setLinearHeadingInterpolation(Math.toRadians(0), cycle2Pose.getHeading())
+                .build();
+
+        cycle2Return = follower.pathBuilder()
+                .addPath(new BezierLine(cycle2Pose, shootPose30))
+                .setLinearHeadingInterpolation(cycle2Pose.getHeading(), shootPose30.getHeading())
                 .build();
 
         shootToEnd = follower.pathBuilder()
@@ -81,21 +95,31 @@ public class RedBackCycler extends AutonTemplate {
                 .delay(.7)
                 .shoot()
                 .intakeStart()
-                .moveTo(startToThirdSpike, maxSpeed, false)
+                .moveToAndCollect(startToThirdSpike, maxSpeed, 0.7, 0.6)
                 .parallel(p -> p.moveTo(thirdSpikeToShoot, maxSpeed, false).autoCatalog())
                 .shoot();
 
+        boolean useCycle1 = true;
         for (int i = 0; i < 5; i++) {
-            builder
-                    .intakeStart()
-                    .moveTo(cycleGo, maxSpeed, false)
-                    .delay(.4)
-                    .parallel(p -> p.moveTo(cycleReturn, maxSpeed, false).autoCatalog())
-                    .shoot();
+            if (useCycle1) {
+                builder
+                        .intakeStart()
+                        .moveToAndCollect(cycle1Go, maxSpeed, 0.7, 0.6)
+                        .parallel(p -> p.moveTo(cycle1Return, maxSpeed, false).autoCatalog())
+                        .shoot();
+            } else {
+                builder
+                        .intakeStart()
+                        .moveToAndCollect(cycle2Go, maxSpeed, 0.7, 0.6)
+                        .parallel(p -> p.moveTo(cycle2Return, maxSpeed, false).autoCatalog())
+                        .shoot();
+            }
+            useCycle1 = !useCycle1;
         }
 
         autonomousCommand = builder
-                .moveTo(shootToEnd, maxSpeed, false)
+                .intakeStart()
+                .moveToAndCollect(cycle1Go, maxSpeed, 0.7, 0.6)
                 .build();
     }
 }

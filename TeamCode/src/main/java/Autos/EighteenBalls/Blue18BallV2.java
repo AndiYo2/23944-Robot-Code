@@ -10,8 +10,8 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import commands.CommandSequenceBuilder;
 
 
-@Autonomous(name = "Blue18Ball")
-public class Blue18Ball extends AutonTemplate {
+@Autonomous(name = "Blue18BallV2")
+public class Blue18BallV2 extends AutonTemplate {
     public static double maxSpeed = 1;
 
     private PathChain startToThirdSpike, thirdSpikeToShoot,
@@ -28,7 +28,6 @@ public class Blue18Ball extends AutonTemplate {
     private final Pose shootPose = new Pose(54.500, 14.000, Math.toRadians(135));
     private final Pose shootPose150 = new Pose(54.500, 14.000, Math.toRadians(150));
     private final Pose upperShootPose = new Pose(48.000, 85.000, Math.toRadians(180));
-    private final Pose gateShootPose = new Pose(57.500, 74.000, Math.toRadians(180));
 
     // Third spike
     private final Pose thirdSpikePrepPose = new Pose(38.000, 36.000, Math.toRadians(180));
@@ -38,8 +37,6 @@ public class Blue18Ball extends AutonTemplate {
     private final Pose cornerPrepPose = new Pose(24.500, 8.500, Math.toRadians(180));
     private final Pose cornerPose = new Pose(11.000, 8.500, Math.toRadians(180));
     private final Pose cornerCyclePose = new Pose(11.000, 9.500, Math.toRadians(180));
-    private final Pose cornerCycleMidPose = new Pose(43.000, 28.500, Math.toRadians(0));
-    private final Pose cornerCycleControl = new Pose(40.500, 10.000);
 
     // Second spike
     private final Pose secondPrepPose = new Pose(39.000, 60.000, Math.toRadians(180));
@@ -112,14 +109,15 @@ public class Blue18Ball extends AutonTemplate {
 
 
         firstToShoot = follower.pathBuilder()
-                .addPath(new BezierLine(firstSpikePose, gateShootPose))
-                .setLinearHeadingInterpolation(firstSpikePose.getHeading(), gateShootPose.getHeading())
+                .addPath(new BezierLine(firstSpikePose, shootPose))
+                .setTangentHeadingInterpolation()
+                .setReversed()
                 .build();
 
         shootToCornerCycleOne = follower.pathBuilder()
-                .addPath(new BezierLine(gateShootPose, cornerCycleMidPose))
+                .addPath(new BezierLine(shootPose, cornerPrepPose))
                 .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
-                .addPath(new BezierCurve(cornerCycleMidPose, cornerCycleControl, cornerCyclePose))
+                .addPath(new BezierLine(cornerPrepPose, cornerCyclePose))
                 .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
                 .build();
 
@@ -155,8 +153,8 @@ public class Blue18Ball extends AutonTemplate {
                 .setSpindexerMode(EnumConstants.ShootingMode.Sorted)
                 .intakeStart()
                 .moveTo(shootToSecond, maxSpeed, false)
-                .moveTo(shootToGate, .8, false)
                 .intakeStop()
+                .moveTo(shootToGate, .8, false)
                 .parallel(p -> p.delay(1).guaranteeSortedAutoCatalog())
                 .moveTo(gateToShoot, maxSpeed, false)
                 .slowShoot()
@@ -166,9 +164,9 @@ public class Blue18Ball extends AutonTemplate {
                 .slowShoot()
                 .intakeStart()
                 .moveTo(shootToCornerCycleOne, maxSpeed, false)
-                .delay(.5)
+                .delay(.3)
                 .parallel(p -> p.moveTo(cornerToShootCycleOne, maxSpeed, false).guaranteeSortedAutoCatalog())
-                .slowShoot()
+                .shoot()
                 .moveTo(shootToEnd, maxSpeed, false)
                 .build();
     }
