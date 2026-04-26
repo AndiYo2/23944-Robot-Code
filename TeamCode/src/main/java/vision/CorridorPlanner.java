@@ -51,7 +51,7 @@ public class CorridorPlanner {
         return plan(robotPose, balls,
                 VisionConstants.CORRIDOR_MAX_BALLS,
                 VisionConstants.CORRIDOR_MAX_TRAVEL_IN,
-                VisionConstants.CORRIDOR_FIELD_X_LIMIT,
+                VisionConstants.getCorridorFieldXLimit(),
                 VisionConstants.CORRIDOR_HALF_WIDTH_IN,
                 Math.toRadians(VisionConstants.CORRIDOR_HEADING_RANGE_DEG),
                 Math.toRadians(VisionConstants.CORRIDOR_HEADING_STEP_DEG),
@@ -95,8 +95,12 @@ public class CorridorPlanner {
             // Clamp max travel so the ROBOT CENTER's end pose doesn't cross
             // the field X boundary. The intake may end up past fieldXLimit
             // but that's expected (intake is already forward of center).
+            // Works for both alliances: Red drives ax>0 against an upper limit
+            // (~132); Blue drives ax<0 against a lower limit (~12). Sweeps with
+            // ax≈0 (pure ±Y travel) skip the clamp — the X boundary doesn't
+            // constrain lateral motion.
             double effectiveMaxTravel = maxTravel;
-            if (ax > 1e-6) {
+            if (Math.abs(ax) > 1e-6) {
                 double distToXLimit = (fieldXLimit - robotPose.getX()) / ax;
                 if (distToXLimit <= 0) continue;  // already at/past the boundary
                 effectiveMaxTravel = Math.min(maxTravel, distToXLimit);

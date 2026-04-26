@@ -83,8 +83,12 @@ public class VisionConstants {
 
     // ============ Corridor planner ============
     public static double CORRIDOR_HALF_WIDTH_IN     = 8.0;    // 16" intake / 2
-    public static double CORRIDOR_MAX_TRAVEL_IN     = 1000.0; // sanity cap only; real constraint is CORRIDOR_FIELD_X_LIMIT
-    public static double CORRIDOR_FIELD_X_LIMIT     = 132.0;  // end pose's field X must not exceed this (field boundary)
+    public static double CORRIDOR_MAX_TRAVEL_IN     = 1000.0; // sanity cap only; real constraint is the alliance field-X limit
+    // Field-X boundary the robot CENTER must NOT cross during a corridor sweep.
+    // Red drives toward +X (goal at 140); Blue drives toward -X (goal at 4).
+    // Symmetry: blue limit ≈ 144 - red limit (field width = 144).
+    public static double CORRIDOR_RED_FIELD_X_LIMIT  = 132.0;
+    public static double CORRIDOR_BLUE_FIELD_X_LIMIT =  12.0;
     public static double CORRIDOR_HEADING_RANGE_DEG = 75.0;   // ± from current heading (6x6 ft reachable box)
     public static double CORRIDOR_HEADING_STEP_DEG  = 1.0;    // sweep resolution
     public static int    CORRIDOR_MAX_BALLS         = 3;
@@ -93,6 +97,13 @@ public class VisionConstants {
     public static double CORRIDOR_MIN_SCORE         = 0.3;    // below → no-plan
     public static double CORRIDOR_APPROACH_EXTRA_IN = 4.0;   // path endpoint: last ball + this
     public static double CORRIDOR_FINISH_BUFFER_IN  = 2.0;   // geometric cut-short: end when robot center passes last ball by this many inches
+
+    public static double getCorridorFieldXLimit() {
+        return Constants.RobotConstants.Robot.allianceColor
+                == Constants.EnumConstants.AllianceColor.Blue
+                ? CORRIDOR_BLUE_FIELD_X_LIMIT
+                : CORRIDOR_RED_FIELD_X_LIMIT;
+    }
 
     // ============ Panels camera preview (AUTO only; TeleOp calls stopVisionPortal) ============
     // 15 fps costs ~3-5ms/frame on the camera thread (NOT scheduler loop).

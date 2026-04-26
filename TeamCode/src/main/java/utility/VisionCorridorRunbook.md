@@ -341,8 +341,9 @@ All in `TeamCode/src/main/java/vision/VisionConstants.java`. Marked non-final so
 | `WB_KELVIN` | 4500 | White balance temperature in Kelvin (2000–6500) |
 | `PANELS_STREAM_FPS` | 15 | Panels camera stream rate; 0 disables |
 | `CORRIDOR_HALF_WIDTH_IN` | 8 | Half of the 16" intake width |
-| `CORRIDOR_MAX_TRAVEL_IN` | 1000 | Sanity cap only; real constraint is `CORRIDOR_FIELD_X_LIMIT` |
-| `CORRIDOR_FIELD_X_LIMIT` | 132 | End pose's field X must not exceed this (field boundary clamp) |
+| `CORRIDOR_MAX_TRAVEL_IN` | 1000 | Sanity cap only; real constraint is the alliance field-X limit |
+| `CORRIDOR_RED_FIELD_X_LIMIT` | 132 | Red-side end-pose X upper bound (Red drives toward +X / goal at 140) |
+| `CORRIDOR_BLUE_FIELD_X_LIMIT` | 12 | Blue-side end-pose X lower bound (Blue drives toward -X / goal at 4) |
 | `CORRIDOR_HEADING_RANGE_DEG` | 75 | Max heading sweep ± from current |
 | `CORRIDOR_HEADING_STEP_DEG` | 1 | Resolution of the heading sweep |
 | `CORRIDOR_MAX_BALLS` | 3 | Max balls in one corridor |

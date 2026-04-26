@@ -84,7 +84,7 @@ public class Turret extends SubsystemBase {
     }
 
     private double getRedTrackingOffset(double robotY) {
-        return (robotY <= TurretConstants.RED_OFFSET_Y_THRESHOLD)
+        return (robotY <= TurretConstants.TURRET_OFFSET_Y_THRESHOLD)
                 ? TurretConstants.RED_FRONT_TURRET_TRACKING_OFFSET
                 : TurretConstants.RED_BACK_TURRET_TRACKING_OFFSET;
     }
