@@ -146,11 +146,19 @@ public class RobotHardware {
     }
 
     public void init(final HardwareMap hardwareMap, GamepadEx driver) {
+        init(hardwareMap, driver, true);
+    }
+
+    public void init(final HardwareMap hardwareMap, GamepadEx driver, boolean initVisionPortal) {
         this.driver = driver;
-        init(hardwareMap);
+        init(hardwareMap, initVisionPortal);
     }
 
     public void init(final HardwareMap hardwareMap) {
+        init(hardwareMap, true);
+    }
+
+    public void init(final HardwareMap hardwareMap, boolean initVisionPortal) {
         this.hardwareMap = hardwareMap;
         this.telemetryManager = PanelsTelemetry.INSTANCE.getTelemetry();
 
@@ -288,6 +296,10 @@ public class RobotHardware {
         limelight.start();
 
         // ******************* WEBCAM (AutonVisionCamera) ******************* //
+        // Skipped entirely in TeleOp (initVisionPortal=false) — VisionPortal
+        // construction + lockCameraControls() busy-wait costs 3+ seconds and
+        // TeleOp doesn't use the webcam.
+        if (initVisionPortal) {
         autonVisionCamera = hardwareMap.get(WebcamName.class, NamingConstants.Camera.autonVisionCamera);
 
         // SDK YCrCb presets tuned by FIRST for the 5" DECODE artifacts. YCrCb
@@ -351,6 +363,7 @@ public class RobotHardware {
             } catch (Exception ignored) {
                 // If Panels is unavailable, don't fail init.
             }
+        }
         }
 
         // ******************* VOLTAGE SENSOR ******************* //

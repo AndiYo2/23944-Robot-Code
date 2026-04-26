@@ -1,4 +1,4 @@
-package Autos.PartnerAutos;
+package Autos.DepreciatedAutos;
 
 import Autos.AutonTemplate;
 import Constants.EnumConstants;
@@ -12,46 +12,43 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import commands.CommandSequenceBuilder;
 
 @Disabled
-@Autonomous(name = "BlueExodus")
-public class BlueExodus extends AutonTemplate {
+@Autonomous(name = "RedExodus")
+public class RedExodus extends AutonTemplate {
     public static double maxSpeed = 1;
     private PathChain startToShoot, shootToFirstPrep, firstPrepToFirst, firstToGate, firstGateToShoot, shootToGatePrep1, prepToThree, gateToShootThree, ShootToFourth, fourthToGate, fiveToShoot;
 
     // Start pose
-    private final Pose startPose = new Pose(32.500, 133.500, Math.toRadians(90));
+    private final Pose startPose = new Pose(111.000, 133.500, Math.toRadians(90));
 
     // Shoot positions
-    private final Pose shootPoseStart = new Pose(56.000, 82.000, Math.toRadians(90));
-    private final Pose shootPose = new Pose(56.000, 82.000, Math.toRadians(150));
-    private final Pose shootPoseThree = new Pose(56.000, 85.000, Math.toRadians(150));
-    private final Pose postShootPose = new Pose(56.000, 85.000, Math.toRadians(180));
+    private final Pose shootPoseStart = new Pose(88.000, 82.000, Math.toRadians(90));
+    private final Pose shootPose = new Pose(88.000, 82.000, Math.toRadians(30));
+    private final Pose postShootPose = new Pose(88.000, 82.000, Math.toRadians(0));
 
     // First prep & pickup
-    private final Pose firstPrepControl = new Pose(54.000, 67.000);
-    private final Pose firstPrepPose = new Pose(43.500, 61.000, Math.toRadians(180));
-    private final Pose firstPickupPose = new Pose(17.000, 61.000, Math.toRadians(180));
+    private final Pose firstPrepControl = new Pose(90.000, 67.000);
+    private final Pose firstPrepPose = new Pose(100.500, 59.000, Math.toRadians(0));
+    private final Pose firstPickupPose = new Pose(127.000, 59.000, Math.toRadians(0));
 
     // First gate
-    private final Pose firstGateControl = new Pose(24.000, 61.000);
-    private final Pose firstGatePose = new Pose(16.750, 67.000, Math.toRadians(180));
-    private final Pose firstGateToShootControl = new Pose(38.500, 58.500);
+    private final Pose firstGateControl = new Pose(120.000, 61.000);
+    private final Pose firstGatePose = new Pose(127, 68.50, Math.toRadians(0));
+    private final Pose firstGateToShootControl = new Pose(105.500, 58.500);
 
     // Gate approach & pickup (shared by 2nd and 4th cycles)
-    private final Pose gateApproachControl = new Pose(42.000, 68.500);
-    private final Pose gateToPickupControl = new Pose(19.000, 57.500);
-    private final Pose gatePickupPose = new Pose(13.50, 55.000, Math.toRadians(180));
-    private final Pose pickupToShootControl = new Pose(36.000, 65.000);
+    private final Pose gateApproachControl = new Pose(102.000, 68.500);
+    private final Pose gateToPickupControl = new Pose(125.000, 57.500);
+    private final Pose gatePickupPose = new Pose(132.00, 55.000, Math.toRadians(0));
+    private final Pose pickupToShootControl = new Pose(108.000, 65.000);
 
     // Second gate
-    private final Pose secondGatePose = new Pose(16.800, 64.500, Math.toRadians(180));
+    private final Pose secondGatePose = new Pose(127.250, 63.500, Math.toRadians(0));
 
-    // Fourth pickup & gate
-    private final Pose fourthPickupPose = new Pose(16.00, 85.000, Math.toRadians(180));
-    private final Pose fourthGateControl = new Pose(25.000, 80.750);
-    private final Pose fourthGatePose = new Pose(16.500, 76.500, Math.toRadians(180));
+    // Third pickup & gate
+    private final Pose thirdPickupPose = new Pose(128.00, 80.000, Math.toRadians(0));
 
     // End pose
-    private final Pose lastShootPose = new Pose(52.500, 118.000, Math.toRadians(150));
+    private final Pose lastShootPose = new Pose(91.500, 118.000, Math.toRadians(30));
 
     @Override
     protected void buildPaths() {
@@ -100,26 +97,20 @@ public class BlueExodus extends AutonTemplate {
                 .build();
 
         gateToShootThree = follower.pathBuilder()
-                .addPath(new BezierCurve(gatePickupPose, pickupToShootControl, shootPoseThree))
-                .setLinearHeadingInterpolation(gatePickupPose.getHeading(), shootPoseThree.getHeading())
+                .addPath(new BezierCurve(gatePickupPose, pickupToShootControl, shootPose))
+                .setLinearHeadingInterpolation(gatePickupPose.getHeading(), shootPose.getHeading())
                 .setGlobalDeceleration()
                 .build();
 
         ShootToFourth = follower.pathBuilder()
-                .addPath(new BezierLine(postShootPose, fourthPickupPose))
-                .setLinearHeadingInterpolation(postShootPose.getHeading(), fourthPickupPose.getHeading())
-                .setGlobalDeceleration()
-                .build();
-
-        fourthToGate = follower.pathBuilder()
-                .addPath(new BezierCurve(fourthPickupPose, fourthGateControl, fourthGatePose))
-                .setLinearHeadingInterpolation(fourthPickupPose.getHeading(), fourthGatePose.getHeading())
+                .addPath(new BezierLine(postShootPose, thirdPickupPose))
+                .setLinearHeadingInterpolation(postShootPose.getHeading(), thirdPickupPose.getHeading())
                 .setGlobalDeceleration()
                 .build();
 
         fiveToShoot = follower.pathBuilder()
-                .addPath(new BezierCurve(fourthGatePose, pickupToShootControl, lastShootPose))
-                .setLinearHeadingInterpolation(fourthGatePose.getHeading(), lastShootPose.getHeading())
+                .addPath(new BezierCurve(thirdPickupPose, pickupToShootControl, lastShootPose))
+                .setLinearHeadingInterpolation(thirdPickupPose.getHeading(), lastShootPose.getHeading())
                 .setGlobalDeceleration()
                 .build();
     }
@@ -128,7 +119,7 @@ public class BlueExodus extends AutonTemplate {
     public void init() {
         super.init();
         SpindexerConstants.currentMode = EnumConstants.ShootingMode.Fast;
-        Constants.RobotConstants.Robot.allianceColor = Constants.EnumConstants.AllianceColor.Blue;
+        Constants.RobotConstants.Robot.allianceColor = Constants.EnumConstants.AllianceColor.Red;
 
         autonomousCommand = new CommandSequenceBuilder(follower, intake, spindexer, limelight, shooter, turret)
                 .moveTo(startToShoot, maxSpeed, false)
@@ -148,10 +139,9 @@ public class BlueExodus extends AutonTemplate {
                 .parallel(p -> p.autoCatalog().moveTo(gateToShootThree, maxSpeed, false))
                 .shoot()
                 .intakeStart()
-                .moveTo(ShootToFourth, maxSpeed, false)
-                .moveTo(fourthToGate, .8, false)
+                .moveTo(ShootToFourth, .9, false)
                 .autoCatalog()
-                .delay(.3)
+                .delay(.45)
                 .moveTo(fiveToShoot, maxSpeed, false)
                 .shoot()
                 .build();

@@ -14,24 +14,20 @@ import vision.FieldBall;
 import vision.VisionConstants;
 
 /**
- * Vision collection with a two-stage scan and a fallback drive.
+ * Vision collection with single-scan + fallback.
  *
- * State machine (no Thread.sleep, no blocking — each transition happens
- * from execute() when the follower is idle):
+ * State machine:
+ *   1. initialize: scan at current pose.
+ *        balls found → drive corridor   (state = DRIVE_CORRIDOR)
+ *        no balls    → fallback path    (state = FALLBACK)
  *
- *   1. initialize:       run first scan at current pose.
- *        balls found → drive corridor          (state = DRIVE_CORRIDOR)
- *        no balls    → rotate in place         (state = ROTATE)
- *
- *   2. execute (after ROTATE finishes):
- *        run second scan at current pose.
- *          balls found → drive corridor       (state = DRIVE_CORRIDOR_2)
- *          no balls    → drive fallback path  (state = FALLBACK)
- *
- *   3. execute (after any drive finishes):    state = DONE
+ *   2. execute (after drive finishes): state = DONE
  *
  * Finishes when state is DONE, or when the spindexer is full (3-of-3
  * sensors), or when the follower finishes naturally.
+ *
+ * NOTE: secondaryHeadingRad is retained in the constructor signature for
+ * call-site compatibility but is no longer used.
  */
 public class VisionCollectWithFallbacksCommand extends CommandBase {
 
@@ -42,15 +38,13 @@ public class VisionCollectWithFallbacksCommand extends CommandBase {
     private final PathChain fallbackPath;
 
     private enum State {
-        SCAN_FIRST,
+        SCAN,
         DRIVE_CORRIDOR,
-        ROTATE,
-        DRIVE_CORRIDOR_2,
         FALLBACK,
         DONE
     }
 
-    private State state = State.SCAN_FIRST;
+    private State state = State.SCAN;
     private CorridorPlanner.Sweep lastSweep = CorridorPlanner.Sweep.EMPTY;
 
     /** Readable from telemetry. */
@@ -71,54 +65,34 @@ public class VisionCollectWithFallbacksCommand extends CommandBase {
 
     @Override
     public void initialize() {
-        state = State.SCAN_FIRST;
+        state = State.SCAN;
         CorridorPlanner.Sweep sweep = CorridorSelector.selectCorridor(detector, follower.getPose());
         lastSweep = sweep;
 
         if (hasUsableSweep(sweep)) {
             driveCorridor(sweep);
             state = State.DRIVE_CORRIDOR;
-            lastResult = "scan1 OK: " + corridorSummary(sweep);
+            lastResult = "scan OK: " + corridorSummary(sweep);
         } else {
-            driveRotateInPlace();
-            state = State.ROTATE;
-            lastResult = "scan1 EMPTY → rotating to " + Math.toDegrees(secondaryHeadingRad) + "°";
+            follower.setMaxPower(maxPower);
+            follower.followPath(fallbackPath, false);
+            state = State.FALLBACK;
+            lastResult = "scan EMPTY → fallback path";
         }
     }
 
     @Override
     public void execute() {
-        // Anything still driving? Wait for it.
         if (follower.isBusy()) return;
 
         switch (state) {
-            case ROTATE:
-                // Rotation finished; re-scan at the new heading.
-                CorridorPlanner.Sweep sweep2 = CorridorSelector.selectCorridor(detector, follower.getPose());
-                lastSweep = sweep2;
-
-                if (hasUsableSweep(sweep2)) {
-                    driveCorridor(sweep2);
-                    state = State.DRIVE_CORRIDOR_2;
-                    lastResult = "scan2 OK: " + corridorSummary(sweep2);
-                } else {
-                    follower.setMaxPower(maxPower);
-                    follower.followPath(fallbackPath, false);
-                    state = State.FALLBACK;
-                    lastResult = "scan2 EMPTY → fallback path";
-                }
-                break;
-
             case DRIVE_CORRIDOR:
-            case DRIVE_CORRIDOR_2:
             case FALLBACK:
-                // Drive finished (follower idle) — done.
                 state = State.DONE;
                 break;
 
-            case SCAN_FIRST:
+            case SCAN:
             case DONE:
-                // no-op
                 break;
         }
     }
@@ -127,11 +101,7 @@ public class VisionCollectWithFallbacksCommand extends CommandBase {
     public boolean isFinished() {
         if (state == State.DONE) return true;
 
-        // Intake full check only during drive states (not during rotation).
-        if ((state == State.DRIVE_CORRIDOR
-                || state == State.DRIVE_CORRIDOR_2
-                || state == State.FALLBACK)
-                && isFull()) {
+        if ((state == State.DRIVE_CORRIDOR || state == State.FALLBACK) && isFull()) {
             return true;
         }
 
@@ -165,26 +135,6 @@ public class VisionCollectWithFallbacksCommand extends CommandBase {
                 .build();
         follower.setMaxPower(maxPower);
         follower.followPath(pc, false);
-    }
-
-    /**
-     * Builds a near-zero-length BezierLine from the current pose to a pose
-     * 0.001" ahead in the current heading's forward direction, with heading
-     * interpolated to secondaryHeadingRad. Effectively an in-place rotation.
-     */
-    private void driveRotateInPlace() {
-        Pose cur = follower.getPose();
-        double eps = 0.001;
-        Pose target = new Pose(
-                cur.getX() + Math.cos(cur.getHeading()) * eps,
-                cur.getY() + Math.sin(cur.getHeading()) * eps,
-                secondaryHeadingRad);
-        PathChain rotatePath = follower.pathBuilder()
-                .addPath(new BezierLine(cur, target))
-                .setLinearHeadingInterpolation(cur.getHeading(), secondaryHeadingRad)
-                .build();
-        follower.setMaxPower(maxPower);
-        follower.followPath(rotatePath, false);
     }
 
     private boolean isFull() {

@@ -1,4 +1,4 @@
-package Autos.EighteenBalls;
+package Autos.DepreciatedAutos;
 
 import Autos.AutonTemplate;
 import Constants.EnumConstants;
@@ -8,9 +8,10 @@ import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import commands.CommandSequenceBuilder;
 
-
+@Disabled
 @Autonomous(name = "Red18Ball3Overflow")
 public class Red18Ball3Overflow extends AutonTemplate {
     public static double maxSpeed = 1;

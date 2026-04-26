@@ -129,7 +129,7 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     protected void initHardware() {
         mainController = new GamepadEx(gamepad1);
         secondaryController = new GamepadEx(gamepad2);
-        robot.init(hardwareMap, mainController);
+        robot.init(hardwareMap, mainController, false);
 
         // Set starting position for TeleOp
         // If we have an ending auton pose, use it; otherwise use standard start point
@@ -175,9 +175,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         FieldDrawing.init();
 
         register(mecanumDrive, intake, shooter, spindexer, limelight, turret);
-
-        // Auton vision camera is not needed in TeleOp — stop it to save loop time
-        robot.stopVisionPortal();
     }
 
     protected void configureButtonBindings() {

@@ -19,7 +19,7 @@ public class OdometryConstants {
     public static double yawScalar = .998148;
 
 
-    public static double BLUE_GOAL_X = 3.0;
+    public static double BLUE_GOAL_X = 4.0;
     public static double BLUE_GOAL_Y = 140.0;
     public static double RED_GOAL_X = 140.0;
     public static double RED_GOAL_Y = 140.0;

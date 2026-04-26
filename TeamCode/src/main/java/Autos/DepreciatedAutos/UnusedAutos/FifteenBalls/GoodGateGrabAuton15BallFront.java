@@ -1,4 +1,4 @@
-package Autos.FifteenBalls;
+package Autos.DepreciatedAutos.UnusedAutos.FifteenBalls;
 
 import Autos.AutonTemplate;
 import Constants.EnumConstants;
@@ -8,11 +8,12 @@ import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import commands.CommandSequenceBuilder;
 
-
+@Disabled
 @Autonomous(name = "15TestSorted")
-public class TestSorted15Ball extends AutonTemplate {
+public class GoodGateGrabAuton15BallFront extends AutonTemplate {
     public static double maxSpeed = 1;
 
     private PathChain startToShoot, shootToSecondSpike, secondSpikeToShoot,

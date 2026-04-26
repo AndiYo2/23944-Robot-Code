@@ -1,4 +1,4 @@
-package Autos.FifteenBalls;
+package Autos.DepreciatedAutos;
 
 import Autos.AutonTemplate;
 import Constants.EnumConstants;
@@ -8,38 +8,33 @@ import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import commands.CommandSequenceBuilder;
 
-
-@Autonomous(name = "RedGuaranteeSorted15Ball")
-public class RedGuaranteeSorted15Ball extends AutonTemplate {
+@Disabled
+@Autonomous(name = "Red18BallOld")
+public class Red18BallOld extends AutonTemplate {
     public static double maxSpeed = 1;
-
-    // Per-auton pipeline settle delays (seconds). Tune here — this auton
-    // owns its own pipeline scheduling; the Limelight subsystem no longer
-    // auto-switches pipelines.
-    public static double MOTIF_SETTLE = 0.30;   // pipeline 5 (AprilTag) warmup
-    public static double RAMP_SETTLE = 0.35;    // pipeline 6 (Python SnapScript) warmup
-    public static double LOCAL_SETTLE = 0.20;   // pipeline 2 (localization) warmup
-
     private PathChain startToShoot, shootToSecondSpike, secondSpikeToShoot,
-            shootToGateOne, gateTwoToShoot,
-            shootToFirstSpike, firstSpikeToShoot,
-            shootToThirdSpike, thirdSpikeToShootEnd, path10;
+            shootToGateOne, gateOneToShoot,
+            shootToGateTwo, gateTwoToShoot,
+            shootToFirstSpike, firstSpikeToShoot, shootToThirdSpike, thirdSpikeToShootEnd;
 
     // Start pose
     private final Pose startPose = new Pose(128.500, 109.500, Math.toRadians(90));
 
     // Shoot positions
-    private final Pose shootPose = new Pose(88.500, 81.500, Math.toRadians(0));
+    private final Pose shootPose = new Pose(88.500, 81.500, Math.toRadians(45));
     private final Pose shootPose2 = new Pose(88.500, 76.500, Math.toRadians(30));
+    private final Pose shootPose2Angled = new Pose(88.500, 76.500, Math.toRadians(30));
+    private final Pose endShootPose = new Pose(92.000, 108.000, Math.toRadians(45));
 
     // Spike positions
     private final Pose firstSpikePose = new Pose(125.500, 83.00, Math.toRadians(0));
     private final Pose secondSpikePose = new Pose(129.500, 57.0, Math.toRadians(0));
     private final Pose thirdSpikePose = new Pose(132.500, 33.500, Math.toRadians(0));
 
-    // Gate position
+    // Gate positions
     private final Pose gateWaypointPose = new Pose(125.000, 61.500, Math.toRadians(31.5));
     private final Pose gatePose = new Pose(131.00, 59.125, Math.toRadians(25));
 
@@ -74,9 +69,19 @@ public class RedGuaranteeSorted15Ball extends AutonTemplate {
                 .setLinearHeadingInterpolation(shootPose2.getHeading(), gatePose.getHeading())
                 .build();
 
+        gateOneToShoot = follower.pathBuilder()
+                .addPath(new BezierLine(gatePose, shootPose2Angled))
+                .setLinearHeadingInterpolation(gatePose.getHeading(), shootPose2Angled.getHeading())
+                .build();
+
+        shootToGateTwo = follower.pathBuilder()
+                .addPath(new BezierCurve(shootPose2Angled, gateWaypointPose, gatePose))
+                .setLinearHeadingInterpolation(shootPose2Angled.getHeading(), gatePose.getHeading())
+                .build();
+
         gateTwoToShoot = follower.pathBuilder()
                 .addPath(new BezierLine(gatePose, shootPose))
-                .setLinearHeadingInterpolation(gatePose.getHeading(), shootPose.getHeading())
+                .setLinearHeadingInterpolation(gatePose.getHeading(), shootPose2Angled.getHeading())
                 .build();
 
         shootToFirstSpike = follower.pathBuilder()
@@ -85,23 +90,18 @@ public class RedGuaranteeSorted15Ball extends AutonTemplate {
                 .build();
 
         firstSpikeToShoot = follower.pathBuilder()
-                .addPath(new BezierLine(firstSpikePose, shootPose))
-                .setLinearHeadingInterpolation(firstSpikePose.getHeading(), shootPose.getHeading())
+                .addPath(new BezierLine(firstSpikePose, shootPose2))
+                .setLinearHeadingInterpolation(firstSpikePose.getHeading(), shootPose2.getHeading())
                 .build();
 
         shootToThirdSpike = follower.pathBuilder()
-                .addPath(new BezierCurve(shootPose, thirdSpikeControl1, thirdSpikeControl2, thirdSpikePose))
-                .setLinearHeadingInterpolation(shootPose.getHeading(), thirdSpikePose.getHeading())
+                .addPath(new BezierCurve(shootPose2, thirdSpikeControl1, thirdSpikeControl2, thirdSpikePose))
+                .setLinearHeadingInterpolation(shootPose2.getHeading(), thirdSpikePose.getHeading())
                 .build();
 
         thirdSpikeToShootEnd = follower.pathBuilder()
-                .addPath(new BezierLine(thirdSpikePose, shootPose))
-                .setLinearHeadingInterpolation(thirdSpikePose.getHeading(), shootPose.getHeading())
-                .build();
-
-        path10 = follower.pathBuilder()
-                .addPath(new BezierLine(shootPose, new Pose(103.000, 81.500)))
-                .setLinearHeadingInterpolation(shootPose.getHeading(), shootPose.getHeading())
+                .addPath(new BezierLine(thirdSpikePose, endShootPose))
+                .setLinearHeadingInterpolation(thirdSpikePose.getHeading(), endShootPose.getHeading())
                 .build();
     }
 
@@ -112,51 +112,34 @@ public class RedGuaranteeSorted15Ball extends AutonTemplate {
         Constants.RobotConstants.Robot.allianceColor = Constants.EnumConstants.AllianceColor.Red;
 
         autonomousCommand = new CommandSequenceBuilder(follower, intake, spindexer, limelight, shooter, turret)
-                .rampClear()
-                // Cycle 1: Preloaded shoot-while-moving (fast) — 3 balls
                 .setShootWhileMoving(true)
-                .parallel(p -> p.moveTo(startToShoot, maxSpeed, false).shootAfterDelay(.7))
+                .parallel(p -> p.moveTo(startToShoot, maxSpeed, false).shootAfterDelay(.5))
                 .setShootWhileMoving(false)
                 .limelightScan()
-                // Cycle 2: Second spike (fast) — 6 balls
                 .intakeStart()
                 .moveTo(shootToSecondSpike, maxSpeed, false)
                 .parallel(p -> p.moveTo(secondSpikeToShoot, maxSpeed, false).autoCatalog())
                 .shoot()
-                .switchPipeline(6)
-                // Switch to sorted for remaining 3 cycles
-                .setSpindexerMode(EnumConstants.ShootingMode.Sorted)
-                // Cycle 3: Gate (sorted) — 9 balls
                 .intakeStart()
                 .moveToParametric(shootToGateOne, t -> t < 0.8 ? maxSpeed : 0.8, false)
                 .delay(1.5)
-                .intakeStop()
-                .moveTo(gateTwoToShoot, maxSpeed, false)
-                .delay(1)
-                .rampScan()
-                .shiftMotif()
-                .guaranteeSortedAutoCatalog()
+                .parallel(p -> p.moveTo(gateOneToShoot, maxSpeed, false).autoCatalog())
+                .shoot()
+                .intakeStart()
+                .setSpindexerMode(EnumConstants.ShootingMode.Sorted)
+                .moveToParametric(shootToGateTwo, t -> t < 0.8 ? maxSpeed : 0.5, false)
+                .delay(1.5)
+                .parallel(p -> p.moveTo(gateTwoToShoot, maxSpeed, false).guaranteeSortedAutoCatalog())
                 .slowShoot()
-                // Cycle 4: First spike (sorted) — 12 balls
                 .intakeStart()
                 .moveTo(shootToFirstSpike, maxSpeed, false)
-                .intakeStop()
-                .moveTo(firstSpikeToShoot, maxSpeed, false)
-                .delay(1)
-                .rampScan()
-                .shiftMotif()
-                .guaranteeSortedAutoCatalog()
+                .parallel(p -> p.moveTo(firstSpikeToShoot, maxSpeed, false).guaranteeSortedAutoCatalog())
                 .slowShoot()
-                // Cycle 5: Third spike (sorted) — 15 balls
                 .intakeStart()
                 .moveTo(shootToThirdSpike, maxSpeed, false)
-                .intakeStop()
-                .moveTo(thirdSpikeToShootEnd, maxSpeed, false)
-                .delay(1)
-                .rampScan()
-                .shiftMotif()
-                .guaranteeSortedAutoCatalog()
+                .parallel(p -> p.moveTo(thirdSpikeToShootEnd, maxSpeed, false).guaranteeSortedAutoCatalog())
                 .slowShoot()
+                .setShootWhileMoving(false)
                 .build();
     }
 }

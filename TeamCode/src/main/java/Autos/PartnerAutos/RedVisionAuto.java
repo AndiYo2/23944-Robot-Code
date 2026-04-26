@@ -1,5 +1,6 @@
-package Autos;
+package Autos.PartnerAutos;
 
+import Autos.AutonTemplate;
 import Constants.EnumConstants;
 import Constants.SpindexerConstants;
 import com.pedropathing.geometry.BezierCurve;
@@ -114,7 +115,7 @@ public class RedVisionAuto extends AutonTemplate {
                 // Cycle 1 (corner balls)
                 .intakeStart()
                 .moveTo(shootToFirst, maxSpeed, false)
-                .delay(.75)
+                .delay(.4)
                 .parallel(p -> p.moveTo(firstToShoot, maxSpeed, false).autoCatalog())
                 .shoot()
                 // Cycle 2 (third spike)

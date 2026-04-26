@@ -1,4 +1,4 @@
-package Autos.TwentyOneBalls;
+package Autos.DepreciatedAutos.Tests;
 
 import Autos.AutonTemplate;
 import com.bylazar.configurables.annotations.Configurable;
@@ -7,10 +7,10 @@ import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import commands.CommandSequenceBuilder;
 
-
-@Configurable
+@Disabled
 @Autonomous(name = "21BallTesting")
 public class BallTesting21 extends AutonTemplate {
     public static double maxSpeed = 1;

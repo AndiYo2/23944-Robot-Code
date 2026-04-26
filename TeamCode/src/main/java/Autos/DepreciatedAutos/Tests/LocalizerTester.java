@@ -1,4 +1,4 @@
-package Autos.Tests;
+package Autos.DepreciatedAutos.Tests;
 
 import Autos.AutonTemplate;
 import com.pedropathing.geometry.BezierCurve;
