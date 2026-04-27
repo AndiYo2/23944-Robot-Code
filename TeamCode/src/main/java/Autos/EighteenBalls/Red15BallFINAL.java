@@ -36,14 +36,14 @@ public class Red15BallFINAL extends AutonTemplate {
     private final Pose secondPose = new Pose(131.500, 57.500, Math.toRadians(0));
 
     // Gate
-    private final Pose gatePose = new Pose(126.0, 64.500, Math.toRadians(0));
+    private final Pose gatePose = new Pose(127.0, 63.500, Math.toRadians(0));
 
     // First spike
     private final Pose firstSpikePose = new Pose(125.000, 82.000, Math.toRadians(0));
 
     // Third spike
-    private final Pose thirdPrepPose = new Pose(98.500, 36.000, Math.toRadians(0));
-    private final Pose thirdSpikePose = new Pose(131.500, 36.000, Math.toRadians(0));
+    private final Pose thirdPrepPose = new Pose(98.500, 33.000, Math.toRadians(0));
+    private final Pose thirdSpikePose = new Pose(131.500, 33.000, Math.toRadians(0));
 
     // Control points
     private final Pose shootToCornerControl = new Pose(100.000, 17.000);
@@ -130,7 +130,7 @@ public class Red15BallFINAL extends AutonTemplate {
                 .moveTo(shootToSecond, maxSpeed, false)
                 .moveTo(secondToGate, .8, false)
                 .intakeStop()
-                .delay(1.5)
+                .delay(1.3)
                 .parallel(p -> p.moveTo(gateToShoot, maxSpeed, false).guaranteeSortedAutoCatalog())
                 .delay(.2)
                 .slowShoot()

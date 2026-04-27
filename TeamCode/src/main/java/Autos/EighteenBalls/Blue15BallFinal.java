@@ -128,7 +128,7 @@ public class Blue15BallFinal extends AutonTemplate {
                 .moveTo(shootToSecond, maxSpeed, false)
                 .moveTo(secondToGate, .8, false)
                 .intakeStop()
-                .delay(1.5)
+                .delay(1.3)
                 .parallel(p -> p.moveTo(gateToShoot, maxSpeed, false).guaranteeSortedAutoCatalog())
                 .delay(.2)
                 .slowShoot()
