@@ -10,8 +10,8 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import commands.CommandSequenceBuilder;
 
 
-@Autonomous(name = "Blue15BallFinal")
-public class Blue15BallFinal extends AutonTemplate {
+@Autonomous(name = "Red15BallFINAL")
+public class Red15BallFINAL extends AutonTemplate {
     public static double maxSpeed = 1;
 
     private PathChain shootToCorner, cornerToShoot,
@@ -20,38 +20,38 @@ public class Blue15BallFinal extends AutonTemplate {
             shootToThird, thirdToShoot;
 
     // Start pose
-    private final Pose startPose = new Pose(55.500, 6.750, Math.toRadians(90));
+    private final Pose startPose = new Pose(88.500, 6.750, Math.toRadians(90));
 
     // Shoot positions
-    private final Pose shootPose = new Pose(54.500, 14.000, Math.toRadians(135));
-    private final Pose upperShootPose = new Pose(48.000, 85.000, Math.toRadians(135));
-    private final Pose upperShootPose135 = new Pose(48.000, 85.000, Math.toRadians(135));
-    private final Pose thirdShootPose = new Pose(57.500, 105.500, Math.toRadians(135));
+    private final Pose shootPose = new Pose(88.500, 13.500, Math.toRadians(30));
+    private final Pose upperShootPose = new Pose(86.000, 82.000, Math.toRadians(30));
+    private final Pose thirdShootPose = new Pose(87.000, 108.000, Math.toRadians(30));
 
     // Corner positions
-    private final Pose cornerPrepPose = new Pose(24.500, 8.500, Math.toRadians(180));
-    private final Pose cornerPose = new Pose(11.000, 8.500, Math.toRadians(180));
+    private final Pose cornerPrepPose = new Pose(119.500, 8.500, Math.toRadians(0));
+    private final Pose cornerPose = new Pose(133.000, 8.500, Math.toRadians(0));
 
     // Second spike
-    private final Pose secondPrepPose = new Pose(39.000, 60.000, Math.toRadians(180));
-    private final Pose secondPose = new Pose(17.000, 60.000, Math.toRadians(180));
+    private final Pose secondPrepPose = new Pose(99.000, 57.500, Math.toRadians(0));
+    private final Pose secondPose = new Pose(131.500, 57.500, Math.toRadians(0));
 
     // Gate
-    private final Pose gatePose = new Pose(17.500, 66.00, Math.toRadians(180));
+    private final Pose gatePose = new Pose(126.0, 64.500, Math.toRadians(0));
 
     // First spike
-    private final Pose firstSpikePose = new Pose(19.000, 85.000, Math.toRadians(180));
+    private final Pose firstSpikePose = new Pose(125.000, 82.000, Math.toRadians(0));
 
     // Third spike
-    private final Pose thirdSpikePose = new Pose(17.000, 36.000, Math.toRadians(180));
+    private final Pose thirdPrepPose = new Pose(98.500, 36.000, Math.toRadians(0));
+    private final Pose thirdSpikePose = new Pose(131.500, 36.000, Math.toRadians(0));
 
     // Control points
-    private final Pose shootToCornerControl = new Pose(37.000, 14.500);
-    private final Pose shootToSecondControl = new Pose(54.000, 50.500);
-    private final Pose secondToGateControl = new Pose(25.000, 62.500);
-    private final Pose gateToShootControl = new Pose(48.000, 66.500);
-    private final Pose shootToThirdControl1 = new Pose(49.500, 35.000);
-    private final Pose shootToThirdControl2 = new Pose(45.500, 34.500);
+    private final Pose shootToCornerControl = new Pose(100.000, 17.000);
+    private final Pose cornerToShootControl = new Pose(109.000, 15.000);
+    private final Pose shootToSecondControl = new Pose(86.745, 52.766);
+    private final Pose secondToGateControl = new Pose(118.500, 62.500);
+    private final Pose gateToShootControl = new Pose(96.500, 65.000);
+    private final Pose shootToThirdControl = new Pose(75.500, 35.500);
 
     @Override
     protected void buildPaths() {
@@ -65,7 +65,7 @@ public class Blue15BallFinal extends AutonTemplate {
                 .build();
 
         cornerToShoot = follower.pathBuilder()
-                .addPath(new BezierLine(cornerPose, shootPose))
+                .addPath(new BezierCurve(cornerPose, cornerToShootControl, shootPose))
                 .setLinearHeadingInterpolation(cornerPose.getHeading(), shootPose.getHeading())
                 .build();
 
@@ -73,7 +73,7 @@ public class Blue15BallFinal extends AutonTemplate {
                 .addPath(new BezierCurve(shootPose, shootToSecondControl, secondPrepPose))
                 .setLinearHeadingInterpolation(shootPose.getHeading(), secondPrepPose.getHeading())
                 .addPath(new BezierLine(secondPrepPose, secondPose))
-                .setLinearHeadingInterpolation(secondPrepPose.getHeading(), secondPose.getHeading())
+                .setTangentHeadingInterpolation()
                 .build();
 
         secondToGate = follower.pathBuilder()
@@ -88,17 +88,19 @@ public class Blue15BallFinal extends AutonTemplate {
 
         shootToFirst = follower.pathBuilder()
                 .addPath(new BezierLine(upperShootPose, firstSpikePose))
-                .setLinearHeadingInterpolation(Math.toRadians(180), firstSpikePose.getHeading())
+                .setLinearHeadingInterpolation(Math.toRadians(0), firstSpikePose.getHeading())
                 .build();
 
         firstToShoot = follower.pathBuilder()
-                .addPath(new BezierLine(firstSpikePose, upperShootPose135))
-                .setLinearHeadingInterpolation(firstSpikePose.getHeading(), upperShootPose135.getHeading())
+                .addPath(new BezierLine(firstSpikePose, upperShootPose))
+                .setLinearHeadingInterpolation(firstSpikePose.getHeading(), upperShootPose.getHeading())
                 .build();
 
         shootToThird = follower.pathBuilder()
-                .addPath(new BezierCurve(upperShootPose135, shootToThirdControl1, shootToThirdControl2, thirdSpikePose))
-                .setLinearHeadingInterpolation(Math.toRadians(180), thirdSpikePose.getHeading())
+                .addPath(new BezierCurve(upperShootPose, shootToThirdControl, thirdPrepPose))
+                .setLinearHeadingInterpolation(upperShootPose.getHeading(), thirdPrepPose.getHeading())
+                .addPath(new BezierLine(thirdPrepPose, thirdSpikePose))
+                .setLinearHeadingInterpolation(thirdPrepPose.getHeading(), thirdSpikePose.getHeading())
                 .build();
 
         thirdToShoot = follower.pathBuilder()
@@ -110,7 +112,7 @@ public class Blue15BallFinal extends AutonTemplate {
     @Override
     public void init() {
         super.init();
-        Constants.RobotConstants.Robot.allianceColor = Constants.EnumConstants.AllianceColor.Blue;
+        Constants.RobotConstants.Robot.allianceColor = Constants.EnumConstants.AllianceColor.Red;
         Constants.SpindexerConstants.currentMode = EnumConstants.ShootingMode.Fast;
 
         autonomousCommand = new CommandSequenceBuilder(follower, intake, spindexer, limelight, shooter, turret)

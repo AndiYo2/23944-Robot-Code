@@ -28,7 +28,7 @@ public class Red18Ball extends AutonTemplate {
     private final Pose shootPose = new Pose(89.500, 14.000, Math.toRadians(45));
     private final Pose shootPose30 = new Pose(89.500, 14.000, Math.toRadians(30));
     private final Pose upperShootPose = new Pose(91.500, 80.000, Math.toRadians(0));
-    private final Pose gateShootPose = new Pose(86.500, 74.000, Math.toRadians(0));
+    private final Pose gateShootPose = new Pose(86.500, 16.500, Math.toRadians(45));
 
     // Third spike
     private final Pose thirdSpikePrepPose = new Pose(106.500, 21.500, Math.toRadians(45));
@@ -38,8 +38,7 @@ public class Red18Ball extends AutonTemplate {
     private final Pose cornerPrepPose = new Pose(119.500, 8.500, Math.toRadians(0));
     private final Pose cornerPose = new Pose(133.000, 8.500, Math.toRadians(0));
     private final Pose cornerCyclePose = new Pose(133.000, 9.500, Math.toRadians(0));
-    private final Pose cornerCycleMidPose = new Pose(101.000, 28.500, Math.toRadians(0));
-    private final Pose cornerCycleControl = new Pose(104.500, 10.000);
+    private final Pose cornerCyclePrepPose = new Pose(119.500, 9.500, Math.toRadians(0));
 
     // Second spike
     private final Pose secondPrepPose = new Pose(106.500, 45.500, Math.toRadians(45));
@@ -59,6 +58,8 @@ public class Red18Ball extends AutonTemplate {
     private final Pose secondControl = new Pose(112.000, 49.500);
     private final Pose secondToGateControl = new Pose(122.000, 58.000);
     private final Pose gateToShootControl = new Pose(96.000, 66.500);
+    private final Pose firstToShootControl1 = new Pose(106.500, 72.000);
+    private final Pose firstToShootControl2 = new Pose(114.500, 24.500);
 
     @Override
     protected void buildPaths() {
@@ -112,14 +113,14 @@ public class Red18Ball extends AutonTemplate {
 
 
         firstToShoot = follower.pathBuilder()
-                .addPath(new BezierLine(firstSpikePose, gateShootPose))
+                .addPath(new BezierCurve(firstSpikePose, firstToShootControl1, firstToShootControl2, gateShootPose))
                 .setLinearHeadingInterpolation(firstSpikePose.getHeading(), gateShootPose.getHeading())
                 .build();
 
         shootToCornerCycleOne = follower.pathBuilder()
-                .addPath(new BezierLine(gateShootPose, cornerCycleMidPose))
-                .setTangentHeadingInterpolation()
-                .addPath(new BezierCurve(cornerCycleMidPose, cornerCycleControl, cornerCyclePose))
+                .addPath(new BezierLine(gateShootPose, cornerCyclePrepPose))
+                .setLinearHeadingInterpolation(gateShootPose.getHeading(), cornerCyclePrepPose.getHeading())
+                .addPath(new BezierLine(cornerCyclePrepPose, cornerCyclePose))
                 .setTangentHeadingInterpolation()
                 .build();
 
@@ -130,7 +131,7 @@ public class Red18Ball extends AutonTemplate {
 
         shootToEnd = follower.pathBuilder()
                 .addPath(new BezierLine(shootPose30, endPose))
-                .setTangentHeadingInterpolation()
+                .setLinearHeadingInterpolation(shootPose30.getHeading(), endPose.getHeading())
                 .build();
     }
 

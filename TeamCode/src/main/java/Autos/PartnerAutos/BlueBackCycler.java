@@ -3,6 +3,7 @@ package Autos.PartnerAutos;
 import Autos.AutonTemplate;
 import Constants.EnumConstants;
 import Constants.SpindexerConstants;
+import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
@@ -27,8 +28,8 @@ public class BlueBackCycler extends AutonTemplate {
     private final Pose shootPose180 = new Pose(54.000, 11.500, Math.toRadians(180));
 
     // Third spike
-    private final Pose thirdSpikePrepPose = new Pose(37.000, 24.000, Math.toRadians(135));
-    private final Pose thirdSpikePose = new Pose(21.500, 24.500, Math.toRadians(110));
+    private final Pose thirdSpikePrepPose = new Pose(40.000, 36.000, Math.toRadians(180));
+    private final Pose thirdSpikePose = new Pose(17.000, 36.000, Math.toRadians(180));
 
     // Cycle corners
     private final Pose cycle1Pose = new Pose(11.000, 9.000, Math.toRadians(180));
@@ -37,12 +38,16 @@ public class BlueBackCycler extends AutonTemplate {
     // End pose
     private final Pose endPose = new Pose(49.000, 17.500, Math.toRadians(135));
 
+    // Control points
+    private final Pose startToThirdSpikeControl = new Pose(54.500, 36.000);
+    private final Pose cycle1Control = new Pose(33.000, 13.500);
+
     @Override
     protected void buildPaths() {
         follower.setStartingPose(startPose);
 
         startToThirdSpike = follower.pathBuilder()
-                .addPath(new BezierLine(startPose, thirdSpikePrepPose))
+                .addPath(new BezierCurve(startPose, startToThirdSpikeControl, thirdSpikePrepPose))
                 .setLinearHeadingInterpolation(startPose.getHeading(), thirdSpikePrepPose.getHeading())
                 .addPath(new BezierLine(thirdSpikePrepPose, thirdSpikePose))
                 .setLinearHeadingInterpolation(thirdSpikePrepPose.getHeading(), thirdSpikePose.getHeading())
@@ -54,12 +59,12 @@ public class BlueBackCycler extends AutonTemplate {
                 .build();
 
         cycle1Go = follower.pathBuilder()
-                .addPath(new BezierLine(shootPose, cycle1Pose))
+                .addPath(new BezierCurve(shootPose, cycle1Control, cycle1Pose))
                 .setLinearHeadingInterpolation(cycle1Pose.getHeading(), cycle1Pose.getHeading())
                 .build();
 
         cycle1Return = follower.pathBuilder()
-                .addPath(new BezierLine(cycle1Pose, shootPose))
+                .addPath(new BezierCurve(cycle1Pose, cycle1Control, shootPose))
                 .setLinearHeadingInterpolation(cycle1Pose.getHeading(), shootPose.getHeading())
                 .build();
 
@@ -70,7 +75,7 @@ public class BlueBackCycler extends AutonTemplate {
 
         cycle2Return = follower.pathBuilder()
                 .addPath(new BezierLine(cycle2Pose, shootPose))
-                .setLinearHeadingInterpolation(Math.toRadians(0), shootPose.getHeading())
+                .setLinearHeadingInterpolation(cycle2Pose.getHeading(), shootPose.getHeading()) // This is the part where the first was 0 degrees.
                 .build();
 
         shootToEnd = follower.pathBuilder()
