@@ -70,6 +70,21 @@ public class CorridorPlanner {
         if (balls == null || balls.isEmpty()) return Sweep.EMPTY;
 
         final double baseHeading = robotPose.getHeading();
+        // The intake's position at scan time is the robot's CURRENT pose
+        // rotated by the CURRENT heading (baseHeading) — NOT by the candidate
+        // sweep heading phi. The path will rotate the robot to phi during
+        // travel, so the intake's end position uses R(phi); but the corridor
+        // start position must use R(baseHeading) since that's where the
+        // intake physically is at t=0. Bug: previously rotated by phi here,
+        // which produced a (R(phi)-R(baseHeading))·(iox,ioy) lateral error
+        // that grew with |phi - baseHeading|.
+        final double cosBase = Math.cos(baseHeading);
+        final double sinBase = Math.sin(baseHeading);
+        final double iox = VisionConstants.INTAKE_OFFSET_X;
+        final double ioy = VisionConstants.INTAKE_OFFSET_Y;
+        final double intakeStartX = robotPose.getX() + iox * cosBase - ioy * sinBase;
+        final double intakeStartY = robotPose.getY() + iox * sinBase + ioy * cosBase;
+
         Sweep best = Sweep.EMPTY;
 
         for (double phi = baseHeading - halfRangeRad;
@@ -78,19 +93,6 @@ public class CorridorPlanner {
 
             final double ax =  Math.cos(phi), ay = Math.sin(phi);  // forward axis
             final double px = -Math.sin(phi), py = Math.cos(phi);  // perpendicular
-
-            // Intake position in field frame at this candidate heading.
-            // The robot CENTER trajectory is a straight line, but the INTAKE
-            // is offset from center by (INTAKE_OFFSET_X, INTAKE_OFFSET_Y) in
-            // robot frame — which rotates into field frame by R(phi).
-            // Balls must be captured by the intake, not the center, so the
-            // corridor math is done from the intake's start position.
-            double iox = VisionConstants.INTAKE_OFFSET_X;
-            double ioy = VisionConstants.INTAKE_OFFSET_Y;
-            double intakeFx = iox * ax - ioy * ay;   // R(phi) · (iox, ioy) — x component
-            double intakeFy = iox * ay + ioy * ax;   // R(phi) · (iox, ioy) — y component
-            double intakeStartX = robotPose.getX() + intakeFx;
-            double intakeStartY = robotPose.getY() + intakeFy;
 
             // Clamp max travel so the ROBOT CENTER's end pose doesn't cross
             // the field X boundary. The intake may end up past fieldXLimit

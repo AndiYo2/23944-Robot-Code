@@ -61,6 +61,16 @@ public class CorridorSelector {
      * on any error (and logs via {@link #lastScanDebug}).
      */
     public static CorridorPlanner.Sweep selectCorridor(ArtifactDetector detector, Pose robotPose) {
+        return selectCorridor(detector, robotPose, VisionConstants.getCorridorFieldXLimit());
+    }
+
+    /**
+     * Same as {@link #selectCorridor(ArtifactDetector, Pose)} but lets the caller
+     * override the alliance field-X clamp. Used by VisionTuningTeleOp to bypass
+     * the clamp when running with a synthetic origin pose.
+     */
+    public static CorridorPlanner.Sweep selectCorridor(ArtifactDetector detector, Pose robotPose,
+                                                        double fieldXLimit) {
         try {
             List<List<FieldBall>> allFrames = new ArrayList<>(storedFrames);
             storedFrames.clear();
@@ -74,7 +84,16 @@ public class CorridorSelector {
             int totalRaw = 0;
             for (List<FieldBall> frame : allFrames) totalRaw += frame.size();
 
-            CorridorPlanner.Sweep sweep = CorridorPlanner.plan(robotPose, mergedBalls);
+            CorridorPlanner.Sweep sweep = CorridorPlanner.plan(robotPose, mergedBalls,
+                    VisionConstants.CORRIDOR_MAX_BALLS,
+                    VisionConstants.CORRIDOR_MAX_TRAVEL_IN,
+                    fieldXLimit,
+                    VisionConstants.CORRIDOR_HALF_WIDTH_IN,
+                    Math.toRadians(VisionConstants.CORRIDOR_HEADING_RANGE_DEG),
+                    Math.toRadians(VisionConstants.CORRIDOR_HEADING_STEP_DEG),
+                    VisionConstants.CORRIDOR_K_TURN,
+                    VisionConstants.CORRIDOR_K_LENGTH,
+                    VisionConstants.CORRIDOR_APPROACH_EXTRA_IN);
 
             lastScanDebug = (sweep.isEmpty() ? "EMPTY" : String.format("hdg=%.0f° cap=%d score=%.2f",
                     Math.toDegrees(sweep.headingRad), sweep.captured.size(), sweep.score))
