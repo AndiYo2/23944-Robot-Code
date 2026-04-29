@@ -78,8 +78,8 @@ public class VisionConstants {
     // ============ Camera controls (runtime-tunable via VisionTuningTeleOp) ============
     // Defaults reflect venue-tuned values saved to /sdcard/FIRST/vision_tuning.json.
     public static long EXPOSURE_MS = 11L;  // [0..204]
-    public static int  GAIN        = 95;   // [0..255]
-    public static int  WB_KELVIN   = 4100; // [2000..6500]
+    public static int  GAIN        = 75;   // [0..255]
+    public static int  WB_KELVIN   = 4600; // [2000..6500]
 
     // ============ Corridor planner ============
     public static double CORRIDOR_HALF_WIDTH_IN     = 8.0;    // 16" intake / 2
