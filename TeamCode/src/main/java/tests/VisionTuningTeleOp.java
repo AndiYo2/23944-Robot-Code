@@ -155,10 +155,10 @@ public class VisionTuningTeleOp extends OpMode {
      */
     private void runScan() {
         Pose fakePose = new Pose(0, 0, 0);
-        // Disable the alliance field-X clamp — fakePose=(0,0,0) makes it
-        // meaningless (and actively wrong if alliance was left as Blue from a
-        // prior OpMode in this session).
-        lastSweep  = CorridorSelector.selectCorridor(detector, fakePose, 1.0e6);
+        // Disable the alliance field-X clamp AND the Y floor — fakePose=(0,0,0)
+        // makes both meaningless (Y=0 is already below the 8.5 floor, which
+        // would skip every -Y heading and corrupt tuning results).
+        lastSweep  = CorridorSelector.selectCorridor(detector, fakePose, 1.0e6, -1.0e6);
         scanReport = CorridorSelector.lastScanDebug;
     }
 

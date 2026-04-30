@@ -249,7 +249,10 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         new GamepadButton(secondaryController, GamepadKeys.Button.LEFT_BUMPER)
                 .whenPressed(new InstantCommand(() -> {
                     if (RobotConstants.Robot.allianceColor == EnumConstants.AllianceColor.Blue)
-                        TurretConstants.BLUE_TURRET_TRACKING_OFFSET += 1;
+                    {
+                        TurretConstants.BLUE_FRONT_TURRET_TRACKING_OFFSET += 1;
+                        TurretConstants.BLUE_BACK_TURRET_TRACKING_OFFSET += 1;
+                    }
                     else
                     {
                         TurretConstants.RED_FRONT_TURRET_TRACKING_OFFSET += 1;
@@ -261,7 +264,10 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         new GamepadButton(secondaryController, GamepadKeys.Button.RIGHT_BUMPER)
                 .whenPressed(new InstantCommand(() -> {
                     if (RobotConstants.Robot.allianceColor == EnumConstants.AllianceColor.Blue)
-                        TurretConstants.BLUE_TURRET_TRACKING_OFFSET -= 1;
+                    {
+                        TurretConstants.BLUE_FRONT_TURRET_TRACKING_OFFSET -= 1;
+                        TurretConstants.BLUE_BACK_TURRET_TRACKING_OFFSET -= 1;
+                    }
                     else
                     {
                         TurretConstants.RED_FRONT_TURRET_TRACKING_OFFSET -= 1;
@@ -288,7 +294,8 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         new GamepadButton(secondaryController, GamepadKeys.Button.Y)
                 .whenPressed(new InstantCommand(() -> {
                     Shooter.runtimeVelocityOffset = 0;
-                    TurretConstants.BLUE_TURRET_TRACKING_OFFSET = 0;
+                    TurretConstants.BLUE_BACK_TURRET_TRACKING_OFFSET = 4;
+                    TurretConstants.BLUE_FRONT_TURRET_TRACKING_OFFSET = 0;
                     TurretConstants.RED_FRONT_TURRET_TRACKING_OFFSET = 3.0;
                     TurretConstants.RED_BACK_TURRET_TRACKING_OFFSET = 3.0;
                 }));

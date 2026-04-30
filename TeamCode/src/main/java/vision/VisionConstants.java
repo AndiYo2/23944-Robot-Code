@@ -89,6 +89,9 @@ public class VisionConstants {
     // Symmetry: blue limit ≈ 144 - red limit (field width = 144).
     public static double CORRIDOR_RED_FIELD_X_LIMIT  = 132.0;
     public static double CORRIDOR_BLUE_FIELD_X_LIMIT =  12.0;
+    // Y floor — robot CENTER must not cross during a corridor sweep.
+    // Driver-station wall is at Y=8; 0.5" tolerance to avoid wall impacts that wedge the robot.
+    public static double CORRIDOR_Y_FLOOR_IN        =   8.5;
     public static double CORRIDOR_HEADING_RANGE_DEG = 75.0;   // ± from current heading (6x6 ft reachable box)
     public static double CORRIDOR_HEADING_STEP_DEG  = 1.0;    // sweep resolution
     public static int    CORRIDOR_MAX_BALLS         = 3;

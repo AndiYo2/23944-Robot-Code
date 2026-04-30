@@ -85,16 +85,21 @@ public class Turret extends SubsystemBase {
 
     private double getRedTrackingOffset(double robotY) {
         return (robotY <= TurretConstants.TURRET_OFFSET_Y_THRESHOLD)
-                ? TurretConstants.RED_FRONT_TURRET_TRACKING_OFFSET
-                : TurretConstants.RED_BACK_TURRET_TRACKING_OFFSET;
+                ? TurretConstants.RED_BACK_TURRET_TRACKING_OFFSET
+                : TurretConstants.RED_FRONT_TURRET_TRACKING_OFFSET;
+    }
+
+    private double getBlueTrackingOffset(double robotY) {
+        return (robotY <= TurretConstants.TURRET_OFFSET_Y_THRESHOLD)
+                ? TurretConstants.BLUE_BACK_TURRET_TRACKING_OFFSET
+                : TurretConstants.BLUE_FRONT_TURRET_TRACKING_OFFSET;
     }
 
     public double[] getTurretFieldPosition() {
         double robotHeading = robot.cachedHeading;
 
-        double combinedAngle = robotHeading + TURRET_OFFSET_ANGLE;
-        turretFieldPos[0] = robot.cachedPoseX + TURRET_OFFSET_MAG * Math.sin(combinedAngle);
-        turretFieldPos[1] = robot.cachedPoseY - TURRET_OFFSET_MAG * Math.cos(combinedAngle);
+        turretFieldPos[0] = robot.cachedPoseX + TURRET_OFFSET_MAG * Math.sin(robotHeading);
+        turretFieldPos[1] = robot.cachedPoseY - TURRET_OFFSET_MAG * Math.cos(robotHeading);
 
         return turretFieldPos;
     }
@@ -122,7 +127,7 @@ public class Turret extends SubsystemBase {
         turretAngleDeg = normalizeAngle(turretAngleDeg);
 
         turretAngleDeg += (RobotConstants.Robot.allianceColor == EnumConstants.AllianceColor.Blue)
-                ? TurretConstants.BLUE_TURRET_TRACKING_OFFSET
+                ? getBlueTrackingOffset(robot.cachedPoseY)
                 : getRedTrackingOffset(robot.cachedPoseY);
 
         if (turretAngleDeg > TurretConstants.HARD_STOP_CW) {
@@ -167,7 +172,7 @@ public class Turret extends SubsystemBase {
         turretAngleDeg = normalizeAngle(turretAngleDeg);
 
         turretAngleDeg += (RobotConstants.Robot.allianceColor == EnumConstants.AllianceColor.Blue)
-                ? TurretConstants.BLUE_TURRET_TRACKING_OFFSET
+                ? getBlueTrackingOffset(robotY)
                 : getRedTrackingOffset(robotY);
 
         if (turretAngleDeg > TurretConstants.HARD_STOP_CW) {
@@ -249,7 +254,7 @@ public class Turret extends SubsystemBase {
     public void periodic() {
         if (ShooterConstants.MANUAL_OVERRIDE) {
             double manualAngle = CENTER + ((RobotConstants.Robot.allianceColor == EnumConstants.AllianceColor.Blue)
-                ? TurretConstants.BLUE_TURRET_TRACKING_OFFSET
+                ? getBlueTrackingOffset(robot.cachedPoseY)
                 : getRedTrackingOffset(robot.cachedPoseY));
             setTurretDegree(manualAngle);
         } else {

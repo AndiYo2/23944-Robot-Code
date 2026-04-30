@@ -52,6 +52,7 @@ public class CorridorPlanner {
                 VisionConstants.CORRIDOR_MAX_BALLS,
                 VisionConstants.CORRIDOR_MAX_TRAVEL_IN,
                 VisionConstants.getCorridorFieldXLimit(),
+                VisionConstants.CORRIDOR_Y_FLOOR_IN,
                 VisionConstants.CORRIDOR_HALF_WIDTH_IN,
                 Math.toRadians(VisionConstants.CORRIDOR_HEADING_RANGE_DEG),
                 Math.toRadians(VisionConstants.CORRIDOR_HEADING_STEP_DEG),
@@ -63,6 +64,7 @@ public class CorridorPlanner {
     /** Parametric entry point for unit tests. */
     public static Sweep plan(Pose robotPose, List<FieldBall> balls,
                              int maxBalls, double maxTravel, double fieldXLimit,
+                             double fieldYFloor,
                              double halfWidth,
                              double halfRangeRad, double stepRad,
                              double kTurn, double kLength,
@@ -106,6 +108,17 @@ public class CorridorPlanner {
                 double distToXLimit = (fieldXLimit - robotPose.getX()) / ax;
                 if (distToXLimit <= 0) continue;  // already at/past the boundary
                 effectiveMaxTravel = Math.min(maxTravel, distToXLimit);
+            }
+
+            // Y floor clamp: robot CENTER must not drop below fieldYFloor (the
+            // driver-station wall). Only relevant for headings that travel
+            // toward -Y (ay < 0). Truncates corridor where it would cross the
+            // floor; if the heading happens to also point along ±X (≈0/180°),
+            // this naturally produces a wall-hugging corner-bound corridor.
+            if (ay < -1e-6) {
+                double distToYFloor = (fieldYFloor - robotPose.getY()) / ay;
+                if (distToYFloor <= 0) continue;  // already at/past the floor
+                effectiveMaxTravel = Math.min(effectiveMaxTravel, distToYFloor);
             }
 
             List<Candidate> inCorridor = new ArrayList<>();

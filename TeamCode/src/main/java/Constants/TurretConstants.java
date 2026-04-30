@@ -36,11 +36,12 @@ public class TurretConstants {
     public static double SMOOTHING_ALPHA = 0.35;
 
     // Positive = shift aim right, Negative = shift aim left
-    public static double BLUE_TURRET_TRACKING_OFFSET = -2;
-
-    // Position-dependent Red offsets: front (Y <= threshold) vs back (Y > threshold).
+    // Position-dependent offsets: front (Y > threshold, close to goal) vs back (Y <= threshold, far from goal).
     // The Y threshold is alliance-neutral — same field split works for both.
-    public static double RED_FRONT_TURRET_TRACKING_OFFSET = 2;
-    public static double RED_BACK_TURRET_TRACKING_OFFSET = -1;
+    public static double BLUE_BACK_TURRET_TRACKING_OFFSET = 0.5;    // far from goal
+    public static double BLUE_FRONT_TURRET_TRACKING_OFFSET = 0.5;   // close to goal
+
+    public static double RED_BACK_TURRET_TRACKING_OFFSET = 4;       // far from goal
+    public static double RED_FRONT_TURRET_TRACKING_OFFSET = -1;     // close to goal
     public static double TURRET_OFFSET_Y_THRESHOLD = 48.0;
 }

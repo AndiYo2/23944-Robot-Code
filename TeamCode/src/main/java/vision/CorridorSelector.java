@@ -61,7 +61,9 @@ public class CorridorSelector {
      * on any error (and logs via {@link #lastScanDebug}).
      */
     public static CorridorPlanner.Sweep selectCorridor(ArtifactDetector detector, Pose robotPose) {
-        return selectCorridor(detector, robotPose, VisionConstants.getCorridorFieldXLimit());
+        return selectCorridor(detector, robotPose,
+                VisionConstants.getCorridorFieldXLimit(),
+                VisionConstants.CORRIDOR_Y_FLOOR_IN);
     }
 
     /**
@@ -71,6 +73,15 @@ public class CorridorSelector {
      */
     public static CorridorPlanner.Sweep selectCorridor(ArtifactDetector detector, Pose robotPose,
                                                         double fieldXLimit) {
+        return selectCorridor(detector, robotPose, fieldXLimit, VisionConstants.CORRIDOR_Y_FLOOR_IN);
+    }
+
+    /**
+     * Full override: lets the caller specify both the field-X clamp and the Y floor.
+     * Used by VisionTuningTeleOp to bypass both clamps when running at synthetic origin pose.
+     */
+    public static CorridorPlanner.Sweep selectCorridor(ArtifactDetector detector, Pose robotPose,
+                                                        double fieldXLimit, double fieldYFloor) {
         try {
             List<List<FieldBall>> allFrames = new ArrayList<>(storedFrames);
             storedFrames.clear();
@@ -88,6 +99,7 @@ public class CorridorSelector {
                     VisionConstants.CORRIDOR_MAX_BALLS,
                     VisionConstants.CORRIDOR_MAX_TRAVEL_IN,
                     fieldXLimit,
+                    fieldYFloor,
                     VisionConstants.CORRIDOR_HALF_WIDTH_IN,
                     Math.toRadians(VisionConstants.CORRIDOR_HEADING_RANGE_DEG),
                     Math.toRadians(VisionConstants.CORRIDOR_HEADING_STEP_DEG),
