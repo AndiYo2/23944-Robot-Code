@@ -10,7 +10,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import commands.CommandSequenceBuilder;
 
 
-@Autonomous(name = "SortedRed")
+@Autonomous(name = "RedSorted")
 public class Red15BallFINAL extends AutonTemplate {
     public static double maxSpeed = 1;
 

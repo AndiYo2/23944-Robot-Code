@@ -16,8 +16,8 @@ public class ShootingSequenceConstants {
     public static double SHOOTER_RETRACT_DELAY = 0;
 
     // --- Spindexer Flipper ---
-    public static double SPINDEXER_FLIPPER_EXTENDED = 0.406;
-    public static double SPINDEXER_FLIPPER_RETRACT = 0.503;
+    public static double SPINDEXER_FLIPPER_EXTENDED = 0.412;
+    public static double SPINDEXER_FLIPPER_RETRACT = 0.509;
     public static double SPINDEXER_FLICK_TIME = 0.1;
     public static double SPINDEXER_RETRACT_DELAY = 0.02;
 
