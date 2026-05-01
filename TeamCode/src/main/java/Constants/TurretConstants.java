@@ -41,7 +41,7 @@ public class TurretConstants {
     public static double BLUE_BACK_TURRET_TRACKING_OFFSET = 0.5;    // far from goal
     public static double BLUE_FRONT_TURRET_TRACKING_OFFSET = 0.5;   // close to goal
 
-    public static double RED_BACK_TURRET_TRACKING_OFFSET = 4;       // far from goal
+    public static double RED_BACK_TURRET_TRACKING_OFFSET = 2;       // far from goal
     public static double RED_FRONT_TURRET_TRACKING_OFFSET = -1;     // close to goal
     public static double TURRET_OFFSET_Y_THRESHOLD = 48.0;
 }

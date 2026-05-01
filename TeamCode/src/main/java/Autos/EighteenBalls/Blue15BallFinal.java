@@ -114,7 +114,7 @@ public class Blue15BallFinal extends AutonTemplate {
         Constants.SpindexerConstants.currentMode = EnumConstants.ShootingMode.Fast;
 
         autonomousCommand = new CommandSequenceBuilder(follower, intake, spindexer, limelight, shooter, turret)
-                .parallel(p -> p.delay(.7).limelightScan())
+                .parallel(p -> p.delay(1).limelightScan())
                 .delay(.2)
                 .shoot()
                 .intakeStart()
@@ -128,7 +128,7 @@ public class Blue15BallFinal extends AutonTemplate {
                 .moveTo(shootToSecond, maxSpeed, false)
                 .moveTo(secondToGate, .8, false)
                 .intakeStop()
-                .delay(1.3)
+                .delay(1)
                 .parallel(p -> p.moveTo(gateToShoot, maxSpeed, false).guaranteeSortedAutoCatalog())
                 .delay(.2)
                 .slowShoot()
