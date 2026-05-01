@@ -33,7 +33,7 @@ public class TurretConstants {
     public static double CENTER = 1.5;
     public static double MIN_CHANGE_THRESHOLD = 0.5;
     /** EMA smoothing factor for turret angle (0.0 = frozen, 1.0 = no smoothing). */
-    public static double SMOOTHING_ALPHA = 0.35;
+    public static double SMOOTHING_ALPHA = 0.8;
 
     // Positive = shift aim right, Negative = shift aim left
     // Position-dependent offsets: front (Y > threshold, close to goal) vs back (Y <= threshold, far from goal).

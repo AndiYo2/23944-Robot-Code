@@ -294,10 +294,10 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         new GamepadButton(secondaryController, GamepadKeys.Button.Y)
                 .whenPressed(new InstantCommand(() -> {
                     Shooter.runtimeVelocityOffset = 0;
-                    TurretConstants.BLUE_BACK_TURRET_TRACKING_OFFSET = 4;
-                    TurretConstants.BLUE_FRONT_TURRET_TRACKING_OFFSET = 0;
-                    TurretConstants.RED_FRONT_TURRET_TRACKING_OFFSET = 3.0;
-                    TurretConstants.RED_BACK_TURRET_TRACKING_OFFSET = 3.0;
+                    TurretConstants.BLUE_BACK_TURRET_TRACKING_OFFSET = 0.5;
+                    TurretConstants.BLUE_FRONT_TURRET_TRACKING_OFFSET = 0.5;
+                    TurretConstants.RED_FRONT_TURRET_TRACKING_OFFSET = -1.0;
+                    TurretConstants.RED_BACK_TURRET_TRACKING_OFFSET = 2.0;
                 }));
     }
 

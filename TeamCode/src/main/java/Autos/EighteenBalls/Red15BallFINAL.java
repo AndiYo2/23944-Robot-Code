@@ -116,7 +116,7 @@ public class Red15BallFINAL extends AutonTemplate {
         Constants.SpindexerConstants.currentMode = EnumConstants.ShootingMode.Fast;
 
         autonomousCommand = new CommandSequenceBuilder(follower, intake, spindexer, limelight, shooter, turret)
-                .parallel(p -> p.delay(1).limelightScan())
+                .parallel(p -> p.delay(.9).limelightScan())
                 .delay(.2)
                 .shoot()
                 .intakeStart()
