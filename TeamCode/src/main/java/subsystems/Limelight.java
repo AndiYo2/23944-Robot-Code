@@ -1,6 +1,5 @@
 package subsystems;
 
-import Constants.RobotConstants;
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
@@ -11,15 +10,10 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import utility.RobotHardware;
 
 import com.pedropathing.geometry.Pose;
-import com.pedropathing.geometry.PedroCoordinates;
-import com.pedropathing.ftc.InvertedFTCCoordinates;
-import Constants.OdometryConstants;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 
 import java.util.List;
-
-import static java.lang.Math.toRadians;
 
 /**
  * Limelight subsystem for AprilTag detection and field relocalization.
@@ -39,9 +33,6 @@ public class Limelight extends SubsystemBase {
     private EnumConstants.LimelightMode currentMode;
     private boolean motifDetected;
     private int detectedTagId;
-
-    private Pose2D redPose = new Pose2D(DistanceUnit.INCH,8, 8.5, AngleUnit.DEGREES, 0);
-    private Pose2D bluePose = new Pose2D(DistanceUnit.INCH,135, 8.5, AngleUnit.DEGREES, 180);
 
     public Limelight() {
         this.robot = RobotHardware.getInstance();
@@ -101,17 +92,6 @@ public class Limelight extends SubsystemBase {
         return -1;
     }
 
-    /**
-     * Toggles between Goal Tracking and Tag Tracking modes.
-     * Tag Tracking mode enables AprilTag scanning for motif pattern detection.
-     */
-    public void toggleMode() {
-        if (currentMode == EnumConstants.LimelightMode.GoalTracking) {
-            setMode(EnumConstants.LimelightMode.TagTracking);
-        } else {
-            setMode(EnumConstants.LimelightMode.GoalTracking);
-        }
-    }
     public void setMode(EnumConstants.LimelightMode mode) {
         currentMode = mode;
         if (mode == EnumConstants.LimelightMode.TagTracking) {
@@ -201,21 +181,6 @@ public class Limelight extends SubsystemBase {
         return false;
     }
 
-    /**
-     * @return true if relocalization succeeded, false if no cached pose available
-     */
-    public boolean relocalizePinpoint() {
-        if(RobotConstants.Robot.allianceColor == EnumConstants.AllianceColor.Blue){
-            robot.pinpoint.setPosition(bluePose);
-        }else{
-            robot.pinpoint.setPosition(redPose);
-        }
-
-        robot.pinpoint.update();
-        limelightPose = null;
-        return true;
-    }
-
     public boolean relocalizePinpointApriltag() {
         if (limelightPose == null) {
             lastRelocDebug = "no limelight pose cached";
@@ -227,45 +192,6 @@ public class Limelight extends SubsystemBase {
                 limelightPose.getX(), limelightPose.getY());
         return true;
     }
-    // ==================== RAMP SCANNING ====================
-
-    public void switchToRampScanPipeline() {
-        if (robot.limelight != null) {
-            robot.limelight.pipelineSwitch(LimelightConstants.RAMP_SCAN_PIPELINE);
-        }
-    }
-
-    /**
-     * Reads getPythonOutput() from the latest result and counts non-zero entries.
-     * Each entry represents a ramp slot: 0=empty, 1=green, 2=purple.
-     *
-     * NOTE: We intentionally do NOT gate on result.isValid(). For Limelight 3A
-     * Python/SnapScript pipelines, isValid() reflects the `tv` (target valid)
-     * flag, which our ramp SnapScript does not set. The presence of a non-null
-     * getPythonOutput() array is the correct readiness signal for Python pipes.
-     *
-     * @return ball count (0-8), or -1 if no pipeline output available
-     */
-    public String lastRampReadDebug = "no read yet";
-
-    public int readRampBallCount() {
-        if (robot.limelight == null) { lastRampReadDebug = "limelight null"; return -1; }
-        LLResult result = robot.limelight.getLatestResult();
-        if (result == null) { lastRampReadDebug = "result null"; return -1; }
-        double[] output = result.getPythonOutput();
-        if (output == null) { lastRampReadDebug = "pyOut null (valid=" + result.isValid() + ")"; return -1; }
-        if (output.length == 0) { lastRampReadDebug = "pyOut empty (valid=" + result.isValid() + ")"; return -1; }
-        int count = 0;
-        StringBuilder slots = new StringBuilder();
-        for (int i = 0; i < output.length; i++) {
-            if (output[i] != 0) count++;
-            if (i > 0) slots.append(",");
-            slots.append((int) output[i]);
-        }
-        lastRampReadDebug = "pyOut=[" + slots + "] count=" + count + " valid=" + result.isValid();
-        return count;
-    }
-
     // ==================== PIPELINE SWITCHING ====================
 
     public void switchToLocalizationPipeline() {

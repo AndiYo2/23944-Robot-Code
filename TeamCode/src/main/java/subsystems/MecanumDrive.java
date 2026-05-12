@@ -2,13 +2,11 @@ package subsystems;
 
 import com.arcrobotics.ftclib.command.SubsystemBase;
 import com.pedropathing.follower.Follower;
-import com.pedropathing.geometry.Pose;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
 import Constants.DriveConstants;
 import Constants.EnumConstants.DriveState;
 import utility.RobotHardware;
-import Constants.OdometryConstants;
 
 public class MecanumDrive extends SubsystemBase {
     private RobotHardware robot;
@@ -18,15 +16,8 @@ public class MecanumDrive extends SubsystemBase {
     private Follower activeFollower = null;
     private double headingOffset = 0;
 
-    private Pose pose;
-
     public MecanumDrive() {
         this.robot = RobotHardware.getInstance();
-        setPose(OdometryConstants.endingAutonPose);
-    }
-
-    public Pose getCurrentPose() {
-        return pose;
     }
 
     public void toggleSlowMode() {
@@ -57,10 +48,6 @@ public class MecanumDrive extends SubsystemBase {
 
     public void setDynamicSpeedMultiplier(double multiplier) {
         this.dynamicSpeedMultiplier = multiplier;
-    }
-
-    public void setPose(Pose pose) {
-        this.pose = pose;
     }
 
     public void resetYaw(){

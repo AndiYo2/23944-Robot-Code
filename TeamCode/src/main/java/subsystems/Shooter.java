@@ -423,11 +423,6 @@ public class Shooter extends SubsystemBase {
         robot.shooterFlipper.setPosition(ShootingSequenceConstants.SHOOTER_FLIPPER_RETRACT);
     }
 
-    public boolean isFlipperAtPosition(double targetPosition) {
-        double actual = robot.shooterFlipperEncoder.getVoltage() / 3.3;
-        return Math.abs(actual - targetPosition) < ShootingSequenceConstants.SHOOTER_FLIPPER_POSITION_TOLERANCE;
-    }
-
     public FlickState getCurrentState() {
         return currentState;
     }
@@ -489,7 +484,7 @@ public class Shooter extends SubsystemBase {
         setHoodAngle(requiredHoodAngle + shotHoodCompensation);
         double targetVelocity = requiredVelocity;
 
-        //  read motor 2 only until rebuild
+        // Velocity feedback comes from motor 2's encoder only.
         double currentVelocity = robot.shooterMotor2.getVelocity();
         cachedVelocity = currentVelocity;
 

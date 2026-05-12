@@ -1,25 +1,17 @@
 package subsystems;
 
 import com.arcrobotics.ftclib.command.SubsystemBase;
-import com.qualcomm.robotcore.util.ElapsedTime;
 import Constants.EnumConstants.IntakeState;
 import utility.RobotHardware;
 
 public class Intake extends SubsystemBase {
     RobotHardware robot;
     private IntakeState currentState = IntakeState.Idle;
-    private final ElapsedTime timedIntakeTimer = new ElapsedTime();
-    private double timedIntakeDuration = 0;
-    private boolean timedIntakeActive = false;
     private double lastIntakePower = 0;
     private double lastBeltPower = 0;
 
     @Override
     public void periodic() {
-        if (timedIntakeActive && timedIntakeTimer.seconds() >= timedIntakeDuration) {
-            timedIntakeActive = false;
-            stopIntake();
-        }
         stateMachinePeriodic();
     }
 

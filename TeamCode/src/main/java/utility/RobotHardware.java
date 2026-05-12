@@ -105,11 +105,6 @@ public class RobotHardware {
     // ******************* BULK CACHING ******************* //
     private List<LynxModule> allHubs;
 
-    // ******************* ROUND-ROBIN SENSOR POLLING ******************* //
-    private DualBallDetector[] sensorDetectors;
-    private boolean[] isNearSensor;
-    private int roundRobinIndex = 0;
-
     // ******************* SMART DISTANCE-BASED POLLING ******************* //
     // Scan order: intake (back-most) → transfer → ramp (front-most)
     private DualBallDetector[] smartScanOrder;
@@ -247,19 +242,10 @@ public class RobotHardware {
                 SensorConstants.TRANSFER_NEAR_DIST_THRESHOLD_MM,
                 SensorConstants.TRANSFER_FAR_DIST_THRESHOLD_MM);
 
-        // Set all detectors to background mode for round-robin polling
+        // Set all detectors to background mode
         spindexerSensorPair.setBackgroundMode(true);
         transferSensorPair.setBackgroundMode(true);
         rampSensorPair.setBackgroundMode(true);
-
-        // Round-robin: 6 sensors, cycling near/far across 3 detector pairs
-        sensorDetectors = new DualBallDetector[]{
-                spindexerSensorPair, spindexerSensorPair,
-            rampSensorPair, rampSensorPair,
-            transferSensorPair, transferSensorPair
-        };
-        isNearSensor = new boolean[]{true, false, true, false, true, false};
-        roundRobinIndex = 0;
 
         // Smart scan: back-most empty first (intake → transfer → ramp)
         smartScanOrder = new DualBallDetector[]{spindexerSensorPair, transferSensorPair, rampSensorPair};
@@ -354,8 +340,7 @@ public class RobotHardware {
         lockCameraControls();
 
         // Panels camera preview at a low frame rate. Lets drivers see what the
-        // camera is detecting during auto. Zero TeleOp impact: TeleOpTemplate
-        // calls stopVisionPortal() at end of init, which calls stopStream().
+        // camera is detecting during auto.
         if (VisionConstants.PANELS_STREAM_FPS > 0) {
             try {
                 PanelsCameraStream.INSTANCE.startStream(visionPortal,
@@ -374,17 +359,6 @@ public class RobotHardware {
         }
 
         resetCachedState();
-    }
-
-    /** Stop the auton vision portal AND the Panels camera stream. Call from TeleOp init. */
-    public void stopVisionPortal() {
-        if (visionPortal != null) {
-            try { PanelsCameraStream.INSTANCE.stopStream(); } catch (Exception ignored) {}
-            visionPortal.close();
-            visionPortal = null;
-            greenBlobProcessor = null;
-            purpleBlobProcessor = null;
-        }
     }
 
     /**
@@ -443,7 +417,6 @@ public class RobotHardware {
         cachedVelY = 0;
         cachedHeadingVel = 0;
         relocalizationPending = false;
-        roundRobinIndex = 0;
 
         // Clear smart polling distance detection state
         if (smartScanOrder != null) {
@@ -461,23 +434,6 @@ public class RobotHardware {
         for (LynxModule hub : allHubs) {
             hub.clearBulkCache();
         }
-    }
-
-    /** Read ONE color sensor in round-robin order (6 sensors total). Call once per loop. */
-    public void pollNextSensor() {
-        if (isNearSensor[roundRobinIndex]) {
-            sensorDetectors[roundRobinIndex].updateNearCache();
-        } else {
-            sensorDetectors[roundRobinIndex].updateFarCache();
-        }
-        roundRobinIndex = (roundRobinIndex + 1) % 6;
-    }
-
-    /** Read ALL color sensors every cycle using bulk-cache-safe reads (3 pairs × 2 sensors). */
-    public void pollAllSensors() {
-        spindexerSensorPair.updateCacheBulkSafe();
-        transferSensorPair.updateCacheBulkSafe();
-        rampSensorPair.updateCacheBulkSafe();
     }
 
     /**

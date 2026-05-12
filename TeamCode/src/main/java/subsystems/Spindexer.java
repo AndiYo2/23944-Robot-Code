@@ -95,20 +95,6 @@ public class Spindexer extends SubsystemBase {
         SpindexerAndMotifStatus.SpindexerPattern.rotateBallsCCW();
     }
 
-
-
-    public void rotateToNextBall(){
-        if(SpindexerConstants.currentMode == EnumConstants.ShootingMode.Fast){
-            rotateCCW();
-        }else{
-            if(SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(0) != EnumConstants.BallColor.None){
-                rotateCCW();
-            }else if(SpindexerAndMotifStatus.SpindexerPattern.getBallInSlotX(2) != EnumConstants.BallColor.None){
-                rotateCW();
-            }
-        }
-    }
-
     public void resetToEmptyPosition() {
         currentDegrees = EMPTY_RESET_DEGREES;
         SpindexerAndMotifStatus.SpindexerPattern.clearAll();
@@ -139,11 +125,6 @@ public class Spindexer extends SubsystemBase {
                 ? 0.28
                 : ShootingSequenceConstants.SPINDEXER_ROTATION_TIME;
         return rotationCooldown.seconds() > requiredTime;
-    }
-
-    public boolean isFlipperAtPosition(double targetPosition) {
-        double actual = robot.spindexerFlipperEncoder.getVoltage() / 3.3;
-        return Math.abs(actual - targetPosition) < ShootingSequenceConstants.SPINDEXER_FLIPPER_POSITION_TOLERANCE;
     }
 
     public boolean isReadyToFlip() {

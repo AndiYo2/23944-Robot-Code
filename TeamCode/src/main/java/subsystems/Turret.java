@@ -23,12 +23,8 @@ public class Turret extends SubsystemBase {
 
     private double currentTargetDegrees = 0.0;
 
-    private boolean targetOutOfRange = false;
-    private double degreesOutOfRange = 0;
-
     private double smoothedTargetDegrees = 0.0;
     private boolean smoothingInitialized = false;
-    private double rawTargetDegrees = 0.0;
 
     private Shooter shooter;
 
@@ -130,17 +126,6 @@ public class Turret extends SubsystemBase {
                 ? getBlueTrackingOffset(robot.cachedPoseY)
                 : getRedTrackingOffset(robot.cachedPoseY);
 
-        if (turretAngleDeg > TurretConstants.HARD_STOP_CW) {
-            targetOutOfRange = true;
-            degreesOutOfRange = turretAngleDeg - TurretConstants.HARD_STOP_CW;
-        } else if (turretAngleDeg < TurretConstants.HARD_STOP_CCW) {
-            targetOutOfRange = true;
-            degreesOutOfRange = TurretConstants.HARD_STOP_CCW - turretAngleDeg;
-        } else {
-            targetOutOfRange = false;
-            degreesOutOfRange = 0;
-        }
-
         return turretAngleDeg;
     }
 
@@ -174,17 +159,6 @@ public class Turret extends SubsystemBase {
         turretAngleDeg += (RobotConstants.Robot.allianceColor == EnumConstants.AllianceColor.Blue)
                 ? getBlueTrackingOffset(robotY)
                 : getRedTrackingOffset(robotY);
-
-        if (turretAngleDeg > TurretConstants.HARD_STOP_CW) {
-            targetOutOfRange = true;
-            degreesOutOfRange = turretAngleDeg - TurretConstants.HARD_STOP_CW;
-        } else if (turretAngleDeg < TurretConstants.HARD_STOP_CCW) {
-            targetOutOfRange = true;
-            degreesOutOfRange = TurretConstants.HARD_STOP_CCW - turretAngleDeg;
-        } else {
-            targetOutOfRange = false;
-            degreesOutOfRange = 0;
-        }
 
         return turretAngleDeg;
     }
@@ -220,8 +194,6 @@ public class Turret extends SubsystemBase {
             Math.min(TurretConstants.HARD_STOP_CW, targetAngleTurret)
         );
 
-        rawTargetDegrees = targetAngleTurret;
-
         if (!smoothingInitialized) {
             smoothedTargetDegrees = targetAngleTurret;
             smoothingInitialized = true;
@@ -236,18 +208,6 @@ public class Turret extends SubsystemBase {
 
     public double getTargetTurretAngle() {
         return currentTargetDegrees;
-    }
-
-    public boolean isTargetOutOfRange() {
-        return targetOutOfRange;
-    }
-
-    public double getRawTargetDegrees() {
-        return rawTargetDegrees;
-    }
-
-    public double getLastDegreesToGoal() {
-        return lastDegreesToGoal;
     }
 
     @Override

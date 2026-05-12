@@ -27,7 +27,6 @@ public class LimelightConstants {
     // Pipeline indices
     public static final int MOTIF_PIPELINE = 5;
     public static final int LOCALIZATION_PIPELINE = 2;
-    public static final int RAMP_SCAN_PIPELINE = 6;
 
     // Coordinate conversion constants
     public static final double METERS_TO_INCHES = 39.3701;

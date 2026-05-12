@@ -88,63 +88,6 @@ public class SpindexerAndMotifStatus {
     }
 
     /**
-     * Tracks the number of balls deposited into the classifier ramp.
-     * Used by scan-based sorted shooting to determine the correct motif-shifted
-     * shooting order. Maintains a manual counter that can be corrected by
-     * Limelight ramp scans.
-     *
-     * All methods are static and synchronized for cross-OpMode persistence.
-     */
-    public static class RampTracker {
-        private static int ballsInRamp = 0;
-        private static EnumConstants.BallColor[] originalMotif = null;
-        public static String lastShiftDebug = "";
-
-        /** Gets the current ball count in the ramp. */
-        public static synchronized int getBallsInRamp() { return ballsInRamp; }
-
-        /** Sets the ball count (used by Limelight scan correction). */
-        public static synchronized void setBallsInRamp(int count) { ballsInRamp = count; }
-
-        /** Increments the counter after shooting. */
-        public static synchronized void addShotBalls(int count) { ballsInRamp += count; }
-
-        /** Resets the counter and saved original motif. */
-        public static synchronized void clear() {
-            ballsInRamp = 0;
-            originalMotif = null;
-        }
-
-        /**
-         * Shifts the motif pattern based on current ramp count.
-         * On first call, saves the current MotifPattern as the original
-         * (should be called after limelightScan() has detected the tag).
-         * Sets MotifPattern to originalMotif rotated by (rampCount % 3).
-         */
-        public static synchronized void shiftMotifForRamp() {
-            if (originalMotif == null) {
-                originalMotif = new EnumConstants.BallColor[]{
-                    MotifPattern.getBallColorInSlotX(0),
-                    MotifPattern.getBallColorInSlotX(1),
-                    MotifPattern.getBallColorInSlotX(2)
-                };
-            }
-            int shift = ballsInRamp % 3;
-            MotifPattern.setBallPattern(
-                originalMotif[shift],
-                originalMotif[(shift + 1) % 3],
-                originalMotif[(shift + 2) % 3]
-            );
-            lastShiftDebug = String.format("Ramp=%d shift=%d orig=[%s,%s,%s] -> [%s,%s,%s]",
-                ballsInRamp, shift,
-                originalMotif[0], originalMotif[1], originalMotif[2],
-                MotifPattern.getBallColorInSlotX(0),
-                MotifPattern.getBallColorInSlotX(1),
-                MotifPattern.getBallColorInSlotX(2));
-        }
-    }
-
-    /**
      * Tracks the detected motif ball pattern from Limelight.
      *
      * All methods are static - use the class directly (MotifPattern.getBallColorInSlotX(0))

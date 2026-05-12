@@ -137,14 +137,6 @@ public class ShooterConstants {
         /** Velocity gain */
         public static double kV = 3.2557046977E-4;
 
-        // === LEGACY PID CONSTANTS (replaced by bang-bang + FF+P) ===
-        // public static double kA = 0.0005;
-        // public static double VELOCITY_kI = 0;
-        // public static double VELOCITY_kD = 0.0;
-        // public static double INTEGRAL_MAX = 0.3;
-        // public static double MAX_ACCELERATION = 15000.0;
-        // === END LEGACY ===
-
         // ==================== BANG-BANG RECOVERY ====================
 
         /** Proportional gain — used in MAINTAIN mode for steady-state accuracy */

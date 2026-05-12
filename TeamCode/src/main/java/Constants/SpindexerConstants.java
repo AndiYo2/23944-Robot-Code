@@ -41,9 +41,9 @@ public class SpindexerConstants {
 
     // --- Auto Catalog Timings (seconds) ---
     public static double AUTO_CATALOG_STOP_TIME = 0.15;
-    public static double AUTO_FIRST_CATALOG_INTAKE_TIME = 0.25;//.35
-    public static double AUTO_SECOND_CATALOG_INTAKE_TIME = 0.4;//.5
-    public static double AUTO_REVERSE_CATALOG_INTAKE_TIME = 0.35;//.5
+    public static double AUTO_FIRST_CATALOG_INTAKE_TIME = 0.25;
+    public static double AUTO_SECOND_CATALOG_INTAKE_TIME = 0.4;
+    public static double AUTO_REVERSE_CATALOG_INTAKE_TIME = 0.35;
 
     // Extra delay after rotation before flicking, lets servo physically arrive
     public static double ROTATION_SETTLE_TIME = 0.08;
