@@ -12,12 +12,6 @@ import Constants.TurretConstants;
 
 import static Constants.TurretConstants.CENTER;
 
-/**
- * Turret subsystem using position-controlled servo.
- *
- * Servo position 0.5 = turret center (0 degrees)
- * Conversion: servoPosition = 0.5 + (turretDegrees * GEAR_RATIO / SERVO_DEGREES_PER_UNIT)
- */
 public class Turret extends SubsystemBase {
     RobotHardware robot;
 
@@ -33,7 +27,6 @@ public class Turret extends SubsystemBase {
     private double lastServoPosition = -1.0;
     private static final double SERVO_EPSILON = 0.001;
 
-    // Pre-allocated array for getTurretFieldPosition() to avoid GC pressure
     private final double[] turretFieldPos = new double[2];
 
     private static final double TURRET_OFFSET_MAG = Math.sqrt(
@@ -52,13 +45,6 @@ public class Turret extends SubsystemBase {
         applyServoPosition(CENTER);
     }
 
-    /**
-     * Convert turret degrees to servo position.
-     * Servo position 0.5 = turret center (0 degrees)
-     *
-     * @param turretDegrees Target angle in turret degrees
-     * @return Servo position (0 to 1)
-     */
     private double turretDegreesToServoPosition(double turretDegrees) {
         double position = TurretConstants.SERVO_CENTER_POSITION +
                 (turretDegrees * TurretConstants.GEAR_RATIO / TurretConstants.SERVO_DEGREES_PER_UNIT);
@@ -114,11 +100,9 @@ public class Turret extends SubsystemBase {
 
         double fieldAngleRad = Math.atan2(deltaY, deltaX);
 
-        // Convert to robot-relative by subtracting robot heading
         double robotHeadingRad = robot.cachedHeading;
         double turretAngleRad = fieldAngleRad - robotHeadingRad;
 
-        // Convert to degrees and normalize to [-180, 180]
         double turretAngleDeg = Math.toDegrees(turretAngleRad);
         turretAngleDeg = normalizeAngle(turretAngleDeg);
 
@@ -129,15 +113,6 @@ public class Turret extends SubsystemBase {
         return turretAngleDeg;
     }
 
-    /**
-     * Calculate the turret angle needed to aim at the goal from a hypothetical robot position.
-     * Used for pre-aiming the turret before arriving at a position.
-     *
-     * @param robotX hypothetical robot X position (inches)
-     * @param robotY hypothetical robot Y position (inches)
-     * @param robotHeadingRad hypothetical robot heading (radians)
-     * @return turret angle in degrees
-     */
     public double getDegreesToGoalFromPosition(double robotX, double robotY, double robotHeadingRad) {
         Pose goalPosition = FieldMap.getGoalPosition();
 
@@ -152,7 +127,6 @@ public class Turret extends SubsystemBase {
 
         double turretAngleRad = fieldAngleRad - robotHeadingRad;
 
-        // Convert to degrees and normalize
         double turretAngleDeg = Math.toDegrees(turretAngleRad);
         turretAngleDeg = normalizeAngle(turretAngleDeg);
 
@@ -163,19 +137,11 @@ public class Turret extends SubsystemBase {
         return turretAngleDeg;
     }
 
-    /**
-     * Shooting_While_Moving turret aiming.
-     * Computes turret angle from the kinematically-predicted future pose
-     * (includes acceleration, not just velocity).
-     */
     public double getDegreesToGoalShootingWhileMoving() {
         if (!ShooterConstants.SHOOTING_WHILE_MOVING_ENABLED || shooter == null) {
             return getDegreesToGoal();
         }
         double[] future = shooter.getShootingWhileMovingFuturePose();
-        // getDegreesToGoalFromPosition subtracts futureH to get the servo angle,
-        // but the servo is on the robot at the CURRENT heading. Correct by adding
-        // back (futureH - curH). When stationary this is zero.
         double angle = getDegreesToGoalFromPosition(future[0], future[1], future[2]);
         angle += Math.toDegrees(future[2] - robot.cachedHeading);
         return angle;

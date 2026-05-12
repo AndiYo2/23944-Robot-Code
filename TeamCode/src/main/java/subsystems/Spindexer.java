@@ -36,7 +36,6 @@ public class Spindexer extends SubsystemBase {
 
     private int currentDegrees = EMPTY_RESET_DEGREES;
 
-    // Servo dirty flag — only write when position actually changes
     private double lastSpindexerServoPosition = -1.0;
     private static final double SERVO_EPSILON = 0.001;
 
@@ -51,26 +50,18 @@ public class Spindexer extends SubsystemBase {
         robot.spindexerServo.setPosition(degreesToServoPosition(EMPTY_RESET_DEGREES));
     }
 
-    /**
-     * Convert degrees to servo position (0-1 range).
-     * Axon servo has 355° range, so position = degrees / 355.
-     * Applies SPINDEXER_OFFSET to all rotations.
-     * Avoids exact 0.0 which can cause servo issues.
-     */
     private double degreesToServoPosition(int degrees) {
         double position = (degrees + SpindexerConstants.SPINDEXER_OFFSET) / SERVO_DEGREES_PER_UNIT;
         if (position < 0.01) position = 0.01;
         return position;
     }
 
-    // ==================== ROTATION METHODS ====================
-
     public void rotateCW() {
         int newDegrees = currentDegrees + DEGREE_INCREMENT;
 
         if (newDegrees > MAX_SERVO_DEGREES) {
-            newDegrees = CW_WRAP_TO_DEG;  // 180°
-            isDoubleRotation = true;      // servo travels 120° instead of 60°
+            newDegrees = CW_WRAP_TO_DEG;
+            isDoubleRotation = true;
         } else {
             isDoubleRotation = false;
         }
@@ -84,8 +75,8 @@ public class Spindexer extends SubsystemBase {
         int newDegrees = currentDegrees - DEGREE_INCREMENT;
 
         if (newDegrees < 0) {
-            newDegrees = CCW_WRAP_TO_DEG;  // 120°
-            isDoubleRotation = true;       // servo travels 120° instead of 60°
+            newDegrees = CCW_WRAP_TO_DEG;
+            isDoubleRotation = true;
         } else {
             isDoubleRotation = false;
         }
@@ -99,8 +90,6 @@ public class Spindexer extends SubsystemBase {
         currentDegrees = EMPTY_RESET_DEGREES;
         SpindexerAndMotifStatus.SpindexerPattern.clearAll();
     }
-
-    // ==================== FLIPPER METHODS ====================
 
     public void triggerFlick() {
         if (currentState == FlickState.Idle) {
@@ -117,8 +106,6 @@ public class Spindexer extends SubsystemBase {
     public void retractFlipper() {
         robot.spindexerFlipperServo.setPosition(ShootingSequenceConstants.SPINDEXER_FLIPPER_RETRACT);
     }
-
-    // ==================== STATE QUERIES ====================
 
     public boolean isRotationIdle() {
         double requiredTime = isDoubleRotation
@@ -147,8 +134,6 @@ public class Spindexer extends SubsystemBase {
         return currentDegrees;
     }
 
-
-    // ==================== PERIODIC UPDATES ====================
 
     @Override
     public void periodic() {

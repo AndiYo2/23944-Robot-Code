@@ -33,7 +33,6 @@ import java.util.List;
 
 public class RobotHardware {
 
-    // ******************* DRIVE TRAIN ******************* //
     public DcMotorEx frontLeft, backLeft, frontRight, backRight;
 
     // ******************* PARK ******************* //
@@ -67,7 +66,6 @@ public class RobotHardware {
     public ColorBlobLocatorProcessor purpleBlobProcessor;
 
     // ******************* COLOR SENSORS ******************* //
-    // Intake sensors (2 sensors offset at first spindexer slot to avoid ball holes)
     public ColorSensor spindexerSensor1;
     public ColorSensor spindexerSensor2;
     public DualBallDetector spindexerSensorPair;
@@ -82,7 +80,7 @@ public class RobotHardware {
 
 
     // ******************* SPINDEXER ******************* //
-    public ServoImplEx spindexerServo;  // Using ServoImplEx for PWM range control
+    public ServoImplEx spindexerServo;
 
     public AnalogInput spindexerFlipperEncoder;
     public Servo spindexerFlipperServo;
@@ -95,22 +93,17 @@ public class RobotHardware {
     public TelemetryManager telemetryManager;
     private HardwareMap hardwareMap;
 
-    // Thread-safe singleton pattern
     private static volatile RobotHardware instance = null;
     private static final Object lock = new Object();
-
-    // Volatile to ensure visibility across threads
     public volatile boolean enabled = false;
 
     // ******************* BULK CACHING ******************* //
     private List<LynxModule> allHubs;
 
     // ******************* SMART DISTANCE-BASED POLLING ******************* //
-    // Scan order: intake (back-most) → transfer → ramp (front-most)
     private DualBallDetector[] smartScanOrder;
 
     // ******************* PROGRESSIVE SCAN (AUTO) ******************* //
-    // Scan order: spindexer → transfer → ramp (one pair at a time)
     private DualBallDetector[] progressiveScanOrder;
     private EnumConstants.SensorPairState[] progressivePairState;
     private int progressiveScanIndex = 0;
@@ -124,10 +117,6 @@ public class RobotHardware {
     public double cachedHeadingVel;
     public volatile boolean relocalizationPending = false;
 
-    /**
-     * Returns the singleton instance of RobotHardware.
-     * Thread-safe implementation using double-checked locking.
-     */
     public static RobotHardware getInstance() {
         if (instance == null) {
             synchronized (lock) {
@@ -158,8 +147,6 @@ public class RobotHardware {
         this.telemetryManager = PanelsTelemetry.INSTANCE.getTelemetry();
 
         // ******************* BULK CACHING ******************* //
-        // MANUAL mode: we clear the cache once at the top of each loop,
-        // so all reads within that loop hit the same bulk-read snapshot.
         allHubs = hardwareMap.getAll(LynxModule.class);
         for (LynxModule hub : allHubs) {
             hub.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
@@ -187,25 +174,16 @@ public class RobotHardware {
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, NamingConstants.Pinpoint.pinpoint);
         pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
         pinpoint.setOffsets(-0.5, 36.5, DistanceUnit.MM); // Y pod: 0.5mm right, X pod: 36.5mm forward of CoR
-
-        // CRITICAL: Reset and calibrate IMU
-        // Robot MUST be stationary during this! Calibration takes ~250ms
-        // This resets position to (0,0,0) and calibrates the IMU to current orientation
         pinpoint.resetPosAndIMU();
 
-        // Wait for calibration to complete before proceeding
         try {
-            Thread.sleep(300); // 250ms calibration + 50ms buffer
+            Thread.sleep(300);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
 
-        // Set yaw scalar for fine-tuning (1.0 = no scaling, tune if needed)
         pinpoint.setYawScalar(OdometryConstants.yawScalar);
 
-        // Note: OpModes will set their starting position AFTER this init completes
-        // - Auton: Calls follower.setStartingPose() which updates the Pinpoint
-        // - TeleOp: Calls pinpoint.setPosition() with either auton ending pose or default start point
 
         // ******************* INTAKE ******************* //
         intakeMotor = hardwareMap.get(DcMotorEx.class, NamingConstants.Intake.intake);
@@ -215,7 +193,6 @@ public class RobotHardware {
         intakeBeltMotor.setDirection(DcMotor.Direction.REVERSE);
 
         // ******************* COLOR SENSORS ******************* //
-        // Intake sensors (2 offset sensors at first spindexer slot to avoid ball holes)
         spindexerSensor1 = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.spindexerSensor1);
         spindexerSensor2 = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.spindexerSensor2);
         spindexerSensorPair = new DualBallDetector(spindexerSensor1, spindexerSensor2,
@@ -242,15 +219,12 @@ public class RobotHardware {
                 SensorConstants.TRANSFER_NEAR_DIST_THRESHOLD_MM,
                 SensorConstants.TRANSFER_FAR_DIST_THRESHOLD_MM);
 
-        // Set all detectors to background mode
         spindexerSensorPair.setBackgroundMode(true);
         transferSensorPair.setBackgroundMode(true);
         rampSensorPair.setBackgroundMode(true);
 
-        // Smart scan: back-most empty first (intake → transfer → ramp)
         smartScanOrder = new DualBallDetector[]{spindexerSensorPair, transferSensorPair, rampSensorPair};
 
-        // Progressive scan order for auto: spindexer → transfer → ramp
         progressiveScanOrder = new DualBallDetector[]{spindexerSensorPair, transferSensorPair, rampSensorPair};
         progressivePairState = new EnumConstants.SensorPairState[]{
                 EnumConstants.SensorPairState.UNCHECKED,
@@ -282,26 +256,15 @@ public class RobotHardware {
         limelight.start();
 
         // ******************* WEBCAM (AutonVisionCamera) ******************* //
-        // Skipped entirely in TeleOp (initVisionPortal=false) — VisionPortal
-        // construction + lockCameraControls() busy-wait costs 3+ seconds and
-        // TeleOp doesn't use the webcam.
         if (initVisionPortal) {
         autonVisionCamera = hardwareMap.get(WebcamName.class, NamingConstants.Camera.autonVisionCamera);
 
-        // SDK YCrCb presets tuned by FIRST for the 5" DECODE artifacts. YCrCb
-        // decouples chroma from luma, so thresholds survive lighting shifts
-        // that wreck HSV.
+
         ColorRange greenRange  = ColorRange.ARTIFACT_GREEN;
         ColorRange purpleRange = ColorRange.ARTIFACT_PURPLE;
 
-        // ROI is the full frame. With the camera tilted down 20° the image
-        // sees only the field itself — no horizon, no audience — so we no
-        // longer need a vertical clip.
         ImageRegion ballRoi = ImageRegion.asUnityCenterCoordinates(-1, 1, 1, -1);
 
-        // drawContours(true) overlays blob outlines on the Panels stream so
-        // drivers can see what the camera is detecting. Cost lives on the
-        // camera thread, not the scheduler loop.
         greenBlobProcessor = new ColorBlobLocatorProcessor.Builder()
                 .setTargetColorRange(greenRange)
                 .setContourMode(ColorBlobLocatorProcessor.ContourMode.EXTERNAL_ONLY)
@@ -333,20 +296,13 @@ public class RobotHardware {
                 .addProcessor(purpleBlobProcessor)
                 .build();
 
-        // Note: processors intentionally LEFT ENABLED after construction.
-        // Main's ArtifactDetector comment warns toggling processor state races
-        // with onDrawFrame and can NPE. Continuous processor execution is the
-        // normal FTC pattern.
         lockCameraControls();
 
-        // Panels camera preview at a low frame rate. Lets drivers see what the
-        // camera is detecting during auto.
         if (VisionConstants.PANELS_STREAM_FPS > 0) {
             try {
                 PanelsCameraStream.INSTANCE.startStream(visionPortal,
                         VisionConstants.PANELS_STREAM_FPS);
             } catch (Exception ignored) {
-                // If Panels is unavailable, don't fail init.
             }
         }
         }
@@ -355,17 +311,12 @@ public class RobotHardware {
         if (hardwareMap.voltageSensor.iterator().hasNext()) {
             voltageSensor = hardwareMap.voltageSensor.iterator().next();
         } else {
-            voltageSensor = null; // Will need null check when used
+            voltageSensor = null;
         }
 
         resetCachedState();
     }
 
-    /**
-     * Lock the C920's exposure, gain, and white-balance to manual. Reads values
-     * from VisionConstants (tunable at runtime via VisionTuningTeleOp). Pacing
-     * mirrors FIRST's ConceptAprilTagOptimizeExposure sample.
-     */
     private void lockCameraControls() {
         if (visionPortal == null) return;
         long waitStart = System.currentTimeMillis();
@@ -400,11 +351,9 @@ public class RobotHardware {
                 wb.setWhiteBalanceTemperature(VisionConstants.WB_KELVIN);
             }
         } catch (Exception e) {
-            // Don't crash init if a control isn't supported — continue.
         }
     }
 
-    /** Re-apply current VisionConstants camera values. Callable from TuningTeleOp. */
     public void applyCameraControls() {
         lockCameraControls();
     }
@@ -418,32 +367,22 @@ public class RobotHardware {
         cachedHeadingVel = 0;
         relocalizationPending = false;
 
-        // Clear smart polling distance detection state
         if (smartScanOrder != null) {
             for (DualBallDetector detector : smartScanOrder) {
                 detector.setDistanceDetected(false);
             }
         }
 
-        // Reset progressive scan state
         resetProgressiveScan();
     }
 
-    /** Clear bulk cache on all hubs. Call once at the top of each loop. */
     public void clearBulkCache() {
         for (LynxModule hub : allHubs) {
             hub.clearBulkCache();
         }
     }
 
-    /**
-     * Smart distance-based sensor polling. Two phases:
-     * Phase 1: If any pair is mid-color-burst, tick it (1 bulk RGBA read).
-     * Phase 2: Distance scan — find first empty slot (back to front), check distance.
-     *          If ball detected, start color burst. If ball departed, clear detection.
-     */
     public void smartPollSensors() {
-        // Phase 1: Service any active color burst
         for (DualBallDetector detector : smartScanOrder) {
             if (detector.isInColorBurst()) {
                 detector.colorBurstTick();
@@ -451,17 +390,14 @@ public class RobotHardware {
             }
         }
 
-        // Phase 2: Distance scan — find first pair where ball is not yet confirmed
         for (DualBallDetector detector : smartScanOrder) {
             if (!detector.quickCheck().ballPresent) {
-                // Slot appears empty — check distance for incoming ball
                 if (detector.checkDistancePresent()) {
                     detector.setDistanceDetected(true);
                     detector.startColorBurst(SensorConstants.COLOR_READ_CYCLES);
                 }
                 return;
             } else if (detector.isDistanceDetected() && !detector.checkDistancePresent()) {
-                // Ball was present but distance now clear — ball has departed
                 detector.setDistanceDetected(false);
                 return;
             }
@@ -469,17 +405,9 @@ public class RobotHardware {
     }
 
     // ==================== Progressive Scan (Auto) ====================
-
-    /**
-     * Progressive auto sensor polling. Scans one pair at a time:
-     * spindexer → transfer → ramp. Each pair goes through:
-     * UNCHECKED → (distance check) → COLOR_SCANNING → CONFIRMED.
-     * Stops scanning once all 3 are CONFIRMED.
-     */
     public void progressivePollAuto() {
         if (isProgressiveScanComplete()) return;
 
-        // Service any active color burst first
         for (int i = 0; i < progressiveScanOrder.length; i++) {
             if (progressivePairState[i] == EnumConstants.SensorPairState.COLOR_SCANNING) {
                 DualBallDetector detector = progressiveScanOrder[i];
@@ -487,25 +415,20 @@ public class RobotHardware {
                     detector.colorBurstTick();
                     return;
                 }
-                // Burst finished — check if color was identified
                 if (detector.quickCheck().color != EnumConstants.BallColor.None) {
                     progressivePairState[i] = EnumConstants.SensorPairState.CONFIRMED;
-                    // Advance to next unconfirmed pair
                     advanceProgressiveIndex();
                 } else {
-                    // No color — go back to UNCHECKED to retry
                     progressivePairState[i] = EnumConstants.SensorPairState.UNCHECKED;
                 }
                 return;
             }
         }
 
-        // Check distance on the current pair
         if (progressiveScanIndex < progressiveScanOrder.length) {
             DualBallDetector detector = progressiveScanOrder[progressiveScanIndex];
             if (progressivePairState[progressiveScanIndex] == EnumConstants.SensorPairState.UNCHECKED) {
                 if (detector.checkDistancePresent()) {
-                    // Ball detected — start color burst
                     detector.setDistanceDetected(true);
                     detector.startColorBurst(SensorConstants.COLOR_READ_CYCLES);
                     progressivePairState[progressiveScanIndex] = EnumConstants.SensorPairState.COLOR_SCANNING;
@@ -514,7 +437,6 @@ public class RobotHardware {
         }
     }
 
-    /** Reset progressive scan to initial state. Call after shooting. */
     public void resetProgressiveScan() {
         if (progressivePairState != null) {
             for (int i = 0; i < progressivePairState.length; i++) {
@@ -529,7 +451,6 @@ public class RobotHardware {
         }
     }
 
-    /** Returns true when all 3 sensor pairs have confirmed ball color. */
     public boolean isProgressiveScanComplete() {
         if (progressivePairState == null) return false;
         for (EnumConstants.SensorPairState state : progressivePairState) {
@@ -545,28 +466,25 @@ public class RobotHardware {
                 return;
             }
         }
-        progressiveScanIndex = progressivePairState.length; // All confirmed
+        progressiveScanIndex = progressivePairState.length;
     }
 
-    /** Read pinpoint pose/velocities once and cache for the entire loop. */
     public void updateCachedPose() {
         GoBildaPinpointDriver.DeviceStatus status = pinpoint.getDeviceStatus();
         if (status != GoBildaPinpointDriver.DeviceStatus.READY) {
-            return; // Keep last good cached values
+            return;
         }
 
         double newX = pinpoint.getPosX(DistanceUnit.INCH);
         double newY = pinpoint.getPosY(DistanceUnit.INCH);
 
-        // After relocalization, allow the first large jump through
         if (relocalizationPending) {
             relocalizationPending = false;
         } else {
-            // Reject teleportation: >12 inches in one loop is physically impossible
             double dx = newX - cachedPoseX;
             double dy = newY - cachedPoseY;
             if ((cachedPoseX != 0 || cachedPoseY != 0) && (dx * dx + dy * dy > 144)) {
-                return; // Keep last good values
+                return;
             }
         }
 

@@ -6,9 +6,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 
-/**
- * Odometry, field positions, and goal constants.
- */
+
 @Configurable
 public class OdometryConstants {
     public static Pose blueStartPoint = new Pose(55.5, 6.75, Math.toRadians(90)); // Test out (55.5, 6.75)
@@ -32,7 +30,6 @@ public class OdometryConstants {
 
     public static Pose endingAutonPose;
 
-    /** Converts a Pedro Pose to FTC Pose2D for the Pinpoint odometry computer. */
     public static Pose2D toPose2D(Pose pose) {
         return new Pose2D(DistanceUnit.INCH, pose.getX(), pose.getY(), AngleUnit.RADIANS, pose.getHeading());
     }

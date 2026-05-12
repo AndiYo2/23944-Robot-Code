@@ -2,13 +2,7 @@ package Constants;
 
 import com.bylazar.configurables.annotations.Configurable;
 
-/**
- * Turret subsystem constants.
- *
- * The turret uses a position-controlled servo (not continuous rotation).
- * Servo position 0.5 = turret center (0 degrees)
- * Gear ratio is 2.5:1 (servo rotates 2.5x per turret degree)
- */
+
 @Configurable
 public class TurretConstants {
     // ==================== TURRET GEOMETRY ====================
@@ -22,26 +16,18 @@ public class TurretConstants {
 
     public static final double SERVO_CENTER_POSITION = 0.5;
     public static final double SERVO_DEGREES_PER_UNIT = SpindexerConstants.SERVO_DEGREES_PER_UNIT;
-    // Servo-to-turret gear ratio (2.5:1)
     public static final double GEAR_RATIO = 200.0 / 96.0;
 
-    // ==================== TURRET LIMITS ====================
-    // Hard stop limits (turret degrees) - prevents hardware damage
-    // Negative = left (CCW), Positive = right (CW)
-    public static double HARD_STOP_CW = 55.0;    // Max right rotation (clockwise)
-    public static double HARD_STOP_CCW = -70.0;  // Max left rotation (counter-clockwise)
+    // These are what its supposed to be, but I lowkey think they are flipped
+    public static double HARD_STOP_CW = 55.0;
+    public static double HARD_STOP_CCW = -70.0;
     public static double CENTER = 1.5;
-    public static double MIN_CHANGE_THRESHOLD = 0.5;
-    /** EMA smoothing factor for turret angle (0.0 = frozen, 1.0 = no smoothing). */
     public static double SMOOTHING_ALPHA = 0.8;
 
-    // Positive = shift aim right, Negative = shift aim left
-    // Position-dependent offsets: front (Y > threshold, close to goal) vs back (Y <= threshold, far from goal).
-    // The Y threshold is alliance-neutral — same field split works for both.
-    public static double BLUE_BACK_TURRET_TRACKING_OFFSET = 0.5;    // far from goal
-    public static double BLUE_FRONT_TURRET_TRACKING_OFFSET = 0.5;   // close to goal
+    public static double BLUE_BACK_TURRET_TRACKING_OFFSET = 0.5;
+    public static double BLUE_FRONT_TURRET_TRACKING_OFFSET = 0.5;
 
-    public static double RED_BACK_TURRET_TRACKING_OFFSET = 2;       // far from goal
-    public static double RED_FRONT_TURRET_TRACKING_OFFSET = -1;     // close to goal
+    public static double RED_BACK_TURRET_TRACKING_OFFSET = 2;
+    public static double RED_FRONT_TURRET_TRACKING_OFFSET = -1;
     public static double TURRET_OFFSET_Y_THRESHOLD = 48.0;
 }

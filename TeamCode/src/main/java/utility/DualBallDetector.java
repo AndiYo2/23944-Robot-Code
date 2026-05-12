@@ -24,11 +24,9 @@ public class DualBallDetector {
     private static final int BUFFER_SIZE = 5;
     private static final int REQUIRED_PRESENT = 3;
 
-    // Per-sensor alpha thresholds
     private static final double MIN_ALPHA_NEAR = 400;
     private static final double MIN_ALPHA_FAR  = 250;
 
-    // Color profiles (sum-normalized, REV V2)
     private static final double[] GREEN_N  = {0.15, 0.55, 0.30};
     private static final double[] PURPLE_N = {0.32, 0.22, 0.46};
 
@@ -121,13 +119,6 @@ public class DualBallDetector {
         return resolveResults(nearResult, farResult);
     }
 
-    /**
-     * Single-read fallback for immediate detection.
-     * Lower confidence than averaged detectBall(), but no buffer latency.
-     *
-     * When background mode is active, returns the most recent cached result
-     * (updated by round-robin polling) instead of reading hardware.
-     */
     public Result quickCheck() {
         if (backgroundMode) {
             return cachedResult;
@@ -138,22 +129,6 @@ public class DualBallDetector {
         return resolveResults(nearResult, farResult);
     }
 
-    /**
-     * Reads both sensors and stores the result in the cache.
-     * Uses getNormalizedColors() — NOT bulk-cache-safe. Use updateCacheBulkSafe() instead
-     * when running in MANUAL bulk caching mode.
-     */
-    public void updateCache() {
-        Result nearResult = nearState.instantRead(near);
-        Result farResult  = farState.instantRead(far);
-        cachedResult = resolveResults(nearResult, farResult);
-    }
-
-    /**
-     * Reads both sensors using .alpha()/.red()/.green()/.blue() which go through
-     * the REV hub bulk read cache. Safe to call for all sensor pairs every loop
-     * when using MANUAL bulk caching mode.
-     */
     public void updateCacheBulkSafe() {
         Result nearResult = bulkSafeRead(near, nearState.minAlpha);
         Result farResult  = bulkSafeRead(far, farState.minAlpha);
@@ -192,31 +167,11 @@ public class DualBallDetector {
                 : new Result(true, BallColor.Purple, pC);
     }
 
-    /**
-     * Update only the near sensor's cached result and re-resolve the pair.
-     * Used by round-robin polling to update one sensor at a time.
-     */
-    public void updateNearCache() {
-        cachedNearResult = bulkSafeRead(near, nearState.minAlpha);
-        cachedResult = resolveResults(cachedNearResult, cachedFarResult);
-    }
-
-    /**
-     * Update only the far sensor's cached result and re-resolve the pair.
-     * Used by round-robin polling to update one sensor at a time.
-     */
-    public void updateFarCache() {
-        cachedFarResult = bulkSafeRead(far, farState.minAlpha);
-        cachedResult = resolveResults(cachedNearResult, cachedFarResult);
-    }
 
     public void setBackgroundMode(boolean on) {
         backgroundMode = on;
     }
 
-    // ========== Distance-based detection ==========
-
-    /** Check if either distance sensor detects a ball below its threshold. */
     public boolean checkDistancePresent() {
         boolean nearPresent = nearDist != null
                 && nearDist.getDistance(DistanceUnit.MM) < nearDistThreshold;
@@ -225,27 +180,15 @@ public class DualBallDetector {
         return nearPresent || farPresent;
     }
 
-    /** Get near-sensor distance in mm (for telemetry). Returns NaN if no DistanceSensor. */
-    public double getNearDistanceMM() {
-        return nearDist != null ? nearDist.getDistance(DistanceUnit.MM) : Double.NaN;
-    }
 
-    /** Get far-sensor distance in mm (for telemetry). Returns NaN if no DistanceSensor. */
-    public double getFarDistanceMM() {
-        return farDist != null ? farDist.getDistance(DistanceUnit.MM) : Double.NaN;
-    }
-
-    /** Trigger N cycles of RGBA reads to identify ball color. */
     public void startColorBurst(int cycles) {
         colorBurstRemaining = cycles;
     }
 
-    /** True if currently performing color burst reads. */
     public boolean isInColorBurst() {
         return colorBurstRemaining > 0;
     }
 
-    /** Perform one cycle of RGBA reads (bulk-safe) and decrement counter. */
     public void colorBurstTick() {
         if (colorBurstRemaining > 0) {
             updateCacheBulkSafe();
@@ -361,11 +304,6 @@ public class DualBallDetector {
                     ? new Result(true, BallColor.Green, gC)
                     : new Result(true, BallColor.Purple, pC);
         }
-
-        /**
-         * Single instantaneous read using NormalizedColorSensor for a single
-         * I2C bulk read instead of 4 individual transactions.
-         */
         Result instantRead(ColorSensor s) {
             NormalizedRGBA colors = ((NormalizedColorSensor) s).getNormalizedColors();
 

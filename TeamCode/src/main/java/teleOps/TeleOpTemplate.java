@@ -51,24 +51,20 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     private TelemetryHelper telemetryHelper;
     private final ElapsedTime loopTimer = new ElapsedTime();
     private final ElapsedTime telemetryTimer = new ElapsedTime();
-    private static final double TELEMETRY_INTERVAL_MS = 200; // ~5 Hz
+    private static final double TELEMETRY_INTERVAL_MS = 200;
     private SimplePoseTracker poseTracker;
     private double loopMs;
 
     private boolean servosInitialized = false;
 
-    // Pre-allocated array for getTransformedControls() to avoid GC pressure
     private final double[] controlsArray = new double[3];
     private boolean endGame = false;
 
-    // Pedro in Teleop
     private Follower follower;
     private Supplier<PathChain> pathChain;
     private Supplier<PathChain> intakePathChain;
     private boolean autoDrive = false;
 
-    // Defense anchor (LT): snapshot pose on press, while held X-Lock when close
-    // to anchor, otherwise follow an aggressive return path back to it.
     private static final double DEFENSE_AT_ANCHOR_DIST = 0.3;
     private static final double DEFENSE_BRAKE_START = 0.15;
     private static final double DEFENSE_BRAKE_STRENGTH = 2.0;
@@ -80,23 +76,15 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     private Command activeReturnCommand;
 
 
-    /**
-     * Consolidated initialization for alliance-specific TeleOp.
-     * Call this from subclasses with the alliance color and fallback start position.
-     *
-     * @param allianceColor the alliance color (Blue or Red)
-     * @param fallbackStartPosition the start position to use if no auton ran
-     */
     protected void initForAlliance(EnumConstants.AllianceColor allianceColor,
                                    com.pedropathing.geometry.Pose fallbackStartPosition) {
-        // Set alliance color BEFORE initHardware so it can use the correct settings
         RobotConstants.Robot.allianceColor = allianceColor;
         follower = Constants.createFollower(hardwareMap);
         Pose gatePose = (allianceColor == EnumConstants.AllianceColor.Red)
                 ? OdometryConstants.redGatePose : OdometryConstants.blueGatePose;
         Pose intakePose = (allianceColor == EnumConstants.AllianceColor.Red)
                 ? OdometryConstants.redIntakePose : OdometryConstants.blueIntakePose;
-        pathChain = () -> follower.pathBuilder() //Lazy Curve Generation
+        pathChain = () -> follower.pathBuilder()
                 .addPath(new Path(new BezierLine(follower::getPose, gatePose)))
                 .setHeadingInterpolation(HeadingInterpolator.linearFromPoint(follower::getHeading, gatePose.getHeading(), 0.8))
                 .build();
@@ -107,8 +95,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         initHardware();
         SpindexerConstants.currentMode = EnumConstants.ShootingMode.Fast;
 
-        // Only set position if no auton ran (endingAutonPose is null)
-        // If auton ran, initHardware already set the position from endingAutonPose
         if (OdometryConstants.endingAutonPose == null) {
             robot.pinpoint.setPosition(OdometryConstants.toPose2D(fallbackStartPosition));
             robot.pinpoint.update();
@@ -131,8 +117,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         secondaryController = new GamepadEx(gamepad2);
         robot.init(hardwareMap, mainController, false);
 
-        // Set starting position for TeleOp
-        // If we have an ending auton pose, use it; otherwise use standard start point
         com.pedropathing.geometry.Pose startPose;
         if (OdometryConstants.endingAutonPose != null) {
             startPose = OdometryConstants.endingAutonPose;
@@ -187,7 +171,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
                 }, mecanumDrive)
         );
 
-        // ============ MAIN CONTROLLER (gamepad1) ============
 
         // Dpad Up — intake (hold)
         new GamepadButton(mainController, GamepadKeys.Button.DPAD_UP)
@@ -205,9 +188,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         // Right bumper — rotate CW spindexer
         new GamepadButton(mainController, GamepadKeys.Button.RIGHT_BUMPER)
                 .whenPressed(new InstantCommand(this::manualRotateCW));
-
-        // Left trigger — defense anchor. Handled per-loop in run() so the
-        // Schmitt trigger / distance check / path rebuild can all run continuously.
 
         // Right trigger — shoot
         new Trigger(() -> gamepad1.right_trigger > RobotConstants.Controls.TRIGGER_THRESHOLD)
@@ -235,7 +215,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         new GamepadButton(mainController, GamepadKeys.Button.START)
                 .whenPressed(new InstantCommand(mecanumDrive::resetYaw));
 
-        // ============ SECONDARY CONTROLLER (gamepad2) ============
 
         // Dpad Up — increase velocity offset by 20
         new GamepadButton(secondaryController, GamepadKeys.Button.DPAD_UP)
@@ -331,24 +310,17 @@ abstract public class TeleOpTemplate extends CommandOpMode {
             updateTelemetry();
         }
     }
-    /**
-     * Per-loop defense-anchor logic bound to LEFT_TRIGGER.
-     * On rising edge: snapshot current pose. While held: if within
-     * DEFENSE_AT_ANCHOR_DIST → X-Lock; otherwise schedule an AggressiveReturnCommand
-     * at max power back to the anchor. On falling edge: cancel + resume teleop drive.
-     */
+
     private void updateDefenseAnchor() {
         double lt = gamepad1.left_trigger;
         boolean wasEngaged = ltEngaged;
         if (!ltEngaged && lt > LT_ENGAGE_THRESHOLD) ltEngaged = true;
         else if (ltEngaged && lt < LT_RELEASE_THRESHOLD) ltEngaged = false;
 
-        // Rising edge: snapshot anchor pose.
         if (ltEngaged && !wasEngaged) {
             anchorPose = follower.getPose();
         }
 
-        // Falling edge: cancel return, drop X-Lock, resume teleop driving.
         if (!ltEngaged && wasEngaged) {
             if (activeReturnCommand != null) {
                 if (!activeReturnCommand.isFinished()) activeReturnCommand.cancel();
@@ -374,7 +346,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         double distance = Math.hypot(dx, dy);
 
         if (distance < DEFENSE_AT_ANCHOR_DIST) {
-            // Close → cancel any running path, engage X-Lock, let drive() write the pattern.
             if (activeReturnCommand != null) {
                 if (!activeReturnCommand.isFinished()) activeReturnCommand.cancel();
                 activeReturnCommand = null;
@@ -387,7 +358,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
                 mecanumDrive.setXLock(true);
             }
         } else {
-            // Away → release X-Lock, ensure an aggressive return path is running.
             if (mecanumDrive.getCurrentState() == DriveState.Locked) {
                 mecanumDrive.setXLock(false);
             }
@@ -402,14 +372,6 @@ abstract public class TeleOpTemplate extends CommandOpMode {
         }
     }
 
-    /**
-     * Applies alliance-specific control mapping transformations.
-     * Blue alliance uses standard field coordinates.
-     * Red alliance inverts X and Y axes to account for mirrored starting position.
-     * Use SWAP_ALLIANCE_CONTROLS in RobotConstants to swap which alliance gets inverted controls.
-     *
-     * @return double array [fieldY, fieldX, rotation] — pre-allocated, do NOT store reference
-     */
     private double[] getTransformedControls() {
         double rawY = -gamepad1.left_stick_y;
         double rawX = gamepad1.left_stick_x;
@@ -433,20 +395,10 @@ abstract public class TeleOpTemplate extends CommandOpMode {
     }
 
 
-    /**
-     * Manual rotation forward with ball pattern update
-     * Blocked during shooting sequence to prevent conflicts
-     * OVERRIDE: Hold left stick button to force rotation during sequence
-     */
     private void manualRotateCW() {
         spindexer.rotateCW();
     }
 
-    /**
-     * Manual rotation backward with ball pattern update
-     * Blocked during shooting sequence to prevent conflicts
-     * OVERRIDE: Hold left stick button to force rotation during sequence
-     */
     private void manualRotateCCW() {
         spindexer.rotateCCW();
     }

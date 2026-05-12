@@ -30,7 +30,6 @@ public class LimelightConstants {
 
     // Coordinate conversion constants
     public static final double METERS_TO_INCHES = 39.3701;
-    public static final double FIELD_CENTER_OFFSET_INCHES = 72.0;
 
 
     public static EnumConstants.BallColor[] getMotifPatternForTag(int tagId) {

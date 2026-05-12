@@ -34,7 +34,6 @@ public class VisionCollectWithFallbacksCommand extends CommandBase {
     private final ArtifactDetector detector;
     private final Follower follower;
     private final double maxPower;
-    private final double secondaryHeadingRad;
     private final PathChain fallbackPath;
 
     private enum State {
@@ -46,8 +45,6 @@ public class VisionCollectWithFallbacksCommand extends CommandBase {
 
     private State state = State.SCAN;
     private CorridorPlanner.Sweep lastSweep = CorridorPlanner.Sweep.EMPTY;
-
-    /** Readable from telemetry. */
     public static String lastResult = "No scan yet";
 
     public VisionCollectWithFallbacksCommand(
@@ -59,7 +56,6 @@ public class VisionCollectWithFallbacksCommand extends CommandBase {
         this.detector = detector;
         this.follower = follower;
         this.maxPower = maxPower;
-        this.secondaryHeadingRad = secondaryHeadingRad;
         this.fallbackPath = fallbackPath;
     }
 
@@ -114,12 +110,6 @@ public class VisionCollectWithFallbacksCommand extends CommandBase {
             follower.breakFollowing();
         }
     }
-
-    public CorridorPlanner.Sweep getLastSweep() {
-        return lastSweep;
-    }
-
-    // ----- Helpers -----
 
     private boolean hasUsableSweep(CorridorPlanner.Sweep sweep) {
         return sweep != null

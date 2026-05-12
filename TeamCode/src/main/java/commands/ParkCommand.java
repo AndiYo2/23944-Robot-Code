@@ -26,7 +26,6 @@ public class ParkCommand extends CommandBase {
         phase = 0;
         extended = !extended;
 
-        // Phase 0: beam out
         robot.beamServo.setPosition(DriveConstants.BEAM_SERVO_EXTENDED);
         timer.reset();
     }

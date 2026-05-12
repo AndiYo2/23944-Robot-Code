@@ -17,10 +17,7 @@ import Constants.ShootingSequenceConstants;
 
 public class Shooter extends SubsystemBase {
     RobotHardware robot;
-
     private Turret turret;
-
-    /** Runtime velocity offset from gamepad Dpad. Stored here (not in @Configurable ShooterConstants) so Panels can't overwrite it. */
     public static double runtimeVelocityOffset = 0;
 
     private double requiredVelocity = ShooterConstants.DEFAULT_VELOCITY;
@@ -31,8 +28,6 @@ public class Shooter extends SubsystemBase {
 
 
     private ElapsedTime loopTimer = new ElapsedTime();
-
-    // Default loop time when dt calculation fails (seconds)
     private static final double DEFAULT_LOOP_TIME = 0.02;
     private double lastLoopDt = DEFAULT_LOOP_TIME;
     private double cachedVelocity = 0;
@@ -49,7 +44,6 @@ public class Shooter extends SubsystemBase {
 
     private double currentTimeInAir = 0.0;
 
-    // Shooting_While_Moving: position-derived velocity and acceleration tracking
     private double prevPoseX = 0.0;
     private double prevPoseY = 0.0;
     private double prevHeading = 0.0;
@@ -61,20 +55,13 @@ public class Shooter extends SubsystemBase {
     private double filteredAngularAccel = 0.0;
     private boolean shootingWhileMovingInitialized = false;
 
-    // Shooting_While_Moving output (shared with Turret via getters)
     private double shootingWhileMovingDistance = ShooterConstants.DEFAULT_DISTANCE;
     private double[] shootingWhileMovingFuturePose = new double[3]; // {x, y, headingRad}
 
     private double lastHoodServoPosition = -1.0;
     private static final double SERVO_EPSILON = 0.001;
-
-    // Cumulative hood compensation during shooting sequences
     private double shotHoodCompensation = 0.0;
-
-    // Pre-allocated array for getTurretFieldPositionFrom() to avoid GC pressure
     private final double[] turretFieldPosTemp = new double[2];
-
-    // Pre-computed turret offset in polar form (same as Turret class)
     private static final double TURRET_OFFSET_MAG = Math.sqrt(
             TurretConstants.TURRET_OFFSET_X * TurretConstants.TURRET_OFFSET_X +
             TurretConstants.TURRET_OFFSET_Y * TurretConstants.TURRET_OFFSET_Y);
@@ -148,16 +135,8 @@ public class Shooter extends SubsystemBase {
                        Math.min(ShooterConstants.HOOD_MAX_ANGLE, angle));
     }
 
-    /**
-     * Convert hood angle to servo position.
-     * Servo 0.34 = 63 degrees (HOOD_MAX_ANGLE)
-     * Servo 1.0 = 30 degrees (HOOD_MIN_ANGLE)
-     *
-     * @param hoodAngleDegrees Target hood angle in degrees
-     * @return Servo position (0.34 to 1.0)
-     */
+
     private double hoodAngleToServoPosition(double hoodAngleDegrees) {
-        // Linear mapping: 30° → 1.0, 63° → 0.34
         double angleRange = ShooterConstants.HOOD_MAX_ANGLE - ShooterConstants.HOOD_MIN_ANGLE;
         double servoRange = ShooterConstants.HOOD_SERVO_AT_MIN_ANGLE - ShooterConstants.HOOD_SERVO_AT_MAX_ANGLE;
         double normalizedAngle = (hoodAngleDegrees - ShooterConstants.HOOD_MIN_ANGLE) / angleRange;
@@ -191,11 +170,6 @@ public class Shooter extends SubsystemBase {
         return turretFieldPosTemp;
     }
 
-    /**
-     * Kinematic prediction with stop-clamp.
-     * Computes pos + vel*t + 0.5*accel*t², but if deceleration would
-     * reverse velocity direction before tof, clamps to the stopping point.
-     */
     private double clampedPredict(double pos, double vel, double accel, double tof) {
         if (accel != 0.0 && vel != 0.0 && Math.signum(accel) != Math.signum(vel)) {
             double tStop = -vel / accel;
@@ -206,16 +180,6 @@ public class Shooter extends SubsystemBase {
         return pos + vel * tof + 0.5 * accel * tof * tof;
     }
 
-    /**
-     * Shooting_While_Moving: Full kinematic shoot-while-moving compensation.
-     *
-     * Predicts future robot pose using: pos + vel*t + 0.5*accel*t²
-     * Then computes turret angle, flywheel velocity, and hood angle
-     * as if the robot were already at that predicted future position.
-     *
-     * Acceleration is derived from velocity differences between loops,
-     * then low-pass filtered and deadbanded to reject sensor noise.
-     */
     private void updateShootingWhileMovingCompensation() {
         double curX = robot.cachedPoseX;
         double curY = robot.cachedPoseY;
@@ -223,7 +187,6 @@ public class Shooter extends SubsystemBase {
 
         double dt = lastLoopDt;
 
-        // ---- INITIALIZATION ----
         if (!shootingWhileMovingInitialized) {
             prevPoseX = curX;
             prevPoseY = curY;
@@ -248,23 +211,18 @@ public class Shooter extends SubsystemBase {
             return;
         }
 
-        // ---- VELOCITY FROM POSITION DELTAS ----
-        // Positions are already field-relative, no rotation needed.
         double fieldVelX = (curX - prevPoseX) / dt;
         double fieldVelY = (curY - prevPoseY) / dt;
         double velH = (curH - prevHeading) / dt;
 
-        // Update previous pose for next loop
         prevPoseX = curX;
         prevPoseY = curY;
         prevHeading = curH;
 
-        // Save raw velocities BEFORE deadband for acceleration computation
         double rawFieldVelX = fieldVelX;
         double rawFieldVelY = fieldVelY;
         double rawVelH = velH;
 
-        // Apply velocity deadbands — only affects the vel*t prediction term
         double speed = Math.sqrt(fieldVelX * fieldVelX + fieldVelY * fieldVelY);
         if (speed < ShooterConstants.LEAD_VELOCITY_DEADBAND) {
             fieldVelX = 0.0;
@@ -273,35 +231,25 @@ public class Shooter extends SubsystemBase {
         if (Math.abs(velH) < ShooterConstants.LEAD_HEADING_VELOCITY_DEADBAND) {
             velH = 0.0;
         }
-
-        // ---- ACCELERATION COMPUTATION (uses raw velocities) ----
         {
-            // --- COLLISION SPIKE REJECTION ---
-            // If velocity changed more than physically possible in one loop,
-            // it's a collision. Zero out acceleration but keep velocity intact.
-            // The vel*t term still compensates for ball inheritance correctly.
             double dvx = rawFieldVelX - prevFieldVelX;
             double dvy = rawFieldVelY - prevFieldVelY;
             double dvMag = Math.sqrt(dvx * dvx + dvy * dvy);
 
             if (dvMag > ShooterConstants.SHOOTING_WHILE_MOVING_MAX_VELOCITY_JUMP) {
-                // Collision detected — don't trust acceleration this loop
                 filteredAccelX = 0.0;
                 filteredAccelY = 0.0;
                 filteredAngularAccel = 0.0;
             } else {
-                // Normal operation — compute and filter acceleration
                 double rawAccelX = dvx / dt;
                 double rawAccelY = dvy / dt;
                 double rawAngularAccel = (rawVelH - prevHeadingVel) / dt;
 
-                // Low-pass EMA filter
                 double alpha = ShooterConstants.SHOOTING_WHILE_MOVING_ACCEL_FILTER_ALPHA;
                 filteredAccelX = alpha * rawAccelX + (1.0 - alpha) * filteredAccelX;
                 filteredAccelY = alpha * rawAccelY + (1.0 - alpha) * filteredAccelY;
                 filteredAngularAccel = alpha * rawAngularAccel + (1.0 - alpha) * filteredAngularAccel;
 
-                // Deadband: zero out negligible acceleration
                 double accelMag = Math.sqrt(filteredAccelX * filteredAccelX + filteredAccelY * filteredAccelY);
                 if (accelMag < ShooterConstants.SHOOTING_WHILE_MOVING_ACCEL_DEADBAND) {
                     filteredAccelX = 0.0;
@@ -312,8 +260,6 @@ public class Shooter extends SubsystemBase {
                 }
             }
 
-            // --- HARD ACCELERATION CAP ---
-            // Even after filtering, clamp to physical robot limits.
             double accelMag = Math.sqrt(filteredAccelX * filteredAccelX + filteredAccelY * filteredAccelY);
             if (accelMag > ShooterConstants.SHOOTING_WHILE_MOVING_MAX_ACCEL) {
                 double scale = ShooterConstants.SHOOTING_WHILE_MOVING_MAX_ACCEL / accelMag;
@@ -324,20 +270,17 @@ public class Shooter extends SubsystemBase {
                 filteredAngularAccel = Math.signum(filteredAngularAccel) * ShooterConstants.SHOOTING_WHILE_MOVING_MAX_ANGULAR_ACCEL;
             }
 
-            // Store raw velocity for next loop's diff (always update, even during collision)
             prevFieldVelX = rawFieldVelX;
             prevFieldVelY = rawFieldVelY;
             prevHeadingVel = rawVelH;
         }
 
-        // ---- FULL KINEMATIC PREDICTION (clamped to stop point) ----
         double tof = ShooterConstants.TIME_IN_AIR;
 
         shootingWhileMovingFuturePose[0] = clampedPredict(curX, fieldVelX, filteredAccelX, tof);
         shootingWhileMovingFuturePose[1] = clampedPredict(curY, fieldVelY, filteredAccelY, tof);
         shootingWhileMovingFuturePose[2] = clampedPredict(curH, velH, filteredAngularAccel, tof);
 
-        // ---- DISTANCE FROM FUTURE TURRET POSITION TO GOAL ----
         double[] futureTurretPos = getTurretFieldPositionFrom(
                 shootingWhileMovingFuturePose[0], shootingWhileMovingFuturePose[1], shootingWhileMovingFuturePose[2]);
         Pose goalPosition = FieldMap.getGoalPosition();
@@ -347,19 +290,8 @@ public class Shooter extends SubsystemBase {
         currentTimeInAir = tof;
     }
 
-    /**
-     * Returns the Shooting_While_Moving predicted future pose {x, y, headingRad}.
-     * Used by Turret to aim from the predicted position.
-     */
     public double[] getShootingWhileMovingFuturePose() {
         return shootingWhileMovingFuturePose;
-    }
-
-    /**
-     * Returns the Shooting_While_Moving distance from predicted future turret position to goal.
-     */
-    public double getShootingWhileMovingDistance() {
-        return shootingWhileMovingDistance;
     }
 
     private void updateVelocityFromDistance() {
@@ -397,18 +329,10 @@ public class Shooter extends SubsystemBase {
         }
     }
 
-    public void triggerShot() {
-        if (currentState == FlickState.Idle) {
-            currentState = FlickState.Start;
-        }
-    }
 
     public void extendFlipper() {
         robot.shooterFlipper.setPosition(ShootingSequenceConstants.SHOOTER_FLIPPER_EXTENDED);
 
-        // Per-shot hood step is zone-dependent on robot Y. Back-zone (long) shots use a larger
-        // negative step because the flywheel loses more velocity per shot at high setpoints;
-        // front-zone (short) shots have enough energy margin that no per-shot drop is needed.
         double step = (robot.cachedPoseY <= ShooterConstants.ShooterTuning.SHOT_HOOD_COMPENSATION_Y_THRESHOLD)
                 ? ShooterConstants.ShooterTuning.SHOT_HOOD_COMPENSATION_STEP_BACK
                 : ShooterConstants.ShooterTuning.SHOT_HOOD_COMPENSATION_STEP_FRONT;
@@ -423,17 +347,8 @@ public class Shooter extends SubsystemBase {
         robot.shooterFlipper.setPosition(ShootingSequenceConstants.SHOOTER_FLIPPER_RETRACT);
     }
 
-    public FlickState getCurrentState() {
-        return currentState;
-    }
-
-
     private double clamp(double value, double min, double max) {
         return Math.max(min, Math.min(max, value));
-    }
-
-    public boolean isAtTargetVelocity() {
-        return Math.abs(requiredVelocity - cachedVelocity) < ShooterConstants.ShooterTuning.VELOCITY_TOLERANCE;
     }
 
     public double getVelocityError() {
@@ -459,7 +374,6 @@ public class Shooter extends SubsystemBase {
 
     @Override
     public void periodic() {
-        // Get loop time for derivative and integral calculations
         double dt = loopTimer.seconds();
         loopTimer.reset();
 
@@ -484,32 +398,27 @@ public class Shooter extends SubsystemBase {
         setHoodAngle(requiredHoodAngle + shotHoodCompensation);
         double targetVelocity = requiredVelocity;
 
-        // Velocity feedback comes from motor 2's encoder only.
         double currentVelocity = robot.shooterMotor2.getVelocity();
         cachedVelocity = currentVelocity;
 
         double velocityError = targetVelocity - currentVelocity;
         lastError = velocityError;
 
-        // ==================== BANG-BANG RECOVERY + FF+P MAINTAIN ====================
         double totalPower;
 
         if (velocityError > ShooterConstants.ShooterTuning.RECOVERY_THRESHOLD) {
-            // --- RECOVERY MODE: full power for fastest possible spin-up ---
             currentControlMode = FlywheelControlMode.RECOVERY;
             double effectiveTarget = targetVelocity + ShooterConstants.ShooterTuning.RECOVERY_VELOCITY_BOOST;
 
             if (currentVelocity < effectiveTarget) {
                 totalPower = 1.0;
             } else {
-                // Boost pushed us past effective target — use feedforward
                 double ff = ShooterConstants.ShooterTuning.kS * Math.signum(targetVelocity)
                           + ShooterConstants.ShooterTuning.kV * targetVelocity;
                 totalPower = ff;
             }
             lastFfOutput = totalPower;
         } else {
-            // --- MAINTAIN MODE: feedforward + proportional for steady-state accuracy ---
             currentControlMode = FlywheelControlMode.MAINTAIN;
             double ff = ShooterConstants.ShooterTuning.kS * Math.signum(targetVelocity)
                       + ShooterConstants.ShooterTuning.kV * targetVelocity;
@@ -520,7 +429,6 @@ public class Shooter extends SubsystemBase {
 
         totalPower = clamp(totalPower, 0, 1.0);
 
-        // Voltage compensation: scale power up as battery sags below nominal
         if (ShooterConstants.ShooterTuning.VOLTAGE_COMPENSATION_ENABLED && robot.voltageSensor != null) {
             double batteryVoltage = robot.voltageSensor.getVoltage();
             if (batteryVoltage > 0) {

@@ -28,8 +28,6 @@ public class VisionCollectCommand extends CommandBase {
 
     private CorridorPlanner.Sweep sweep;
     private boolean usable;
-
-    /** Readable from telemetry after the scan runs. */
     public static String lastScanResult = "No scan yet";
 
     public VisionCollectCommand(ArtifactDetector detector, Follower follower, double maxPower) {
@@ -61,7 +59,6 @@ public class VisionCollectCommand extends CommandBase {
 
     @Override
     public void execute() {
-        // Nothing per-tick — follower handles path following.
     }
 
     @Override
@@ -77,10 +74,6 @@ public class VisionCollectCommand extends CommandBase {
         if (usable) {
             follower.breakFollowing();
         }
-    }
-
-    public CorridorPlanner.Sweep getSweep() {
-        return sweep;
     }
 
     /**

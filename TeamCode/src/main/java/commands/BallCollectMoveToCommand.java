@@ -25,7 +25,6 @@ import utility.RobotHardware;
  * every loop.
  */
 public class BallCollectMoveToCommand extends CommandBase {
-    /** Live debug snapshot — read by AutonTemplate for Panels/DS telemetry. */
     public static volatile String lastDebug = "idle";
 
     private static final double DEFAULT_MAX_WAIT_AFTER_PATH_SEC = 0.4;
@@ -58,19 +57,6 @@ public class BallCollectMoveToCommand extends CommandBase {
     public BallCollectMoveToCommand(Follower follower, PathChain collectPath, double maxPower) {
         this(follower, (Object) collectPath, maxPower, DEFAULT_MAX_WAIT_AFTER_PATH_SEC, false, 1.0, maxPower);
     }
-
-    public BallCollectMoveToCommand(Follower follower, Path collectPath, double maxPower, double maxWaitAfterPathSec) {
-        this(follower, (Object) collectPath, maxPower, maxWaitAfterPathSec, false, 1.0, maxPower);
-    }
-
-    public BallCollectMoveToCommand(Follower follower, PathChain collectPath, double maxPower, double maxWaitAfterPathSec) {
-        this(follower, (Object) collectPath, maxPower, maxWaitAfterPathSec, false, 1.0, maxPower);
-    }
-
-    /**
-     * Late-taper variant. Holds maxPower until decelStartT (0-1 along path),
-     * then linearly ramps to endPower by t=1.
-     */
     public BallCollectMoveToCommand(Follower follower, Path collectPath, double maxPower,
                                     double decelStartT, double endPower) {
         this(follower, (Object) collectPath, maxPower, DEFAULT_MAX_WAIT_AFTER_PATH_SEC, true, decelStartT, endPower);
@@ -80,17 +66,6 @@ public class BallCollectMoveToCommand extends CommandBase {
                                     double decelStartT, double endPower) {
         this(follower, (Object) collectPath, maxPower, DEFAULT_MAX_WAIT_AFTER_PATH_SEC, true, decelStartT, endPower);
     }
-
-    public BallCollectMoveToCommand(Follower follower, Path collectPath, double maxPower,
-                                    double decelStartT, double endPower, double maxWaitAfterPathSec) {
-        this(follower, (Object) collectPath, maxPower, maxWaitAfterPathSec, true, decelStartT, endPower);
-    }
-
-    public BallCollectMoveToCommand(Follower follower, PathChain collectPath, double maxPower,
-                                    double decelStartT, double endPower, double maxWaitAfterPathSec) {
-        this(follower, (Object) collectPath, maxPower, maxWaitAfterPathSec, true, decelStartT, endPower);
-    }
-
     private BallCollectMoveToCommand(Follower follower, Object collectPath, double maxPower,
                                      double maxWaitAfterPathSec, boolean taperEnabled,
                                      double decelStartT, double endPower) {
@@ -118,8 +93,6 @@ public class BallCollectMoveToCommand extends CommandBase {
         allHighNow = false;
 
         follower.setMaxPower(maxPower);
-        // holdEnd=true so the robot sits at the end pose while we wait for any
-        // in-flight balls to clear the sensors.
         if (collectPath instanceof Path) {
             follower.followPath((Path) collectPath, true);
         } else {

@@ -53,7 +53,6 @@ public class IntakeOnlyTeleOp extends CommandOpMode {
     }
 
     private void configureButtonBindings() {
-        // Drive with left stick + right stick rotation
         mecanumDrive.setDefaultCommand(
                 new RunCommand(() -> {
                     double[] controls = getTransformedControls();
@@ -62,21 +61,17 @@ public class IntakeOnlyTeleOp extends CommandOpMode {
                 }, mecanumDrive)
         );
 
-        // Right bumper — intake (hold to run)
         new GamepadButton(driverGamepad, GamepadKeys.Button.RIGHT_BUMPER)
                 .whenPressed(new InstantCommand(() -> intake.runIntake()))
                 .whenReleased(new InstantCommand(() -> intake.stopIntake()));
 
-        // Dpad Right — reverse intake (hold)
         new GamepadButton(driverGamepad, GamepadKeys.Button.DPAD_RIGHT)
                 .whenPressed(new InstantCommand(intake::reverse))
                 .whenReleased(new InstantCommand(intake::stopIntake));
 
-        // B — toggle slow mode
         new GamepadButton(driverGamepad, GamepadKeys.Button.B)
                 .whenPressed(new InstantCommand(mecanumDrive::toggleSlowMode));
 
-        // Start — reset IMU/yaw
         new GamepadButton(driverGamepad, GamepadKeys.Button.START)
                 .whenPressed(new InstantCommand(mecanumDrive::resetYaw));
     }

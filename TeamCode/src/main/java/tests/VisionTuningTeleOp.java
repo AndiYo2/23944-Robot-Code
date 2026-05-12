@@ -64,7 +64,6 @@ public class VisionTuningTeleOp extends OpMode {
         robot.init(hardwareMap);
         detector = new ArtifactDetector();
 
-        // Auto-load persisted values if present.
         loadFromDisk();
         telemetry.addLine("Vision Tuning ready. Press START to run a scan.");
     }
@@ -75,7 +74,6 @@ public class VisionTuningTeleOp extends OpMode {
         loopTimer.reset();
         avgLoopMs = 0.9 * avgLoopMs + 0.1 * loopMs;
 
-        // ----- Camera control tuning -----
         if (risingEdge(gamepad1.right_bumper, prevRB)) VisionConstants.EXPOSURE_MS =
                 Math.min(204, VisionConstants.EXPOSURE_MS + 1);
         if (risingEdge(gamepad1.left_bumper,  prevLB)) VisionConstants.EXPOSURE_MS =
@@ -99,7 +97,6 @@ public class VisionTuningTeleOp extends OpMode {
         prevRight = gamepad1.dpad_right;
         prevLeft  = gamepad1.dpad_left;
 
-        // X = apply, A = save, B = reload, START = scan
         if (risingEdge(gamepad1.x, prevX)) {
             robot.applyCameraControls();
             scanReport = "Applied EXP=" + VisionConstants.EXPOSURE_MS
@@ -120,7 +117,6 @@ public class VisionTuningTeleOp extends OpMode {
         prevB     = gamepad1.b;
         prevStart = gamepad1.start;
 
-        // ----- Telemetry -----
         telemetry.addData("LoopMs avg", "%.1f", avgLoopMs);
         telemetry.addLine();
         telemetry.addData("Exposure (LB/RB)", "%d ms", VisionConstants.EXPOSURE_MS);
@@ -147,22 +143,11 @@ public class VisionTuningTeleOp extends OpMode {
         telemetry.addData("Report", scanReport);
     }
 
-    /**
-     * Run the full detect → cluster → corridor pipeline using a zero pose
-     * (the origin is the camera's current forward axis). The merged ball
-     * list is read from CorridorSelector.lastMergedBalls — exactly what
-     * the planner saw.
-     */
     private void runScan() {
         Pose fakePose = new Pose(0, 0, 0);
-        // Disable the alliance field-X clamp AND the Y floor — fakePose=(0,0,0)
-        // makes both meaningless (Y=0 is already below the 8.5 floor, which
-        // would skip every -Y heading and corrupt tuning results).
         lastSweep  = CorridorSelector.selectCorridor(detector, fakePose, 1.0e6, -1.0e6);
         scanReport = CorridorSelector.lastScanDebug;
     }
-
-    // ----- Persistence -----
 
     private String saveToDisk() {
         try {

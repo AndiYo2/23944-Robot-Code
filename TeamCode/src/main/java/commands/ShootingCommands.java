@@ -40,10 +40,6 @@ public class ShootingCommands {
         return buildShootSequence(shooter, spindexer, ballCount, ShootingSequenceConstants.SUPER_SLOW_SHOOT_DELAY);
     }
 
-    /**
-     * Builds the shoot sequence. All variants use SHOOTER_FLICK_TIME for the actual flick.
-     * Slow variants add a delay between each ball shot.
-     */
     private static Command buildShootSequence(Shooter shooter, Spindexer spindexer, int ballCount, double delayBetweenShots) {
         SequentialCommandGroup sequence = new SequentialCommandGroup();
         double flickTime = ShootingSequenceConstants.SHOOTER_FLICK_TIME;
@@ -59,7 +55,6 @@ public class ShootingCommands {
                 new RetractShooterFlipperCommand(shooter)
             );
         } else if (ballCount == 2) {
-            // Ball 1
             sequence.addCommands(
                 new ExtendShooterFlipperCommand(shooter, flickTime),
                 new RetractShooterFlipperCommand(shooter)
@@ -67,7 +62,6 @@ public class ShootingCommands {
             if (delayMs > 0) {
                 sequence.addCommands(new WaitCommand(delayMs));
             }
-            // Ball 2
             sequence.addCommands(
                 new ExtendSpindexerFlipperCommand(spindexer),
                 new ExtendShooterFlipperCommand(shooter, flickTime),
@@ -75,20 +69,14 @@ public class ShootingCommands {
                     .alongWith(new RetractSpindexerFlipperCommand(spindexer))
             );
         } else if (ballCount == 3) {
-            // Ball 1: fire from slot 1
             sequence.addCommands(
                 new ExtendShooterFlipperCommand(shooter, flickTime),
                 new RetractShooterFlipperCommand(shooter)
             );
 
-            // Ball 2: spindexer flipper lifts ball 2 up to the shooter
             sequence.addCommands(new ExtendSpindexerFlipperCommand(spindexer));
 
-            // Parallel:
-            //   Lane A: [equalization wait] → extend shooter → retract shooter (fires ball 2)
-            //   Lane B: [halfway wait] → retract spindexer flipper → rotate CCW (ball 3 prep)
-            // Equalization wait lives INSIDE Lane A so it only delays ball 2's shot,
-            // not ball 3. Sized to fit within Lane B so total parallel duration is unchanged.
+
             long equalizationMs = (long)(ShootingSequenceConstants.SHOT_EQUALIZATION_DELAY * 1000);
             long laneAPreFireWait = Math.max(delayMs, equalizationMs);
             long shooterHalfwayMs = (long)(ShootingSequenceConstants.SHOOTER_EXTEND_HALFWAY * 1000);
@@ -108,7 +96,6 @@ public class ShootingCommands {
                 sequence.addCommands(new WaitCommand(delayMs));
             }
 
-            // Ball 3: push up, fire, retract spindexer
             sequence.addCommands(
                 new ExtendSpindexerFlipperCommand(spindexer),
                 new ExtendShooterFlipperCommand(shooter, flickTime),

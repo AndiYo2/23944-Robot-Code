@@ -9,21 +9,11 @@ import com.qualcomm.robotcore.hardware.PwmControl;
 
 import Constants.NamingConstants;
 
-/**
- * Test TeleOp for individually controlling each servo.
- *
- * Controls:
- *   Left/Right Bumper — cycle through servos
- *   Left Stick Y      — control selected servo position (up = 1.0, down = 0.0)
- *   A button           — center servo (0.5)
- *   B button           — toggle servo PWM on/off
- */
 @TeleOp(name = "Servo Test", group = "Test")
 public class ServoTestTeleOp extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-        // Initialize all servos directly (avoids full RobotHardware init)
         ServoImplEx spindexerServo = hardwareMap.get(ServoImplEx.class, NamingConstants.Spindexer.spindexerServo);
         spindexerServo.setPwmRange(new PwmControl.PwmRange(500, 2500));
 
@@ -32,11 +22,9 @@ public class ServoTestTeleOp extends LinearOpMode {
         Servo shooterHood = hardwareMap.get(Servo.class, NamingConstants.Shooter.shooterHood);
         Servo turret = hardwareMap.get(Servo.class, NamingConstants.Turret.turret);
 
-        // Analog feedback encoders (0-3.3V → 0-1 position)
         AnalogInput spindexerFlipperEncoder = hardwareMap.get(AnalogInput.class, NamingConstants.Spindexer.spindexerFlipperEncoder);
         AnalogInput shooterFlipperEncoder = hardwareMap.get(AnalogInput.class, NamingConstants.Shooter.shooterFlipperEncoder);
 
-        // Map which servos have analog feedback (null = no encoder)
         AnalogInput[] encoders = {
                 null,                       // Spindexer
                 spindexerFlipperEncoder,    // Spindexer Flipper
@@ -81,7 +69,6 @@ public class ServoTestTeleOp extends LinearOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
-            // Edge detection for bumpers
             boolean leftBumper = gamepad1.left_bumper;
             boolean rightBumper = gamepad1.right_bumper;
             boolean aButton = gamepad1.a;
@@ -102,17 +89,14 @@ public class ServoTestTeleOp extends LinearOpMode {
             prevA = aButton;
             prevB = bButton;
 
-            // Left stick Y controls position: up (-1) = increase, down (+1) = decrease
             double stickY = -gamepad1.left_stick_y;
             if (Math.abs(stickY) > 0.05) {
                 positions[selectedIndex] += stickY * 0.005;
                 positions[selectedIndex] = Math.max(0.0, Math.min(1.0, positions[selectedIndex]));
             }
 
-            // Apply position to selected servo
             servos[selectedIndex].setPosition(positions[selectedIndex]);
 
-            // Telemetry
             telemetry.addLine("=== SERVO TEST ===");
             telemetry.addLine("");
             for (int i = 0; i < servos.length; i++) {

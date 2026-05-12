@@ -1,30 +1,14 @@
 package utility;
 
-import Constants.LimelightConstants;
 import Constants.RobotConstants;
 import Constants.ShooterConstants;
 import Constants.SpindexerConstants;
 import com.bylazar.telemetry.TelemetryManager;
-import com.pedropathing.ftc.FTCCoordinates;
-import com.pedropathing.ftc.InvertedFTCCoordinates;
-import com.pedropathing.ftc.PoseConverter;
-import com.pedropathing.geometry.PedroCoordinates;
-import com.pedropathing.geometry.Pose;
-
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 
 import subsystems.*;
 
-/**
- * Centralized telemetry helper that sends data to Bylazar Panels.
- * Uses debug() for text status and graph() for numeric time-series data.
- * Gated behind RobotConstants.Robot.ENABLE_TELEMETRY — when disabled,
- * update() is a complete no-op (no string formatting, no sensor reads).
- */
+
 public class TelemetryHelper {
     private final RobotHardware robot;
     private final TelemetryManager panels;
@@ -36,7 +20,6 @@ public class TelemetryHelper {
     private MecanumDrive mecanumDrive;
     private Intake intake;
 
-    // Rolling 60-second loop time tracker
     private static final int LOOP_BUFFER_SIZE = 6000; // ~60s at 100 Hz max
     private static final long WINDOW_NS = 60_000_000_000L; // 60 seconds in nanos
     private final double[] loopBuffer = new double[LOOP_BUFFER_SIZE];
@@ -62,10 +45,6 @@ public class TelemetryHelper {
         this.intake = intake;
     }
 
-    /**
-     * Records a loop time sample. Call this every loop iteration (not just at telemetry rate)
-     * so all samples are captured for accurate avg/spike tracking.
-     */
     public void recordLoop(double loopMs) {
         long now = System.nanoTime();
         loopBuffer[loopHead] = loopMs;
@@ -82,7 +61,6 @@ public class TelemetryHelper {
         int validCount = 0;
 
         for (int i = 0; i < loopCount; i++) {
-            // Walk the buffer from oldest to newest
             int idx = (loopHead - loopCount + i + LOOP_BUFFER_SIZE) % LOOP_BUFFER_SIZE;
             if (loopTimestamps[idx] < cutoff) continue;
             double val = loopBuffer[idx];
@@ -95,17 +73,10 @@ public class TelemetryHelper {
         rollingMaxMs = max;
     }
 
-    /**
-     * Pushes all telemetry data to Panels (debug text + graph time-series).
-     * Complete no-op when ENABLE_TELEMETRY is false.
-     *
-     * @param telemetry FTC SDK telemetry for Driver Station display
-     * @param loopMs    current loop time in milliseconds (for graph tracking)
-     */
+
     public void update(Telemetry telemetry, double loopMs) {
         computeLoopStats();
 
-        // Always report loop timing regardless of ENABLE_TELEMETRY
         panels.addData("Loop Time (ms)", loopMs);
         panels.addData("Avg Loop (60s)", rollingAvgMs);
         panels.addData("Max Spike (60s)", rollingMaxMs);
@@ -116,14 +87,12 @@ public class TelemetryHelper {
             return;
         }
 
-        // Cache values used in both debug text and graph sections
         double currentVel = shooter.getCurrentVelocity();
         double targetVel = shooter.getTargetVelocity();
         double hoodAngle = shooter.getTargetHoodAngle();
         double distance = shooter.getDistanceToTarget();
         double turretAngle = turret.getTargetTurretAngle();
 
-        // Status
         panels.debug("Spindexer Pattern: " + SpindexerAndMotifStatus.SpindexerPattern.getSpindexerPatternString());
         panels.debug("Sorting Mode: " + SpindexerConstants.currentMode);
 
@@ -137,7 +106,6 @@ public class TelemetryHelper {
         }
 
 
-        // Position — use cached pose values
         double x = robot.cachedPoseX;
         double y = robot.cachedPoseY;
         double heading = Math.toDegrees(robot.cachedHeading);

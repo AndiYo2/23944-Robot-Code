@@ -3,9 +3,6 @@ package Constants;
 import com.bylazar.configurables.annotations.Configurable;
 import com.pedropathing.geometry.Pose;
 
-/**
- * Goal position definitions.
- */
 @Configurable
 public class FieldMap {
 

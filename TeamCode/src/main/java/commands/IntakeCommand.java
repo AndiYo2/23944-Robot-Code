@@ -17,9 +17,6 @@ public class IntakeCommand extends CommandBase {
     private final DualBallDetector sensorGate;
     private final ElapsedTime timer = new ElapsedTime();
 
-    public IntakeCommand(Intake intake, double duration) {
-        this(intake, duration, false, null);
-    }
 
     public IntakeCommand(Intake intake, double duration, boolean reverseIntake) {
         this(intake, duration, reverseIntake, null);

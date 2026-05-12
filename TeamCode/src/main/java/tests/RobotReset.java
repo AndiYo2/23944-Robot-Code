@@ -9,18 +9,6 @@ import Constants.SpindexerConstants;
 import Constants.TurretConstants;
 import utility.RobotHardware;
 
-/**
- * Resets all servos to their default/safe positions.
- *
- * Servo defaults:
- *   Turret             = 0.5 (center)
- *   Spindexer          = 0.5 (center)
- *   Hood               = 1.0 (min angle / retracted)
- *   Spindexer Flipper  = retract position
- *   Shooter Flipper    = retract position
- *
- * Press START to apply reset. Telemetry confirms current positions.
- */
 @TeleOp(name = "Robot Reset", group = "Tests")
 public class RobotReset extends OpMode {
 
@@ -45,7 +33,6 @@ public class RobotReset extends OpMode {
 
     @Override
     public void loop() {
-        // Allow re-applying reset with START button
         if (gamepad1.start) {
             applyReset();
         }

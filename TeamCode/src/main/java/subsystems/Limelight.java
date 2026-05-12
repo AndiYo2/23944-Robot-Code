@@ -15,18 +15,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 
 import java.util.List;
 
-/**
- * Limelight subsystem for AprilTag detection and field relocalization.
- * - Scans for motif AprilTags (21-23) to determine ball pattern
- * - Provides MegaTag2-based field pose for Pinpoint relocalization
- *
- * STATIC STATE MUTATIONS:
- * This class modifies the following static fields in LimelightConstants:
- * - motifPattern: Updated when a motif AprilTag (21-23) is detected
- * - manuallySlowedForScan: Controls shooter speed during scanning
- *
- * These mutations allow state to persist across OpModes for Auto->TeleOp transitions.
- */
 public class Limelight extends SubsystemBase {
     private RobotHardware robot;
     private LLResult latestResult;
@@ -47,17 +35,6 @@ public class Limelight extends SubsystemBase {
             latestResult = robot.limelight.getLatestResult();
         }
     }
-
-    /**
-     * Scans for motif AprilTags (21, 22, 23) and updates pattern if found.
-     *
-     * SIDE EFFECTS (on detection):
-     * - LimelightConstants.motifPattern: Updated with detected pattern
-     * - LimelightConstants.manuallySlowedForScan: Set to false
-     * - currentMode: Switched to GoalTracking
-     *
-     * @return tag ID if detected (21-23), -1 if not detected
-     */
     public int scanForMotifTag() {
         if (latestResult == null) {
             return -1;
@@ -131,9 +108,6 @@ public class Limelight extends SubsystemBase {
         return detectedTagId;
     }
 
-    // ==================== RELOCALIZATION ====================
-
-    /** Cached limelight pose, updated every loop */
     private Pose limelightPose = null;
     public String lastRelocDebug = "no attempt yet";
 
@@ -141,22 +115,11 @@ public class Limelight extends SubsystemBase {
         return limelightPose;
     }
 
-    /**
-     * Pushes the current robot heading to the Limelight so MT2 stays accurate.
-     * Cheap — just sends one number. Called every loop in periodic().
-     */
     public void pushHeadingToLimelight() {
         if (robot.limelight == null) return;
         robot.limelight.updateRobotOrientation(Math.toDegrees(robot.cachedHeading) + 90);
     }
 
-    /**
-     * Fetches the latest Limelight MT2 pose on demand.
-     * Call this only when relocalization is actually requested (not every loop).
-     * Heading must already be pushed via periodic() for MT2 accuracy.
-     *
-     * @return true if a valid AprilTag-based pose was obtained
-     */
     public boolean fetchPoseForRelocalization() {
         if (robot.limelight == null) return false;
 
@@ -192,7 +155,6 @@ public class Limelight extends SubsystemBase {
                 limelightPose.getX(), limelightPose.getY());
         return true;
     }
-    // ==================== PIPELINE SWITCHING ====================
 
     public void switchToLocalizationPipeline() {
         if (robot.limelight != null) {
@@ -209,15 +171,10 @@ public class Limelight extends SubsystemBase {
     @Override
     public void periodic() {
         if (currentMode == EnumConstants.LimelightMode.TagTracking && !motifDetected) {
-            // Re-enforce motif pipeline each loop to prevent updateRobotOrientation()
-            // from the previous GoalTracking cycle holding the Limelight on pipeline 2
             robot.limelight.pipelineSwitch(LimelightConstants.MOTIF_PIPELINE);
             updateLimelightData();
             scanForMotifTag();
         } else {
-            // Just push heading so MT2 stays accurate for on-demand relocalization.
-            // NOTE: ramp-scan pipeline (6) is driven manually by the auton — periodic()
-            // does NOT touch pipelines here, so manual switches survive.
             pushHeadingToLimelight();
         }
     }

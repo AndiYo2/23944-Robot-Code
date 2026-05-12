@@ -1,8 +1,5 @@
 package Constants;
 
-/**
- * All enumerations used throughout the robot code.
- */
 public class EnumConstants {
     public enum AllianceColor {
         Red,

@@ -49,13 +49,11 @@ public class ColorSensorTestOpMode extends LinearOpMode {
         sensors1[2] = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.transferSensor1);
         sensors2[2] = hardwareMap.get(ColorSensor.class, NamingConstants.ColorSensor.transferSensor2);
 
-        // Cast to DistanceSensor (REV V3 implements both interfaces)
         for (int i = 0; i < 3; i++) {
             distSensors1[i] = (DistanceSensor) sensors1[i];
             distSensors2[i] = (DistanceSensor) sensors2[i];
         }
 
-        // Enable MANUAL bulk caching for accurate distance reads
         for (LynxModule hub : hardwareMap.getAll(LynxModule.class)) {
             hub.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
         }
@@ -63,7 +61,6 @@ public class ColorSensorTestOpMode extends LinearOpMode {
         detectors[0] = new DualBallDetector(sensors1[0], sensors2[0]); // Intake - defaults
         detectors[1] = new DualBallDetector(sensors1[1], sensors2[1]); // Ramp - defaults
 
-        // Transfer - custom profiles and thresholds (must match RobotHardware)
         double[] transferGreen = {0.21, 0.47, 0.32};
         double[] transferPurple = {0.32, 0.31, 0.37};
         detectors[2] = new DualBallDetector(sensors1[2], sensors2[2],
@@ -78,7 +75,6 @@ public class ColorSensorTestOpMode extends LinearOpMode {
 
         while (opModeIsActive()) {
 
-            // === Handle pair cycling with edge detection ===
             if (gamepad1.dpad_right && !prevDpadRight) {
                 currentPair = (currentPair + 1) % 3;
             }
@@ -88,7 +84,6 @@ public class ColorSensorTestOpMode extends LinearOpMode {
             prevDpadRight = gamepad1.dpad_right;
             prevDpadLeft = gamepad1.dpad_left;
 
-            // Clear bulk cache for fresh reads
             for (LynxModule hub : hardwareMap.getAll(LynxModule.class)) {
                 hub.clearBulkCache();
             }

@@ -37,8 +37,8 @@ public class ShooterTest extends OpMode {
 
     private double hoodAngle = ShooterConstants.HOOD_DEFAULT_ANGLE;
     private double defaultSpeed = 0.0;
-    private static final double HOOD_INCREMENT = 0.5; // degrees per loop while held
-    private static final double SPEED_INCREMENT = 0.025; // power per press
+    private static final double HOOD_INCREMENT = 0.5;
+    private static final double SPEED_INCREMENT = 0.025;
     private boolean prevDpadRight = false;
     private boolean prevDpadLeft = false;
 
@@ -52,7 +52,6 @@ public class ShooterTest extends OpMode {
         motor1 = robot.shooterMotor1;
         motor2 = robot.shooterMotor2;
 
-        // Reset encoders, run without encoder for direct power control
         motor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         motor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         motor1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -60,10 +59,8 @@ public class ShooterTest extends OpMode {
         motor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         motor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
-        // Set hood to default
         robot.shooterHood.setPosition(hoodAngleToServo(hoodAngle));
 
-        // Center turret
         robot.turretServo.setPosition(TurretConstants.SERVO_CENTER_POSITION);
 
         telemetry.addLine("=== SHOOTER TEST ===");
@@ -79,7 +76,6 @@ public class ShooterTest extends OpMode {
         double loopMs = loopTimer.milliseconds();
         loopTimer.reset();
 
-        // ==================== SHOOTER FLYWHEEL ====================
         if (gamepad1.dpad_right && !prevDpadRight) {
             defaultSpeed = Math.min(1.0, defaultSpeed + SPEED_INCREMENT);
         }
@@ -118,9 +114,6 @@ public class ShooterTest extends OpMode {
             motor2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         }
 
-        // ==================== TURRET ====================
-        // Right stick X maps proportionally to turret range
-        // Full right (+1) = HARD_STOP_CW, full left (-1) = HARD_STOP_CCW, center = 0
         double turretInput = gamepad1.right_stick_x;
         double turretDegrees;
         if (turretInput >= 0) {
@@ -134,7 +127,6 @@ public class ShooterTest extends OpMode {
         turretServoPos = Math.max(0.0, Math.min(1.0, turretServoPos));
         robot.turretServo.setPosition(turretServoPos);
 
-        // ==================== HOOD ====================
         if (gamepad1.dpad_up) {
             hoodAngle += HOOD_INCREMENT;
         }
@@ -147,7 +139,6 @@ public class ShooterTest extends OpMode {
         double hoodServoPos = hoodAngleToServo(hoodAngle);
         robot.shooterHood.setPosition(hoodServoPos);
 
-        // ==================== DIAGNOSTICS ====================
         double vel1 = motor1.getVelocity();
         double vel2 = motor2.getVelocity();
         int pos1 = motor1.getCurrentPosition();
@@ -215,10 +206,6 @@ public class ShooterTest extends OpMode {
         robot.turretServo.setPosition(TurretConstants.SERVO_CENTER_POSITION);
     }
 
-    /**
-     * Convert hood angle to servo position.
-     * Mirrors Shooter subsystem logic: 30deg -> 1.0, 63deg -> 0.34
-     */
     private double hoodAngleToServo(double angleDegrees) {
         double angleRange = ShooterConstants.HOOD_MAX_ANGLE - ShooterConstants.HOOD_MIN_ANGLE;
         double servoRange = ShooterConstants.HOOD_SERVO_AT_MIN_ANGLE - ShooterConstants.HOOD_SERVO_AT_MAX_ANGLE;

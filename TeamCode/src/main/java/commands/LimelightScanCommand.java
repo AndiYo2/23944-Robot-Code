@@ -65,7 +65,6 @@ public class LimelightScanCommand extends CommandBase {
 
         if (timer.seconds() < PIPELINE_SETTLE_SECONDS) return;
 
-        // Actively scan here too — don't rely solely on Limelight.periodic().
         limelight.updateLimelightData();
         limelight.scanForMotifTag();
 

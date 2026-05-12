@@ -15,10 +15,6 @@ public class ExtendShooterFlipperCommand extends CommandBase {
     private final ElapsedTime timer = new ElapsedTime();
     private final double flickTime;
 
-    public ExtendShooterFlipperCommand(Shooter shooter) {
-        this(shooter, ShootingSequenceConstants.SHOOTER_FLICK_TIME);
-    }
-
     public ExtendShooterFlipperCommand(Shooter shooter, double flickTime) {
         this.shooter = shooter;
         this.flickTime = flickTime;

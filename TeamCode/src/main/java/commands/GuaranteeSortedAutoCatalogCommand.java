@@ -97,7 +97,6 @@ public class GuaranteeSortedAutoCatalogCommand extends CommandBase {
 
     private boolean allSensorsReady() {
         RobotHardware robot = RobotHardware.getInstance();
-        // Force fresh bulk-safe reads — progressive scan may have stopped updating the cache
         robot.spindexerSensorPair.updateCacheBulkSafe();
         robot.transferSensorPair.updateCacheBulkSafe();
         robot.rampSensorPair.updateCacheBulkSafe();
@@ -108,7 +107,6 @@ public class GuaranteeSortedAutoCatalogCommand extends CommandBase {
 
     private void startSortedCatalog() {
         RobotHardware robot = RobotHardware.getInstance();
-        // Force fresh reads so sorting uses current ball colors, not stale cache
         robot.spindexerSensorPair.updateCacheBulkSafe();
         robot.transferSensorPair.updateCacheBulkSafe();
         robot.rampSensorPair.updateCacheBulkSafe();

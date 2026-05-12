@@ -2,9 +2,6 @@ package Constants;
 
 import com.bylazar.configurables.annotations.Configurable;
 
-/**
- * Drivetrain tuning constants.
- */
 @Configurable
 public class DriveConstants {
     public static double STRAFE_COMPENSATION = 1.1;

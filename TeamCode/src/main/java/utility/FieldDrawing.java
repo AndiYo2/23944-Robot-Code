@@ -9,12 +9,7 @@ import com.pedropathing.math.Vector;
 import com.pedropathing.paths.Path;
 import com.pedropathing.util.PoseHistory;
 
-/**
- * Public field drawing utility for Panels dashboard.
- * Based on the Drawing class in pedroPathing/Tuning.java,
- * made public so it can be used from teleOps and Autos packages.
- * Adds drawTeleOpDebug() for TeleOp pose tracking without a Follower.
- */
+
 public class FieldDrawing {
     public static final double ROBOT_RADIUS = 9;
     private static final FieldManager panelsField = PanelsField.INSTANCE.getField();
@@ -28,10 +23,6 @@ public class FieldDrawing {
     }
 
 
-    /**
-     * Draw current path, closest point on path, pose history trail, and robot.
-     * Call this each loop in Autonomous.
-     */
     public static void drawFollowerDebug(Follower follower) {
         if (follower.getCurrentPath() != null) {
             drawPath(follower.getCurrentPath(), pathStyle);
@@ -47,23 +38,13 @@ public class FieldDrawing {
     }
 
 
-    /**
-     * Draw a pose trail from parallel x/y arrays plus the current robot pose.
-     * This is the TeleOp equivalent of drawFollowerDebug.
-     *
-     * @param xHistory array of x coordinates (oldest to newest)
-     * @param yHistory array of y coordinates (oldest to newest)
-     * @param count    number of valid entries in the arrays
-     * @param current  current robot pose
-     */
-    // Draw every Nth point when trail is long to reduce overhead
+
     private static final int TRAIL_SKIP = 4;
 
     public static void drawTeleOpDebug(double[] xHistory, double[] yHistory,
                                        int count, Pose current) {
         if (count > 1) {
             panelsField.setStyle(trailStyle);
-            // When trail is long, skip points to reduce line draw calls
             int step = (count > 50) ? TRAIL_SKIP : 1;
             for (int i = 0; i < count - step; i += step) {
                 int next = Math.min(i + step, count - 1);
@@ -96,10 +77,6 @@ public class FieldDrawing {
         panelsField.setStyle(style);
         panelsField.moveCursor(x1, y1);
         panelsField.line(x2, y2);
-    }
-
-    public static void drawRobot(Pose pose) {
-        drawRobot(pose, robotStyle);
     }
 
     public static void drawPath(Path path, Style style) {

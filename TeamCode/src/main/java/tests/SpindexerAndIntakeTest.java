@@ -35,17 +35,15 @@ public class SpindexerAndIntakeTest extends CommandOpMode {
     private final RobotHardware robot = RobotHardware.getInstance();
     private GamepadEx driverGamepad;
 
-    // Edge detection for button presses
     private boolean prevDpadRight = false;
     private boolean prevDpadLeft = false;
     private boolean prevX = false;
     private boolean prevY = false;
     private boolean prevA = false;
 
-    // Shooter flipper state
     private boolean shooterFlipperExtended = false;
     private double shooterFlipperTimer = 0;
-    private static final double SHOOTER_FLIP_DURATION = 0.2; // seconds
+    private static final double SHOOTER_FLIP_DURATION = 0.2;
 
     @Override
     public void initialize() {
@@ -55,7 +53,6 @@ public class SpindexerAndIntakeTest extends CommandOpMode {
         spindexer = new Spindexer();
         intake = new Intake();
 
-        // Retract shooter flipper at start
         robot.shooterFlipper.setPosition(ShootingSequenceConstants.SHOOTER_FLIPPER_RETRACT);
 
         register(spindexer, intake);
@@ -68,7 +65,6 @@ public class SpindexerAndIntakeTest extends CommandOpMode {
         robot.clearBulkCache();
         robot.smartPollSensors();
 
-        // ==================== SPINDEXER ROTATIONS ====================
         if (gamepad1.dpad_right && !prevDpadRight) {
             spindexer.rotateCW();
         }
@@ -78,13 +74,11 @@ public class SpindexerAndIntakeTest extends CommandOpMode {
         prevDpadRight = gamepad1.dpad_right;
         prevDpadLeft = gamepad1.dpad_left;
 
-        // ==================== SPINDEXER FLIPPER ====================
         if (gamepad1.x && !prevX) {
             spindexer.triggerFlick();
         }
         prevX = gamepad1.x;
 
-        // ==================== SHOOTER FLIPPER (single flip only) ====================
         if (gamepad1.right_trigger > 0.3 && !shooterFlipperExtended) {
             robot.shooterFlipper.setPosition(ShootingSequenceConstants.SHOOTER_FLIPPER_EXTENDED);
             shooterFlipperExtended = true;
@@ -95,26 +89,21 @@ public class SpindexerAndIntakeTest extends CommandOpMode {
             shooterFlipperExtended = false;
         }
 
-        // ==================== INTAKE ====================
         if (gamepad1.right_bumper) {
             intake.runIntake();
         } else if (gamepad1.left_bumper) {
             intake.reverse();
         } else if (gamepad1.dpad_up) {
-            // Staging belt only
             intake.setIntakePower(0);
             intake.setStagingMotorPower(1.0);
         } else if (gamepad1.dpad_down) {
-            // Reverse intake, belt forward
             intake.runReverseIntakeTransfer();
         } else {
-            // Only stop if we were previously running via bumper/dpad hold
             if (intake.getCurrentState() != EnumConstants.IntakeState.Idle) {
                 intake.stopIntake();
             }
         }
 
-        // ==================== MODE TOGGLE ====================
         if (gamepad1.y && !prevY) {
             SpindexerConstants.currentMode =
                     (SpindexerConstants.currentMode == EnumConstants.ShootingMode.Fast)
@@ -123,7 +112,6 @@ public class SpindexerAndIntakeTest extends CommandOpMode {
         }
         prevY = gamepad1.y;
 
-        // ==================== RESET ====================
         if (gamepad1.a && !prevA) {
             spindexer.resetToEmptyPosition();
         }

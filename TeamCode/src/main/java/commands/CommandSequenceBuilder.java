@@ -106,19 +106,9 @@ public class CommandSequenceBuilder {
     // or shortly after the path completes. The decelStartT/endPower variant tapers
     // speed near the end so the robot doesn't ram into a ball cluster.
 
-    public CommandSequenceBuilder moveToAndCollect(Path collectPath, double maxPower) {
-        commands.add(new BallCollectMoveToCommand(follower, collectPath, maxPower));
-        return this;
-    }
 
     public CommandSequenceBuilder moveToAndCollect(PathChain collectPath, double maxPower) {
         commands.add(new BallCollectMoveToCommand(follower, collectPath, maxPower));
-        return this;
-    }
-
-    public CommandSequenceBuilder moveToAndCollect(Path collectPath, double maxPower,
-                                                    double decelStartT, double endPower) {
-        commands.add(new BallCollectMoveToCommand(follower, collectPath, maxPower, decelStartT, endPower));
         return this;
     }
 
@@ -171,19 +161,16 @@ public class CommandSequenceBuilder {
 
     // ==================== Action Methods ====================
 
-    /** Shoots all 3 balls. */
     public CommandSequenceBuilder shoot() {
         commands.add(ShootingCommands.shootThreeBalls(shooter, spindexer));
         return this;
     }
 
-    /** Shoots all 3 balls with extended flick time (0.30s). */
     public CommandSequenceBuilder slowShoot() {
         commands.add(ShootingCommands.slowShootThreeBalls(shooter, spindexer));
         return this;
     }
 
-    /** Sets the spindexer shooting mode (Fast or Sorted). */
     public CommandSequenceBuilder setSpindexerMode(ShootingMode mode) {
         commands.add(new InstantCommand(() -> SpindexerConstants.currentMode = mode));
         return this;
@@ -223,7 +210,6 @@ public class CommandSequenceBuilder {
 
     // ==================== Build ====================
 
-    /** Builds and returns the configured command sequence. */
     public Command build() {
         return new SequentialCommandGroup(commands.toArray(new Command[0]));
     }
@@ -288,16 +274,11 @@ public class CommandSequenceBuilder {
             return this;
         }
 
-        /** Cataloging that assumes the intake is already running (only reverses it at the end). */
         public ParallelBuilder autoCatalog() {
             parallelCommands.add(new AutoCatalogModeCommand(spindexer, intake));
             return this;
         }
 
-        /**
-         * Waits for all sensors to read non-None, forces fresh bulk-safe reads, validates
-         * colors, then runs sorted auto catalog (falls back to fast auto if validation fails).
-         */
         public ParallelBuilder guaranteeSortedAutoCatalog() {
             parallelCommands.add(new GuaranteeSortedAutoCatalogCommand(spindexer, intake));
             return this;

@@ -135,7 +135,6 @@ public class DriveTest extends CommandOpMode {
         if (fieldRelative) {
             mecanumDrive.drive(ly, lx, rx);
         } else {
-            // Robot-relative: bypass field transform, write motors directly
             double rotX = lx * DriveConstants.STRAFE_COMPENSATION;
             double denominator = Math.max(Math.abs(ly) + Math.abs(rotX) + Math.abs(rx), 1);
             robot.frontLeft.setPower((ly + rotX + rx) / denominator);
